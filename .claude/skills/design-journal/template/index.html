@@ -1,0 +1,255 @@
+<title>My Game Design Journal</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: a journal. A top bar of levels (one page each, hash-routed); each page is its entries, newest first, dated in a mono stamp on the left rail; shots open full-window in a lightbox. */
+:root {
+  --bg: #f2f5f9;
+  --fg: #142033;
+  --muted: #55627a;
+  --panel: #ffffff;
+  --line: #d3dcea;
+  --accent: #2a5cc8;
+  --vine: #d9571a;
+  --shade: rgba(8, 12, 20, .94);
+  --display: "Archivo Black", "Arial Black", system-ui, sans-serif;
+  --body: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0d131e; --fg: #e8eef8; --muted: #9aa8c0; --panel: #151e2d; --line: #26344a;
+  --accent: #82a8ff; --vine: #ff8f4d; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0d131e; --fg: #e8eef8; --muted: #9aa8c0; --panel: #151e2d; --line: #26344a;
+  --accent: #82a8ff; --vine: #ff8f4d; color-scheme: dark }
+
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1800px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 64px; display: grid; gap: 28px; }
+.mast { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; border-bottom: 2px solid var(--fg); padding-bottom: 12px; }
+.mast h1 { font-family: var(--display); font-size: clamp(26px, 4vw, 38px); line-height: 1.05; margin: 0; }
+.mast h1 a { color: inherit; text-decoration: none; }
+.mast p { margin: 0; color: var(--muted); font-size: 14px; }
+nav { display: flex; flex-wrap: wrap; gap: 6px; }
+nav a { font-family: var(--display); font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); text-decoration: none; padding: 7px 12px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); }
+nav a:hover { color: var(--fg); }
+nav a[aria-current="page"] { color: var(--bg); background: var(--fg); border-color: var(--fg); }
+a:focus-visible, button:focus-visible, figure button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.page { display: grid; gap: 40px; }
+.page-head { display: grid; gap: 8px; }
+.page-head h2 { font-family: var(--display); font-size: clamp(30px, 5vw, 48px); line-height: 1.02; margin: 0; text-wrap: balance; }
+.page-head p { margin: 0; color: var(--muted); max-width: 70ch; }
+.status { font-family: var(--mono); font-size: 13px; color: var(--fg); }
+.status b { color: var(--vine); font-weight: 500; }
+
+.entry { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 20px; border-top: 1px solid var(--line); padding-top: 22px; }
+.stamp { font-family: var(--mono); font-size: 13px; color: var(--muted); display: grid; gap: 4px; align-content: start; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
+.stamp time { color: var(--fg); font-size: 15px; }
+.stamp span { color: var(--vine); }
+.entry-body { display: grid; gap: 18px; min-width: 0; }
+.entry h3 { font-family: var(--display); font-size: 22px; line-height: 1.15; margin: 0; text-wrap: balance; }
+.entry h4 { font-family: var(--body); font-weight: 600; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 6px 0 0; }
+.lede { margin: 0; color: var(--muted); max-width: 110ch; }
+.lede b { color: var(--fg); font-weight: 600; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 540px), 1fr)); gap: 14px; }
+figure { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 5px; overflow: hidden; display: grid; align-content: start; }
+figure button { all: unset; cursor: zoom-in; display: block; }
+figure img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; background: var(--line); transition: filter .15s; }
+figure button:hover img { filter: brightness(1.08); }
+figcaption { padding: 9px 12px 11px; font-size: 14px; color: var(--muted); min-width: 0; }
+figcaption b { color: var(--fg); font-weight: 600; }
+figure.sound { padding: 14px 12px 4px; gap: 6px; }
+figure.sound audio { width: 100%; display: block; }
+
+ol.crit { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; counter-reset: c; }
+ol.crit li { counter-increment: c; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; padding: 12px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 5px; }
+ol.crit li::before { content: counter(c); font-family: var(--display); font-size: 18px; color: var(--vine); line-height: 1.25; }
+ol.crit li.good::before { color: var(--accent); }
+ol.crit strong { display: block; font-weight: 600; }
+ol.crit p { margin: 0; color: var(--muted); max-width: 75ch; }
+
+/* Home: one card per level, then the whole timeline */
+.levels { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr)); gap: 16px; }
+.level-card { display: grid; text-decoration: none; color: inherit; background: var(--panel); border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
+.level-card img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; }
+.level-card div { padding: 12px 14px 14px; display: grid; gap: 4px; }
+.level-card strong { font-family: var(--display); font-size: 20px; }
+.level-card span { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.level-card:hover strong { color: var(--accent); }
+.timeline { margin: 0; padding: 0; list-style: none; display: grid; gap: 0; }
+.timeline li { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 20px; padding: 10px 0; border-top: 1px solid var(--line); }
+.timeline time { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.timeline a { color: var(--fg); font-weight: 600; text-decoration-color: var(--line); text-underline-offset: 3px; }
+.timeline a:hover { text-decoration-color: var(--accent); }
+.timeline em { font-style: normal; color: var(--muted); }
+
+/* Lightbox: fixed dark sheet, image as large as the window allows */
+.lb { position: fixed; inset: 0; z-index: 10; background: var(--shade); display: grid; grid-template-rows: minmax(0, 1fr) auto; padding: calc(env(safe-area-inset-top, 0px) + 16px) 16px calc(env(safe-area-inset-bottom, 0px) + 12px); gap: 10px; }
+.lb img { width: 100%; height: 100%; object-fit: contain; cursor: zoom-out; }
+.lb p { margin: 0 auto; max-width: 90ch; color: #d8e0ee; font-size: 15px; text-align: center; }
+.lb p b { color: #fff; }
+.lb p small { font-family: var(--mono); color: #8d9ab0; margin-left: 8px; }
+.lb button { position: absolute; background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.25); border-radius: 4px; font: 600 22px/1 var(--body); width: 44px; height: 44px; cursor: pointer; }
+.lb button:hover { background: rgba(255,255,255,.22); }
+.lb .x { top: calc(env(safe-area-inset-top, 0px) + 12px); right: 12px; }
+.lb .prev { left: 12px; top: 50%; translate: 0 -50%; }
+.lb .next { right: 12px; top: 50%; translate: 0 -50%; }
+
+/* Tests page: bars and a plain table */
+.bars { display: grid; gap: 8px; max-width: 900px; }
+.bar-row { display: grid; grid-template-columns: 64px minmax(0, 1fr) 64px 84px; gap: 12px; align-items: center; font-family: var(--mono); font-size: 13px; }
+.bar-row span:nth-child(3) { color: var(--fg); text-align: right; }
+.bar-row span:nth-child(4) { color: var(--muted); }
+.bar { height: 18px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.bar i { display: block; height: 100%; flex: none; }
+.tbl { overflow-x: auto; }
+.tbl table { border-collapse: collapse; font-family: var(--mono); font-size: 13px; min-width: 520px; }
+.tbl th, .tbl td { padding: 6px 14px 6px 0; border-bottom: 1px solid var(--line); text-align: right; }
+.tbl th:first-child, .tbl td:first-child, .tbl th:nth-child(2), .tbl td:nth-child(2) { text-align: left; }
+.tbl th { color: var(--muted); font-weight: 500; }
+.bar { display: flex; }
+.bar i.k-rust, .key i.k-rust { background: var(--accent); }
+.bar i.k-browser, .key i.k-browser { background: var(--vine); }
+.bar i.k-online, .key i.k-online { background: #2f9e6e; }
+.bar i.k-other, .key i.k-other { background: var(--muted); }
+.key { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; color: var(--muted); max-width: 110ch; }
+.key b { color: var(--fg); font-weight: 600; }
+.key i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-right: 8px; vertical-align: -1px; }
+.tbl + .tbl { margin-top: 8px; }
+code { font-family: var(--mono); font-size: .9em; }
+
+/* Tag slicer on the tests page: chips choose a tag, the panel shows what it runs */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips button { font-family: var(--mono); font-size: 13px; color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 5px 9px; cursor: pointer; display: inline-flex; gap: 6px; align-items: baseline; }
+.chips button span { color: var(--muted); font-variant-numeric: tabular-nums; }
+.chips button:hover { border-color: var(--accent); }
+.chips button[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.chips button[aria-pressed="true"] span { color: var(--bg); opacity: .75; }
+.slice { display: grid; gap: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 5px; padding: 16px; min-width: 0; }
+.slice h5 { margin: 0; font-family: var(--display); font-size: 20px; }
+.slice p { margin: 0; color: var(--muted); max-width: 90ch; }
+.slice .nums { display: flex; flex-wrap: wrap; gap: 8px 28px; font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.slice .nums b { font-family: var(--display); font-size: 22px; color: var(--fg); font-weight: 400; margin-right: 6px; font-variant-numeric: tabular-nums; }
+.slice .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+.slice .cols > div { min-width: 0; display: grid; gap: 6px; align-content: start; }
+.slice h6 { margin: 0; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.slice ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; font-family: var(--mono); font-size: 13px; }
+.slice li { display: flex; justify-content: space-between; gap: 12px; min-width: 0; }
+.slice li code { overflow-wrap: anywhere; }
+.slice li span { color: var(--muted); font-variant-numeric: tabular-nums; flex: none; }
+.slice .none { color: var(--muted); font-family: var(--mono); font-size: 13px; }
+.share { height: 8px; background: var(--line); border-radius: 3px; overflow: hidden; max-width: 600px; }
+.share i { display: block; height: 100%; background: var(--accent); }
+@media (max-width: 640px) {
+  .bar-row { grid-template-columns: 52px minmax(0, 1fr) 56px; } .bar-row span:nth-child(4) { display: none; }
+  .entry, .timeline li { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .stamp { position: static; display: flex; gap: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+<div class="wrap">
+  <header class="mast">
+    <h1><a href="#home">My Game Design Journal</a></h1>
+    <nav aria-label="Levels">
+      <a href="#home">All entries</a>
+      <a href="#level-one">Level One</a>
+    </nav>
+  </header>
+
+  <!-- HOME: one card per level, and a timeline of every entry (newest first) -->
+  <section class="page" id="home" data-page>
+    <div class="page-head">
+      <h2>Every level, every build</h2>
+      <p>One page per level, entries newest first and never removed. Click any shot to see it full-window; the arrow keys step through the entry.</p>
+      <p class="status">Live: <b>v0.1.0</b> · started YYYY-MM-DD</p>
+    </div>
+    <div class="levels">
+      <a class="level-card" href="#level-one"><img src="img/level-one/example/first-look.svg" alt=""><div><strong>Level One</strong><span>1 entry · latest YYYY-MM-DD · being built</span></div></a>
+    </div>
+    <ol class="timeline">
+      <li><time>YYYY-MM-DD</time><div><a href="#level-one">Level One: the first look</a> <em>· Level One · in progress</em></div></li>
+    </ol>
+  </section>
+
+  <!-- LEVEL ONE: copy this section for each level; its id is the level's key -->
+  <section class="page" id="level-one" data-page>
+    <div class="page-head">
+      <h2>Level One</h2>
+      <p>One or two sentences on what this level is: its setting, mood and what makes it different.</p>
+      <p class="status">Status: <b>being built</b></p>
+    </div>
+
+    <!-- newest entry first; never delete old ones -->
+    <article class="entry">
+      <div class="stamp"><time>YYYY-MM-DD</time><span>in progress</span></div>
+      <div class="entry-body">
+        <h3>The first look</h3>
+        <p class="lede">What changed, in plain words. <b>Still to do:</b> what still looks wrong.</p>
+        <div class="grid">
+          <figure><button><img src="img/level-one/example/first-look.svg" alt="The first look" loading="lazy"></button><figcaption><b>The first look.</b> One line on what the picture shows.</figcaption></figure>
+        </div>
+      </div>
+    </article>
+  </section>
+
+</div>
+
+
+<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Screenshot">
+  <img id="lb-img" alt="">
+  <p id="lb-cap"></p>
+  <button class="x" id="lb-x" aria-label="Close">×</button>
+  <button class="prev" id="lb-prev" aria-label="Previous shot">‹</button>
+  <button class="next" id="lb-next" aria-label="Next shot">›</button>
+</div>
+
+<script>
+(() => {
+  const JOURNAL = document.querySelector('.mast h1').textContent.trim();
+  const pages = [...document.querySelectorAll('[data-page]')];
+  const links = [...document.querySelectorAll('nav a')];
+  function route() {
+    const id = (location.hash || '#home').slice(1);
+    const target = pages.find(p => p.id === id) ? id : 'home';
+    pages.forEach(p => { p.hidden = p.id !== target; });
+    links.forEach(a => a.toggleAttribute('aria-current', a.getAttribute('href') === '#' + target));
+    links.forEach(a => { if (a.hasAttribute('aria-current')) a.setAttribute('aria-current', 'page'); });
+    document.title = target === 'home' ? JOURNAL
+      : document.querySelector('#' + target + ' h2').textContent + ' · ' + JOURNAL;
+  }
+  addEventListener('hashchange', () => { route(); scrollTo(0, 0); });
+  route();
+
+  const lb = document.getElementById('lb'), img = document.getElementById('lb-img'), cap = document.getElementById('lb-cap');
+  let set = [], at = 0, opener = null;
+  function show(i) {
+    at = (i + set.length) % set.length;
+    const f = set[at], src = f.querySelector('img');
+    img.src = src.src; img.alt = src.alt;
+    cap.innerHTML = f.querySelector('figcaption').innerHTML + '<small>' + (at + 1) + ' / ' + set.length + '</small>';
+  }
+  document.addEventListener('click', e => {
+    const b = e.target.closest('figure button');
+    if (!b) return;
+    const entry = b.closest('.entry-body');
+    set = [...entry.querySelectorAll('figure')];
+    opener = b;
+    show(set.indexOf(b.closest('figure')));
+    lb.hidden = false;
+    document.getElementById('lb-x').focus();
+  });
+  function close() { lb.hidden = true; if (opener) opener.focus(); }
+  img.addEventListener('click', close);
+  lb.addEventListener('click', e => { if (e.target === lb) close(); });
+  document.getElementById('lb-x').addEventListener('click', close);
+  document.getElementById('lb-prev').addEventListener('click', () => show(at - 1));
+  document.getElementById('lb-next').addEventListener('click', () => show(at + 1));
+  addEventListener('keydown', e => {
+    if (lb.hidden) return;
+    if (e.key === 'Escape') close();
+    else if (e.key === 'ArrowLeft') show(at - 1);
+    else if (e.key === 'ArrowRight') show(at + 1);
+  });
+})();
+</script>

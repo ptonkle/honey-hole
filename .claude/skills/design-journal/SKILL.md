@@ -11,7 +11,7 @@ The person reviews the game's look from this journal, not from the game: screens
 
 Keep it in one lasting folder, called JOURNAL here (ask the person where it lives, or create `<game>-journal/` next to the game's repo). Never in a temporary or scratch folder: it is the source of truth.
 
-- `index.html`: the whole journal. Start a new one from `template/index.html` in this kit (it has the layout, the lightbox and the page routing).
+- `index.html`: the whole journal. Start a new one from `template/index.html` beside this skill (it has the layout, the lightbox and the page routing).
 - `img/<level>/<topic>/<shot>.png`: the screenshots.
 - A git repo: commit after every change.
 
@@ -36,3 +36,7 @@ Keep it in one lasting folder, called JOURNAL here (ask the person where it live
 - Captions and ledes in everyday words, not code terms or internal names.
 - Say honestly what still looks wrong; the person uses the journal to give feedback.
 - Lay pages out for a 1920-wide window with big shots.
+
+## In this project (fishing)
+
+- **The journal:** not started yet. When the game has a first look, make `../fishing-journal/` from `template/` beside this skill (its own git repo, never pushed), with one page per area of the game.
