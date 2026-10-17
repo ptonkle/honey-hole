@@ -14,3 +14,9 @@ The person's answers to the follow-up questions:
 - Project notes: lean. Start with the template notebooks and add checklists or archives only when the game needs them.
 
 The agent decided: port the general tooling now, before the game is described, and keep every Ape Race name, screen and tuning choice out of it.
+
+## 2026-10-17 (online)
+
+> Online play will be a part of this but I want more care since this game will likely need different interactions between players compared to ape race
+
+The agent decided: online play is in scope, but neither Ape Race's netcode (each browser owns its own ape and sends its state 20 times a second; the host runs the AI and results) nor Mandible's (lockstep over a full mesh) is copied by default. The sync model is chosen in `PLAN.md` from the game's own player interactions once the game is described, and agreed with the person before any transport code. Only the transport layer that is truly general (WebRTC introduced by room code over pinned Nostr relays, with its BUILDER-SPEC exemptions and `check-online.sh`) may be reused. Meanwhile the core is kept deterministic and driven by per-player inputs, so every sync model stays open.
