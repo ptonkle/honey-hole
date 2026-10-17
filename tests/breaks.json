@@ -1,0 +1,16 @@
+[
+  {
+    "name": "an empty title is refused",
+    "file": "crates/core/src/page.rs",
+    "find": "if strings.title.trim().is_empty() {",
+    "replace": "if false {",
+    "test": "an_empty_title_is_rejected_by_name"
+  },
+  {
+    "name": "an unknown action is refused",
+    "file": "crates/core/src/api.rs",
+    "find": "other => return Err(format!(\"Unknown action \\\"{other}\\\".\")),",
+    "replace": "_ => {}",
+    "test": "act_refuses_an_unknown_action"
+  }
+]

@@ -1,0 +1,3 @@
+# Reference default (D12). A scripted edit that matches text must assert it
+# matched: rustfmt rewraps lines between edits.
+max_width = 110

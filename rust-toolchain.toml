@@ -1,0 +1,8 @@
+# Reference default (D13): a pinned toolchain, so a newer Clippy on CI cannot
+# fail a build that passed locally. Change the channel on purpose, in a
+# commit of its own.
+[toolchain]
+channel = "1.99.0"
+components = ["clippy", "rustfmt"]
+targets = ["wasm32-unknown-unknown"]
+profile = "minimal"

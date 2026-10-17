@@ -1,0 +1,9 @@
+{
+  "_about": "Art settings read by tools/art/art.py. style: \"default\" is the fallback pack in styles/default; any other value is a path to a style pack directory. sizes: one row per picture kind, with the drawing size in cm, the exact PNG size in pixels, whether the background is transparent, which edges a cutout must leave clear (t, b, l, r), and the file size cap in bytes.",
+  "style": "default",
+  "sizes": {
+    "scene": {"cm": [19.2, 10.8], "px": [1280, 720], "cutout": false, "max_bytes": 1500000},
+    "unit": {"cm": [6.0, 6.0], "px": [384, 384], "cutout": true, "clear_edges": "tlr", "max_bytes": 300000},
+    "icon": {"cm": [2.0, 2.0], "px": [128, 128], "cutout": true, "clear_edges": "tblr", "max_bytes": 60000}
+  }
+}

@@ -1,0 +1,14 @@
+[package]
+name = "tool_shim"
+version = "0.1.0"
+edition = "2021"
+description = "wasm-bindgen shim: moves strings between tool_core and the page. Decides nothing."
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+tool_core = { path = "../core" }
+# Pinned exactly: the wasm-bindgen CLI that builds the page must match this.
+wasm-bindgen = "=0.2.127"

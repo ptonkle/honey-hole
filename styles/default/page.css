@@ -1,0 +1,16 @@
+/* Optional page tokens for Builder's default style pack. A page that wants
+   its chrome to sit with the art may import this file and use the tokens;
+   nothing in the template reads it. */
+:root {
+  --art-ink: #3B2340;
+  --art-sky: #EFC46A;
+  --art-sky-high: #F5DA92;
+  --art-sky-low: #E9B060;
+  --art-paper: #F6E7C4;
+  --art-cream: #FFF6E0;
+  --art-wall: #E88A73;
+  --art-green: #6FA77A;
+  --art-teal: #4FA3A0;
+  --art-gold: #FFB000;
+  --art-ink-width: 2px;
+}

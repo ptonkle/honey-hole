@@ -1,0 +1,7 @@
+{
+  "_about": "Ink width in pt for each picture kind in data/art.json sizes. Small pictures get a bolder line so it survives being shown small.",
+  "default": 1.15,
+  "scene": 1.15,
+  "unit": 1.5,
+  "icon": 1.8
+}
