@@ -80,3 +80,4 @@ The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the 
 One action.
 
 2026-10-17, map generation (branch `worktree-agent-a13a60c04e6220e7c`, after df1b4b7): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 82 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 53 of 53 breaks caught.
+2026-10-18, the six item minigames and the Minigames screen (branch `worktree-agent-a8a336c7d80722fb8`, merged with main's fishing): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 342 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 22 of 22 new breaks caught.
