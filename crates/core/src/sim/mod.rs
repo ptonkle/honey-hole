@@ -892,6 +892,13 @@ impl Match {
         if self.is_remote(seat) {
             return;
         }
+        // with the line out the cast stays as it went: the angler holds the
+        // rod still while the camera looks about
+        let aiming = self
+            .fishing
+            .lines
+            .get(seat)
+            .is_none_or(|l| matches!(l.stage, fishing::Stage::Idle | fishing::Stage::Charging));
         let Some(b) = self.boats[seat].as_mut() else {
             return;
         };
@@ -906,7 +913,9 @@ impl Match {
             };
             self.events.push(MatchEvent::ModeChanged { seat, mode: b.mode });
         }
-        b.steer(&self.rules, i);
+        if aiming || b.mode == Mode::Driving {
+            b.steer(&self.rules, i);
+        }
         match collide::land(&self.map, &self.rules, b) {
             collide::LandHit::Clear => {}
             collide::LandHit::Bounced(speed) => self.events.push(MatchEvent::Bounced { seat, speed }),

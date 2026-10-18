@@ -3078,5 +3078,33 @@
     "find": "lake.surface_at(lake.map_point(p), clock_ms) + lift",
     "replace": "p.y + lift",
     "test": "the_aim_marker_is_drawn_where_the_bobber_lands"
+  },
+  {
+    "name": "aim: the cast ignores the camera",
+    "file": "crates/core/src/sim/boat.rs",
+    "find": "self.cast_yaw = (look + self.swivel).clamp(-limit, limit);",
+    "replace": "self.cast_yaw = self.swivel.clamp(-limit, limit) + 0 * look;",
+    "test": "the_cast_goes_where_the_camera_looks_turned_by_the_swivel"
+  },
+  {
+    "name": "aim: the cast turns with the camera while the line is out",
+    "file": "crates/core/src/sim/mod.rs",
+    "find": "        if aiming || b.mode == Mode::Driving {",
+    "replace": "        if aiming || b.mode == Mode::Driving || true {",
+    "test": "the_cast_goes_where_the_camera_looks_turned_by_the_swivel"
+  },
+  {
+    "name": "aim: the app keeps the camera from the cast",
+    "file": "crates/core/src/app/play.rs",
+    "find": "mine.look = p.cam_yaw;",
+    "replace": "mine.look = 0;",
+    "test": "the_cast_follows_the_camera_and_the_camera_looks_down_to_fish"
+  },
+  {
+    "name": "aim: the fishing camera does not tilt",
+    "file": "crates/core/src/app/fishing/aim.rs",
+    "find": "(true, Some(l)) => fx::deg(l.camera_tilt_deg),",
+    "replace": "(true, Some(_)) => 0,",
+    "test": "the_cast_follows_the_camera_and_the_camera_looks_down_to_fish"
   }
 ]

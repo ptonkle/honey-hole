@@ -485,7 +485,8 @@ impl App {
                     - self
                         .controls
                         .as_ref()
-                        .map_or(deg(cam_look.pitch_deg), |c| deg(c.mouse.pitch_start_deg)),
+                        .map_or(deg(cam_look.pitch_deg), |c| deg(c.mouse.pitch_start_deg))
+                    + self.fishing_tilt(me),
             ),
         };
         // a wreck shakes its player's camera; the postgame turns slowly

@@ -97,6 +97,17 @@ pub fn drawn_depth_mm(float_mm: i32, float_pct: i32, drawn_length_mm: i32) -> i3
 }
 
 impl crate::app::App {
+    /// How much further down the boat camera looks with `me` in fishing
+    /// mode (`fishing.camera_tilt_deg`, SECOND-ORDER R7.75): steep enough
+    /// that the angler's back hides little of the water a cast reaches.
+    pub(in crate::app) fn fishing_tilt(&self, me: Option<&crate::sim::view::BoatView>) -> i32 {
+        let fishing = me.is_some_and(|b| b.mode == crate::sim::Mode::Fishing);
+        match (fishing, self.look.as_ref().and_then(|l| l.fishing.as_ref())) {
+            (true, Some(l)) => fx::deg(l.camera_tilt_deg),
+            _ => 0,
+        }
+    }
+
     /// Under `?debug=aimfish`, once the match has run a tick (after
     /// `debug_move`): a common fish resting 1.5 m down, 13 m out from this
     /// seat's bow 30 degrees to the right, and 1 m right of that line, for

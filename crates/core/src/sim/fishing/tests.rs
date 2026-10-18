@@ -260,7 +260,7 @@ fn the_cast_goes_further_the_longer_space_is_held() {
 fn the_bobber_lands_in_the_swivel_direction_and_the_lure_sinks_to_where_space_stops_it() {
     let mut m = fresh(1);
     // swivelled a quarter turn left: the cast goes north
-    m.boats[0].as_mut().unwrap().cast_yaw = crate::map::trig::QUARTER;
+    m.boats[0].as_mut().unwrap().swivel = crate::map::trig::QUARTER;
     cast_short(&mut m);
     let l = &m.fishing.lines[0];
     assert_eq!(l.stage, Stage::Flying);
@@ -1196,7 +1196,7 @@ fn the_view_counts_the_bite_from_its_tick() {
 fn the_cast_lands_where_the_aim_marker_shows() {
     let mut m = fresh(1);
     // swivelled an eighth of a turn right: the cast goes south-east
-    m.boats[0].as_mut().unwrap().cast_yaw = -crate::map::trig::TURN / 8;
+    m.boats[0].as_mut().unwrap().swivel = -crate::map::trig::TURN / 8;
     assert_eq!(m.fishing_view(0).aim, None, "no marker before Space");
     step0(&mut m, space_down());
     for _ in 1..24 {
@@ -1228,4 +1228,38 @@ fn the_cast_lands_where_the_aim_marker_shows() {
     until(&mut m, 60, |e| matches!(e, MatchEvent::BobberLanded { .. }));
     assert_eq!(m.fishing.lines[0].bobber, aim, "the bobber lands on the marker");
     assert_eq!(m.fishing_view(0).aim, None, "and the marker goes");
+}
+
+/// The cast goes where the seat's camera looks, turned by the swivel, at
+/// most 135 degrees (24 576) from the bow (SECOND-ORDER R7.74). The boat
+/// faces east; a quarter turn is 16 384, and the swivel turns 436 a tick.
+#[test]
+fn the_cast_goes_where_the_camera_looks_turned_by_the_swivel() {
+    use crate::map::trig::{HALF, QUARTER};
+    let looking = |mut i: SeatInput, look: i32| {
+        i.look = look;
+        i
+    };
+    let yaw = |m: &Match| m.boats[0].as_ref().unwrap().cast_yaw;
+    let mut m = fresh(1);
+    // the camera turned a quarter left, north, and D held 10 ticks
+    for _ in 0..10 {
+        step0(&mut m, looking(input(&[], &["right"], &[]), QUARTER));
+    }
+    assert_eq!(yaw(&m), QUARTER - 4360);
+    // looking almost straight back: no further than the limit
+    step0(&mut m, looking(SeatInput::default(), HALF - 1000));
+    assert_eq!(yaw(&m), 24_576);
+    // the swivel let go to the middle, the camera north: a tap casts 4 m
+    // north of the bow
+    m.boats[0].as_mut().unwrap().swivel = 0;
+    step0(&mut m, looking(tap("cast"), QUARTER));
+    let to = m.fishing.lines[0].to;
+    assert!(
+        (to.x - BOW_X).abs() <= 2 && (to.y - (AT.y + 4000)).abs() <= 2,
+        "{to:?}"
+    );
+    // with the line out the camera looks about and the cast stays put
+    step0(&mut m, looking(SeatInput::default(), 0));
+    assert_eq!(yaw(&m), QUARTER);
 }

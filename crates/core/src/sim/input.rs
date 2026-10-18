@@ -125,6 +125,10 @@ pub struct SeatInput {
     /// in that layer's own units, which the 2D layer defines; `None` while
     /// no layer takes the pointer
     pub pointer: Option<[i32; 2]>,
+    /// where the seat's camera looks, turned from the bow (65536 a turn,
+    /// left positive): in fishing mode a cast with the swivel centred goes
+    /// this way (SECOND-ORDER R7.74). The AI leaves it 0, the bow.
+    pub look: i32,
 }
 
 impl SeatInput {

@@ -180,6 +180,8 @@ impl Gather {
             released: self.released,
             mouse: self.mouse,
             pointer: self.pointer,
+            // the app fills in the camera (`app/play.rs`)
+            look: 0,
         };
         self.pressed = Actions::default();
         self.released = Actions::default();

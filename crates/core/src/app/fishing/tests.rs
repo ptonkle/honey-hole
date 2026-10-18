@@ -329,7 +329,7 @@ fn the_aim_marker_is_drawn_where_the_bobber_lands() {
     let mut a = fishing();
     let g = &mut a.play.as_mut().unwrap().game;
     // swivelled a sixteenth of a turn left
-    g.boats[0].as_mut().unwrap().cast_yaw = fx::TURN / 16;
+    g.boats[0].as_mut().unwrap().swivel = fx::TURN / 16;
     assert_eq!(a.my_fishing().unwrap().aim, None);
     a.act("key", "Space").unwrap();
     for _ in 0..30 {
@@ -457,4 +457,33 @@ fn a_fish_seen_from_the_boat_is_drawn_over_its_true_spot() {
     assert!((fish_px[0] - spot_px[0]).abs() <= 1, "{fish_px:?} {spot_px:?}");
     let gap = spot_px[1] - fish_px[1];
     assert!((5..=9).contains(&gap), "{gap} pixels");
+}
+
+/// The mouse turns the camera, and the cast with it (SECOND-ORDER R7.74);
+/// in fishing mode the camera looks 14 degrees further down (R7.75).
+#[test]
+fn the_cast_follows_the_camera_and_the_camera_looks_down_to_fish() {
+    let mut a = fishing();
+    // 120 px right at 25 degrees a 100 px: 30 degrees clockwise from above
+    a.act("mouse.move", "120,0").unwrap();
+    tick(&mut a);
+    let b = a.play.as_ref().unwrap().game.boat(0).unwrap().clone();
+    assert!((b.cast_yaw + deg(30)).abs() <= 2, "{}", b.cast_yaw);
+    let me = a
+        .play_view()
+        .unwrap()
+        .world
+        .boats
+        .into_iter()
+        .find(|v| v.seat == 0);
+    assert_eq!(a.fishing_tilt(me.as_ref()), deg(14));
+    a.play.as_mut().unwrap().game.boats[0].as_mut().unwrap().mode = Mode::Driving;
+    let me = a
+        .play_view()
+        .unwrap()
+        .world
+        .boats
+        .into_iter()
+        .find(|v| v.seat == 0);
+    assert_eq!(a.fishing_tilt(me.as_ref()), 0, "no tilt while driving");
 }
