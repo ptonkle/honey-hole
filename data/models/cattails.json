@@ -1,0 +1,114 @@
+{
+  "_note": "A clump of cattails and reed blades standing in shallow water: three stalks with brown heads and six blades, about 1.8 m above the water. Prop conventions: the pivot is the middle of the base at the origin; y 0 is the ground (the water's surface for things standing in water). Flat colours from one lake palette, muted so the water and the players' boats stand out in fog.",
+  "name": "Cattails",
+  "kind": "prop",
+  "unit": "mm",
+  "view": { "yaw": 25, "pitch": 10 },
+  "colours": {
+    "stalk": [116, 130, 76],
+    "blade": [98, 120, 70],
+    "blade_light": [132, 144, 86],
+    "head": [98, 66, 44]
+  },
+  "parts": [
+    { "name": "blades_a", "pivot": [0, 0, 0], "vertices": [
+      [201, -250, -96], [223, -250, 12], [345, 655, -108], [360, 655, -33],
+      [656, 1192, -132], [-132, -250, 43], [-127, -250, -67], [-262, 601, 20],
+      [-259, 601, -57], [-544, 1093, -33]
+    ] },
+    { "name": "blades_b", "pivot": [0, 0, 0], "vertices": [
+      [190, -250, 144], [105, -250, 214], [270, 663, 266], [211, 663, 315],
+      [441, 1205, 531], [-122, -250, -166], [-37, -250, -236], [-208, 713, -297],
+      [-148, 713, -346], [-391, 1295, -583]
+    ] },
+    { "name": "blades_c", "pivot": [0, 0, 0], "vertices": [
+      [-29, -250, 132], [-124, -250, 76], [-113, 632, 243], [-179, 632, 204],
+      [-296, 1148, 481], [100, -250, -129], [181, -250, -54], [205, 622, -217],
+      [261, 622, -165], [433, 1132, -406]
+    ] },
+    { "name": "cattail_a", "pivot": [-60, 0, 40], "vertices": [
+      [-45, -251, 25], [-86, -250, 49], [-86, -247, 1], [36, 1364, 122],
+      [-6, 1365, 146], [-6, 1368, 98], [81, 1322, 120], [29, 1321, 191],
+      [-54, 1326, 164], [-54, 1332, 76], [30, 1329, 49], [95, 1701, 143],
+      [47, 1700, 209], [-31, 1705, 184], [-31, 1710, 101], [47, 1708, 76],
+      [3, 1706, 143], [47, 1704, 143], [38, 1964, 158]
+    ] },
+    { "name": "cattail_b", "pivot": [180, 0, -120], "vertices": [
+      [178, -250, -95], [137, -243, -71], [136, -248, -119], [341, 1103, -232],
+      [300, 1110, -208], [299, 1106, -256], [383, 1058, -228], [333, 1071, -157],
+      [249, 1079, -184], [248, 1070, -272], [331, 1057, -299], [423, 1434, -266],
+      [376, 1446, -200], [298, 1453, -225], [297, 1445, -307], [375, 1433, -332],
+      [332, 1445, -266], [376, 1440, -266], [385, 1699, -292]
+    ] },
+    { "name": "cattail_c", "pivot": [-220, 0, -160], "vertices": [
+      [-157, -243, -140], [-199, -247, -116], [-199, -251, -164], [-320, 912, -234],
+      [-362, 908, -209], [-362, 904, -258], [-268, 879, -230], [-320, 877, -159],
+      [-403, 864, -186], [-402, 857, -274], [-319, 866, -301], [-326, 1253, -261],
+      [-375, 1252, -194], [-452, 1239, -220], [-451, 1233, -302], [-373, 1241, -327],
+      [-417, 1241, -261], [-373, 1247, -261], [-431, 1500, -281]
+    ] }
+  ],
+  "faces": [
+    { "colour": "blade_light", "v": [0, 1, 3, 2] },
+    { "colour": "blade_light", "v": [2, 3, 4] },
+    { "colour": "blade", "v": [10, 11, 13, 12] },
+    { "colour": "blade", "v": [12, 13, 14] },
+    { "colour": "blade_light", "v": [20, 21, 23, 22] },
+    { "colour": "blade_light", "v": [22, 23, 24] },
+    { "colour": "blade", "v": [5, 6, 8, 7] },
+    { "colour": "blade", "v": [7, 8, 9] },
+    { "colour": "blade_light", "v": [15, 16, 18, 17] },
+    { "colour": "blade_light", "v": [17, 18, 19] },
+    { "colour": "blade", "v": [25, 26, 28, 27] },
+    { "colour": "blade", "v": [27, 28, 29] },
+    { "colour": "stalk", "v": [30, 31, 34, 33] },
+    { "colour": "stalk", "v": [31, 32, 35, 34] },
+    { "colour": "stalk", "v": [32, 30, 33, 35] },
+    { "colour": "head", "v": [36, 37, 42, 41] },
+    { "colour": "head", "v": [37, 38, 43, 42] },
+    { "colour": "head", "v": [38, 39, 44, 43] },
+    { "colour": "head", "v": [39, 40, 45, 44] },
+    { "colour": "head", "v": [40, 36, 41, 45] },
+    { "colour": "head", "v": [36, 37, 38, 39, 40] },
+    { "colour": "head", "v": [41, 42, 43, 44, 45] },
+    { "colour": "stalk", "v": [46, 47, 48] },
+    { "colour": "stalk", "v": [49, 50, 53, 52] },
+    { "colour": "stalk", "v": [50, 51, 54, 53] },
+    { "colour": "stalk", "v": [51, 49, 52, 54] },
+    { "colour": "head", "v": [55, 56, 61, 60] },
+    { "colour": "head", "v": [56, 57, 62, 61] },
+    { "colour": "head", "v": [57, 58, 63, 62] },
+    { "colour": "head", "v": [58, 59, 64, 63] },
+    { "colour": "head", "v": [59, 55, 60, 64] },
+    { "colour": "head", "v": [55, 56, 57, 58, 59] },
+    { "colour": "head", "v": [60, 61, 62, 63, 64] },
+    { "colour": "stalk", "v": [65, 66, 67] },
+    { "colour": "stalk", "v": [68, 69, 72, 71] },
+    { "colour": "stalk", "v": [69, 70, 73, 72] },
+    { "colour": "stalk", "v": [70, 68, 71, 73] },
+    { "colour": "head", "v": [74, 75, 80, 79] },
+    { "colour": "head", "v": [75, 76, 81, 80] },
+    { "colour": "head", "v": [76, 77, 82, 81] },
+    { "colour": "head", "v": [77, 78, 83, 82] },
+    { "colour": "head", "v": [78, 74, 79, 83] },
+    { "colour": "head", "v": [74, 75, 76, 77, 78] },
+    { "colour": "head", "v": [79, 80, 81, 82, 83] },
+    { "colour": "stalk", "v": [84, 85, 86] }
+  ],
+  "animations": {
+    "sway": { "ms": 2100, "ease": "linear", "keys": [
+      {"at": 0, "parts": {"blades_a": {"turn": [0, 0, 3]}, "blades_b": {"turn": [4, 0, -1]}, "blades_c": {"turn": [-3, 0, -2]}, "cattail_a": {"turn": [3, 0, 2]}, "cattail_b": {"turn": [2, 0, -3]}, "cattail_c": {"turn": [-5, 0, 1]}}},
+      {"at": 175, "parts": {"blades_a": {"turn": [2, 0, 3]}, "blades_b": {"turn": [2, 0, -3]}, "blades_c": {"turn": [-4, 0, 0]}, "cattail_a": {"turn": [5, 0, 1]}, "cattail_b": {"turn": [-1, 0, -3]}, "cattail_c": {"turn": [-3, 0, 2]}}},
+      {"at": 350, "parts": {"blades_a": {"turn": [3, 0, 2]}, "blades_b": {"turn": [0, 0, -3]}, "blades_c": {"turn": [-4, 0, 1]}, "cattail_a": {"turn": [5, 0, 0]}, "cattail_b": {"turn": [-3, 0, -2]}, "cattail_c": {"turn": [-1, 0, 3]}}},
+      {"at": 525, "parts": {"blades_a": {"turn": [4, 0, 0]}, "blades_b": {"turn": [-2, 0, -3]}, "blades_c": {"turn": [-2, 0, 3]}, "cattail_a": {"turn": [4, 0, -2]}, "cattail_b": {"turn": [-5, 0, -1]}, "cattail_c": {"turn": [2, 0, 3]}}},
+      {"at": 700, "parts": {"blades_a": {"turn": [3, 0, -1]}, "blades_b": {"turn": [-3, 0, -2]}, "blades_c": {"turn": [0, 0, 3]}, "cattail_a": {"turn": [2, 0, -3]}, "cattail_b": {"turn": [-5, 0, 1]}, "cattail_c": {"turn": [4, 0, 2]}}},
+      {"at": 875, "parts": {"blades_a": {"turn": [2, 0, -3]}, "blades_b": {"turn": [-4, 0, 0]}, "blades_c": {"turn": [2, 0, 3]}, "cattail_a": {"turn": [-1, 0, -3]}, "cattail_b": {"turn": [-4, 0, 2]}, "cattail_c": {"turn": [5, 0, 1]}}},
+      {"at": 1050, "parts": {"blades_a": {"turn": [0, 0, -3]}, "blades_b": {"turn": [-4, 0, 1]}, "blades_c": {"turn": [3, 0, 2]}, "cattail_a": {"turn": [-3, 0, -2]}, "cattail_b": {"turn": [-2, 0, 3]}, "cattail_c": {"turn": [5, 0, -1]}}},
+      {"at": 1225, "parts": {"blades_a": {"turn": [-2, 0, -3]}, "blades_b": {"turn": [-2, 0, 3]}, "blades_c": {"turn": [4, 0, 0]}, "cattail_a": {"turn": [-5, 0, -1]}, "cattail_b": {"turn": [1, 0, 3]}, "cattail_c": {"turn": [3, 0, -2]}}},
+      {"at": 1400, "parts": {"blades_a": {"turn": [-3, 0, -2]}, "blades_b": {"turn": [0, 0, 3]}, "blades_c": {"turn": [4, 0, -1]}, "cattail_a": {"turn": [-5, 0, 0]}, "cattail_b": {"turn": [3, 0, 2]}, "cattail_c": {"turn": [1, 0, -3]}}},
+      {"at": 1575, "parts": {"blades_a": {"turn": [-4, 0, 0]}, "blades_b": {"turn": [2, 0, 3]}, "blades_c": {"turn": [2, 0, -3]}, "cattail_a": {"turn": [-4, 0, 2]}, "cattail_b": {"turn": [5, 0, 1]}, "cattail_c": {"turn": [-2, 0, -3]}}},
+      {"at": 1750, "parts": {"blades_a": {"turn": [-3, 0, 2]}, "blades_b": {"turn": [3, 0, 2]}, "blades_c": {"turn": [0, 0, -3]}, "cattail_a": {"turn": [-2, 0, 3]}, "cattail_b": {"turn": [5, 0, -1]}, "cattail_c": {"turn": [-4, 0, -2]}}},
+      {"at": 1925, "parts": {"blades_a": {"turn": [-2, 0, 3]}, "blades_b": {"turn": [4, 0, 0]}, "blades_c": {"turn": [-2, 0, -3]}, "cattail_a": {"turn": [1, 0, 3]}, "cattail_b": {"turn": [4, 0, -2]}, "cattail_c": {"turn": [-5, 0, -1]}}}
+    ] }
+  }
+}

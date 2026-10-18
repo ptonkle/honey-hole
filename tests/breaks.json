@@ -175,6 +175,27 @@
     "test": "a_bad_version_date_or_empty_entry_is_refused_by_name"
   },
   {
+    "name": "a lake prop file of another kind is caught",
+    "file": "data/models/pine.json",
+    "find": "\"kind\": \"prop\",",
+    "replace": "\"kind\": \"item\",",
+    "test": "every_lake_prop_is_a_prop_the_core_accepts"
+  },
+  {
+    "name": "a lake tree without its sway is caught",
+    "file": "data/models/birch.json",
+    "find": "\"sway\": { \"ms\": 4200",
+    "replace": "\"bob\": { \"ms\": 4200",
+    "test": "the_plants_sway_and_the_lily_pads_bob"
+  },
+  {
+    "name": "a lake prop hanging far below its origin is caught",
+    "file": "data/models/dock.json",
+    "find": "[550, -1000, 160]",
+    "replace": "[550, -1400, 160]",
+    "test": "every_prop_stands_on_its_origin"
+  },
+  {
     "name": "a map comes from its seed",
     "file": "crates/core/src/map/generate.rs",
     "find": "    let s = seed as u64;",
