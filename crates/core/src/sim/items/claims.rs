@@ -73,7 +73,7 @@ pub fn use_item(s: &SeatItems, wrecked: bool) -> Result<Item, Refusal> {
 /// has no such water.
 pub fn teleport_target(map: &Map, want: P, clear_mm: i32) -> Option<P> {
     let open = |i: usize| map.cells[i].water() && map.shore[i] >= clear_mm;
-    if map.index(want).is_some_and(&open) {
+    if map.index(want).is_some_and(open) {
         return Some(want);
     }
     (0..map.cells.len())

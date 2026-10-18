@@ -365,7 +365,7 @@ impl App {
         let Some(l) = self.items_look() else {
             return out;
         };
-        let ms = (self.clock.max(0) / 1000) as i64;
+        let ms = self.clock.max(0) / 1000;
         for b in view.world.boats.iter().filter(|b| !b.wrecked) {
             let at = P::new(b.x_mm, b.y_mm);
             if b.nitrous {
