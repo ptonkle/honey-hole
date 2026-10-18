@@ -19,6 +19,7 @@ pub mod fishing;
 pub mod gallery;
 pub mod lake;
 mod menus;
+pub mod minigames;
 mod notes;
 pub mod play;
 pub mod sounds;
@@ -49,6 +50,8 @@ pub enum Screen {
     Sounds,
     /// a map drawn in 3D with a camera tour, for debugging (`app/lake.rs`)
     Lake,
+    /// each item's minigame on its own, for trying them (`app/minigames.rs`)
+    Minigames,
 }
 
 /// How large the menus' text is drawn. The page scales its text by it.
@@ -133,6 +136,9 @@ pub struct Ui {
     pub capture: bool,
     /// the page asks for the view model each frame (a match's clock moves)
     pub live: bool,
+    /// the page hides its cursor over the 2D layer, which draws its own
+    /// (the camera minigame's viewfinder)
+    pub hide_cursor: bool,
     pub panels: Vec<Panel>,
 }
 
@@ -176,6 +182,8 @@ pub struct App {
     /// the match's flow: the HUD, popups, bursts, the end and the
     /// postgame (`flow/`)
     pub flow: crate::flow::Flow,
+    /// the Minigames screen's minigame and results
+    pub minigames: minigames::MinigamesScreen,
     /// the page's `?debug=fishing`: a fish by every bobber (`app/fishing.rs`)
     pub debug_fishing: bool,
 }
@@ -209,6 +217,7 @@ impl App {
             preview: lake::Preview::default(),
             world: None,
             flow: crate::flow::Flow::default(),
+            minigames: minigames::MinigamesScreen::default(),
             debug_fishing: false,
         })
     }
@@ -248,6 +257,7 @@ impl App {
             | Screen::Lobby
             | Screen::Sounds
             | Screen::Lake => self.back(),
+            Screen::Minigames => self.minigames_escape(),
             Screen::Title => {}
         }
     }
@@ -264,6 +274,7 @@ impl App {
                 | Screen::Lobby
                 | Screen::Sounds
                 | Screen::Lake
+                | Screen::Minigames
         )
     }
 
@@ -305,6 +316,7 @@ impl App {
             "menu.gallery" => self.go(Screen::Gallery),
             "menu.sounds" => self.go(Screen::Sounds),
             "menu.lake" => self.open_lake(),
+            "menu.minigames" => self.go(Screen::Minigames),
             "scene.unavailable" => self.scene_unavailable = true,
             "version" if self.version_opens_notes() => self.go(Screen::Notes),
             "version" => {}
@@ -324,6 +336,11 @@ impl App {
             _ if name.starts_with("lobby.") => self.lobby_act(name, value)?,
             _ if name.starts_with("settings.") => self.settings_act(name, value)?,
             _ if name.starts_with("gallery.") => self.gallery_act(name, value)?,
+            _ if name.starts_with("minigames.")
+                || (name.starts_with("pointer.") && self.screen == Screen::Minigames) =>
+            {
+                self.minigames_act(name, value)?
+            }
             _ if name.starts_with("fishboy.") || name.starts_with("pointer.") => {
                 self.fishboy_act(name, value)?
             }
@@ -340,6 +357,7 @@ impl App {
         self.run_ticks(self.clock);
         self.fishboy_advance();
         self.flow_advance();
+        self.minigames_advance();
     }
 
     /// The canvas's size in CSS pixels and the device's pixel ratio in
@@ -380,6 +398,7 @@ impl App {
             Screen::Gallery => self.gallery_panels(),
             Screen::Sounds => self.sounds_panels(),
             Screen::Lake => self.lake_panels(),
+            Screen::Minigames => self.minigames_panels(),
         };
         Ui {
             screen: self.screen,
@@ -390,16 +409,19 @@ impl App {
             volume: self.settings.volume,
             scene: matches!(
                 self.screen,
-                Screen::Gallery | Screen::Play | Screen::Postgame | Screen::Lake
+                Screen::Gallery | Screen::Play | Screen::Postgame | Screen::Lake | Screen::Minigames
             ),
             fishboy: self.fishboy_shown(),
-            pointer: self.fishboy_shown() != "",
+            pointer: self.fishboy_shown() != ""
+                || (self.screen == Screen::Minigames && self.minigames.game.is_some()),
             capture: self.screen == Screen::Play
                 && self
                     .play
                     .as_ref()
                     .is_some_and(|p| !p.menu_open() && !p.game.ended),
-            live: matches!(self.screen, Screen::Play | Screen::Postgame) && self.play.is_some(),
+            live: (matches!(self.screen, Screen::Play | Screen::Postgame) && self.play.is_some())
+                || self.screen == Screen::Minigames,
+            hide_cursor: self.minigames_hide_cursor(),
             panels,
         }
     }

@@ -35,6 +35,8 @@ pub struct Tuning {
     /// the match's flow: the countdown, the popups, the end
     /// (`crates/core/src/flow/`)
     pub flow: FlowTuning,
+    /// the item minigames (`minigame/tuning.rs`)
+    pub minigames: crate::minigame::tuning::MinigameTuning,
     /// the sound engine's section, read and checked by `sound::Bank::parse`
     #[serde(default)]
     pub audio: serde_json::Value,
@@ -261,6 +263,7 @@ impl Tuning {
                 r.ping_sweep_ms <= r.ping_cooldown_ms,
                 "radar.ping_sweep_ms must end before radar.ping_cooldown_ms.",
             );
+        self.minigames.check(&mut c);
         c.done()
     }
 }
@@ -328,6 +331,7 @@ pub mod tests {
                 "end_hold_ms": 3000,
                 "hints_ms": 60000
             },
+            "minigames": crate::minigame::tuning::tests::sample_json(),
             "fish": fish_sample(),
             "fishing": fishing_sample()
         })

@@ -18,6 +18,7 @@ in [browser], or `scripts/tags.py guard` fails.
 """
 
 import json
+import math
 import os
 import pathlib
 
@@ -44,8 +45,8 @@ def step_boot(page, check):
     check(page.inner_text(".panel.title h2") == STRINGS["title"], "the Title shows the game's name")
     menu = page.locator(".panel.menu .button").all_inner_texts()
     check(
-        menu == [STRINGS["menu.play"], STRINGS["menu.settings"], STRINGS["menu.notes"], STRINGS["menu.gallery"], STRINGS["menu.lake"]],
-        f"the Title's menu is Play, Settings, What's New, Gallery, Lake preview {menu}",
+        menu == [STRINGS["menu.play"], STRINGS["menu.settings"], STRINGS["menu.notes"], STRINGS["menu.gallery"], STRINGS["menu.lake"], STRINGS["menu.minigames"]],
+        f"the Title's menu is Play, Settings, What's New, Gallery, Lake preview, Minigames {menu}",
     )
     check(page.inner_text("#version") == "v0.1.0", "the version shows in the corner")
     check(page.inner_text("#message") == "", "no error message is shown")
@@ -301,6 +302,43 @@ def step_sounds(page, check):
     check(page.get_attribute("body", "data-audio-voices") == "", "leaving the Sounds screen stops its motor")
 
 
+def step_minigames(page, check):
+    # the Minigames screen: Power Reel played through by circling the
+    # pointer clockwise round the reel, then Esc quitting another
+    page.click(by_id("menu.minigames"))
+    check(screen(page, "minigames"), "the Minigames screen opens from the Title")
+    names = page.locator(".panel.minigames .button").all_inner_texts()
+    keys = ["cloak", "power_reel", "nitrous", "teleporter", "camera", "enhanced_radar"]
+    want = [STRINGS[f"minigames.play.{k}"] for k in keys]
+    check(names[:6] == want, f"it offers each item's minigame {names}")
+    page.click(by_id("minigames.play.power_reel"))
+    check(ui2d_has(page, "mg=power_reel", "phase=banner"), "Power Reel opens on its instruction banner")
+    check(ui2d_has(page, "phase=play"), "play follows the banner")
+    # the reel's middle is (800, 470) of the 1600 x 900 canvas
+    x, y, w, h = (int(v) for v in ui2d_value(page, "rect").split(","))
+    ratio = page.evaluate("() => window.devicePixelRatio")
+
+    def at(u, v):
+        return ((x + u * w / 1600) / ratio, (y + v * h / 900) / ratio)
+
+    for k in range(6 * 12 + 1):
+        a = k * 2 * math.pi / 12
+        page.mouse.move(*at(800 + 160 * math.cos(a), 470 + 160 * math.sin(a)))
+    page.wait_for_selector(by_id("minigames.play.power_reel"), timeout=5000)
+    rows = page.locator(".panel.minigames tr").all_inner_texts()
+    done = STRINGS["minigames.done"].split("{")[0]
+    reel = STRINGS["minigames.play.power_reel"]
+    check(any(reel in r and done in r for r in rows), f"five clockwise turns finish it {rows}")
+    page.click(by_id("minigames.play.nitrous"))
+    check(ui2d_has(page, "mg=nitrous"), "Nitrous starts")
+    page.keyboard.press("Escape")
+    page.wait_for_selector(by_id("minigames.play.nitrous"), timeout=5000)
+    check(ui2d_has(page, "mg=none"), "Esc quits the minigame, back to the list")
+    page.keyboard.press("Escape")
+    check(screen(page, "title"), "Escape again goes to the Title")
+    check(page.inner_text("#message") == "", "no refusal on the Minigames screen")
+
+
 # The steps in order, by name; `boot` always runs.
 def fishing_stage(page, want, timeout=30000):
     """Waits until the fishing HUD (body[data-ui2d]) shows the stage `want`."""
@@ -403,6 +441,7 @@ STEPS = [
     ("sounds", step_sounds),
     ("lake", step_lake),
     ("fishboy", step_fishboy),
+    ("minigames", step_minigames),
     ("fishing", step_fishing),
     ("match_flow", step_match_flow),
 ]

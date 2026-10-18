@@ -163,6 +163,18 @@ The menu over Play that Esc opens when there is nothing else to cancel, and the 
 
 Not: options
 
+### Minigame
+
+The short game an item plays before it takes effect, opened by a one-line instruction. It cannot be lost: playing it badly only takes longer. Esc quits it, and the item is wasted.
+
+Not: mini-game, microgame, puzzle, challenge
+
+### Minigames
+
+The debug screen, opened from the Title, that plays each item's minigame on its own and shows how long the last try took.
+
+Not: minigame menu, arcade
+
 ### Minor version
 
 A version whose last number is not zero. It holds fixes only, and What's New lists it when the reader asks.

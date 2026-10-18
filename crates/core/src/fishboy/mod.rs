@@ -488,6 +488,9 @@ impl App {
             built.list.status = status.join(" ");
             return built;
         }
+        if self.screen == Screen::Minigames {
+            return self.minigames_ui2d(theme);
+        }
         if self.screen != Screen::Play {
             return built;
         }
