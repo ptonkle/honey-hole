@@ -349,6 +349,34 @@ fn groups_point_inside_the_static_buffer_at_a_pose_and_its_motion() {
 }
 
 #[test]
+fn a_model_past_the_far_plane_or_behind_the_camera_is_not_posed() {
+    let mut l = lake();
+    l.look.fog_end_pct = 100;
+    let r = rock();
+    // the camera at the origin looking east; fog at 20 m puts the far plane
+    // at 22.5 m. The rock's rest bounds are 1000 x 600 mm round (0, 300, 0)
+    // mm: a ball of 583 mm, doubled for a swing to 1166 mm.
+    let cam = cam_at(V3::ZERO, v3(ONE, 0, 0));
+    let posed = |x_m: i32| {
+        let rock = Instance {
+            model: &r,
+            place: Affine::translate(v3(int(x_m), 0, 0)),
+            anim: None,
+            ms: 0,
+            colour: [0; 3],
+        };
+        !frame(&l, cam, ONE, Some(20_000), 0, &[rock]).tris.is_empty()
+    };
+    // 23 m off: its ball reaches 21.8 m, inside the far plane
+    assert!(posed(23), "a rock 23 m ahead is posed");
+    // 24 m off: its nearest is 22.8 m, past it
+    assert!(!posed(24), "a rock 24 m ahead is not");
+    // 1 m behind the eye its ball still reaches in front; 2 m behind it does not
+    assert!(posed(-1), "a rock 1 m behind is posed");
+    assert!(!posed(-2), "a rock 2 m behind is not");
+}
+
+#[test]
 fn props_past_the_fog_or_behind_the_camera_are_left_out() {
     let mut l = lake();
     l.look.fog_end_pct = 100;

@@ -498,3 +498,47 @@ fn the_ai_hunts_on_the_hook_popup_not_the_hook_and_knows_its_delay() {
     crew.inputs(&m);
     assert!(hunting(&crew), "{:?}", crew.brains[0].goal);
 }
+
+/// The worst tick of a seeded 8-minute match of four Hard AI players on
+/// Burt Lake, layout `layout`: (A* searches in it, their steps), and the
+/// match's searches in all.
+fn worst_tick_of_four_hard_ais(seed: u64, layout: u32) -> ((u64, u64), u64) {
+    let t = sample();
+    let r = roster();
+    let mut s = Setup::new(&t);
+    s.seed = seed;
+    s.fish = r.0.iter().map(|k| (k.id.clone(), k.count)).collect();
+    for k in 0..4 {
+        s = s.with(k, Occupant::Ai(Difficulty::Hard), &format!("P{k}"));
+    }
+    let mut m = Match::new(generate(Setting::MichiganLake, layout), &t, s).unwrap();
+    m.stock(&r).unwrap();
+    let mut crew = Crew::new(&m);
+    let mut worst = (0, 0);
+    let mut was = crew.nav.work();
+    while !m.ended {
+        let i = crew.inputs(&m);
+        let now = crew.nav.work();
+        worst = (worst.0.max(now.0 - was.0), worst.1.max(now.1 - was.1));
+        was = now;
+        m.step(&i);
+    }
+    (worst, was.0)
+}
+
+#[test]
+fn four_hard_ais_run_at_most_one_path_search_a_tick() {
+    // A cost guard, counted in steps rather than timed, so a busy machine
+    // cannot fail it. The AI's slow ticks were path searches, several
+    // players starting one in the same tick (all four leave the spawn on
+    // the first). One search on this 96-cell grid takes at most
+    // 96 x 96 = 9216 cells off the open list, plus its 2 m line samples;
+    // the steps allowed are about 3 times the worst measured (SECOND-ORDER
+    // R6.4).
+    for (seed, layout) in [(9, 3), (5, 0)] {
+        let ((searches, steps), all) = worst_tick_of_four_hard_ais(seed, layout);
+        assert!(all > 10, "seed {seed}: only {all} searches in a match");
+        assert_eq!(searches, 1, "seed {seed}: {searches} path searches in one tick");
+        assert!(steps <= 10_000, "seed {seed}: a tick took {steps} search steps");
+    }
+}

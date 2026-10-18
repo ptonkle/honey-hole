@@ -64,6 +64,7 @@ Every `SECOND-ORDER.md` row with status *person*, by number, with what the perso
 - R5.40: items in AI playtests (camera strongest, Nitrous, Teleporter and Cloaking Tech worth about nothing, the winner's margin wider); whether to let the boat keep its throttle during a minigame, shorten Nitrous's, or lower the camera's weight (`notes/playtests.md`, "Results with items"; PLAN.md V54).
 - R4.26: the items' look, words and numbers (`notes/shots/items/`; try them with `?debug=items,item.<key>`).
 - R2.43: the boat camera's distance, height, pitch and field of view (`lake.camera` in `data/look.json`), and the lake's look in `notes/shots/world/`; the fog distance can be tried live in the Lake preview.
+- R6.12: MSAA stays on; an edge-smoothing setting would help weaker machines (the frame-time measurements are in `MEASUREMENTS.md`, "A full match in the browser"; PLAN.md V-perf).
 
 ## Mistakes so far
 
@@ -108,6 +109,8 @@ The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the 
 2026-10-18, items (the buoy's clock, warning, beats and fair point; pickups; Shift and the six minigames; the six effects; claim functions; HUD, icons, popups, world effects; `?debug=items`), merged with main through dc644e7 (online play) (branch `items`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 405 checks, with the new `items` step); `count-tests.sh`: 431 passed, 0 failed, 0 ignored; `scripts/break_tests.py items:`: 29 of 29 caught.
 
 2026-10-18, the AI uses items (the buoy, each item's moment, a hand that plays the six minigames through the pointer), R4.11's fix (the reel holds while a minigame plays) and the playtests with items, merged with main's online items (branch `worktree-agent-abdb694ecf26104d8`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, with the new `ai_items` step); `count-tests.sh`: 455 passed, 0 failed, 0 ignored; `break_tests.py` caught all 11 new breaks.
+
+2026-10-18, the performance pass (one AI path search a tick, models out of view not posed, the frame's lists read in place, unchanged view model and 2D list not redrawn, the sky drawn last, no stray 404s), merged with main (branch `worktree-agent-a9dc849f7fd273052`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, now failing on any 404); `ONLINE CHECK PASSED`; `count-tests.sh`: 467 passed, 0 failed, 0 ignored; `scripts/break_tests.py R6.4 R6.5`: 2 of 2 breaks caught.
 
 ## The next action
 

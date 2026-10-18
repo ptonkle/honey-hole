@@ -162,6 +162,11 @@ fn every_view_draws_the_world_with_its_boat_and_an_unknown_one_is_refused() {
     let lake = a.world.as_ref().unwrap();
     let statics = [lake.terrain[0], lake.terrain[1], lake.water[0], lake.water[1]];
     for v in View::ALL {
+        // the overview's camera is 700 m up, past the fog's far plane, so
+        // with the fog on its boat is out of the picture and not posed
+        // (SECOND-ORDER R6.6)
+        let fog = if v == View::Above { "off" } else { "on" };
+        a.act("lake.fog_on", fog).unwrap();
         a.act("lake.view", v.key()).unwrap();
         a.advance(a.clock + 1_000_000);
         let f = a.frame();

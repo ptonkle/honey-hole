@@ -24,6 +24,10 @@ const make = (tag, cls, text) => {
 let game = null;
 let ui = null;
 let panelsText = "";
+// the module's memory, where the shim keeps the frame's big lists
+let memory = null;
+// the view model's text as last drawn: an unchanged one is not drawn again
+let uiText = "";
 
 // ---- talking to the core ----
 
@@ -330,6 +334,8 @@ function draw(result) {
     return;
   }
   ui = result.ok;
+  // drawn from an action's answer: the next frame's text is drawn afresh
+  uiText = "";
   document.title = ui.title;
   document.body.dataset.screen = ui.screen;
   document.body.dataset.fishboy = ui.fishboy;
@@ -440,6 +446,19 @@ function resize() {
 // The static world the renderer holds, by the core's stamp.
 let worldStamp = 0;
 
+// One of the shim's two buffers, read in place in the module's memory
+// (crates/shim/src/lib.rs). A view is made after every other call for the
+// same draw, since a call that allocates can move the memory.
+function floats(i) {
+  return new Float32Array(memory.buffer, game.buf_at(i), game.buf_len(i));
+}
+
+// A data attribute, written only when it changes.
+function mark(name, value) {
+  const text = String(value);
+  if (document.body.dataset[name] !== text) document.body.dataset[name] = text;
+}
+
 // Each frame: the clock to the core, and, when the core says the screen
 // has a scene, its draw data to the renderer; the static world goes up
 // again only when the core's stamp for it changes.
@@ -452,33 +471,55 @@ function frame(now) {
       renderer.world(game.world_vertices());
       worldStamp = stamp;
     }
-    renderer.frame(game.view(), game.vertices(), game.vertex_count(), game.statics(), game.groups(), game.instances(),
-      game.ghost_view(), game.ghost_vertices(), game.ghost_vertex_count());
+    const view = game.view();
+    const count = game.vertex_count();
+    const statics = game.statics();
+    const groups = game.groups();
+    const ghostView = game.ghost_view();
+    const ghost = game.ghost_vertices();
+    const ghostCount = game.ghost_vertex_count();
+    game.load_frame();
+    renderer.frame(view, floats(0), count, statics, groups, floats(1), ghostView, ghost, ghostCount);
     // the picture-in-picture, when the core gives one
     const inset = game.inset_rect();
     if (inset.length) {
-      renderer.inset(inset, game.inset_border(), game.inset_view(), game.inset_vertices(), game.inset_vertex_count(),
-        game.inset_statics(), game.inset_groups(), game.inset_instances());
+      const border = game.inset_border();
+      const insetView = game.inset_view();
+      const insetCount = game.inset_vertex_count();
+      const insetStatics = game.inset_statics();
+      const insetGroups = game.inset_groups();
+      game.load_inset();
+      renderer.inset(inset, border, insetView, floats(0), insetCount, insetStatics, insetGroups, floats(1));
     }
     // the 2D layer: its models and the Fish-Boy through the renderer,
     // then the draw list on the overlay
     game.build_ui2d();
     const passes = game.pass_count();
     for (let k = 0; k < passes; k++) {
-      renderer.pass(passLayout, game.pass_values(k), game.pass_vertices(k), game.pass_vertex_count(k));
+      const values = game.pass_values(k);
+      const passCount = game.pass_vertex_count(k);
+      game.load_pass(k);
+      renderer.pass(passLayout, values, floats(0), passCount);
     }
     const list = JSON.parse(game.ui2d_strings());
     overlay.draw(game.ui2d_values(), list.strings);
-    document.body.dataset.ui2d = list.status;
-    // a match's clock moves: its view model is asked for each frame
-    if (ui.live) draw(JSON.parse(game.ui()));
-    if (ui.panels.length && !ui.backdrop) document.body.dataset.drawn = ui.panels[0].heading;
+    mark("ui2d", list.status);
+    // a match's clock moves: its view model is asked for each frame, and
+    // drawn when it changed
+    if (ui.live) {
+      const text = game.ui();
+      if (text !== uiText) {
+        draw(JSON.parse(text));
+        uiText = text;
+      }
+    }
+    if (ui.panels.length && !ui.backdrop) mark("drawn", ui.panels[0].heading);
   }
   requestAnimationFrame(frame);
 }
 
 async function main() {
-  await init();
+  memory = (await init()).memory;
   const strings = await (await fetch("data/strings.json")).text();
   const notes = await (await fetch("data/patch-notes.json")).text();
   const models = await (await fetch("data/models.json")).text();

@@ -4,7 +4,7 @@
        magazine look (DECISIONS.md, 2026-10-18): no font file, no logo
        copied. Chunky slab-serif capitals built from plain shapes, paper
        letters with a double offset (burnt orange, then teal) outlined in
-       ink, over the 70s triple stripe, with a worn-print speckle. The
+       ink, over the 70s triple stripe. The
        colours are the menus' (web/style.css :root). -->
   <defs>
     <!-- the worn print: small specks knocked out of the ink -->
@@ -75,7 +75,7 @@
     <rect x="-10" y="156" width="1400" height="18" fill="#2c7f7a"/>
     <rect x="1386" y="106" width="164" height="70" fill="url(#dots)" mask="url(#tail)"/>
   </g>
-  <g stroke-linejoin="round" filter="url(#worn)">
+  <g stroke-linejoin="round">
     <!-- the second offset: teal -->
     <g transform="translate(18 16)">
       <use href="#word" fill="none" stroke="#2b2118" stroke-width="9"/>

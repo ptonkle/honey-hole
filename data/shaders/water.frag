@@ -60,7 +60,9 @@ void main() {
     vec3 under = mix(uUnderside, uZenith, window);
     under += uSheen * caustic(vWorld.xz) * uCaustic.w;
     float alpha = mix(uWindow.w, uWindow.z, window);
-    outColour = vec4(mix(under, murk(-view), f), mix(alpha, 1.0, f));
+    // the murk only where the fog has begun: mixing in none of it is the same
+    vec3 far = f > 0.0 ? murk(-view) : under;
+    outColour = vec4(mix(under, far, f), mix(alpha, 1.0, f));
     return;
   }
   vec3 n = normalize(cross(dFdx(vWorld), dFdy(vWorld)));
@@ -71,6 +73,6 @@ void main() {
   lit += uSpec.rgb * pow(max(dot(n, normalize(view + uSunDir)), 0.0), uSpec.w);
   float graze = pow(1.0 - abs(view.y), uWater.z);
   float alpha = mix(uWater.x, uWater.y, graze);
-  vec3 sky = murk(-view);
+  vec3 sky = f > 0.0 ? murk(-view) : lit;
   outColour = vec4(mix(lit, sky, f), mix(alpha, 1.0, f));
 }

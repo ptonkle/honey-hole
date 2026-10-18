@@ -2833,5 +2833,19 @@
     "find": "if self.reel_held.get(seat).copied().unwrap_or(false) {",
     "replace": "if false {",
     "test": "a_minigame_holds_the_reel_still_until_it_ends"
+  },
+  {
+    "name": "the AI crew runs any number of path searches a tick (R6.4)",
+    "file": "crates/core/src/ai/nav.rs",
+    "find": "if self.left.get() == 0 && !clear_line(map, from, to, self.clear_mm) {",
+    "replace": "if false {",
+    "test": "four_hard_ais_run_at_most_one_path_search_a_tick"
+  },
+  {
+    "name": "a model out of the camera's picture is posed (R6.5)",
+    "file": "crates/core/src/scene/mod.rs",
+    "find": "!off.longer_than(cam.far.saturating_add(r)) && off.dot64(cam.fwd) >= -(r as i64) * ONE as i64",
+    "replace": "true",
+    "test": "a_model_past_the_far_plane_or_behind_the_camera_is_not_posed"
   }
 ]

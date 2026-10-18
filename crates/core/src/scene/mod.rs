@@ -332,14 +332,30 @@ pub fn frame(
     }
     debug_assert_eq!(groups.len() % GROUP_VALUES, 0);
 
+    let seen: Vec<Instance> = instances.iter().filter(|i| in_view(i, &cam)).copied().collect();
     Frame {
         view,
-        tris: pose(instances),
+        tris: pose(&seen),
         statics: [lake.terrain[0], lake.terrain[1], lake.water[0], lake.water[1]],
         groups,
         instances: inst,
         ..Frame::default()
     }
+}
+
+/// Whether any of an instance can be in `cam`'s picture: its ball (twice
+/// the rest pose's, for a swing of an animation) reaches nearer than the
+/// far plane, where the drawing is cut off, and in front of the eye. One
+/// that is not is left out before it is posed, which draws the same
+/// picture for less work (a rival in the fog, the boats over an
+/// underwater camera).
+pub fn in_view(i: &Instance, cam: &Camera) -> bool {
+    let (centre, radius) = i.model.ball();
+    let p = &i.place;
+    let grow = p.c0.len().max(p.c1.len()).max(p.c2.len()) as i64;
+    let r = (radius as i64 * 2 * grow / ONE as i64).min(i32::MAX as i64 / 4) as i32;
+    let off = p.apply(centre).sub(cam.eye);
+    !off.longer_than(cam.far.saturating_add(r)) && off.dot64(cam.fwd) >= -(r as i64) * ONE as i64
 }
 
 /// The instances posed into one triangle list.
