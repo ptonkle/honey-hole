@@ -145,6 +145,11 @@ def step_gallery(page, check):
     page.select_option(by_id("gallery.view"), "above")
     page.wait_for_selector(f"{by_id('gallery.view')} option[value='above']:checked", state="attached", timeout=5000)
     check(page.input_value(by_id("gallery.view")) == "above", "the view from above can be chosen")
+    # true size: every fish in a row with the boat; the row stands still
+    page.select_option(by_id("gallery.size"), "lineup")
+    page.wait_for_selector(by_id("gallery.turn"), state="detached", timeout=5000)
+    check(page.input_value(by_id("gallery.size")) == "lineup", "the true-size row can be chosen")
+    check(page.locator(by_id("gallery.turn")).count() == 0, "the true-size row has no turn toggle")
     # a key pressed in a select belongs to the select, and a chosen select
     # keeps the focus, so leave it first (SECOND-ORDER R1.52)
     page.evaluate("() => document.activeElement.blur()")

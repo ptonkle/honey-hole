@@ -130,3 +130,7 @@ More answers:
 - **Esc with nothing to cancel:** opens a small menu (Settings, Leave match) while the match keeps running. Offline against AI it also pauses.
 - **Bite wait:** 2–6 s once the bobber is near fish, then 1–3 nibbles before the real bite (tuning values).
 - **Offline match setup:** AI count (0–3) and each AI's difficulty (Easy/Normal/Hard), match length (default 8 min), map seed (random, or typed), and the item buoy interval (default 1 min).
+
+> eyebrows on the fisherman look sad. otherwise looks good
+
+The agent levelled the brows and raised them slightly; the rest of the angler is approved.
