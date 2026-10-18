@@ -837,32 +837,14 @@ fn the_same_inputs_give_the_same_catches() {
 /// Measured on 2026-10-18: every one of 200 landed per tier, in 3.0, 5.3,
 /// 12.8 and 47 s on average (perfect 3, 5, 10, 20 s); a person reacting
 /// later will do worse (SECOND-ORDER R3.12). After the playtests eased the
-/// rare and legendary fights (R4.45): 3.0, 5.3, 10.4 and 22.9 s.
+/// rare and legendary fights (R4.45): 3.0, 5.3, 10.4 and 22.9 s. After the
+/// person's "wayyyyy too hard" easing (R7.1): 3.0, 5.1, 10.6 and 23.3 s.
 #[test]
 fn a_steady_player_lands_every_tier_in_fair_time() {
     let t = crate::tuning::parse(include_str!("../../../../../data/tuning.json")).unwrap();
     let r = &t.fishing.reel;
     for tier in [Tier::Common, Tier::Uncommon, Tier::Rare, Tier::Legendary] {
-        let (mut landed, mut ticks_sum) = (0u32, 0u32);
-        for seed in 0..200 {
-            let mut rng = Rng::new(seed);
-            let mut reel = Reel::new(tier, r, false);
-            let mut tick = 0;
-            loop {
-                tick += 1;
-                let mid = reel.zone + reel.zone_h / 2 + reel.zone_v / 5;
-                match reel.step(r, &mut rng, tick, mid < reel.marker, 100) {
-                    Outcome::Landed => {
-                        landed += 1;
-                        ticks_sum += tick;
-                        break;
-                    }
-                    Outcome::Broke => break,
-                    Outcome::Fighting => {}
-                }
-            }
-        }
-        let mean_ms = ticks_sum / landed.max(1) * 20;
+        let (landed, mean_ms) = late_reels(r, tier, 0);
         let perfect = r.perfect_ms.get(tier) as u32;
         assert!(landed >= 180, "{tier:?}: landed {landed} of 200");
         assert!(mean_ms <= 3 * perfect, "{tier:?}: {mean_ms} ms on average");
@@ -1063,5 +1045,57 @@ fn a_minigame_holds_the_reel_still_until_it_ends() {
                 "the reel held with the hold off"
             );
         }
+    }
+}
+
+/// `seeds` reels of `tier` by a steady player who sees the bar `lag` ticks
+/// late: how many it landed, and their mean time in ms.
+fn late_reels(r: &super::tuning::ReelTuning, tier: Tier, lag: usize) -> (u32, u32) {
+    let (mut landed, mut ticks_sum) = (0u32, 0u32);
+    for seed in 0..200 {
+        let mut rng = Rng::new(seed);
+        let mut reel = Reel::new(tier, r, false);
+        let mut seen = std::collections::VecDeque::new();
+        let mut tick = 0;
+        loop {
+            tick += 1;
+            let mid = reel.zone + reel.zone_h / 2 + reel.zone_v / 5;
+            seen.push_back(mid < reel.marker);
+            let lift = seen.len() > lag && seen.pop_front().unwrap_or(false);
+            match reel.step(r, &mut rng, tick, lift, 100) {
+                Outcome::Landed => {
+                    landed += 1;
+                    ticks_sum += tick;
+                    break;
+                }
+                Outcome::Broke => break,
+                Outcome::Fighting => {}
+            }
+        }
+    }
+    (landed, ticks_sum / landed.max(1) * 20)
+}
+
+/// The person (T2): "stardew valley game is wayyyyy too hard". A player who
+/// reacts a fifth of a second late (10 ticks) lands nearly every fish:
+/// commons nearly free, legendaries a long but winnable fight. Measured on
+/// 2026-10-18, before the easing (R7.1) this player landed 171 of 200 commons
+/// in 15.6 s and no other fish at all; after it, every one of 200 per tier in
+/// 3.6, 7.5, 22.3 and 61 s (perfect 3, 5, 10, 20 s).
+#[test]
+fn a_player_a_fifth_of_a_second_late_still_lands_every_tier() {
+    let t = crate::tuning::parse(include_str!("../../../../../data/tuning.json")).unwrap();
+    let r = &t.fishing.reel;
+    // (tier, fewest landed of 200, most mean time in perfect times)
+    for (tier, min, most) in [
+        (Tier::Common, 198, 2),
+        (Tier::Uncommon, 195, 2),
+        (Tier::Rare, 190, 3),
+        (Tier::Legendary, 180, 4),
+    ] {
+        let (landed, mean_ms) = late_reels(r, tier, 10);
+        let perfect = r.perfect_ms.get(tier) as u32;
+        assert!(landed >= min, "{tier:?}: landed {landed} of 200");
+        assert!(mean_ms <= most * perfect, "{tier:?}: {mean_ms} ms on average");
     }
 }
