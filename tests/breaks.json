@@ -37,8 +37,8 @@
   {
     "name": "escape on a sub-screen goes to the title",
     "file": "crates/core/src/app.rs",
-    "find": "Screen::Settings | Screen::Notes => self.go(Screen::Title),",
-    "replace": "Screen::Settings => self.go(Screen::Title), Screen::Notes => {}",
+    "find": "Screen::Settings | Screen::Notes | Screen::Gallery => self.go(Screen::Title),",
+    "replace": "Screen::Settings | Screen::Gallery => self.go(Screen::Title), Screen::Notes => {}",
     "test": "escape_on_a_sub_screen_goes_back_to_the_title"
   },
   {
@@ -100,8 +100,8 @@
   {
     "name": "the version opens what's new from the menus only",
     "file": "crates/core/src/app.rs",
-    "find": "matches!(self.screen, Screen::Title | Screen::Settings | Screen::Notes)",
-    "replace": "true",
+    "find": "Screen::Title | Screen::Settings | Screen::Notes | Screen::Gallery\n        )",
+    "replace": "Screen::Title | Screen::Settings | Screen::Notes | Screen::Gallery | Screen::Play\n        )",
     "test": "the_version_opens_whats_new_from_the_menus_only"
   },
   {
@@ -194,5 +194,236 @@
     "find": "[550, -1000, 160]",
     "replace": "[550, -1400, 160]",
     "test": "every_prop_stands_on_its_origin"
+  },
+  {
+    "name": "a map comes from its seed",
+    "file": "crates/core/src/map/generate.rs",
+    "find": "    let s = seed as u64;",
+    "replace": "    let s = 0u64;",
+    "test": "a_seed_always_makes_the_same_map_and_other_seeds_other_maps"
+  },
+  {
+    "name": "reeds stand in water",
+    "file": "crates/core/src/map/generate.rs",
+    "find": "if map.cells[j].water() && map.shore[j] <= 14_000 {",
+    "replace": "if map.shore[j] <= 14_000 {",
+    "test": "a_made_map_has_its_parts_where_they_belong"
+  },
+  {
+    "name": "trees grow on land",
+    "file": "crates/core/src/map/generate.rs",
+    "find": "if map.cells[i].water() || from_water < 2500 ||",
+    "replace": "if from_water < 2500 ||",
+    "test": "a_made_map_has_its_parts_where_they_belong"
+  },
+  {
+    "name": "a lake with no cover is too open",
+    "file": "crates/core/src/map/validate.rs",
+    "find": "if report.cover < p.cover.0 {",
+    "replace": "if report.cover < 0 {",
+    "test": "a_roomy_lake_passes_the_water_rules"
+  },
+  {
+    "name": "a cut-off pocket is counted",
+    "file": "crates/core/src/map/validate.rs",
+    "find": "report.pockets = regions.saturating_sub(1);",
+    "replace": "report.pockets = 0;",
+    "test": "a_cut_off_pocket_is_rejected"
+  },
+  {
+    "name": "water behind a narrow channel is counted",
+    "file": "crates/core/src/map/validate.rs",
+    "find": "sizes[l] >= 12)",
+    "replace": "sizes[l] >= 100_000)",
+    "test": "a_channel_too_narrow_for_a_boat_is_rejected"
+  },
+  {
+    "name": "land near the spawn is refused",
+    "file": "crates/core/src/map/validate.rs",
+    "find": "map.centre(i).dist(s) < p.spawn_clear_mm as i64",
+    "replace": "map.centre(i).dist(s) < 0",
+    "test": "the_spawn_needs_room_and_an_open_lane"
+  },
+  {
+    "name": "land in the spawn's lane is refused",
+    "file": "crates/core/src/map/validate.rs",
+    "find": "        if !open {",
+    "replace": "        if false {",
+    "test": "the_spawn_needs_room_and_an_open_lane"
+  },
+  {
+    "name": "an island near other land is refused",
+    "file": "crates/core/src/map/validate.rs",
+    "find": "if gap < p.island_gap_mm {",
+    "replace": "if gap < 0 {",
+    "test": "islands_keep_clear_of_the_shore_and_each_other"
+  },
+  {
+    "name": "a cramped lake is refused",
+    "file": "crates/core/src/map/validate.rs",
+    "find": "if report.cover > p.cover.1 {",
+    "replace": "if report.cover > 1000 {",
+    "test": "a_lake_full_of_land_is_too_cramped"
+  },
+  {
+    "name": "a scan keeps only accepted seeds",
+    "file": "crates/core/src/map/list.rs",
+    "find": "if verdict.ok() {",
+    "replace": "if true {",
+    "test": "every_accepted_seed_of_a_scan_passes_and_rejected_ones_say_why"
+  },
+  {
+    "name": "a match seed spreads over the list",
+    "file": "crates/core/src/map/list.rs",
+    "find": "list.maps[k as usize].seed",
+    "replace": "list.maps[0].seed",
+    "test": "a_match_seed_picks_a_listed_map"
+  },
+  {
+    "name": "one schooling fish is refused",
+    "file": "crates/core/src/map/fish.rs",
+    "find": "if k.tier.schools() && count == 1 {",
+    "replace": "if false {",
+    "test": "the_fish_counts_are_exact_per_kind"
+  },
+  {
+    "name": "schools hold at most four",
+    "file": "crates/core/src/map/fish.rs",
+    "find": "smax.min(left - smin)",
+    "replace": "(smax + 1).min(left - smin)",
+    "test": "schools_hold_two_to_four_of_one_kind_close_together"
+  },
+  {
+    "name": "a school keeps close together",
+    "file": "crates/core/src/map/fish.rs",
+    "find": "let rad = rules.school_radius_mm;",
+    "replace": "let rad = rules.school_radius_mm * 3;",
+    "test": "schools_hold_two_to_four_of_one_kind_close_together"
+  },
+  {
+    "name": "rare and legendary fish are spread apart",
+    "file": "crates/core/src/map/fish.rs",
+    "find": "&singles, 64)",
+    "replace": "&[], 1)",
+    "test": "rare_and_legendary_fish_are_single_and_far_apart"
+  },
+  {
+    "name": "fish swim in their tier's depths",
+    "file": "crates/core/src/map/fish.rs",
+    "find": "r.range(lo, hi.min(-map.ground[i] - rules.under_mm).max(lo))",
+    "replace": "r.range(0, hi.min(-map.ground[i] - rules.under_mm).max(lo))",
+    "test": "fish_swim_at_their_tiers_depths_over_deep_enough_water"
+  },
+  {
+    "name": "commons keep to water near shore",
+    "file": "crates/core/src/map/fish.rs",
+    "find": "Tier::Common => (lo + RULES.under_mm, 6000),",
+    "replace": "Tier::Common => (lo + RULES.under_mm, i32::MAX),",
+    "test": "fish_swim_at_their_tiers_depths_over_deep_enough_water"
+  },
+  {
+    "name": "the buoy is fair",
+    "file": "crates/core/src/map/buoy.rs",
+    "find": "let over = (hi - lo - tolerance(mean)).max(0);",
+    "replace": "let over = 0;",
+    "test": "the_buoy_is_about_as_far_by_boat_from_every_player"
+  },
+  {
+    "name": "the buoy is a trip away",
+    "file": "crates/core/src/map/buoy.rs",
+    "find": "(mean - TARGET_MM).abs()",
+    "replace": "mean",
+    "test": "the_buoy_is_about_as_far_by_boat_from_every_player"
+  },
+  {
+    "name": "listed maps keep their stamps",
+    "file": "crates/core/src/map/generate.rs",
+    "find": "let scale = r.range(800, 1300);",
+    "replace": "let scale = r.range(800, 1301);",
+    "test": "listed_maps_part_1_are_unchanged_and_pass"
+  },
+  {
+    "name": "listed maps pass the validator",
+    "file": "crates/core/src/map/mod.rs",
+    "find": "cover: (70, 400),",
+    "replace": "cover: (70, 60),",
+    "test": "listed_maps_part_2_are_unchanged_and_pass"
+  },
+  {
+    "name": "a listed seed is not listed twice",
+    "file": "data/maps/michigan-lake.json",
+    "find": "\"seed\": 3,",
+    "replace": "\"seed\": 0,",
+    "test": "the_list_holds_enough_maps"
+  },
+  {
+    "name": "ranges include their top",
+    "file": "crates/core/src/map/rng.rs",
+    "find": "lo + self.below((hi - lo + 1) as u32) as i32",
+    "replace": "lo + self.below((hi - lo) as u32) as i32",
+    "test": "a_seed_gives_the_same_numbers_and_ranges_hold"
+  },
+  {
+    "name": "angles west of north",
+    "file": "crates/core/src/map/trig.rs",
+    "find": "let a = if x < 0 { HALF - a } else { a };",
+    "replace": "let a = if x < 0 { a } else { a };",
+    "test": "sines_and_angles_match_known_values"
+  },
+  {
+    "name": "noise stays in range",
+    "file": "crates/core/src/map/noise.rs",
+    "find": "& 2047) as i32) - 1024",
+    "replace": "& 4095) as i32) - 1024",
+    "test": "noise_stays_in_range_and_is_smooth"
+  },
+  {
+    "name": "paths do not cut corners",
+    "file": "crates/core/src/map/grid.rs",
+    "find": "if beside(dx, dy).iter().any(|&(bx, by)| !ok(x + bx, y + by)) {",
+    "replace": "if false {",
+    "test": "distances_go_around_walls_and_regions_count_pockets"
+  },
+  {
+    "name": "regions join across corners only when asked",
+    "file": "crates/core/src/map/grid.rs",
+    "find": "(!corners && dx != 0 && dy != 0)",
+    "replace": "(false && dx != 0 && dy != 0)",
+    "test": "distances_go_around_walls_and_regions_count_pockets"
+  },
+  {
+    "name": "the first map is named Burt Lake on screen",
+    "file": "crates/core/src/map/mod.rs",
+    "find": "Setting::MichiganLake => \"map.burt_lake\",",
+    "replace": "Setting::MichiganLake => \"map.lake\",",
+    "test": "every_setting_names_a_string_key"
+  },
+  {
+    "name": "the item buoy is an item",
+    "file": "data/models/item-buoy.json",
+    "find": "\"kind\": \"item\",",
+    "replace": "\"kind\": \"prop\",",
+    "test": "the_boat_angler_and_buoy_load_as_their_kinds_in_a_few_hundred_faces"
+  },
+  {
+    "name": "the seated angler's feet rest on the floor",
+    "file": "data/models/angler.json",
+    "find": "\"hips\": {\"move\": [0, -300, -300]}",
+    "replace": "\"hips\": {\"move\": [0, -200, -300]}",
+    "test": "the_angler_keeps_its_feet_on_the_anchor_seated_and_standing"
+  },
+  {
+    "name": "the angler fishes from the bow",
+    "file": "data/models/boat.json",
+    "find": "\"fish\": { \"part\": \"hull\", \"at\": [0, 370, 1200] }",
+    "replace": "\"fish\": { \"part\": \"hull\", \"at\": [0, 370, -1200] }",
+    "test": "the_boat_seats_the_driver_aft_and_the_angler_on_the_raised_bow_deck"
+  },
+  {
+    "name": "the item buoy bobs",
+    "file": "data/models/item-buoy.json",
+    "find": "\"bob\": { \"ms\": 3200,",
+    "replace": "\"sway\": { \"ms\": 3200,",
+    "test": "the_item_buoy_bobs"
   }
 ]

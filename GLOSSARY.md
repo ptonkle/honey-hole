@@ -7,6 +7,12 @@ Write each entry as a `### Term` heading, then one or two plain sentences, then 
 <!--
 An example entry. It sits inside this comment, so it does not count.
 
+### Burt Lake
+
+The first map: a northern lake with pine and birch shores, small wooded islands and reeds in the coves, in medium fog. Each match on it plays one of its checked layouts.
+
+Not: Michigan Lake, level, course
+
 ### Spout
 
 Where slush comes out. Each line has up to {line.spouts} spouts.
@@ -14,17 +20,35 @@ Where slush comes out. Each line has up to {line.spouts} spouts.
 Not: tap, dispenser, nozzle
 -->
 
+### Angler
+
+The figure each player plays: it sits on the boat's back bench to drive and stands at the bow to fish. Its shirt and hat band wear the player's colour.
+
+Not: fisherman, avatar
+
 ### Back
 
 The button at the foot of each screen opened from the Title. It goes back to the Title, as Esc does.
 
 Not: return, exit
 
+### Boat
+
+Each player's small aluminium fishing boat, painted in the player's colour, with an outboard motor at the stern and a raised casting deck at the bow.
+
+Not: ship, vessel
+
 ### Controls
 
 The keys the game uses, listed on the Title.
 
 Not: keybindings, hotkeys, bindings
+
+### Item buoy
+
+The floating yellow box marked with a question mark that holds a hidden item. A player who drives through it takes the item.
+
+Not: crate, loot box
 
 ### Minor version
 
