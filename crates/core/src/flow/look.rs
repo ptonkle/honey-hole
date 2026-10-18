@@ -66,8 +66,6 @@ pub struct CardLook {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct HudLook {
-    pub driving: C,
-    pub fishing: C,
     pub gauge_face: C,
     pub gauge_tick: C,
     pub gauge_fill: C,
@@ -77,9 +75,6 @@ pub struct HudLook {
     pub ping_ready: C,
     pub ping_wait: C,
     pub item_slot: C,
-    pub key_cap: C,
-    /// the key hints fade over this long once `flow.hints_ms` is up
-    pub hint_fade_ms: i32,
     pub seed: C,
     /// your boat wrecked: a flash over the screen, this colour, fading
     /// over this long
@@ -235,8 +230,6 @@ impl FlowLook {
             ("card.light", k.light),
             ("card.shadow_colour", k.shadow_colour),
             ("card.dots", k.dots),
-            ("hud.driving", h.driving),
-            ("hud.fishing", h.fishing),
             ("hud.gauge_face", h.gauge_face),
             ("hud.gauge_tick", h.gauge_tick),
             ("hud.gauge_fill", h.gauge_fill),
@@ -245,7 +238,6 @@ impl FlowLook {
             ("hud.ping_ready", h.ping_ready),
             ("hud.ping_wait", h.ping_wait),
             ("hud.item_slot", h.item_slot),
-            ("hud.key_cap", h.key_cap),
             ("hud.seed", h.seed),
             ("hud.wreck_flash", h.wreck_flash),
             ("countdown.number", n.number),
@@ -311,7 +303,6 @@ impl FlowLook {
             colour_ok("burst.colours", *c)?;
         }
         let times = [
-            h.hint_fade_ms,
             h.wreck_flash_ms,
             n.pop_ms,
             n.go_ms,

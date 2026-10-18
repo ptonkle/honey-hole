@@ -15,9 +15,6 @@ pub struct Look {
     /// the instruction line and the progress readout during play
     pub text: C,
     pub text_size: i32,
-    pub hint: C,
-    pub hint_size: i32,
-    pub progress_size: i32,
     pub bar: C,
     pub bar_back: C,
     /// the Fish-Boy's case round a minigame shown on its screen outside a
@@ -95,7 +92,6 @@ pub struct ReelLook {
     pub hub: C,
     pub handle: C,
     pub arrow: C,
-    pub progress: C,
     pub pip_off: C,
     pub pip_on: C,
 }
@@ -179,7 +175,6 @@ impl Look {
             ("banner.ink", b.ink),
             ("banner.shadow", b.shadow),
             ("text", self.text),
-            ("hint", self.hint),
             ("bar", self.bar),
             ("bar_back", self.bar_back),
             ("bezel", self.bezel),
@@ -202,7 +197,6 @@ impl Look {
             ("power_reel.hub", r.hub),
             ("power_reel.handle", r.handle),
             ("power_reel.arrow", r.arrow),
-            ("power_reel.progress", r.progress),
             ("power_reel.pip_off", r.pip_off),
             ("power_reel.pip_on", r.pip_on),
             ("nitrous.background", a.background),
@@ -260,8 +254,6 @@ impl Look {
         }
         let sizes = [
             self.text_size,
-            self.hint_size,
-            self.progress_size,
             self.banner.size,
             self.banner.band_h,
             self.camera.viewfinder_size[0],

@@ -34,8 +34,6 @@
     "dots_h_pct": 70
   },
   "hud": {
-    "driving": [201, 88, 31],
-    "fishing": [44, 127, 122],
     "gauge_face": [227, 209, 170],
     "gauge_tick": [110, 90, 67],
     "gauge_fill": [44, 127, 122],
@@ -44,8 +42,6 @@
     "ping_ready": [44, 127, 122],
     "ping_wait": [217, 162, 30],
     "item_slot": [227, 209, 170],
-    "key_cap": [248, 239, 220],
-    "hint_fade_ms": 3000,
     "seed": [248, 239, 220],
     "wreck_flash": [201, 88, 31],
     "wreck_flash_pct": 35,
