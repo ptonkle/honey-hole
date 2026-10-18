@@ -1,0 +1,395 @@
+{
+  "setting": "michigan-lake",
+  "from": 0,
+  "scanned": 256,
+  "maps": [
+    {
+      "seed": 0,
+      "stamp": "72ffcdaa7767aef9"
+    },
+    {
+      "seed": 3,
+      "stamp": "0ca3c3c493851ed5"
+    },
+    {
+      "seed": 8,
+      "stamp": "26111e637f6175b1"
+    },
+    {
+      "seed": 11,
+      "stamp": "9743380327abe2b1"
+    },
+    {
+      "seed": 14,
+      "stamp": "f1ec04a6b2119de9"
+    },
+    {
+      "seed": 23,
+      "stamp": "b3ad0e18ccb012de"
+    },
+    {
+      "seed": 27,
+      "stamp": "2d7a5bda2328bf98"
+    },
+    {
+      "seed": 29,
+      "stamp": "60c6081e91d76cc7"
+    },
+    {
+      "seed": 33,
+      "stamp": "f9096e3cc71e07c9"
+    },
+    {
+      "seed": 34,
+      "stamp": "2a836da2186465b5"
+    },
+    {
+      "seed": 36,
+      "stamp": "1eb6630d909fe324"
+    },
+    {
+      "seed": 44,
+      "stamp": "de961c6263635a97"
+    },
+    {
+      "seed": 46,
+      "stamp": "f81a30d5664e3c66"
+    },
+    {
+      "seed": 47,
+      "stamp": "ed9a1f3876ffdfb2"
+    },
+    {
+      "seed": 48,
+      "stamp": "d62f5aaf890d6b26"
+    },
+    {
+      "seed": 52,
+      "stamp": "e5a5f93454164e22"
+    },
+    {
+      "seed": 53,
+      "stamp": "4d89eca69d829395"
+    },
+    {
+      "seed": 54,
+      "stamp": "d205402121dfbb6e"
+    },
+    {
+      "seed": 55,
+      "stamp": "bf1be76fd273eb9e"
+    },
+    {
+      "seed": 56,
+      "stamp": "a2fb9db77601eb98"
+    },
+    {
+      "seed": 66,
+      "stamp": "5c8704bdc84e563e"
+    },
+    {
+      "seed": 67,
+      "stamp": "971596c6d71345f0"
+    },
+    {
+      "seed": 73,
+      "stamp": "8306a8218b649a1e"
+    },
+    {
+      "seed": 74,
+      "stamp": "8b724d54d5a53b6e"
+    },
+    {
+      "seed": 77,
+      "stamp": "99fdfc8f1a64ba82"
+    },
+    {
+      "seed": 81,
+      "stamp": "c07704b5580cc583"
+    },
+    {
+      "seed": 83,
+      "stamp": "630b7f9fef68a7fe"
+    },
+    {
+      "seed": 90,
+      "stamp": "e270ded7326f2c69"
+    },
+    {
+      "seed": 91,
+      "stamp": "a1e7b436342d3c18"
+    },
+    {
+      "seed": 96,
+      "stamp": "6a26773e5d4fe63b"
+    },
+    {
+      "seed": 97,
+      "stamp": "afabc5bfe9bb4029"
+    },
+    {
+      "seed": 99,
+      "stamp": "ae56fa7c7d9e2a9c"
+    },
+    {
+      "seed": 100,
+      "stamp": "fdb14a5a7a524004"
+    },
+    {
+      "seed": 101,
+      "stamp": "8cf509e3d8556964"
+    },
+    {
+      "seed": 105,
+      "stamp": "0e34cbca6032c518"
+    },
+    {
+      "seed": 112,
+      "stamp": "d7b0594e909ce43f"
+    },
+    {
+      "seed": 113,
+      "stamp": "ef674504a24c2caf"
+    },
+    {
+      "seed": 114,
+      "stamp": "d4c6b3c64f9614f1"
+    },
+    {
+      "seed": 115,
+      "stamp": "e0a8754081466f20"
+    },
+    {
+      "seed": 118,
+      "stamp": "1360b9a159edafe2"
+    },
+    {
+      "seed": 120,
+      "stamp": "92cb889927317b17"
+    },
+    {
+      "seed": 121,
+      "stamp": "f5f4826e810cb103"
+    },
+    {
+      "seed": 122,
+      "stamp": "f86f42de08ef1e51"
+    },
+    {
+      "seed": 123,
+      "stamp": "e50881fae9ed3a45"
+    },
+    {
+      "seed": 125,
+      "stamp": "a27d5ac29120e994"
+    },
+    {
+      "seed": 126,
+      "stamp": "973a47f4c01fcfec"
+    },
+    {
+      "seed": 127,
+      "stamp": "8892a71f6005ddb4"
+    },
+    {
+      "seed": 128,
+      "stamp": "67574fe00c90b094"
+    },
+    {
+      "seed": 130,
+      "stamp": "4fc7eb157cd80b02"
+    },
+    {
+      "seed": 137,
+      "stamp": "ceec81bbc3c9cbd5"
+    },
+    {
+      "seed": 140,
+      "stamp": "0a0592a960793b29"
+    },
+    {
+      "seed": 141,
+      "stamp": "9cd45fd004dff505"
+    },
+    {
+      "seed": 142,
+      "stamp": "62b244c14caa9439"
+    },
+    {
+      "seed": 143,
+      "stamp": "1282449342e87420"
+    },
+    {
+      "seed": 144,
+      "stamp": "1901b10deec535c8"
+    },
+    {
+      "seed": 145,
+      "stamp": "2ba55886d56ca246"
+    },
+    {
+      "seed": 151,
+      "stamp": "aa87b2b20fc09fe1"
+    },
+    {
+      "seed": 154,
+      "stamp": "2c5dab42ba50a77f"
+    },
+    {
+      "seed": 155,
+      "stamp": "71093bbc0213da3a"
+    },
+    {
+      "seed": 157,
+      "stamp": "7670dc4641d90810"
+    },
+    {
+      "seed": 158,
+      "stamp": "29c8ebb8d42100d3"
+    },
+    {
+      "seed": 160,
+      "stamp": "05fdad05cfea64d1"
+    },
+    {
+      "seed": 162,
+      "stamp": "75dfcae752c26aca"
+    },
+    {
+      "seed": 163,
+      "stamp": "706768cc4cb0e571"
+    },
+    {
+      "seed": 164,
+      "stamp": "f71b16b6b8ceb142"
+    },
+    {
+      "seed": 168,
+      "stamp": "97b689155c9ec2d0"
+    },
+    {
+      "seed": 170,
+      "stamp": "2b43775c62d1e522"
+    },
+    {
+      "seed": 172,
+      "stamp": "94cb4202fbf55037"
+    },
+    {
+      "seed": 174,
+      "stamp": "daaf573a2896f6b5"
+    },
+    {
+      "seed": 176,
+      "stamp": "946a1abf768ceb31"
+    },
+    {
+      "seed": 183,
+      "stamp": "691a8dfbee55df8a"
+    },
+    {
+      "seed": 184,
+      "stamp": "3915ce4c1253e9a1"
+    },
+    {
+      "seed": 187,
+      "stamp": "27925daf00c0c5b1"
+    },
+    {
+      "seed": 192,
+      "stamp": "fecb565628b3761d"
+    },
+    {
+      "seed": 194,
+      "stamp": "a4126671506f2d07"
+    },
+    {
+      "seed": 195,
+      "stamp": "9aa0a1ca9965d121"
+    },
+    {
+      "seed": 200,
+      "stamp": "8e1e030f3a26febb"
+    },
+    {
+      "seed": 202,
+      "stamp": "1501edb292097b5e"
+    },
+    {
+      "seed": 212,
+      "stamp": "cd4c225055aa6798"
+    },
+    {
+      "seed": 220,
+      "stamp": "72ff6fa08c54f281"
+    },
+    {
+      "seed": 221,
+      "stamp": "ceb4c05cf6737ea9"
+    },
+    {
+      "seed": 224,
+      "stamp": "1b79671b084472ec"
+    },
+    {
+      "seed": 229,
+      "stamp": "ac4ab01a3cd87272"
+    },
+    {
+      "seed": 231,
+      "stamp": "66bf66858a8b7c93"
+    },
+    {
+      "seed": 232,
+      "stamp": "18e3e7f37b15bb3a"
+    },
+    {
+      "seed": 233,
+      "stamp": "9187ddf17068261b"
+    },
+    {
+      "seed": 236,
+      "stamp": "df3ad6f8fdd34a58"
+    },
+    {
+      "seed": 237,
+      "stamp": "7afc4283d96c90af"
+    },
+    {
+      "seed": 240,
+      "stamp": "5016f42910498257"
+    },
+    {
+      "seed": 241,
+      "stamp": "9a2772b40e727ded"
+    },
+    {
+      "seed": 242,
+      "stamp": "94539ab28dc740c5"
+    },
+    {
+      "seed": 244,
+      "stamp": "184d2fe001734503"
+    },
+    {
+      "seed": 248,
+      "stamp": "56c108b93027c3ce"
+    },
+    {
+      "seed": 249,
+      "stamp": "bec437eac1a4ad98"
+    },
+    {
+      "seed": 253,
+      "stamp": "20f9b6f3025b1210"
+    },
+    {
+      "seed": 254,
+      "stamp": "0e794b1d0c89ab66"
+    },
+    {
+      "seed": 255,
+      "stamp": "a8513a4ed5175694"
+    }
+  ]
+}

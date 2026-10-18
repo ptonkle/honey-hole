@@ -29,6 +29,7 @@ pub const KEYS: &[&str] = &[
     "play.placeholder",
     "pause.heading",
     "menu.gallery",
+    "map.burt_lake",
     "gallery.heading",
     "gallery.model",
     "gallery.show",

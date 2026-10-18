@@ -39,4 +39,4 @@ Keep it in one lasting folder, called JOURNAL here (ask the person where it live
 
 ## In this project (fishing)
 
-- **The journal:** the journal is `../honey-hole-journal/` beside this repo (its own git repo, never pushed). Pages: one per area of the game (models, maps, Fish-Boy and minigames).
+- **The journal:** the journal is `../honey-hole-journal/` beside this repo (its own git repo, never pushed), published at https://claude.ai/artifact/TeFhUVC6nLvhasHW726N6U. Pages: one per area of the game (models, maps, Fish-Boy and minigames).
