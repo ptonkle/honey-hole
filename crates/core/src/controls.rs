@@ -12,7 +12,7 @@ use crate::tuning::Checker;
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct File {
+struct ControlsFile {
     #[serde(rename = "_note", default)]
     _note: String,
     bindings: BTreeMap<String, Vec<String>>,
@@ -57,7 +57,8 @@ impl Controls {
 /// Reads and checks the controls file: every name is an action, and no key
 /// does two things.
 pub fn parse(json: &str) -> Result<Controls, String> {
-    let f: File = serde_json::from_str(json).map_err(|e| format!("The controls file does not read: {e}."))?;
+    let f: ControlsFile =
+        serde_json::from_str(json).map_err(|e| format!("The controls file does not read: {e}."))?;
     let mut keys = BTreeMap::new();
     for (action, codes) in &f.bindings {
         if !Actions::NAMES.contains(&action.as_str()) {

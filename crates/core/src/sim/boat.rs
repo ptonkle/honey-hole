@@ -30,6 +30,15 @@ pub const ONE: i32 = fx::ONE;
 /// them each tick (a mm/s for a 20 ms tick is 20 µm).
 pub const UM: i64 = 1000;
 
+/// `a / b` rounded to the nearest, halves away from zero.
+pub fn round_div(a: i64, b: i64) -> i64 {
+    if (a < 0) == (b < 0) {
+        (a + b / 2) / b
+    } else {
+        (a - b / 2) / b
+    }
+}
+
 /// The unit vector of a heading, as (east, north) in Q16.
 pub fn dir(heading: i32) -> (i32, i32) {
     (fx::cos(heading), fx::sin(heading))
@@ -47,8 +56,9 @@ pub struct Boat {
     pub seat: usize,
     /// the middle of the hull, in µm (east, north)
     pub pos_um: [i64; 2],
-    /// mm/s (east, north)
-    pub vel: [i32; 2],
+    /// µm/s (east, north), so a turn's rounding does not wear the speed
+    /// down; read and set it in mm/s with `vel` and `set_vel`
+    pub vel_um: [i32; 2],
     /// where the bow points
     pub heading: i32,
     pub mode: Mode,
@@ -81,7 +91,7 @@ impl Boat {
         Boat {
             seat,
             pos_um: pos,
-            vel: [0, 0],
+            vel_um: [0, 0],
             heading,
             mode: Mode::Driving,
             cast_yaw: 0,
@@ -116,30 +126,51 @@ impl Boat {
         tick < self.stall_until
     }
 
+    /// The velocity in mm/s (east, north), rounded.
+    pub fn vel(&self) -> [i32; 2] {
+        self.vel_um.map(|v| round_div(v as i64, UM) as i32)
+    }
+
+    pub fn set_vel(&mut self, v: [i32; 2]) {
+        self.vel_um = v.map(|c| (c as i64 * UM) as i32);
+    }
+
+    fn fwd_um(&self) -> i64 {
+        let (c, s) = dir(self.heading);
+        (self.vel_um[0] as i64 * c as i64 + self.vel_um[1] as i64 * s as i64) / ONE as i64
+    }
+
+    fn side_um(&self) -> i64 {
+        let (c, s) = dir(self.heading);
+        (-(self.vel_um[0] as i64) * s as i64 + self.vel_um[1] as i64 * c as i64) / ONE as i64
+    }
+
     /// Speed along the bow, mm/s (negative backing up).
     pub fn forward_speed(&self) -> i32 {
-        let (c, s) = dir(self.heading);
-        ((self.vel[0] as i64 * c as i64 + self.vel[1] as i64 * s as i64) / ONE as i64) as i32
+        round_div(self.fwd_um(), UM) as i32
     }
 
     /// Speed across the bow, mm/s (positive to the left).
     pub fn side_speed(&self) -> i32 {
-        let (c, s) = dir(self.heading);
-        ((-(self.vel[0] as i64) * s as i64 + self.vel[1] as i64 * c as i64) / ONE as i64) as i32
+        round_div(self.side_um(), UM) as i32
     }
 
     /// The boat's speed over the water, mm/s, whichever way it moves (the
     /// fishing system allows a cast only below its own limit).
     pub fn speed_mm_per_s(&self) -> i32 {
-        crate::map::trig::hypot(self.vel[0] as i64, self.vel[1] as i64) as i32
+        let v = self.vel_um;
+        round_div(crate::map::trig::hypot(v[0] as i64, v[1] as i64), UM) as i32
     }
 
-    fn set_motion(&mut self, fwd: i32, side: i32) {
+    fn set_motion(&mut self, fwd: i64, side: i64) {
         let (c, s) = dir(self.heading);
-        let (f, sd, c, s) = (fwd as i64, side as i64, c as i64, s as i64);
-        self.vel = [
-            ((f * c - sd * s) / ONE as i64) as i32,
-            ((f * s + sd * c) / ONE as i64) as i32,
+        let (c, s) = (c as i64, s as i64);
+        // over the direction's own length squared, which is not quite one,
+        // so splitting the velocity and joining it again changes nothing
+        let norm2 = c * c + s * s;
+        self.vel_um = [
+            ((fwd * c - side * s) * ONE as i64 / norm2) as i32,
+            ((fwd * s + side * c) * ONE as i64 / norm2) as i32,
         ];
     }
 
@@ -195,38 +226,42 @@ impl Boat {
         if self.wrecked() {
             return;
         }
-        let mut fwd = self.forward_speed();
-        let mut side = self.side_speed();
+        // in µm/s: each rate is mm/s a tick, times a thousand
+        let k = UM as i32;
+        let mut fwd = self.fwd_um() as i32;
+        let mut side = self.side_um() as i32;
         let motor = self.mode == Mode::Driving && !self.captured && !self.stalled(tick);
         let (w, s) = (motor && i.down("forward"), motor && i.down("back"));
-        let top = self.top(r);
-        let accel = if self.nitrous {
+        let top = self.top(r) * k;
+        let accel = k * if self.nitrous {
             Self::pct(r.accel, r.nitrous_accel_pct)
         } else {
             r.accel
         };
+        let (coast, brake, reverse, reverse_accel) =
+            (r.coast * k, r.brake * k, r.reverse * k, r.reverse_accel * k);
         fwd = if w && !s {
             if fwd > top {
-                fx::approach(fwd, top, r.coast)
+                fx::approach(fwd, top, coast)
             } else {
                 fx::approach(fwd, top, accel)
             }
         } else if s && !w {
             if fwd > 0 {
-                fx::approach(fwd, 0, r.brake)
+                fx::approach(fwd, 0, brake)
             } else {
-                fx::approach(fwd, -r.reverse, r.reverse_accel)
+                fx::approach(fwd, -reverse, reverse_accel)
             }
         } else {
-            fx::approach(fwd, 0, r.coast)
+            fx::approach(fwd, 0, coast)
         };
-        side = fx::approach(side, 0, r.side_drag);
-        self.set_motion(fwd, side);
+        side = fx::approach(side, 0, r.side_drag * k);
+        self.set_motion(fwd as i64, side as i64);
     }
 
     pub(crate) fn wreck(&mut self, respawn_at: u32) {
         self.wrecked_until = Some(respawn_at);
-        self.vel = [0, 0];
+        self.vel_um = [0, 0];
         self.nitrous = false;
     }
 

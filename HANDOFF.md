@@ -34,6 +34,9 @@ Every `SECOND-ORDER.md` row with status *person*, by number, with what the perso
 - R1.48: the draft fish roster and their names (seven fish, Midwest lakes), shown in the Gallery.
 - R1.54: the four player colours and the Gallery's light in `data/look.json`.
 - R1.149: the remodelled angler's look (tapered limbs, round head, no boxes), in `notes/shots/models/angler-v2/`.
+- R2.7: the boat's handling numbers the brief does not name (reverse, braking, coasting, slip, turning, swivel, nitrous), in `data/tuning.json`; try them by driving.
+- R2.11: the twelve draft AI names in `data/names.json`.
+- R2.21: the match setup's length choices (4, 8, 12 min) and buoy intervals (30 s to 2 min).
 
 ## Mistakes so far
 

@@ -153,7 +153,7 @@ fn turning_is_slow_at_rest_and_full_from_forty_percent_of_top_speed() {
     assert_eq!(boat(&m, 0).heading, 109);
     let b = boat_mut(&mut m, 0);
     b.heading = 0;
-    b.vel = [6400, 0]; // 40% of top speed
+    b.set_vel([6400, 0]); // 40% of top speed
     m.step(&[hold(&["right", "forward"])]);
     assert_eq!(boat(&m, 0).heading, TURN - 364);
 }
@@ -168,7 +168,7 @@ fn at_the_wall(speed: i32, t: &Tuning) -> Match {
     let hl = t.boat.half_length_mm + t.boat.half_beam_mm;
     let b = boat_mut(&mut m, 0);
     b.set_at(P::new(wall_x - hl - 40, 80_000));
-    b.vel = [speed, 0];
+    b.set_vel([speed, 0]);
     m
 }
 
@@ -183,7 +183,7 @@ fn land_below_half_top_speed_bounces_the_boat_back() {
     assert!(!b.wrecked());
     assert_eq!(b.at(), before, "it stays where it was, out of the land");
     // back at 30% of 7999 = 2399, less this tick's coasting (53)
-    assert_eq!(b.vel, [-2346, 0]);
+    assert_eq!(b.vel(), [-2346, 0]);
 }
 
 #[test]
@@ -205,18 +205,15 @@ fn land_at_half_top_speed_wrecks_the_boat() {
 fn a_glancing_hit_slides_along_the_shore_losing_speed() {
     let t = sample();
     let mut m = at_the_wall(4000, &t);
-    // heading north-east into the wall, moving east 4000 and north 6000;
-    // pointing straight north the bow misses, so turn the hull east
-    boat_mut(&mut m, 0).vel = [4000, 6000];
+    // the hull points east at the wall, sliding north as it hits: only the
+    // bow touches, so the land pushes straight west
+    boat_mut(&mut m, 0).set_vel([4000, 6000]);
     m.step(&[SeatInput::default()]);
     let b = boat(&m, 0);
     assert!(!b.wrecked(), "4 m/s toward the land is below 8 m/s");
-    assert!(b.vel[0] < 0, "pushed back off the wall: {:?}", b.vel);
-    assert!(
-        b.vel[1] > 3000 && b.vel[1] < 6000,
-        "slides on, slower: {:?}",
-        b.vel
-    );
+    // back at 30% of 4000 (1200), and 70% of 6000 along the shore (4200);
+    // then a tick of coasting (53) along the bow and slip (400) across it
+    assert_eq!(b.vel(), [-1200 + 53, 4200 - 400]);
 }
 
 /// Seat 0 heading east at `speed`; seat 1 still, broadside (heading north),
@@ -227,7 +224,7 @@ fn ram(speed: i32, t: &Tuning) -> Match {
     let a = boat_mut(&mut m, 0);
     a.set_at(P::new(60_000, 80_000));
     a.heading = 0;
-    a.vel = [speed, 0];
+    a.set_vel([speed, 0]);
     let b = boat_mut(&mut m, 1);
     b.set_at(P::new(60_000 + 1000 + 1800, 80_000));
     b.heading = TURN / 4;
@@ -268,8 +265,8 @@ fn a_ram_at_seventy_nine_percent_only_bumps() {
         "{ev:?}"
     );
     assert!(!boat(&m, 1).wrecked());
-    assert!(boat(&m, 1).vel[0] > 0, "the other boat is pushed east");
-    assert!(boat(&m, 0).vel[0] < 12_640, "the rammer slows");
+    assert!(boat(&m, 1).vel()[0] > 0, "the other boat is pushed east");
+    assert!(boat(&m, 0).vel()[0] < 12_640, "the rammer slows");
     assert_eq!(boat(&m, 0).stall_until, 0);
 }
 
@@ -294,7 +291,7 @@ fn a_wrecked_boat_respawns_at_the_spawn_after_two_seconds_ghosted() {
     let a = boat_mut(&mut m, 0);
     a.set_at(P::new(at.x - 2800, at.y));
     a.heading = 0;
-    a.vel = [16_000, 0];
+    a.set_vel([16_000, 0]);
     a.stall_until = 0;
     let ev = run(&mut m, &none, 20);
     assert!(ev
@@ -324,7 +321,7 @@ fn the_timer_ends_the_match_at_zero() {
     assert_eq!(m.remaining_ms(), 0);
     // nothing moves after the end
     assert!(m.step(&[hold(&["forward"])]).is_empty());
-    assert_eq!((m.tick, boat(&m, 0).vel), (50, [0, 0]));
+    assert_eq!((m.tick, boat(&m, 0).vel()), (50, [0, 0]));
 }
 
 #[test]
@@ -364,7 +361,7 @@ fn q_switches_to_fishing_keeping_momentum_and_a_d_swivel_the_cast() {
 fn s_brakes_then_reverses_slowly() {
     let t = sample();
     let mut m = Match::new(lake(60, None, P::new(120_000, 120_000)), &t, setup(&t, 1)).unwrap();
-    boat_mut(&mut m, 0).vel = [1600, 0];
+    boat_mut(&mut m, 0).set_vel([1600, 0]);
     // braking: 16000 × 20 / 2000 = 160 a tick, 10 ticks to rest
     run(&mut m, &[hold(&["back"])], 10);
     assert_eq!(boat(&m, 0).forward_speed(), 0);
@@ -411,7 +408,7 @@ fn esc_opens_the_menu_and_an_offline_match_waits_under_it() {
     let tick = m.tick;
     run(&mut m, &[hold(&["forward"])], 10);
     assert_eq!(m.tick, tick, "paused offline");
-    assert_eq!(boat(&m, 0).vel, [0, 0]);
+    assert_eq!(boat(&m, 0).vel(), [0, 0]);
     assert_eq!(m.step(&[press("cancel")]), [MatchEvent::MenuClosed { seat: 0 }]);
     assert_eq!(m.tick, tick + 1);
     // online, the match runs on under the menu
@@ -430,7 +427,7 @@ fn a_captured_boat_coasts_and_ignores_the_keys() {
     let t = sample();
     let mut m = Match::new(lake(60, None, P::new(30_000, 120_000)), &t, setup(&t, 1)).unwrap();
     let b = boat_mut(&mut m, 0);
-    b.vel = [5000, 0];
+    b.set_vel([5000, 0]);
     b.captured = true;
     let mut i = hold(&["forward", "left"]);
     i.pressed.mode = true;
@@ -485,7 +482,7 @@ fn every_rule_follows_the_tuning() {
     assert!(boat(&m, 0).wrecked());
     let mut m = at_the_wall(2999, &t);
     m.step(&[SeatInput::default()]);
-    assert_eq!(boat(&m, 0).vel, [-1499 + 200, 0]);
+    assert_eq!(boat(&m, 0).vel(), [-1499 + 200, 0]);
     // a ram at 60%, a stall of 20 ticks, a respawn after 50 and a ghost of 25
     let mut m = ram(6000, &t);
     let ev = m.step(&[SeatInput::default(); 2]).to_vec();
@@ -510,7 +507,7 @@ fn every_rule_follows_the_tuning() {
 fn the_view_draws_each_boat_between_its_last_two_ticks() {
     let t = sample();
     let mut m = Match::new(lake(40, None, P::new(60_000, 80_000)), &t, setup(&t, 1)).unwrap();
-    boat_mut(&mut m, 0).vel = [10_000, 0];
+    boat_mut(&mut m, 0).set_vel([10_000, 0]);
     m.step(&[SeatInput::default()]);
     // moved 200 mm this tick; halfway is 100 mm on
     let half = m.view(crate::gfx::fx::ONE / 2);

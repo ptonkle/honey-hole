@@ -34,6 +34,11 @@ Collected as the agent makes them; brought up in the morning. Each also has a ro
 
 - V1. Online sync model (decision 11).
 - V2. 50 ticks per second (decision 2).
+- V3. Rams and grounding are judged on the speed *toward* the other boat or the land, not the boat's whole speed: a fast glancing scrape bounces (SECOND-ORDER R2.3).
+- V4. The boat's handling numbers the brief leaves open: reverse 4 m/s, braking 2 s, coasting 6 s, turning 100°/s, the cast swivelling 135° either side, nitrous 200/150/150% (`data/tuning.json`, R2.7).
+- V5. Two boats ramming each other head-on, both fast enough, are both wrecked (R2.4).
+- V6. The draft AI names (`data/names.json`, R2.11).
+- V7. The match menu has Resume as well as Settings and Leave match (R2.9).
 
 ## Status
 

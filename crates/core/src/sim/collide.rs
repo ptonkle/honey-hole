@@ -92,8 +92,12 @@ fn land_normal(map: &Map, at: [i64; 2], heading: i32, r: &Rules) -> Option<[i64;
 /// Moves a boat one tick and settles its contact with land.
 pub fn land(map: &Map, r: &Rules, b: &mut Boat) -> LandHit {
     let old = b.pos_um;
-    let step = super::TICK_MS as i64; // mm/s for one tick is this many µm
-    let new = [old[0] + b.vel[0] as i64 * step, old[1] + b.vel[1] as i64 * step];
+    let step = super::TICK_MS as i64;
+    let new = [
+        old[0] + b.vel_um[0] as i64 * step / 1000,
+        old[1] + b.vel_um[1] as i64 * step / 1000,
+    ];
+    let vel = b.vel();
     let mm = |p: [i64; 2]| [p[0] / UM, p[1] / UM];
     let Some(mut n) = land_normal(map, mm(new), b.heading, r) else {
         b.pos_um = new;
@@ -101,16 +105,16 @@ pub fn land(map: &Map, r: &Rules, b: &mut Boat) -> LandHit {
     };
     if n == [0, 0] {
         // touching evenly all round: push back the way it came
-        n = unit([-(b.vel[0] as i64), -(b.vel[1] as i64)]);
+        n = unit([-(vel[0] as i64), -(vel[1] as i64)]);
     }
-    let vn = dot(b.vel, n);
+    let vn = dot(vel, n);
     let into = (-vn).max(0) as i32;
     if into >= r.land_wreck {
         return LandHit::Wrecked;
     }
     // bounce off: the speed into the land comes back at bounce_pct, and the
     // speed along the shore is scraped down to scrape_keep_pct
-    let (vx, vy) = (b.vel[0] as i64, b.vel[1] as i64);
+    let (vx, vy) = (vel[0] as i64, vel[1] as i64);
     let normal = vn.min(0);
     let (tx, ty) = (vx - normal * n[0] / ONE as i64, vy - normal * n[1] / ONE as i64);
     let back = -normal * r.bounce_pct as i64 / 100;
@@ -127,7 +131,7 @@ pub fn land(map: &Map, r: &Rules, b: &mut Boat) -> LandHit {
             vy
         },
     );
-    b.vel = [nvx as i32, nvy as i32];
+    b.set_vel([nvx as i32, nvy as i32]);
     if land_normal(map, mm(old), b.heading, r).is_some() {
         // caught inside (a turn swung the hull into land): push out
         b.pos_um = [
@@ -223,8 +227,8 @@ pub fn boats(m: &mut Match) {
             if d == [0, 0] {
                 d = [ONE as i64, 0];
             }
-            let a_toward = dot(a.vel, d) as i32;
-            let b_toward = -dot(b.vel, d) as i32;
+            let a_toward = dot(a.vel(), d) as i32;
+            let b_toward = -dot(b.vel(), d) as i32;
             let (a_rams, b_rams) = (a_toward >= r.ram_wreck, b_toward >= r.ram_wreck);
             if a_rams || b_rams {
                 if a_rams {
@@ -242,8 +246,10 @@ pub fn boats(m: &mut Match) {
                         let boat = m.boats[seat].as_mut().unwrap();
                         boat.stall_until = stall;
                         // it hit something: its speed toward the wreck is gone
-                        boat.vel[0] -= (toward as i64 * sign * d[0] / ONE as i64) as i32;
-                        boat.vel[1] -= (toward as i64 * sign * d[1] / ONE as i64) as i32;
+                        let mut v = boat.vel();
+                        v[0] -= (toward as i64 * sign * d[0] / ONE as i64) as i32;
+                        v[1] -= (toward as i64 * sign * d[1] / ONE as i64) as i32;
+                        boat.set_vel(v);
                         m.events.push(MatchEvent::Stalled { seat });
                     }
                 }
@@ -257,7 +263,10 @@ pub fn boats(m: &mut Match) {
 /// Two boats bump apart.
 fn bump(m: &mut Match, i: usize, j: usize, d: [i64; 2], dist2: i64, reach: i64) {
     let one = ONE as i64;
-    let (va, vb) = (m.boats[i].as_ref().unwrap().vel, m.boats[j].as_ref().unwrap().vel);
+    let (va, vb) = (
+        m.boats[i].as_ref().unwrap().vel(),
+        m.boats[j].as_ref().unwrap().vel(),
+    );
     let rel = dot([vb[0] - va[0], vb[1] - va[1]], d);
     let push = (reach - isqrt(dist2)) / 2 + 1;
     let k = if rel < 0 {
@@ -267,8 +276,10 @@ fn bump(m: &mut Match, i: usize, j: usize, d: [i64; 2], dist2: i64, reach: i64) 
     };
     for (seat, sign) in [(i, -1i64), (j, 1)] {
         let b = m.boats[seat].as_mut().unwrap();
-        b.vel[0] += (sign * k * d[0] / one) as i32;
-        b.vel[1] += (sign * k * d[1] / one) as i32;
+        let mut v = b.vel();
+        v[0] += (sign * k * d[0] / one) as i32;
+        v[1] += (sign * k * d[1] / one) as i32;
+        b.set_vel(v);
         b.pos_um[0] += sign * push * UM * d[0] / one;
         b.pos_um[1] += sign * push * UM * d[1] / one;
     }
