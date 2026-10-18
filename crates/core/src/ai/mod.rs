@@ -38,7 +38,6 @@ pub mod tuning;
 mod item_tests;
 #[cfg(test)]
 mod tests;
-
 use crate::map::rng::Rng;
 use crate::map::P;
 use crate::sim::fishing::Stage;
@@ -372,7 +371,8 @@ impl Brain {
 
     /// Whether to raise the Fish-Boy and ping now: a rival's hook worth
     /// weighing with the rival nowhere known, or its usual ping while the
-    /// lure waits quietly or it drives about.
+    /// lure waits quietly, or while it drives about with `ai.ping_driving`
+    /// (the boat coasts through the sweep: SECOND-ORDER R7.50).
     fn want_ping(&self, s: &Senses) -> bool {
         if s.ping != crate::fishboy::radar::PingState::Ready {
             return false;
@@ -413,7 +413,7 @@ impl Brain {
             return true;
         }
         let quiet = match self.goal {
-            Goal::Explore { .. } => stage == Stage::Idle,
+            Goal::Explore { .. } => s.tuning.ai.ping_driving && stage == Stage::Idle,
             Goal::Fish { .. } => stage == Stage::Set && !fish::fish_near_lure(s, 2500),
             _ => false,
         };

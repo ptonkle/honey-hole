@@ -75,6 +75,8 @@ By system, from `SECOND-ORDER.md`, with the rule each one produced.
 
 The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the date and commit.
 
+2026-10-18, Hard beats Easy with items (the usual AI ping waits for a lure in the water; `hard_beats_easy_on_average` on 32 seeds, with items and without; branch `worktree-agent-a501484596b332f2b`, merged with main at 2b921b9, T1): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 485 passed, 0 failed, 0 ignored; `scripts/break_tests.py "pings while it drives" "Easy and Hard swap skills"`: 2 of 2 caught. The known failure from the T1 merge is fixed.
+
 2026-10-18, the KISS pass, stage 2 (the line's drag tick, copy limits, the postgame's Catches; branch `worktree-agent-a9818ee19434f1aea`, merged with main at 552c22b): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 470 passed, 0 failed, 0 ignored; `break_tests.py` on the 11 new or changed rows: 11 of 11 caught.
 
 2026-10-18, online: items shared, other players' lines drawn, hook popups at the host's delay, fish places packed (branch `online2`, worktree `.claude/worktrees/online2`, from main at 0389fa6): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `ONLINE CHECK PASSED` (chromium, firefox, webkit); `count-tests.sh`: 444 passed, 0 failed, 0 ignored; `scripts/break_tests.py "online items" "online fishing"`: every row caught.

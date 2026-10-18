@@ -146,6 +146,34 @@ fn the_ai_drives_from_the_spawn_to_the_far_end_without_grounding() {
     );
 }
 
+/// Pings by a lone Hard AI exploring Burt Lake with no fish, over 60 s.
+fn pings_exploring(ping_driving: bool) -> usize {
+    let mut t = sample();
+    t.ai.ping_driving = ping_driving;
+    let map = generate(Setting::MichiganLake, 0);
+    let mut m = Match::new(map, &t, setup(&t, &[Occupant::Ai(Difficulty::Hard)])).unwrap();
+    let mut crew = Crew::new(&m);
+    let mut pings = 0;
+    for _ in 0..60 * 50 {
+        let i = crew.inputs(&m);
+        let events = m.step(&i);
+        pings += events
+            .iter()
+            .filter(|e| matches!(e, MatchEvent::Pinged { .. }))
+            .count();
+    }
+    pings
+}
+
+#[test]
+fn the_ai_does_not_ping_while_it_drives_about() {
+    // the boat coasts through each 3 s sweep, so the usual ping waits for a
+    // lure in the water (SECOND-ORDER R7.50); with `ai.ping_driving` on,
+    // Hard's first ping comes within 15 s and one every 15 s after
+    assert_eq!(pings_exploring(false), 0);
+    assert!(pings_exploring(true) >= 2);
+}
+
 /// One AI in the small lake with one bluegill 20 m ahead, 1 m down.
 fn bluegill_ahead(d: Difficulty) -> (Match, Crew, u32) {
     let t = sample();
@@ -234,21 +262,28 @@ fn match_points(seed: u64, seats: [Difficulty; 4], items: bool) -> Vec<i32> {
         .collect()
 }
 
+/// Seeds for [`hard_beats_easy_on_average`]: a 4-minute match's points swing
+/// widely (Hard is ahead in about two matches of three), so the totals over
+/// 32 matches are what hold. Measured over 256 seeds, any 32 in a row had
+/// Hard at least 13% ahead, with items and without (SECOND-ORDER R7.50).
+const HARD_EASY_SEEDS: u64 = 32;
+
 #[test]
 fn hard_beats_easy_on_average() {
     use Difficulty::{Easy, Hard};
-    // with items, and without: there the skill alone decides (with items,
-    // Hard's quicker hand at the minigames wins even on Easy's skill)
+    // with items, and without: there the skill alone decides
     for items in [true, false] {
-        let (mut hard, mut easy) = (0, 0);
-        for seed in 1..=4 {
+        let points = (1..=HARD_EASY_SEEDS).map(|seed| {
             // the seats change round so neither sits nearer the fish
             let seats = if seed % 2 == 0 {
                 [Hard, Easy, Hard, Easy]
             } else {
                 [Easy, Hard, Easy, Hard]
             };
-            let p = match_points(seed, seats, items);
+            (seats, match_points(seed, seats, items))
+        });
+        let (mut hard, mut easy) = (0, 0);
+        for (seats, p) in points {
             for (k, d) in seats.iter().enumerate() {
                 if *d == Hard {
                     hard += p[k];

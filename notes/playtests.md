@@ -170,3 +170,17 @@ A minigame takes the keys, so before this change a Power Reel used with a fish o
 Set from these runs: the buoy is worth a trip of 15 s with the slot empty (25 s cost 15 more points a player than 15 s, and 10 s took fewer buoys for the same points) and 6 s with an item held; Nitrous for drives of 400 m or more and hunts of 120 m or more (200 m cost 15 points a player); Cloaking Tech before the cast at a rare or legendary fish, and on hunts 100 m or more off; the Power Reel at the hook of a rare or legendary (before the cast it gave about half as much). Each difficulty's hand (`ai.items.hand`): the pointer's speed 1400 / 2400 / 3800 canvas units a second, a pause of 450 / 250 / 120 ms after each grab, drop or click, its aim off by up to 26 / 14 / 6 units, its click on a closing ring off by up to 240 / 130 / 60 ms, and the Power Reel circled at 0.9 / 1.6 / 2.6 turns a second.
 
 AI cost with items: 1.6 µs per AI player per tick on average (1.2 before); 430 ticks in 1,152,000 took the four AI players over 1 ms together, the slowest 22 ms (a path search).
+
+## Hard against Easy, 2026-10-18
+
+Four-minute matches of two Hard and two Easy AIs, the seats alternating, on the four Burt Lake layouts of `hard_beats_easy_on_average` (`crates/core/src/ai/tests.rs`), with the test tuning. Points are the two Hard seats' total against the two Easy seats' over the seeds (SECOND-ORDER R7.50 to R7.53).
+
+| Seeds | Build | With items, Hard / Easy | Without items, Hard / Easy |
+| --- | --- | --- | --- |
+| 1 to 16 | main before | 2221 / 2346 | 2694 / 2028 |
+| 1 to 16 | with T1's nibbles | 2409 / 2284 | 2985 / 2051 |
+| 1 to 16 | T1, usual ping only with the lure in (`ai.ping_driving` false) | 2699 / 2007 | 3259 / 2034 |
+| 1 to 256 | T1, pinging while driving | 42777 / 31729 | |
+| 1 to 256 | T1, usual ping only with the lure in | 45160 / 31651 | 48974 / 33756 |
+
+The items, on 256 seeds with the ping fix and T1, Hard's points: all six used 45160; buoys fetched and nothing used 45545; Cloaking Tech, the Teleporter and Nitrous never used 45334. In a 4-minute match they are worth about nothing either way, so the AI's item play is unchanged. Hard ahead in about two matches of three, so the test runs 32 seeds: every block of 32 in the 256 had Hard 22% or more ahead.

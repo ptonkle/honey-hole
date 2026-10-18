@@ -2576,6 +2576,13 @@
     "test": "hard_beats_easy_on_average"
   },
   {
+    "name": "the AI pings while it drives about",
+    "file": "crates/core/src/ai/mod.rs",
+    "find": "Goal::Explore { .. } => s.tuning.ai.ping_driving && stage == Stage::Idle,",
+    "replace": "Goal::Explore { .. } => stage == Stage::Idle,",
+    "test": "the_ai_does_not_ping_while_it_drives_about"
+  },
+  {
     "name": "a hunt ignores the reel's end",
     "file": "crates/core/src/ai/hunt.rs",
     "find": "    if eta >= left {",
