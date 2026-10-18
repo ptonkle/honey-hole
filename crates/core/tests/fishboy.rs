@@ -19,7 +19,12 @@ fn vertices(v: &Value) -> Vec<(String, [i64; 3])> {
     for part in v["parts"].as_array().unwrap() {
         let name = part["name"].as_str().unwrap().to_string();
         for p in part["vertices"].as_array().unwrap() {
-            let c: Vec<i64> = p.as_array().unwrap().iter().map(|c| c.as_i64().unwrap()).collect();
+            let c: Vec<i64> = p
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|c| c.as_i64().unwrap())
+                .collect();
             out.push((name.clone(), [c[0], c[1], c[2]]));
         }
     }
@@ -43,13 +48,23 @@ fn the_screen_is_a_flat_16_by_9_rectangle_facing_forward_with_its_anchor_in_the_
         .map(|(_, p)| p)
         .collect();
     assert_eq!(screen.len(), 4, "the screen is four corners");
-    assert!(screen.iter().all(|p| p[2] == 0), "the screen is flat at z = 0: {screen:?}");
+    assert!(
+        screen.iter().all(|p| p[2] == 0),
+        "the screen is flat at z = 0: {screen:?}"
+    );
     let xs: Vec<i64> = screen.iter().map(|p| p[0]).collect();
     let ys: Vec<i64> = screen.iter().map(|p| p[1]).collect();
     for p in &screen {
-        assert!(p[0].abs() == 96 && p[1].abs() == 54, "a corner off the 192 x 108 mm rectangle: {p:?}");
+        assert!(
+            p[0].abs() == 96 && p[1].abs() == 54,
+            "a corner off the 192 x 108 mm rectangle: {p:?}"
+        );
     }
-    assert_eq!(xs.iter().sum::<i64>() + ys.iter().sum::<i64>(), 0, "the four corners differ");
+    assert_eq!(
+        xs.iter().sum::<i64>() + ys.iter().sum::<i64>(),
+        0,
+        "the four corners differ"
+    );
 
     // its one face, wound to face +z (seen from in front, anticlockwise)
     let m = model::parse("fishboy", &file()).unwrap();
@@ -62,7 +77,10 @@ fn the_screen_is_a_flat_16_by_9_rectangle_facing_forward_with_its_anchor_in_the_
     assert_eq!(faces.len(), 1);
     let corners: Vec<_> = faces[0].v.iter().map(|&i| m.verts[i].0).collect();
     let n = model::newell(&corners);
-    assert!(n.z > 65_000 && n.x == 0 && n.y == 0, "the screen faces {n:?}, not +z");
+    assert!(
+        n.z > 65_000 && n.x == 0 && n.y == 0,
+        "the screen faces {n:?}, not +z"
+    );
 
     let anchor = m.anchor("screen").expect("an anchor \"screen\"");
     assert_eq!(anchor.part, screen_part);
@@ -89,7 +107,13 @@ fn nothing_covers_the_screen_and_the_bezel_frames_it_at_nine_eighths() {
     let tall = front.iter().map(|p| p[1].abs()).max().unwrap();
     // 96 x 9/8 = 108; 54 x 9/8 = 60.75, so 61
     assert_eq!((wide, tall), (108, 61));
-    // the bezel stands no more than 3 mm proud, so perspective barely changes it
-    let proud = front.iter().filter(|p| p[0].abs() > 100).map(|p| p[2]).max().unwrap();
+    // the bezel stands 3 mm proud (its rivets a little more), so perspective
+    // barely changes it
+    let proud = front
+        .iter()
+        .filter(|p| p[0].abs() > 100)
+        .map(|p| p[2])
+        .max()
+        .unwrap();
     assert!(proud <= 5, "the bezel stands {proud} mm proud");
 }
