@@ -618,3 +618,251 @@ fn the_countdown_runs_out_together_and_the_clock_then_follows_the_host() {
         }
     }
 }
+
+#[test]
+fn a_hook_popup_comes_at_the_hosts_delay_once_in_every_browser() {
+    for (seed, delay) in [(1, 0), (2, 0), (1, 1000), (2, 1000)] {
+        let mut l = Loop::new(2, 0, LinkSpec::ROUGH, seed);
+        l.tuning.balance.announce_delay_ms.common = delay;
+        l.tuning.balance.announce_delay_ms.uncommon = delay;
+        l.roster = Some(crate::roster::Roster::parse(ROSTER).unwrap());
+        l.lobby_and_start();
+        l.run(500);
+        let t = l.nodes[1].game().tick;
+        // both lines on one fish: the first hook holds, the second lets go
+        bite(&mut l, 1, 0, t + 20);
+        bite(&mut l, 2, 0, t + 30);
+        l.run(6000);
+        for (k, node) in l.nodes.iter().enumerate() {
+            let said: Vec<(u32, usize)> = node
+                .log
+                .iter()
+                .filter_map(|(tick, e)| match e {
+                    MatchEvent::Announced { seat, .. } => Some((*tick, *seat)),
+                    _ => None,
+                })
+                .collect();
+            let seats: Vec<usize> = said.iter().map(|(_, s)| *s).collect();
+            assert_eq!(
+                seats,
+                vec![1],
+                "seed {seed}, delay {delay}: browser {k} announces the hook that held, once"
+            );
+        }
+        // on the host, the popup comes the delay after its grant
+        let host = &l.nodes[0].log;
+        let granted = host
+            .iter()
+            .find(|(_, e)| matches!(e, MatchEvent::Hooked { seat: 1, .. }))
+            .map(|(t, _)| *t)
+            .unwrap();
+        let said = host
+            .iter()
+            .find(|(_, e)| matches!(e, MatchEvent::Announced { .. }))
+            .map(|(t, _)| *t)
+            .unwrap();
+        assert_eq!(
+            said - granted,
+            crate::sim::ticks(delay),
+            "seed {seed}, delay {delay}"
+        );
+    }
+}
+
+#[test]
+fn another_players_line_and_the_fish_on_it_show_on_every_screen() {
+    use crate::sim::fishing::Stage;
+    let mut l = fishing_loop(6);
+    let t = l.nodes[1].game().tick;
+    bite(&mut l, 1, 0, t + 20);
+    l.run(1500);
+    let own = l.nodes[1].game().fishing.lines[1].clone();
+    assert_eq!(own.stage, Stage::Reeling, "joiner 1 is reeling");
+    for k in [0, 2] {
+        let g = l.nodes[k].game();
+        let seen = &g.fishing.lines[1];
+        assert_eq!(seen.stage, Stage::Reeling, "browser {k} draws joiner 1's line");
+        let d = seen.bobber.dist(own.bobber);
+        assert!(
+            d < 2000,
+            "browser {k}: the bobber {d} mm from where joiner 1 has it"
+        );
+        let f = g.fishing.fish[0].at.dist(seen.bobber);
+        assert!(f < 500, "browser {k}: the fish on it at its lure ({f} mm)");
+        let view = g.fishing_view(k);
+        assert!(
+            view.lines.iter().any(|v| v.seat == 1),
+            "browser {k}'s view has the line"
+        );
+        // and its own fish are left alone by it: no lure of joiner 1's here
+        assert!(seen.interest.is_none());
+    }
+}
+
+// ---- items, shared (`sim/items/online.rs`) ----
+
+use crate::sim::items::Item;
+
+/// Where the host's buoy is once it is up on every browser.
+fn buoy_up(l: &mut Loop) -> crate::map::P {
+    // the buoy's clock is every browser's; the buoy is the host's
+    for n in l.nodes.iter_mut() {
+        let t = n.game().tick;
+        n.game_mut().items.next_buoy = t + 3;
+    }
+    assert!(
+        l.run_until(3000, |l| l.nodes.iter().all(|n| n.game().items.buoy.is_some())),
+        "the host's buoy reaches every browser"
+    );
+    let at = l.nodes[0].game().items.buoy.unwrap();
+    for n in &l.nodes {
+        assert_eq!(n.game().items.buoy, Some(at), "one buoy, the host's");
+    }
+    at
+}
+
+fn put_boat(l: &mut Loop, k: usize, at: crate::map::P) {
+    let b = l.nodes[k].game_mut().boats[k].as_mut().unwrap();
+    b.set_at(at);
+    b.prev_um = b.pos_um;
+    b.set_vel([0, 0]);
+}
+
+#[test]
+fn the_host_spawns_the_buoy_and_one_boat_takes_it_on_every_screen() {
+    for seed in [1, 2, 3] {
+        let mut l = Loop::new(2, 0, LinkSpec::ROUGH, seed);
+        l.lobby_and_start();
+        l.run(500);
+        let at = buoy_up(&mut l);
+        // joiner 1 drives through it, joiner 2 a moment later
+        put_boat(&mut l, 1, at);
+        l.run(60);
+        put_boat(&mut l, 2, at);
+        l.run(3000);
+        for (k, n) in l.nodes.iter().enumerate() {
+            let g = n.game();
+            assert_eq!(g.items.buoy, None, "seed {seed}: browser {k} has no buoy left");
+            let picks: Vec<usize> = n
+                .log
+                .iter()
+                .filter_map(|(_, e)| match e {
+                    MatchEvent::ItemPicked { seat, .. } => Some(*seat),
+                    _ => None,
+                })
+                .collect();
+            assert_eq!(
+                picks,
+                vec![1],
+                "seed {seed}: browser {k} hears one pickup, joiner 1's"
+            );
+            let spawned = n
+                .log
+                .iter()
+                .filter(|(_, e)| matches!(e, MatchEvent::BuoySpawned { .. }))
+                .count();
+            assert_eq!(spawned, 1, "seed {seed}: browser {k} hears the buoy spawn once");
+        }
+        assert!(
+            l.nodes[1].game().items.seats[1].held.is_some(),
+            "seed {seed}: joiner 1 holds an item"
+        );
+        assert!(
+            l.nodes[2].game().items.seats[2].held.is_none(),
+            "seed {seed}: joiner 2 none"
+        );
+    }
+}
+
+/// Joiner `k` uses `item` now (its minigame done at once).
+fn use_item(l: &mut Loop, k: usize, item: Item) {
+    let m = l.nodes[k].game_mut();
+    m.items.seats[k].held = Some(item);
+    m.items.quick = true;
+    let t = m.tick;
+    let mut shift = SeatInput::default();
+    shift.pressed.set("item", true);
+    l.nodes[k].presses.push((t, shift));
+}
+
+#[test]
+fn nitrous_and_the_cloak_show_on_every_screen() {
+    let mut l = Loop::new(2, 0, LinkSpec::CLEAN, 4);
+    l.lobby_and_start();
+    l.run(500);
+    use_item(&mut l, 1, Item::Nitrous);
+    use_item(&mut l, 2, Item::Cloak);
+    l.run(1000);
+    for k in [0, 1, 2] {
+        let g = l.nodes[k].game();
+        assert!(
+            g.boat(1).unwrap().nitrous,
+            "browser {k}: joiner 1's boat has nitrous"
+        );
+        assert!(
+            g.online.hidden.get(2).copied().unwrap_or(false),
+            "browser {k}: joiner 2 is cloaked"
+        );
+        if k != 1 {
+            assert!(
+                l.nodes[k].log.iter().any(|(_, e)| *e
+                    == MatchEvent::ItemUsed {
+                        seat: 1,
+                        item: Item::Nitrous
+                    }),
+                "browser {k} hears the nitrous"
+            );
+        }
+    }
+}
+
+#[test]
+fn a_teleports_destination_and_charge_reach_every_browser() {
+    let mut l = Loop::new(2, 0, LinkSpec::CLEAN, 5);
+    l.lobby_and_start();
+    l.run(500);
+    use_item(&mut l, 1, Item::Teleporter);
+    l.run(200);
+    assert!(
+        l.nodes[1].game().items.seats[1].choosing,
+        "joiner 1 picks a destination"
+    );
+    // a click on the radar, at the lake's middle
+    let to_want = crate::map::P::new(80_000, 80_000);
+    let (lo, side) = crate::fishboy::radar::region(&l.map, crate::fishboy::RADAR_MARGIN_MM);
+    let r = crate::fishboy::radar::MAP_RECT;
+    let x = r.x as i64 + (to_want.x - lo.x) as i64 * r.w as i64 / side as i64;
+    let y = r.y as i64 + (lo.y as i64 + side as i64 - to_want.y as i64) * r.h as i64 / side as i64;
+    let mut click = SeatInput::default();
+    click.pressed.set("click", true);
+    click.pointer = Some([x as i32, y as i32]);
+    let t = l.nodes[1].game().tick;
+    l.nodes[1].presses.push((t, click));
+    l.run(500);
+    let to = l.nodes[1].game().items.seats[1].charge.expect("charging").to;
+    for k in [0, 2] {
+        let g = l.nodes[k].game();
+        let c = g.items.seats[1].charge.expect("the others see the charge");
+        assert_eq!(c.to, to, "browser {k} knows where it goes");
+        assert!(
+            g.items.charge_permille(1, g.tick) > 0,
+            "browser {k} draws the shimmer"
+        );
+    }
+    l.run(6000);
+    for k in [0, 1, 2] {
+        let at = l.nodes[k].game().boat(1).unwrap().at();
+        assert!(
+            at.dist(to) < 1500,
+            "browser {k}: joiner 1 is there ({} mm off)",
+            at.dist(to)
+        );
+        assert!(
+            l.nodes[k]
+                .log
+                .iter()
+                .any(|(_, e)| *e == MatchEvent::Teleported { seat: 1 }),
+            "browser {k} hears the teleport"
+        );
+    }
+}

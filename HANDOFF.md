@@ -70,6 +70,8 @@ By system, from `SECOND-ORDER.md`, with the rule each one produced.
 
 The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the date and commit.
 
+2026-10-18, online: items shared, other players' lines drawn, hook popups at the host's delay, fish places packed (branch `online2`, worktree `.claude/worktrees/online2`, from main at 0389fa6): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `ONLINE CHECK PASSED` (chromium, firefox, webkit); `count-tests.sh`: 444 passed, 0 failed, 0 ignored; `scripts/break_tests.py "online items" "online fishing"`: every row caught.
+
 2026-10-18, the balance knobs for ramming, with a legendary popup 20 s late and an 80 m swim applied (`notes/balance-options.md`), merged with main at dc644e7 (online play) (branch `worktree-agent-a0102cd6c05bc4610`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 415 passed, 0 failed, 0 ignored; `break_tests.py` on the 10 new rows: 10 of 10 caught.
 
 2026-10-18, online play, both halves (transport, lobby, boats, wrecks, timer; fishing shared by claims; branch `online`, worktree `.claude/worktrees/online-redo`, after d5a813b, merged with main at dad627e): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `./scripts/check-online.sh`: `ONLINE CHECK PASSED` (chromium, firefox, webkit); `count-tests.sh`: 369 passed, 0 failed, 0 ignored; `scripts/break_tests.py online boundary:`: every new break caught (24 + 5 for shared fishing).

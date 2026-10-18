@@ -370,12 +370,14 @@ impl Node {
                     inputs[seat] = *i;
                 }
             }
+            // once each, even if the clock steps back over its tick
             let due: Vec<Claim> = self
                 .plans
                 .iter()
-                .filter(|(t, _)| *t == tick)
+                .filter(|(t, _)| *t <= tick)
                 .map(|(_, c)| c.clone())
                 .collect();
+            self.plans.retain(|(t, _)| *t > tick);
             for c in due {
                 m.claim(seat, c);
             }
