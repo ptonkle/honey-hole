@@ -40,6 +40,7 @@
 //! [`Fishing::use_camera`]: super::fishing::Fishing::use_camera
 
 pub mod claims;
+mod online;
 pub mod tuning;
 
 #[cfg(test)]
@@ -179,6 +180,11 @@ pub struct Items {
     pub force_next: Option<Item>,
     /// **Test hook**: a minigame is done as soon as it starts
     pub quick: bool,
+    /// buoys placed so far: the buoy in the lake is number `spawned`
+    /// (online, the host's count, `online.rs`)
+    pub spawned: u32,
+    /// online: the buoy this browser has claimed already
+    pub claimed: Option<u32>,
     seed: u64,
     rng: Rng,
 }
@@ -194,6 +200,8 @@ impl Items {
             seats: vec![SeatItems::default(); seats],
             force_next: None,
             quick: false,
+            spawned: 0,
+            claimed: None,
             seed,
             rng: Rng::stream(seed, 41),
         }
@@ -263,6 +271,8 @@ impl Match {
     /// now (the next still comes on the clock).
     pub fn place_buoy(&mut self, at: P) {
         self.items.buoy = Some(at);
+        self.items.spawned += 1;
+        self.items.claimed = None;
         self.events.push(MatchEvent::BuoySpawned {
             x_mm: at.x,
             y_mm: at.y,
@@ -293,9 +303,14 @@ impl Match {
         for seat in pinged {
             self.items.seats[seat].marks.clear();
         }
+        self.items_shared_before();
         self.buoy_clock();
         self.pickups();
         for seat in 0..self.items.seats.len() {
+            // a remote seat's items are its own browser's
+            if self.is_remote(seat) {
+                continue;
+            }
             let none = SeatInput::default();
             let i = if self.seats[seat].menu_open {
                 none
@@ -335,15 +350,25 @@ impl Match {
                 })
                 .collect();
             let seed = mix(self.items.seed ^ tick as u64);
-            match crate::map::buoy::fair_point(&self.map, &players, seed) {
-                Some(at) => self.place_buoy(at),
-                None => self.items.buoy = None,
+            // online the host places it, and a joiner waits for its word
+            if self.places_buoys() {
+                match crate::map::buoy::fair_point(&self.map, &players, seed) {
+                    Some(at) => {
+                        self.place_buoy(at);
+                        self.share_buoy(at);
+                    }
+                    None => self.items.buoy = None,
+                }
             }
         }
     }
 
     /// The boat that drives through the buoy takes an item.
     fn pickups(&mut self) {
+        // online it is a claim to the host (`online.rs`)
+        if self.online_pickups() {
+            return;
+        }
         let boats: Vec<(usize, P)> = self
             .boats
             .iter()
@@ -355,16 +380,21 @@ impl Match {
             return;
         };
         self.items.buoy = None;
-        let item = match self.items.force_next.take() {
+        let item = self.draw_item();
+        let dropped = self.items.seats[seat].held.replace(item);
+        self.events.push(MatchEvent::ItemPicked { seat, item, dropped });
+    }
+
+    /// The item a pickup draws: the test hook's, or from the weights.
+    pub(super) fn draw_item(&mut self) -> Item {
+        match self.items.force_next.take() {
             Some(i) => i,
             None => {
                 let roll = self.items.rng.next_u64() as u32;
                 let w = self.items.tuning.weights;
                 claims::draw(|i| w.get(i), roll)
             }
-        };
-        let dropped = self.items.seats[seat].held.replace(item);
-        self.events.push(MatchEvent::ItemPicked { seat, item, dropped });
+        }
     }
 
     /// One seat's Shift, minigame, teleport choice or camera offer.
@@ -534,6 +564,9 @@ impl Match {
                 self.enhanced_ping(seat);
             }
         }
+        if item != Item::Teleporter {
+            self.share_use(seat, item);
+        }
         self.recapture(seat);
     }
 
@@ -564,6 +597,7 @@ impl Match {
             seat,
             item: Item::Teleporter,
         });
+        self.share_use(seat, Item::Teleporter);
     }
 
     /// Cloaking Tech: every radar's blip of this seat is wiped now.

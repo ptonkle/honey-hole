@@ -712,6 +712,7 @@ impl Match {
             half_length_mm: self.rules.half_length,
             half_beam_mm: self.rules.half_beam,
             tick: self.tick,
+            remote: &self.online.remote,
         };
         // a remote seat's line is its own browser's (`fishing/shared.rs`)
         let all: Vec<SeatInput> = (0..self.seats.len())
@@ -724,6 +725,7 @@ impl Match {
         // the hook popups due (`balance.announce_delay_ms`), last, after
         // every system that raises or ends a hook this tick
         self.fishing.announcer.step(self.tick, &mut self.events);
+        self.share_announced();
         if self.tick >= self.rules.length_ticks && !self.online.end_elsewhere {
             self.ended = true;
             self.events.push(MatchEvent::MatchEnded);

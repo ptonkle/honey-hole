@@ -2095,8 +2095,8 @@
   {
     "name": "online fishing: the host releases a freed fish",
     "file": "crates/core/src/sim/fishing/shared.rs",
-    "find": "                    if self.online.role == Role::Host {\n                        self.online.release(&fish_thing(fish));\n                    }\n",
-    "replace": "",
+    "find": "                    if self.online.role == Role::Host {\n                        self.online.release(&fish_thing(fish));\n                        // got away",
+    "replace": "                    if false {\n                        self.online.release(&fish_thing(fish));\n                        // got away",
     "test": "a_fish_that_gets_away_is_free_for_another_line"
   },
   {
@@ -2644,5 +2644,54 @@
     "find": "        b.reeling_ram_wreck_pct,\n        ram_wreck_pct,",
     "replace": "        b.reeling_ram_wreck_pct,\n        0,",
     "test": "a_reeling_threshold_under_the_ram_speed_is_refused"
+  },
+  {
+    "name": "online items: a joiner waits for the host's buoy",
+    "file": "crates/core/src/sim/items/online.rs",
+    "find": "        self.online.role != Role::Client\n",
+    "replace": "        true\n",
+    "test": "the_host_spawns_the_buoy_and_one_boat_takes_it_on_every_screen"
+  },
+  {
+    "name": "online items: a pickup is the host's to grant",
+    "file": "crates/core/src/sim/items/mod.rs",
+    "find": "        if self.online_pickups() {\n            return;\n        }\n",
+    "replace": "",
+    "test": "the_host_spawns_the_buoy_and_one_boat_takes_it_on_every_screen"
+  },
+  {
+    "name": "online items: a use reaches the others",
+    "file": "crates/core/src/sim/items/online.rs",
+    "find": "        if self.online.role == Role::Offline || self.is_remote(seat) {\n            return;\n        }\n        let effect",
+    "replace": "        if true {\n            return;\n        }\n        let effect",
+    "test": "a_teleports_destination_and_charge_reach_every_browser"
+  },
+  {
+    "name": "online items: the cloak's flag is set",
+    "file": "crates/core/src/online/session.rs",
+    "find": "        m.online.hidden = vec![false; n];\n",
+    "replace": "",
+    "test": "nitrous_and_the_cloak_show_on_every_screen"
+  },
+  {
+    "name": "online fishing: a joiner shows the host's announcements",
+    "file": "crates/core/src/sim/fishing/announce.rs",
+    "find": "                } if !self.online => {",
+    "replace": "                } => {",
+    "test": "a_hook_popup_comes_at_the_hosts_delay_once_in_every_browser"
+  },
+  {
+    "name": "online fishing: the host queues a granted hook's popup",
+    "file": "crates/core/src/sim/fishing/shared.rs",
+    "find": "                        self.fishing.announcer.queue(tick, v.seat, fish, kind, tier);\n",
+    "replace": "",
+    "test": "a_hook_popup_comes_at_the_hosts_delay_once_in_every_browser"
+  },
+  {
+    "name": "online fishing: a remote line is placed",
+    "file": "crates/core/src/sim/remote.rs",
+    "find": "        self.place_line(s.seat, s.line.as_ref());\n",
+    "replace": "",
+    "test": "another_players_line_and_the_fish_on_it_show_on_every_screen"
   }
 ]

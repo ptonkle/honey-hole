@@ -65,7 +65,7 @@ use reel::{Outcome, Reel};
 use tuning::{FishTuning, FishingTuning};
 
 /// Where a seat's line is.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Stage {
     Idle,
@@ -118,7 +118,7 @@ pub struct Line {
 }
 
 impl Line {
-    fn idle() -> Line {
+    pub fn idle() -> Line {
         Line {
             stage: Stage::Idle,
             since: 0,
@@ -196,6 +196,9 @@ pub struct World<'a> {
     pub half_length_mm: i32,
     pub half_beam_mm: i32,
     pub tick: u32,
+    /// by seat: online, another browser runs this seat's line, and its
+    /// owner's state places it here (`shared.rs`)
+    pub remote: &'a [bool],
 }
 
 impl Fishing {
@@ -361,6 +364,9 @@ impl Fishing {
             &mut self.schools,
         );
         for seat in 0..self.lines.len() {
+            if w.remote.get(seat).copied().unwrap_or(false) {
+                continue;
+            }
             let none = SeatInput::default();
             let i = inputs.get(seat).copied().unwrap_or(none);
             let Some(b) = w.boats.get(seat).and_then(Option::as_ref) else {
@@ -683,6 +689,9 @@ impl Fishing {
     fn move_engaged(&mut self, w: &World) {
         let approach = lake::per_tick(self.tuning.approach_speed_mm_per_s);
         for seat in 0..self.lines.len() {
+            if w.remote.get(seat).copied().unwrap_or(false) {
+                continue;
+            }
             let line = &self.lines[seat];
             if let Some(int) = line.interest {
                 let (to, depth) = (line.bobber, line.lure_depth_mm);

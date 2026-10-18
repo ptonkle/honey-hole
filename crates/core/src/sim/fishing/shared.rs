@@ -5,7 +5,8 @@
 //! - **The fish in the lake are the host's.** Every browser runs the same
 //!   lake from the same seed, but each sees only its own lines, so the
 //!   fish drift apart. The host sends where each free fish is every
-//!   [`FISH_SYNC_TICKS`] (`WorldEvent::FishMoved`), and the other browsers
+//!   [`FISH_SYNC_TICKS`], all in one message (`WorldEvent::FishPlaces`),
+//!   and the other browsers
 //!   put them there, except a fish their own line is busy with.
 //! - **A hook is a claim.** The local line hooks at once (the 0.75 s
 //!   window allows no round trip) and claims the fish
@@ -58,6 +59,19 @@ impl Match {
                     let f = fish as usize;
                     if f >= self.fishing.fish.len() {
                         continue;
+                    }
+                    if v.granted && self.online.role == Role::Host {
+                        // the popup, at the host's delay from now
+                        let lf = &self.fishing.fish[f];
+                        let kind = self
+                            .fishing
+                            .roster
+                            .0
+                            .get(lf.kind)
+                            .map_or(String::new(), |k| k.id.clone());
+                        let tier = lf.tier;
+                        let tick = self.tick;
+                        self.fishing.announcer.queue(tick, v.seat, fish, kind, tier);
                     }
                     if v.granted && !local {
                         // another seat has it: any line here after it lets go
@@ -133,6 +147,8 @@ impl Match {
                     let f = fish as usize;
                     if self.online.role == Role::Host {
                         self.online.release(&fish_thing(fish));
+                        // got away before its popup: none
+                        self.fishing.announcer.waiting.retain(|w| w.fish != fish);
                     }
                     if f < self.fishing.fish.len() && !self.engaged_here(f) {
                         let lf = &mut self.fishing.fish[f];
@@ -141,18 +157,66 @@ impl Match {
                         }
                     }
                 }
-                WorldEvent::FishMoved { fish, at, depth } => {
-                    let f = fish as usize;
-                    if f < self.fishing.fish.len() && !self.engaged_here(f) {
-                        let lf = &mut self.fishing.fish[f];
-                        if matches!(lf.state, FishState::Roaming | FishState::Fleeing { .. }) {
-                            lf.at = crate::map::P::new(at[0], at[1]);
-                            lf.depth_mm = depth;
+                WorldEvent::FishPlaces { fish } => {
+                    for [id, x, y, depth] in fish {
+                        let f = id.max(0) as usize;
+                        if f < self.fishing.fish.len() && !self.engaged_here(f) {
+                            let lf = &mut self.fishing.fish[f];
+                            if matches!(lf.state, FishState::Roaming | FishState::Fleeing { .. }) {
+                                lf.at = crate::map::P::new(x, y);
+                                lf.depth_mm = depth;
+                            }
                         }
                     }
                 }
+                WorldEvent::Announced {
+                    seat,
+                    fish,
+                    fish_kind: kind,
+                    tier,
+                    delay_ms,
+                } if self.online.role == Role::Client => {
+                    self.events.push(MatchEvent::Announced {
+                        seat,
+                        fish,
+                        kind,
+                        tier,
+                        delay_ms,
+                    });
+                }
                 _ => {}
             }
+        }
+    }
+
+    /// The host's hook popups due this tick go to every browser (after the
+    /// announcer's step, last in the tick).
+    pub(crate) fn share_announced(&mut self) {
+        if self.online.role != Role::Host {
+            return;
+        }
+        let due: Vec<WorldEvent> = self
+            .events
+            .iter()
+            .filter_map(|e| match e {
+                MatchEvent::Announced {
+                    seat,
+                    fish,
+                    kind,
+                    tier,
+                    delay_ms,
+                } => Some(WorldEvent::Announced {
+                    seat: *seat,
+                    fish: *fish,
+                    fish_kind: kind.clone(),
+                    tier: *tier,
+                    delay_ms: *delay_ms,
+                }),
+                _ => None,
+            })
+            .collect();
+        for e in due {
+            self.broadcast(e);
         }
     }
 
@@ -193,19 +257,15 @@ impl Match {
             }
         }
         if self.online.role == Role::Host && self.tick.is_multiple_of(FISH_SYNC_TICKS) {
-            let moves: Vec<WorldEvent> = self
+            let fish: Vec<[i32; 4]> = self
                 .fishing
                 .fish
                 .iter()
                 .filter(|f| matches!(f.state, FishState::Roaming | FishState::Fleeing { .. }))
-                .map(|f| WorldEvent::FishMoved {
-                    fish: f.id,
-                    at: [f.at.x, f.at.y],
-                    depth: f.depth_mm,
-                })
+                .map(|f| [f.id as i32, f.at.x, f.at.y, f.depth_mm])
                 .collect();
-            for m in moves {
-                self.broadcast(m);
+            if !fish.is_empty() {
+                self.broadcast(WorldEvent::FishPlaces { fish });
             }
         }
     }
