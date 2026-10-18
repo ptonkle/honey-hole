@@ -43,6 +43,7 @@
 pub mod announce;
 pub mod lake;
 pub mod reel;
+pub mod shared;
 pub mod tuning;
 pub mod view;
 
@@ -168,6 +169,9 @@ pub struct Fishing {
     /// (`balance.rammed_swim_mm`; [`Fishing::new`] makes it
     /// `fish.freed_swim_mm`, and the match sets it)
     pub rammed_swim_mm: tuning::PerTier,
+    /// **Hook for online play** (`shared.rs`): fish that got off a line
+    /// since the last look, by seat
+    pub freed: Vec<(usize, u32)>,
     rng: Rng,
 }
 
@@ -219,6 +223,7 @@ impl Fishing {
                 rare: fish.freed_swim_mm,
                 legendary: fish.freed_swim_mm,
             },
+            freed: Vec::new(),
             rng: Rng::stream(seed, 32),
         }
     }
@@ -266,6 +271,7 @@ impl Fishing {
             Stage::Reeling => {
                 let fish = line.fish.unwrap_or(0);
                 self.free(map, fish, rod);
+                self.freed.push((seat, fish as u32));
                 Some(if broke {
                     MatchEvent::LineBroke {
                         seat,
@@ -378,7 +384,6 @@ impl Fishing {
             self.seat_step(w, seat, b, rod, &i, scores, events);
         }
         self.move_engaged(w);
-        self.announcer.step(tick, events);
     }
 
     #[allow(clippy::too_many_arguments)]

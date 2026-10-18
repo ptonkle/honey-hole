@@ -9,7 +9,10 @@
 //!   `FishDropped` for the same seat and fish) is never announced; the
 //!   landing has its own popup.
 //! - It works on the tick's events only, so a `Hooked` raised by any system
-//!   is announced.
+//!   is announced (online, a remote seat's hook from its granted claim).
+//!   `Match::step` runs it last in the tick, after online play's look at
+//!   the tick's events (`fishing_shared_after`), so its insertions shift
+//!   nothing that reads them by index.
 
 use serde::Serialize;
 
@@ -43,7 +46,7 @@ impl Announcer {
         }
     }
 
-    /// After a tick's fishing: drops the waiting hooks whose fish came off
+    /// At the end of a tick: drops the waiting hooks whose fish came off
     /// or in, queues this tick's hooks, and adds the announcements due.
     pub fn step(&mut self, tick: u32, events: &mut Vec<MatchEvent>) {
         let mut out = Vec::with_capacity(events.len() + 1);

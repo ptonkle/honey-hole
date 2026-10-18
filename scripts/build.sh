@@ -30,6 +30,15 @@ while IFS= read -r sums; do
     exit 1
   fi
 done < <(find web -name SHA256SUMS -path '*/vendor/*' | sort)
+# ...and a file added beside them without a pin fails too (online play's
+# Trystero bundle, PLAN.md decision 11; the same check as Ape Race's).
+while IFS= read -r f; do
+  dir=$(dirname "$f"); name=$(basename "$f")
+  if [ "$name" != SHA256SUMS ] && ! grep -q "  $name\$" "$dir/SHA256SUMS" 2>/dev/null; then
+    echo "$f is not pinned in $dir/SHA256SUMS; do not add vendored files without a pin." >&2
+    exit 1
+  fi
+done < <(find web -path '*/vendor/*' -type f | sort)
 
 cargo build --release --target wasm32-unknown-unknown -p tool_shim
 
@@ -60,6 +69,7 @@ BUILD=$(find dist -type f | LC_ALL=C sort | xargs cat | sha256 | cut -c1-12)
 find dist -name '*.js' -not -path '*/vendor/*' -print0 | xargs -0 perl -0777 -pi -e "
   s{((?:from|import\\()\\s*\")(\\.{1,2}/[^\"?:]+\\.js)\"}{\$1\$2?v=$BUILD\"}g;
   s{(fetch\\(\")([^\"?:]+)\"}{\$1\$2?v=$BUILD\"}g;
+  s{(new Worker\\(\")([^\"?:]+\\.js)\"}{\$1\$2?v=$BUILD\"}g;
   s{new URL\\('([A-Za-z0-9_]+_bg\\.wasm)', import\\.meta\\.url\\)}{new URL('\$1?v=$BUILD', import.meta.url)}g;
 "
 find dist -name '*.html' -print0 | xargs -0 perl -0777 -pi -e "

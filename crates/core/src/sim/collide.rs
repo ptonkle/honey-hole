@@ -207,6 +207,47 @@ pub fn nearest_points(a: ([i64; 2], [i64; 2]), b: ([i64; 2], [i64; 2])) -> ([i64
     best
 }
 
+/// Two boats touching: the direction from the first to the second (Q16),
+/// how near their middle lines are (mm²) and may come (mm), and each one's
+/// speed toward the other, mm/s.
+pub struct Contact {
+    pub d: [i64; 2],
+    pub dist2: i64,
+    pub reach: i64,
+    pub a_toward: i32,
+    pub b_toward: i32,
+}
+
+/// Whether two boats touch, and how; `None` when they do not, or either is
+/// wrecked or ghosted. The host's online judging uses it too
+/// (`Match::judge_rams`).
+pub fn contact(a: &Boat, b: &Boat, r: &Rules, tick: u32) -> Option<Contact> {
+    if a.wrecked() || b.wrecked() || a.ghosted(tick) || b.ghosted(tick) {
+        return None;
+    }
+    let (pa, pb) = nearest_points(spine(a, r), spine(b, r));
+    let dist2 = d2(pa, pb);
+    let reach = 2 * r.half_beam as i64;
+    if dist2 >= reach * reach {
+        return None;
+    }
+    let mut d = unit([pb[0] - pa[0], pb[1] - pa[1]]);
+    if d == [0, 0] {
+        let (ca, cb) = (a.pos_um, b.pos_um);
+        d = unit([cb[0] - ca[0], cb[1] - ca[1]]);
+    }
+    if d == [0, 0] {
+        d = [ONE as i64, 0];
+    }
+    Some(Contact {
+        d,
+        dist2,
+        reach,
+        a_toward: dot(a.vel(), d) as i32,
+        b_toward: -dot(b.vel(), d) as i32,
+    })
+}
+
 /// Every touching pair of boats, in seat order.
 pub fn boats(m: &mut Match) {
     let n = m.boats.len();
@@ -216,29 +257,25 @@ pub fn boats(m: &mut Match) {
             let (Some(a), Some(b)) = (m.boats[i].as_ref(), m.boats[j].as_ref()) else {
                 continue;
             };
-            if a.wrecked() || b.wrecked() || a.ghosted(tick) || b.ghosted(tick) {
-                continue;
-            }
             let r = &m.rules;
-            let (pa, pb) = nearest_points(spine(a, r), spine(b, r));
-            let dist2 = d2(pa, pb);
-            let reach = 2 * r.half_beam as i64;
-            if dist2 >= reach * reach {
+            let Some(Contact {
+                d,
+                dist2,
+                reach,
+                a_toward,
+                b_toward,
+            }) = contact(a, b, r, tick)
+            else {
                 continue;
-            }
-            let mut d = unit([pb[0] - pa[0], pb[1] - pa[1]]);
-            if d == [0, 0] {
-                let (ca, cb) = (a.pos_um, b.pos_um);
-                d = unit([cb[0] - ca[0], cb[1] - ca[1]]);
-            }
-            if d == [0, 0] {
-                d = [ONE as i64, 0];
-            }
-            let a_toward = dot(a.vel(), d) as i32;
-            let b_toward = -dot(b.vel(), d) as i32;
+            };
             let (reel_i, reel_j) = (reeling(m, i), reeling(m, j));
             let need = |reel: bool| if reel { r.ram_wreck_reeling } else { r.ram_wreck };
             let (a_rams, b_rams) = (a_toward >= need(reel_j), b_toward >= need(reel_i));
+            if (a_rams || b_rams) && m.online.rams_elsewhere {
+                // online: the host judges it (`sim::remote`); the boats
+                // pass through each other until its verdict arrives
+                continue;
+            }
             if a_rams || b_rams {
                 let crash = |toward: i32| r.rammer_wreck > 0 && toward >= r.rammer_wreck;
                 let (a_crash, b_crash) = (a_rams && crash(a_toward), b_rams && crash(b_toward));

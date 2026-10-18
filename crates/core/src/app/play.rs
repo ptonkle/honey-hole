@@ -102,6 +102,27 @@ pub struct Play {
 }
 
 impl Play {
+    /// A match to play from seat `seat`, its clock started at `start_us`
+    /// (page time), the camera tilted `pitch_deg` down.
+    /// Online, the AI seats are the host's: a joiner's browser runs no
+    /// brain for a seat it does not simulate.
+    pub fn begin(game: Match, seat: usize, pitch_deg: i32, start_us: i64) -> Play {
+        let mut ai = crate::ai::Crew::new(&game);
+        ai.brains.retain(|b| !game.is_remote(b.seat));
+        Play {
+            ai,
+            watch: false,
+            game,
+            seat,
+            gather: Gather::default(),
+            pending_us: 0,
+            last_now: Some(start_us),
+            cam_yaw: 0,
+            cam_pitch: deg(pitch_deg),
+            log: Vec::new(),
+        }
+    }
+
     /// How far between the last tick and the next the drawing is (Q16).
     pub fn alpha(&self) -> i32 {
         (self.pending_us * ONE as i64 / (TICK_MS as i64 * 1000)) as i32
@@ -254,12 +275,13 @@ impl App {
                     .ok_or_else(|| format!("There is no difficulty \"{value}\"."))?;
             }
         }
+        self.online_setup_changed();
         Ok(())
     }
 
     /// The map seed for this match: the typed one, if it is a checked
     /// layout, or one picked by the match seed.
-    fn map_seed(&self, list: &MapList, match_seed: u64) -> Result<u32, String> {
+    pub(super) fn map_seed(&self, list: &MapList, match_seed: u64) -> Result<u32, String> {
         let lobby = self.lobby.as_ref().ok_or("The tuning file is not loaded yet.")?;
         if lobby.seed.is_empty() {
             return Ok(list::pick(list, match_seed));
@@ -361,6 +383,8 @@ impl App {
 
     /// Leaves the match for the Title.
     pub(crate) fn leave_match(&mut self) {
+        // online, a parting word first (`app/online_play.rs`)
+        self.leave_online();
         self.play = None;
         self.flow.reset();
         self.settings_return = false;
@@ -427,6 +451,7 @@ impl App {
         p.pending_us += dt;
         let mut ran = 0;
         let mut heard = Vec::new();
+        let mut online = self.online.session.as_mut();
         while p.pending_us >= step_us && ran < MAX_CATCH_UP {
             // the AI seats play by the same inputs (`ai/`)
             let mut inputs = p.ai.inputs(&p.game);
@@ -439,7 +464,11 @@ impl App {
                 inputs[p.seat] = mine;
             }
             let tick = p.game.tick;
-            for e in p.game.step(&inputs) {
+            p.game.step(&inputs);
+            if let Some(s) = online.as_mut() {
+                s.after_step(&mut p.game, now / 1000);
+            }
+            for e in &p.game.events {
                 p.log.push((tick + 1, e.clone()));
                 heard.push(serde_json::to_value(e).unwrap_or_default());
             }
@@ -485,7 +514,7 @@ impl App {
 
     // ---- panels ----
 
-    fn time_choices(&self, id: &str, label: &str, value: i32, choices: &[i32]) -> Item {
+    pub(super) fn time_choices(&self, id: &str, label: &str, value: i32, choices: &[i32]) -> Item {
         let options = choices
             .iter()
             .map(|&ms| Choice {
@@ -595,11 +624,13 @@ impl App {
         let w = &view.world;
         // the HUD itself is on the 2D layer (`flow/hud.rs`); this panel
         // holds only the Menu button, for the mouse
-        let hud = Panel::new(
+        let mut hud = Panel::new(
             "hud",
             String::new(),
             vec![Item::quiet_button("menu.pause", self.t("menu.pause"))],
         );
+        // online: who left, or that the host did (`app/online_play.rs`)
+        hud.sub = self.online_notice().unwrap_or_default();
         // the Fish-Boy up covers it
         let mut panels = if self.fishboy.open { Vec::new() } else { vec![hud] };
         // at the end the postgame follows (`flow/`); without the flow's

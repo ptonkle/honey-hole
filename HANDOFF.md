@@ -46,6 +46,8 @@ Every `SECOND-ORDER.md` row with status *person*, by number, with what the perso
 - R5.6: whether a ram should cost the rammer its held item (needs the items work; not built).
 - R2.11: the twelve draft AI names in `data/names.json`.
 - R2.21: the match setup's length choices (4, 8, 12 min) and buoy intervals (30 s to 2 min).
+- R3.44: whether two players both behind strict NATs must be able to connect (a TURN server: a server or a paid service, and a new origin).
+- R3.57: a try of online play by room code between two machines (the relay path no automatic check runs).
 - R1.160: the fish's new shapes from above and their new base lengths (R1.153, R1.154), in `notes/shots/models/fish-v2/`.
 - R2.116: the six more roster fish's look from the side and from above, in `notes/shots/models/fish-more/` (swims in `notes/shots/models/swims/`).
 - R2.117: a read of their six names (listed at the foot of `SECOND-ORDER.md`).
@@ -66,6 +68,12 @@ By system, from `SECOND-ORDER.md`, with the rule each one produced.
 ## What passed
 
 The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the date and commit.
+
+2026-10-18, the balance knobs for ramming, with a legendary popup 20 s late and an 80 m swim applied (`notes/balance-options.md`), merged with main at dc644e7 (online play) (branch `worktree-agent-a0102cd6c05bc4610`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 415 passed, 0 failed, 0 ignored; `break_tests.py` on the 10 new rows: 10 of 10 caught.
+
+2026-10-18, online play, both halves (transport, lobby, boats, wrecks, timer; fishing shared by claims; branch `online`, worktree `.claude/worktrees/online-redo`, after d5a813b, merged with main at dad627e): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `./scripts/check-online.sh`: `ONLINE CHECK PASSED` (chromium, firefox, webkit); `count-tests.sh`: 369 passed, 0 failed, 0 ignored; `scripts/break_tests.py online boundary:`: every new break caught (24 + 5 for shared fishing).
+
+2026-10-18, online play merged with the match flow and the AI (main at 3895a04; branch `online`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `ONLINE CHECK PASSED` (chromium, firefox, webkit); `count-tests.sh`: 407 passed, 0 failed, 0 ignored; `scripts/break_tests.py "online flow"`: 3 of 3 caught.
 
 2026-10-17, the menu machinery port (branch `worktree-agent-aaf1b7a85a5536b76`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 58 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 25 of 25 breaks caught.
 

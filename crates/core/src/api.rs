@@ -172,6 +172,29 @@ impl Session {
         crate::ui2d::numbers_json()
     }
 
+    /// A transport event from `web/online.js` (`app/online_play.rs`).
+    pub fn net_event(&mut self, kind: &str, peer: &str, text: &str, host: bool) {
+        if let Ok(app) = &mut self.app {
+            app.net_event(kind, peer, text, host);
+        }
+    }
+
+    /// A pasted code the transport made.
+    pub fn net_code(&mut self, which: &str, code: &str) {
+        if let Ok(app) = &mut self.app {
+            app.net_code(which, code);
+        }
+    }
+
+    /// Every frame while the page runs: the clock in, and the text to send
+    /// and the transport's requests out (`app::online_play::Pump`).
+    pub fn net_pump(&mut self, now: i64) -> String {
+        match &mut self.app {
+            Ok(app) => ok(&app.net_pump(now)),
+            Err(e) => error(e),
+        }
+    }
+
     /// Every number the renderer needs (`gfx::render::numbers_json`).
     pub fn numbers(&self) -> String {
         crate::gfx::render::numbers_json()
