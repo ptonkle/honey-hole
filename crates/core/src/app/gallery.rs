@@ -55,6 +55,10 @@ pub struct Look {
     /// fishing is drawn
     #[serde(default)]
     pub fishing: Option<super::fishing::FishingLook>,
+    /// the menus' lake backdrop (`app::title::TitleLook`); without it the
+    /// menus have none
+    #[serde(default)]
+    pub title: Option<super::title::TitleLook>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
@@ -91,6 +95,9 @@ impl Look {
         look.gallery.light.check()?;
         if let Some(lake) = &look.lake {
             lake.check()?;
+        }
+        if let Some(title) = &look.title {
+            title.check()?;
         }
         if look.gallery.turn_seconds <= 0 {
             return Err("The gallery's turn must take some seconds.".into());

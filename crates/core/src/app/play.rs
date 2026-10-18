@@ -415,6 +415,8 @@ impl App {
                     .split_once(',')
                     .and_then(|(x, y)| Some((whole(x)?, whole(y)?)))
                     .ok_or_else(|| format!("The mouse move \"{value}\" is not two whole numbers."))?;
+                // the reader's sensitivity and invert-Y (Settings)
+                let (dx, dy) = crate::controls::feel(dx, dy, self.settings.mouse_pct, self.settings.invert_y);
                 p.gather.mouse(dx, dy);
                 // with the Fish-Boy up the mouse points at its screen
                 if !p.menu_open() && !p.game.seats[p.seat].fishboy && !p.game.items.seats[p.seat].captures() {
@@ -557,10 +559,17 @@ impl App {
                 } else {
                     self.t("lobby.empty")
                 };
-                [self.t(&format!("colour.{}", sim::SEAT_COLOURS[k])), who]
+                crate::view::TableRow {
+                    cells: vec![self.t(&format!("colour.{}", sim::SEAT_COLOURS[k])), who],
+                    marked: k == 0,
+                    tone: sim::SEAT_COLOURS[k].into(),
+                }
             })
             .collect();
-        let mut items = vec![Item::List { rows }];
+        let mut items = vec![Item::Table {
+            head: vec![self.t("online_lobby.colour"), self.t("online_lobby.name")],
+            rows,
+        }];
         items.push(Item::Select {
             id: "lobby.ai".into(),
             label: self.t("lobby.ai"),

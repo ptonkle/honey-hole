@@ -11,6 +11,7 @@ import { makeRenderer } from "./gl.js";
 import { makeOverlay, bitmapFrom } from "./ui2d.js";
 import { startAudio } from "./audio.js";
 import { startNet } from "./net.js";
+import { loadSettings, saveSettings } from "./settings-store.js";
 
 const el = (id) => document.getElementById(id);
 const make = (tag, cls, text) => {
@@ -142,7 +143,7 @@ function table(item) {
   item.head.forEach((h) => head.append(make("th", "", h)));
   box.append(head);
   item.rows.forEach((r) => {
-    const tr = make("tr", r.marked ? "marked" : "");
+    const tr = make("tr", (r.marked ? "marked" : "") + (r.tone ? " tone tone-" + r.tone : ""));
     r.cells.forEach((c) => tr.append(make("td", "", c)));
     box.append(tr);
   });
@@ -339,6 +340,10 @@ function draw(result) {
   document.body.dataset.cursor = ui.hide_cursor ? "none" : "";
   if (ui.pointer && document.pointerLockElement) document.exitPointerLock();
   document.documentElement.dataset.textSize = ui.text_size;
+  // the menus over the lake backdrop (`app/title.rs`)
+  document.body.dataset.backdrop = ui.backdrop ? "on" : "";
+  // the settings as the core wrote them, kept for the next visit
+  saveSettings(ui.settings);
   const version = el("version");
   if (version.textContent !== ui.version) version.textContent = ui.version;
   version.disabled = !ui.version_opens;
@@ -354,6 +359,20 @@ function draw(result) {
 function typing(e) {
   const t = e.target;
   return t.tagName === "SELECT" || t.tagName === "TEXTAREA" || (t.tagName === "INPUT" && t.type === "text");
+}
+
+// Up and Down move the focus between a menu's controls, as Tab and
+// Shift+Tab do, while a button or a toggle has it (a slider, a select and
+// a text field keep their own arrow keys).
+function arrowFocus(e) {
+  const t = e.target;
+  if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+  if (!(t.tagName === "BUTTON" || (t.tagName === "INPUT" && t.type === "checkbox"))) return;
+  const all = [...el("menus").querySelectorAll("button:not([disabled]), input:not([disabled]), select:not([disabled])")];
+  const next = all[all.indexOf(t) + (e.key === "ArrowDown" ? 1 : -1)];
+  if (!next) return;
+  e.preventDefault();
+  next.focus();
 }
 
 function bindInput() {
@@ -387,6 +406,7 @@ function bindInput() {
     if (ui && ui.capture) e.preventDefault();
   });
   watchSelects();
+  el("menus").addEventListener("keydown", arrowFocus);
   document.addEventListener("input", (e) => {
     if (e.target.matches && e.target.matches("#menus input[type=text]")) editing = e.target;
   }, true);
@@ -452,7 +472,7 @@ function frame(now) {
     document.body.dataset.ui2d = list.status;
     // a match's clock moves: its view model is asked for each frame
     if (ui.live) draw(JSON.parse(game.ui()));
-    if (ui.panels.length) document.body.dataset.drawn = ui.panels[0].heading;
+    if (ui.panels.length && !ui.backdrop) document.body.dataset.drawn = ui.panels[0].heading;
   }
   requestAnimationFrame(frame);
 }
@@ -478,6 +498,9 @@ async function main() {
   const sounds = await (await fetch("data/sounds.json")).text();
   const tuning = await (await fetch("data/tuning.json")).text();
   game = new Game(strings, notes);
+  // the settings from an earlier visit, checked by the core, before the
+  // first draw writes the defaults back
+  loadSettings(game);
   bindInput();
   draw(JSON.parse(game.load_models(models, look)));
   send("data.ui2d", ui2dLook);
@@ -509,6 +532,8 @@ async function main() {
   startNet(game, draw);
   renderer = makeRenderer(el("scene"), JSON.parse(game.numbers()), shaders);
   if (!renderer) send("scene.unavailable", "");
+  // the Title's backdrop draws before any action: its canvas's size now
+  else if (ui && ui.scene) resize();
   window.addEventListener("resize", () => renderer && resize());
   requestAnimationFrame(frame);
   document.body.dataset.ready = "true";

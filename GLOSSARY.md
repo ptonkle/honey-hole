@@ -230,6 +230,12 @@ One fish, boat, figure, item or piece of scenery, kept as its own file of flat-c
 
 Not: mesh, asset, sprite
 
+### Mouse sensitivity
+
+How far the camera turns for a move of the mouse, in percent of the usual turn. A Settings slider.
+
+Not: mouse speed, DPI
+
 ### My catch
 
 The Fish-Boy's tab that lists your own catches this match, newest first: each fish's name, tier and length. It shows no points; scores stay hidden until the postgame.
@@ -334,13 +340,13 @@ Not: lobby code, game ID, PIN
 
 ### Settings
 
-The screen where the reader sets the volume, the text size, their name in matches and whether the map seed shows in a match. Settings last for this visit.
+The screen where the reader sets the volume, the text size, their name in matches, the mouse sensitivity, whether the mouse is inverted up and down, and whether the map seed shows in a match. The browser keeps them for the next visit.
 
 Not: options, preferences, config
 
 ### Sounds
 
-The screen, opened from the Gallery, that plays each of the game's sounds on a click, and runs the motors and the line's whine at chosen settings, including another boat's motor driving past. The game makes every sound from a recipe as it plays; there are no recordings.
+The screen, opened from the Workshop or the Gallery, that plays each of the game's sounds on a click, and runs the motors and the line's whine at chosen settings, including another boat's motor driving past. The game makes every sound from a recipe as it plays; there are no recordings.
 
 Not: soundboard, audio test, sound test
 
@@ -370,7 +376,7 @@ Not: rarity class, grade
 
 ### Title
 
-The first screen: the game's name, its menu and its controls.
+The first screen: the game's name, its menu, the Workshop and the controls, over a live view of Burt Lake.
 
 Not: home screen, main menu, start screen
 
@@ -397,6 +403,12 @@ Not: loudness, sound level
 The screen listing what each version changed, newest first.
 
 Not: changelog, release notes, patch notes, news
+
+### Workshop
+
+The Title's smaller buttons for the screens used to build and check the game: the Gallery, the Lake preview, Sounds and Minigames.
+
+Not: debug menu, dev tools, tools
 
 ### Wreck
 

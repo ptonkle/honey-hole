@@ -108,13 +108,14 @@ fn triangles(a: &App) -> usize {
 #[test]
 fn the_gallery_opens_from_the_title_with_its_scene_and_escape_closes_it() {
     let mut a = App::new(&crate::strings::tests::complete(), NOTES).unwrap();
-    assert!(!a.ui().scene);
+    // the Title's scene is the lake backdrop (`app/title.rs`)
+    assert!(a.ui().backdrop);
     a.act("menu.gallery", "").unwrap();
     assert_eq!(a.screen, Screen::Gallery);
-    assert!(a.ui().scene);
+    assert!(a.ui().scene && !a.ui().backdrop);
     a.act("key", "Escape").unwrap();
     assert_eq!(a.screen, Screen::Title);
-    assert!(!a.ui().scene);
+    assert!(a.ui().backdrop);
 }
 
 #[test]

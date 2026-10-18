@@ -1,6 +1,6 @@
 {
   "_note": "The working name stands in as the title until the person names the game.",
-  "title": "Fishing",
+  "title": "Honey Hole",
   "menu.play": "Play",
   "menu.settings": "Settings",
   "menu.notes": "What's New",
@@ -293,5 +293,9 @@
   "camera.save_key": "Esc",
   "camera.save": "Save for later",
   "teleport.choose": "Click the radar where you want to teleport.",
-  "teleport.keys": "Esc gives it up, and the Teleporter is lost."
+  "teleport.keys": "Esc gives it up, and the Teleporter is lost.",
+  "workshop.heading": "Workshop",
+  "settings.mouse": "Mouse sensitivity",
+  "settings.invert_y": "Invert mouse up and down",
+  "settings.kept": "This browser keeps your settings for your next visit."
 }

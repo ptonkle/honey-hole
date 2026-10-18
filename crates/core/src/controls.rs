@@ -30,6 +30,29 @@ pub struct MouseTuning {
     pub pitch_start_deg: i32,
 }
 
+/// The Settings screen's mouse sensitivity: a share of the controls
+/// file's turn, in percent, from `MOUSE_PCT_MIN` to `MOUSE_PCT_MAX` in
+/// steps of `MOUSE_PCT_STEP`.
+pub const MOUSE_PCT_MIN: u32 = 25;
+pub const MOUSE_PCT_MAX: u32 = 300;
+pub const MOUSE_PCT_STEP: u32 = 25;
+pub const MOUSE_PCT_DEFAULT: u32 = 100;
+
+/// A sensitivity the page sent, kept inside the slider's range and on its
+/// steps.
+pub fn mouse_pct(pct: u32) -> u32 {
+    let pct = pct.clamp(MOUSE_PCT_MIN, MOUSE_PCT_MAX);
+    (pct - MOUSE_PCT_MIN) / MOUSE_PCT_STEP * MOUSE_PCT_STEP + MOUSE_PCT_MIN
+}
+
+/// A mouse movement as the reader's settings make it: scaled by the
+/// sensitivity (percent) and, with `invert_y`, up and down swapped.
+pub fn feel(dx: i32, dy: i32, pct: u32, invert_y: bool) -> (i32, i32) {
+    let scale = |d: i32| (d as i64 * pct as i64 / 100) as i32;
+    let dy = scale(dy);
+    (scale(dx), if invert_y { -dy } else { dy })
+}
+
 /// The checked controls.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Controls {
@@ -194,6 +217,19 @@ mod tests {
         g.release_all();
         let i = g.take();
         assert!(!i.held.forward && i.released.forward);
+    }
+
+    #[test]
+    fn sensitivity_scales_the_mouse_and_invert_flips_only_up_and_down() {
+        // 200%: 10 px right and 4 px down turn as 20 and 8
+        assert_eq!(feel(10, 4, 200, false), (20, 8));
+        // 50% and inverted: 10 right, 4 down -> 5 right, 2 up
+        assert_eq!(feel(10, 4, 50, true), (5, -2));
+        assert_eq!(feel(-7, 0, 100, true), (-7, 0));
+        // the slider's own steps: 25 to 300 by 25
+        assert_eq!(mouse_pct(0), 25);
+        assert_eq!(mouse_pct(130), 125);
+        assert_eq!(mouse_pct(999), 300);
     }
 
     #[test]

@@ -22,11 +22,13 @@ impl App {
                 self.settings.text_size =
                     TextSize::from_key(value).ok_or_else(|| format!("There is no text size \"{value}\"."))?;
             }
-            other => return Err(format!("Unknown action \"{other}\".")),
+            other => return self.more_settings_act(other, value),
         }
         Ok(())
     }
 
+    /// The Title: the game's name, its menu, the Workshop's debug screens
+    /// as smaller buttons, and the controls.
     pub(super) fn title_panels(&self) -> Vec<Panel> {
         vec![
             Panel::new("title", self.t("title"), Vec::new()),
@@ -37,10 +39,15 @@ impl App {
                     self.button("menu.play"),
                     self.button("menu.settings"),
                     self.button("menu.notes"),
-                    self.button("menu.gallery"),
-                    self.button("menu.lake"),
-                    self.button("menu.minigames"),
                 ],
+            ),
+            Panel::new(
+                "workshop",
+                self.t("workshop.heading"),
+                ["menu.gallery", "menu.lake", "menu.sounds", "menu.minigames"]
+                    .iter()
+                    .map(|id| Item::quiet_button(id, self.t(id)))
+                    .collect(),
             ),
             self.controls_panel(),
         ]
@@ -69,39 +76,41 @@ impl App {
                 disabled: false,
             })
             .collect();
-        vec![Panel::new(
-            "settings",
-            self.t("settings.heading"),
-            vec![
-                Item::Slider {
-                    id: "settings.volume".into(),
-                    label: self.t("settings.volume"),
-                    min: 0,
-                    max: VOLUME_MAX,
-                    step: VOLUME_STEP,
-                    value: s.volume,
-                    text: format!("{}%", s.volume),
-                },
-                Item::Select {
-                    id: "settings.text_size".into(),
-                    label: self.t("settings.text_size"),
-                    value: s.text_size.key().into(),
-                    options: sizes,
-                },
-                Item::Text {
-                    id: "settings.name".into(),
-                    label: self.t("settings.name"),
-                    value: s.name.clone(),
-                    max: super::play::NAME_MAX,
-                    placeholder: self.t("name.default"),
-                },
-                Item::Toggle {
-                    id: "settings.show_seed".into(),
-                    label: self.t("settings.show_seed"),
-                    value: s.show_seed,
-                },
-                self.button("menu.back"),
-            ],
-        )]
+        // the volume first: a screen's first control takes the focus, and a
+        // text field keeps Esc from leaving the screen
+        let mut items = vec![
+            Item::Slider {
+                id: "settings.volume".into(),
+                label: self.t("settings.volume"),
+                min: 0,
+                max: VOLUME_MAX,
+                step: VOLUME_STEP,
+                value: s.volume,
+                text: format!("{}%", s.volume),
+            },
+            Item::Select {
+                id: "settings.text_size".into(),
+                label: self.t("settings.text_size"),
+                value: s.text_size.key().into(),
+                options: sizes,
+            },
+            Item::Text {
+                id: "settings.name".into(),
+                label: self.t("settings.name"),
+                value: s.name.clone(),
+                max: super::play::NAME_MAX,
+                placeholder: self.t("name.default"),
+            },
+        ];
+        items.extend(self.more_settings_items());
+        items.push(Item::Toggle {
+            id: "settings.show_seed".into(),
+            label: self.t("settings.show_seed"),
+            value: s.show_seed,
+        });
+        items.push(self.button("menu.back"));
+        let mut p = Panel::new("settings", self.t("settings.heading"), items);
+        p.sub = self.t("settings.kept");
+        vec![p]
     }
 }
