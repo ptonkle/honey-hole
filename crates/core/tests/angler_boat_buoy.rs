@@ -10,8 +10,7 @@ fn load(id: &str) -> Model {
     let path: PathBuf = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../data/models")
         .join(format!("{id}.json"));
-    let json =
-        fs::read_to_string(&path).unwrap_or_else(|e| panic!("cannot read {}: {e}", path.display()));
+    let json = fs::read_to_string(&path).unwrap_or_else(|e| panic!("cannot read {}: {e}", path.display()));
     model::parse(id, &json).unwrap_or_else(|e| panic!("{e}"))
 }
 
@@ -24,7 +23,11 @@ fn lowest_mm(m: &Model, anim: Anim, ms: u32) -> i64 {
 
 #[test]
 fn the_boat_angler_and_buoy_load_as_their_kinds_in_a_few_hundred_faces() {
-    for (id, kind) in [("boat", Kind::Boat), ("angler", Kind::Figure), ("item-buoy", Kind::Item)] {
+    for (id, kind) in [
+        ("boat", Kind::Boat),
+        ("angler", Kind::Figure),
+        ("item-buoy", Kind::Item),
+    ] {
         let m = load(id);
         assert_eq!(m.kind, kind, "{id}");
         assert!(m.faces.len() <= 400, "{id} has {} faces", m.faces.len());
@@ -40,7 +43,10 @@ fn the_angler_keeps_its_feet_on_the_anchor_seated_and_standing() {
         let ms = m.animation(anim).unwrap().ms;
         for at in [0, ms / 2] {
             let low = lowest_mm(&m, anim, at);
-            assert!((-20..=20).contains(&low), "{anim:?} at {at} ms: lowest point {low} mm");
+            assert!(
+                (-20..=20).contains(&low),
+                "{anim:?} at {at} ms: lowest point {low} mm"
+            );
         }
     }
 }
