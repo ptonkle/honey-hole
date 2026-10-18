@@ -16,6 +16,7 @@ use crate::strings::{self, Strings};
 use crate::view::{Item, Panel};
 
 pub mod gallery;
+pub mod lake;
 mod menus;
 mod notes;
 pub mod play;
@@ -42,6 +43,8 @@ pub enum Screen {
     Gallery,
     /// every sound, played on a click (`app/sounds.rs`)
     Sounds,
+    /// a map drawn in 3D with a camera tour, for debugging (`app/lake.rs`)
+    Lake,
 }
 
 /// How large the menus' text is drawn. The page scales its text by it.
@@ -150,6 +153,11 @@ pub struct App {
     /// the sound recipes and the cues waiting for the page (`load_sounds`)
     pub sound: Option<crate::sound::Sound>,
     pub sounds: sounds::SoundsScreen,
+    /// the Lake preview's choices
+    pub preview: lake::Preview,
+    /// the lake drawn now, built once per map (`scene::Lake`); the page
+    /// uploads its static vertices when its stamp changes
+    pub world: Option<crate::scene::Lake>,
 }
 
 impl App {
@@ -177,6 +185,8 @@ impl App {
             scene_unavailable: false,
             sound: None,
             sounds: sounds::SoundsScreen::default(),
+            preview: lake::Preview::default(),
+            world: None,
         })
     }
 
@@ -206,9 +216,12 @@ impl App {
     fn escape(&mut self) {
         match self.screen {
             Screen::Play => {}
-            Screen::Settings | Screen::Notes | Screen::Gallery | Screen::Lobby | Screen::Sounds => {
-                self.back()
-            }
+            Screen::Settings
+            | Screen::Notes
+            | Screen::Gallery
+            | Screen::Lobby
+            | Screen::Sounds
+            | Screen::Lake => self.back(),
             Screen::Title => {}
         }
     }
@@ -224,6 +237,7 @@ impl App {
                 | Screen::Gallery
                 | Screen::Lobby
                 | Screen::Sounds
+                | Screen::Lake
         )
     }
 
@@ -255,6 +269,7 @@ impl App {
             "menu.notes" => self.go(Screen::Notes),
             "menu.gallery" => self.go(Screen::Gallery),
             "menu.sounds" => self.go(Screen::Sounds),
+            "menu.lake" => self.open_lake(),
             "scene.unavailable" => self.scene_unavailable = true,
             "version" if self.version_opens_notes() => self.go(Screen::Notes),
             "version" => {}
@@ -270,6 +285,7 @@ impl App {
             _ if name.starts_with("settings.") => self.settings_act(name, value)?,
             _ if name.starts_with("gallery.") => self.gallery_act(name, value)?,
             _ if name.starts_with("sounds.") => self.sounds_act(name, value)?,
+            _ if name.starts_with("lake.") => self.lake_act(name, value)?,
             other => return Err(format!("Unknown action \"{other}\".")),
         }
         Ok(())
@@ -290,6 +306,30 @@ impl App {
 
     // ---- what the page shows ----
 
+    /// This frame's draw data (`gfx::render::Frame`): the screen's 3D
+    /// scene, or nothing on a screen without one.
+    pub fn frame(&self) -> crate::gfx::render::Frame {
+        match self.screen {
+            Screen::Gallery => self.gallery_frame(),
+            Screen::Lake => self.lake_frame(),
+            Screen::Play => self.match_frame().unwrap_or_else(|| {
+                let (view, tris) = self.play_frame();
+                crate::gfx::render::Frame {
+                    view,
+                    tris,
+                    ..Default::default()
+                }
+            }),
+            _ => crate::gfx::render::Frame::default(),
+        }
+    }
+
+    /// The static world's stamp, 0 for none: the page uploads its
+    /// vertices again when it changes.
+    pub fn world_stamp(&self) -> u32 {
+        self.world.as_ref().map_or(0, |w| w.stamp())
+    }
+
     pub fn ui(&self) -> Ui {
         let panels = match self.screen {
             Screen::Title => self.title_panels(),
@@ -299,6 +339,7 @@ impl App {
             Screen::Play => self.play_panels(),
             Screen::Gallery => self.gallery_panels(),
             Screen::Sounds => self.sounds_panels(),
+            Screen::Lake => self.lake_panels(),
         };
         Ui {
             screen: self.screen,
@@ -307,7 +348,7 @@ impl App {
             version_opens: self.version_opens_notes(),
             text_size: self.settings.text_size,
             volume: self.settings.volume,
-            scene: matches!(self.screen, Screen::Gallery | Screen::Play),
+            scene: matches!(self.screen, Screen::Gallery | Screen::Play | Screen::Lake),
             capture: self.screen == Screen::Play
                 && self
                     .play

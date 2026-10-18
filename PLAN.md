@@ -44,6 +44,10 @@ Collected as the agent makes them; brought up in the morning. Each also has a ro
 - V5. Sound: a rival's motor is heard from 5 s at top speed (80 m), rising with the square of the nearness to full within 6 m, and its Doppler shift is exaggerated 3 times (about +16% closing, -12% leaving) because the true shift of a boat is under a semitone (SECOND-ORDER R2.93, R2.94). Every sound's recipe is the agent's: audition them on the Sounds screen (Gallery, Sounds) and say which to change.
 - V6. Sound: the 3-2-1 beeps are alike with a higher go, the buoy's five beats climb to a high last one, and an explosion and the wreck chime are heard by every player at full volume (SECOND-ORDER R2.96, R2.97, R2.106).
 - V7. Six more roster fish modelled (pumpkinseed, rock bass, largemouth bass, black crappie, channel catfish, lake trout), bases 150 to 600 mm on the same 1.5× rule (SECOND-ORDER R2.110 to R2.117).
+- V8. The lake's look: overcast grey-blue sky, fog thickening from 22% of the sight distance, water 30% see-through looking down, cool greens (`notes/shots/world/`, `data/look.json` "lake"; SECOND-ORDER R2.35, R2.37, R2.39).
+- V9. Props the scene adds beyond the map: the dock behind the spawn, two cabins, lily pads, shore rocks, boulders, fallen logs; maples drawn as birches or tall spruces (R2.34, R2.40).
+- V10. The boat camera: 9 m behind, 3.8 m up, 10° down, 55° field of view (R2.43).
+- V11. Glowing colours take 45% of the fog on the lake, so the buoy's beacon and a cabin window read through it (R2.42).
 
 ## Status
 

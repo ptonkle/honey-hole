@@ -21,7 +21,7 @@ pub mod fish;
 mod generate;
 pub mod grid;
 pub mod list;
-mod noise;
+pub mod noise;
 pub mod rng;
 pub mod trig;
 pub mod validate;

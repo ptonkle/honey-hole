@@ -102,5 +102,20 @@
   "sounds.heard": "Heard",
   "sounds.heard_as": "gain {gain}%, pitch {pitch}%",
   "sounds.silent": "too far away to hear",
-  "sounds.drive_past": "Drive past at top speed"
+  "sounds.drive_past": "Drive past at top speed",
+  "menu.lake": "Lake preview",
+  "lake.heading": "Lake preview",
+  "lake.seed": "Map seed",
+  "lake.view": "Camera",
+  "lake.view.tour": "Tour of the lake",
+  "lake.view.spawn": "At the spawn point",
+  "lake.view.dock": "Back at the dock",
+  "lake.view.island": "By an island",
+  "lake.view.reeds": "Across the reeds",
+  "lake.view.under": "Under the surface",
+  "lake.view.above": "Over the whole lake",
+  "lake.fog_on": "Fog",
+  "lake.fog": "Fog distance",
+  "lake.metres": "{m} m",
+  "lake.none": "The lake cannot be drawn: the map list or the lake's look is missing."
 }

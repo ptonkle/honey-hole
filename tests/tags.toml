@@ -24,6 +24,8 @@ gfx = "the 3D drawing's core: fixed-point maths, geometry, the renderer and the 
 models = "model files and their reader: data/models/, model.rs"
 gallery = "the Gallery screen that shows each model (app/gallery.rs)"
 maps = "map generation: the generator, validator, fish placement and buoy point (crates/core/src/map/), the map tool (crates/core/examples/), data/maps/ and the preview renderer (tools/maps/)"
+scene = "the 3D world of a map: terrain, water, props, instancing, fog, cameras (crates/core/src/scene/, crates/core/examples/lake.rs)"
+lake = "the Lake preview screen that draws a map with a camera tour and the fog control (app/lake.rs)"
 sim = "the match core: the Match, boats, collisions, wrecks, the timer, events, the tuning and controls files and their readers (crates/core/src/sim/, tuning.rs, controls.rs, data/tuning.json, data/controls.json)"
 sound = "the sound engine: recipes, events to cues, motors and Doppler, the Sounds screen (crates/core/src/sound/, app/sounds.rs, data/sounds.json, the audio section of data/tuning.json, web/audio.js)"
 tooling = "scripts outside the check (serve, publish, audits, watch window): nothing beyond the always-run tests"
@@ -31,8 +33,10 @@ tooling = "scripts outside the check (serve, publish, audits, watch window): not
 # Hitting a tag also hits these, for a tag whose change reaches another's
 # tests: `a = ["b"]`.
 [implies]
-gfx = ["models", "gallery"]
-models = ["gallery"]
+gfx = ["models", "gallery", "scene"]
+models = ["gallery", "lake"]
+scene = ["lake"]
+maps = ["scene"]
 
 # Tags whose tests always run in a quick check.
 [always]
@@ -64,6 +68,10 @@ tags = ["boundary"]
 "crates/core/src/model/**" = ["models"]
 "crates/core/src/app/gallery.rs" = ["gallery", "menus"]
 "crates/core/src/app/gallery/**" = ["gallery"]
+"crates/core/src/scene/**" = ["scene"]
+"crates/core/src/app/lake.rs" = ["lake", "menus"]
+"crates/core/src/app/lake/**" = ["lake"]
+"crates/core/examples/lake.rs" = ["scene"]
 "crates/core/src/app/play.rs" = ["sim", "menus"]
 "crates/core/src/app/play/**" = ["sim", "menus"]
 "data/names.json" = ["sim", "copy"]
@@ -188,6 +196,8 @@ tags = ["boundary"]
 "lib:gfx::" = ["gfx"]
 "lib:model::" = ["models"]
 "lib:app::gallery::" = ["gallery", "menus", "copy"]
+"lib:scene::" = ["scene"]
+"lib:app::lake::" = ["lake", "scene", "menus", "copy", "models", "sim"]
 "lib:app::play::" = ["sim", "menus", "copy", "maps"]
 "lib:app::tests::escape_in_play_" = ["menus", "copy", "sim"]
 "lib:app::tests::the_menu_button_" = ["menus", "copy", "sim"]
@@ -216,4 +226,5 @@ settings = ["menus", "copy", "page"]
 notes = ["menus", "copy", "whatsnew", "page"]
 play = ["menus", "copy", "page", "sim", "maps", "gfx"]
 gallery = ["gallery", "models", "gfx", "menus", "copy", "page"]
+lake = ["lake", "scene", "maps", "models", "gfx", "menus", "copy", "page"]
 sounds = ["sound", "menus", "copy", "page"]

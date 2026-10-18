@@ -303,3 +303,24 @@ fn models_come_in_gallery_order() {
     let e = parse_all(&json!({ "reed": bad }).to_string()).unwrap_err();
     assert!(e.starts_with("reed: the unit"), "{e}");
 }
+
+#[test]
+fn a_colour_marked_glow_is_drawn_unlit_and_a_plain_one_lit() {
+    let mut v = jointed();
+    v["colours"]["grey"] = json!({ "rgb": [128, 128, 128], "glow": true });
+    let m = load(&v).unwrap();
+    let mut out = Vec::new();
+    let t = m.transforms(&m.poses(None, 0));
+    m.draw(&t, &Affine::IDENTITY, &m.colours([0; 3]), &mut out);
+    let glow = |tri: usize| out[tri * 3 * render::VERTEX_VALUES + 9];
+    // the grey face glows (ONE), the slot's face does not
+    assert_eq!((glow(0), glow(1)), (ONE, 0));
+    // the object form without glow is a plain lit colour, as the array is
+    v["colours"]["grey"] = json!({ "rgb": [128, 128, 128] });
+    assert_eq!(load(&v).unwrap().glows, vec![false, false]);
+    // a slot may glow too
+    v["colours"]["hull"] = json!({ "slot": "player", "glow": true });
+    assert_eq!(load(&v).unwrap().glows, vec![false, true]);
+    v["colours"]["grey"] = json!({ "rgb": [300, 0, 0], "glow": true });
+    refused(v, "the colour \"grey\" is outside 0 to 255.");
+}

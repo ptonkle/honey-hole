@@ -310,6 +310,9 @@ impl App {
         let map_seed = self.map_seed(&list, match_seed)?;
         let setup = self.setup(match_seed)?;
         let map = generate(Setting::MichiganLake, map_seed);
+        // the lake's world, uploaded once (`app/lake.rs`); without the
+        // lake's look the match draws its stand-in
+        let _ = self.show_world(&map);
         let game = Match::new(map, &t, setup)?;
         self.play = Some(Play {
             game,
@@ -638,7 +641,11 @@ impl App {
         let sight = mm_to_q16(map.setting.params().sight_mm);
         let fog = (sight / 3, sight);
         let aspect = render::aspect(self.size);
-        (render::view_values(&cam, aspect, fog, &look.gallery.light), tris)
+        let light = &look.gallery.light;
+        (
+            render::view_values(&cam, aspect, fog, light, &render::Air::plain(light)),
+            tris,
+        )
     }
 }
 

@@ -47,7 +47,13 @@ fn the_app_opens_on_the_title_with_its_menu() {
     assert_eq!(a.screen, Screen::Title);
     assert_eq!(
         ids(&a),
-        ["menu.play", "menu.settings", "menu.notes", "menu.gallery"]
+        [
+            "menu.play",
+            "menu.settings",
+            "menu.notes",
+            "menu.gallery",
+            "menu.lake"
+        ]
     );
     let v = ui(&a);
     assert_eq!(v["screen"], "title");

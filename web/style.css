@@ -137,7 +137,7 @@ table { border-collapse: collapse; width: 100%; }
 #version:disabled { cursor: default; }
 #version:empty { display: none; }
 
-/* ---- the 3D scene, behind the Gallery's panel ---- */
+/* ---- the 3D scene, behind the Gallery's and the Lake preview's panel ---- */
 #scene {
   position: fixed;
   inset: 0;
@@ -145,7 +145,8 @@ table { border-collapse: collapse; width: 100%; }
   height: 100%;
   display: none;
 }
-body[data-screen="gallery"] #scene { display: block; }
+body[data-screen="gallery"] #scene,
+body[data-screen="lake"] #scene { display: block; }
 body[data-screen="play"] #scene { display: block; }
 /* Play: the HUD in the top corner over the lake */
 body[data-screen="play"] #menus {
@@ -157,7 +158,8 @@ body[data-screen="play"] #menus {
   width: 16rem;
 }
 .panel.hud { background: color-mix(in srgb, var(--panel) 80%, transparent); }
-body[data-screen="gallery"] #menus {
+body[data-screen="gallery"] #menus,
+body[data-screen="lake"] #menus {
   position: fixed;
   left: 1rem;
   top: 1rem;
@@ -165,7 +167,8 @@ body[data-screen="gallery"] #menus {
   padding: 0;
   width: 19rem;
 }
-.panel.gallery { background: color-mix(in srgb, var(--panel) 88%, transparent); }
+.panel.gallery,
+.panel.lake { background: color-mix(in srgb, var(--panel) 88%, transparent); }
 .panel.notice { color: var(--error); }
 .field.text input { font: inherit; padding: 0.35rem 0.5rem; }
 
