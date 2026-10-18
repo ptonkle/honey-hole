@@ -10,6 +10,7 @@ import init, { Game } from "./pkg/tool_shim.js";
 import { makeRenderer } from "./gl.js";
 import { makeOverlay, bitmapFrom } from "./ui2d.js";
 import { startAudio } from "./audio.js";
+import { startNet } from "./net.js";
 
 const el = (id) => document.getElementById(id);
 const make = (tag, cls, text) => {
@@ -241,7 +242,9 @@ function patch(old, fresh) {
   patchChildren(old, fresh);
   // the live state, after the children (a select's value needs its options)
   if (old.tagName === "INPUT" || old.tagName === "SELECT" || old.tagName === "TEXTAREA") {
-    if (old.value !== fresh.value) old.value = fresh.value;
+    // a field being typed in keeps its text until it sends it (a live
+    // screen, such as the online Lobby, redraws many times a second)
+    if (old.value !== fresh.value && old !== editing) old.value = fresh.value;
     if (old.checked !== fresh.checked) old.checked = fresh.checked;
   }
   if (old.disabled !== undefined && old.disabled !== fresh.disabled) old.disabled = fresh.disabled;
@@ -263,6 +266,9 @@ function patchChildren(old, fresh) {
 // closes (a choice, Escape, Enter or Tab, a click anywhere, or the focus
 // leaving it).
 let openSelect = null;
+
+// The text field typed in since it last sent its text, if any.
+let editing = null;
 
 function selectClosed() {
   if (!openSelect) return;
@@ -378,6 +384,13 @@ function bindInput() {
     if (ui && ui.capture) e.preventDefault();
   });
   watchSelects();
+  document.addEventListener("input", (e) => {
+    if (e.target.matches && e.target.matches("#menus input[type=text]")) editing = e.target;
+  }, true);
+  // before the change is sent, so the core's answer is drawn into it
+  document.addEventListener("change", (e) => {
+    if (e.target === editing) editing = null;
+  }, true);
   // the pointer over the 2D layer, in CSS pixels (the core turns it into
   // its own units)
   const overlay = el("overlay");
@@ -484,6 +497,10 @@ async function main() {
   const debug = new URLSearchParams(location.search).get("debug");
   if (debug) send("debug.flags", debug);
   startAudio(game);
+  // `?codes`: the pasted-code path to online play, for the automated
+  // online check (scripts/check-online.sh); players use room codes
+  if (new URLSearchParams(location.search).has("codes")) send("flag.codes", "on");
+  startNet(game, draw);
   renderer = makeRenderer(el("scene"), JSON.parse(game.numbers()), shaders);
   if (!renderer) send("scene.unavailable", "");
   window.addEventListener("resize", () => renderer && resize());

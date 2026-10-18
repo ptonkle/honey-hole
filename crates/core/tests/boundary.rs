@@ -490,9 +490,62 @@ fn strip_js(src: &str) -> String {
     out
 }
 
+/// What one page file may do beyond the strict defaults. Online play
+/// (PLAN.md decision 11, BUILDER-SPEC.md "Changes to the defaults") needs
+/// narrow exemptions, each given to the one file that needs it, named by its
+/// path under `web/`, and to no other (the same ones Ape Race and Mandible
+/// record):
+///
+/// - `web/online.js` may name the WebRTC names in [`ONLINE_JS_MAY_NAME`]. It
+///   keeps every other ban, numbers and `Math` included.
+/// - `web/online-config.js` may hold numbers (transport timings and the
+///   channel id, none of them a game rule) and absolute `wss://` URLs (the
+///   pinned Nostr relays). It keeps every forbidden name.
+///
+/// Third-party code in `web/vendor/` is not scanned at all ([`files_under`]
+/// skips it); the vendored bundle is pinned by sha256 in
+/// `web/vendor/SHA256SUMS`, which `scripts/build.sh` checks.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct PagePolicy {
+    webrtc: bool,
+    numbers: bool,
+    wss_urls: bool,
+}
+
+const STRICT: PagePolicy = PagePolicy {
+    webrtc: false,
+    numbers: false,
+    wss_urls: false,
+};
+
+/// The names `web/online.js`, and only it, may use.
+const ONLINE_JS_MAY_NAME: &[&str] = &["RTCPeerConnection"];
+
+/// The policy for a page file, by its path under `web/` ("online.js";
+/// "x/online.js" is another file and gets nothing).
+fn page_policy(path_in_web: &str) -> PagePolicy {
+    match path_in_web {
+        "online.js" => PagePolicy {
+            webrtc: true,
+            ..STRICT
+        },
+        "online-config.js" => PagePolicy {
+            numbers: true,
+            wss_urls: true,
+            ..STRICT
+        },
+        _ => STRICT,
+    }
+}
+
 /// Scans page JavaScript for rule-like code: numeric literals other than 0
 /// and 1, and the forbidden names above.
 fn scan_page_js(src: &str) -> Vec<Violation> {
+    scan_page_js_as(src, STRICT)
+}
+
+/// [`scan_page_js`], with one file's exemptions.
+fn scan_page_js_as(src: &str, policy: PagePolicy) -> Vec<Violation> {
     let code = strip_js(src);
     let mut found = Vec::new();
     for (n, line) in code.lines().enumerate() {
@@ -510,7 +563,7 @@ fn scan_page_js(src: &str) -> Vec<Violation> {
                     i += 1;
                 }
                 let token: String = chars[start..i].iter().collect();
-                if token != "0" && token != "1" {
+                if token != "0" && token != "1" && !policy.numbers {
                     found.push(Violation {
                         line: n + 1,
                         token,
@@ -525,7 +578,11 @@ fn scan_page_js(src: &str) -> Vec<Violation> {
                     i += 1;
                 }
                 let token: String = chars[start..i].iter().collect();
-                if let Some((_, why)) = PAGE_FORBIDDEN_IDENTIFIERS.iter().find(|(w, _)| *w == token) {
+                let exempt = policy.webrtc && ONLINE_JS_MAY_NAME.contains(&token.as_str());
+                if let Some((_, why)) = PAGE_FORBIDDEN_IDENTIFIERS
+                    .iter()
+                    .find(|(w, _)| *w == token && !exempt)
+                {
                     found.push(Violation {
                         line: n + 1,
                         token,
@@ -711,10 +768,13 @@ fn shim_decides_nothing() {
 fn page_keeps_no_rule_and_names_no_other_origin() {
     let mut problems = Vec::new();
     let mut js_files = 0;
+    let relays = relay_urls();
     for path in web_files() {
         let text = fs::read_to_string(&path).expect("read page file");
+        let policy = page_policy(&in_web(&path));
+        let html = path.extension().map(|x| x == "html").unwrap_or(false);
         for (n, line) in text.lines().enumerate() {
-            if without_allowed_urls(line).contains("://") {
+            if names_another_origin(line, policy, html, &relays) {
                 problems.push(format!(
                     "{}:{}: absolute URL (another origin?)",
                     path.display(),
@@ -724,7 +784,7 @@ fn page_keeps_no_rule_and_names_no_other_origin() {
         }
         if path.extension().map(|x| x == "js").unwrap_or(false) {
             js_files += 1;
-            problems.extend(report(&path, &scan_page_js(&text)));
+            problems.extend(report(&path, &scan_page_js_as(&text, policy)));
             problems.extend(report(&path, &scan_page_navigation(&text)));
         }
     }
@@ -750,6 +810,7 @@ fn shaders_hold_no_numbers_of_their_own() {
 /// allows WebAssembly, keeps connections on the origin, and blocks form posts.
 #[test]
 fn every_page_sets_the_content_security_policy() {
+    let relays = relay_urls();
     let mut pages = 0;
     for path in web_files() {
         if path.extension().map(|x| x == "html").unwrap_or(false) {
@@ -769,9 +830,76 @@ fn every_page_sets_the_content_security_policy() {
                     path.display()
                 );
             }
+            if let Some(problem) = connect_src_problem(&csp, &relays) {
+                panic!("{}: {problem}", path.display());
+            }
         }
     }
     assert!(pages > 0, "no HTML page found in web/");
+}
+
+/// A page file's path under `web/`, with `/` between its parts.
+fn in_web(path: &Path) -> String {
+    let web = repo_root().join("web");
+    let rel = path.strip_prefix(&web).unwrap_or(path);
+    rel.components()
+        .map(|c| c.as_os_str().to_string_lossy().into_owned())
+        .collect::<Vec<_>>()
+        .join("/")
+}
+
+/// The pinned Nostr relays: every `"wss://..."` string in
+/// `web/online-config.js`. They are the only other origins a page may name,
+/// in its CSP's connect-src, and the only absolute URLs that file may hold.
+fn relay_urls() -> Vec<String> {
+    let path = repo_root().join("web/online-config.js");
+    let text = fs::read_to_string(path).expect("read web/online-config.js");
+    let mut urls = Vec::new();
+    let mut rest = text.as_str();
+    while let Some(at) = rest.find("\"wss://") {
+        let url = &rest[at + 1..];
+        let end = url.find('"').expect("closing quote");
+        urls.push(url[..end].to_string());
+        rest = &url[end..];
+    }
+    assert!(!urls.is_empty(), "no wss:// relay in web/online-config.js");
+    urls
+}
+
+/// Whether a line of a page file names another origin. HTML may name the
+/// pinned relays (in its CSP); `online-config.js` may name `wss://` URLs;
+/// nothing else may hold `://`, beyond the names in [`ALLOWED_ABSOLUTE_URLS`].
+fn names_another_origin(line: &str, policy: PagePolicy, html: bool, relays: &[String]) -> bool {
+    let mut rest = without_allowed_urls(line);
+    if html {
+        for relay in relays {
+            rest = rest.replace(relay.as_str(), "");
+        }
+    }
+    if policy.wss_urls {
+        rest = rest.replace("wss://", "");
+    }
+    rest.contains("://")
+}
+
+/// Reference default D4, as changed for online play: connect-src starts with
+/// 'self' and adds nothing but the pinned relays. `None` when it complies.
+fn connect_src_problem(csp: &str, relays: &[String]) -> Option<String> {
+    let Some(directive) = csp
+        .split(';')
+        .map(str::trim)
+        .find(|d| d.split_whitespace().next() == Some("connect-src"))
+    else {
+        return Some("no connect-src".to_string());
+    };
+    let sources: Vec<&str> = directive.split_whitespace().skip(1).collect();
+    if sources.first() != Some(&"'self'") {
+        return Some(format!("connect-src must start with 'self': {directive}"));
+    }
+    sources[1..]
+        .iter()
+        .find(|s| !relays.iter().any(|r| r == *s))
+        .map(|s| format!("connect-src names {s}, which is not a relay in web/online-config.js"))
 }
 
 /// The content of the first `<meta http-equiv="Content-Security-Policy" content="...">`.
@@ -894,4 +1022,101 @@ fn csp_reader_finds_the_policy_and_reports_its_absence() {
         Some("default-src 'self'; form-action 'none'")
     );
     assert_eq!(csp_of("<meta charset=\"utf-8\">"), None);
+}
+
+#[test]
+fn only_online_js_may_name_webrtc() {
+    let rtc = "const pc = new RTCPeerConnection(c);";
+    // Every page file but web/online.js is refused; so is any file not yet
+    // written, so the exemption cannot spread by copying a file.
+    for path in web_files() {
+        let name = in_web(&path);
+        assert!(
+            !name.starts_with("vendor/") && !name.contains("/vendor/"),
+            "web_files() must not walk web/vendor/: {}",
+            path.display()
+        );
+        let found = scan_page_js_as(rtc, page_policy(&name));
+        assert_eq!(found.is_empty(), name == "online.js", "{name}: {found:?}");
+    }
+    for name in [
+        "app.js",
+        "net.js",
+        "nettest.js",
+        "online2.js",
+        "online-config.js",
+        "sub/online.js",
+    ] {
+        assert!(
+            !scan_page_js_as(rtc, page_policy(name)).is_empty(),
+            "{name} may not name RTCPeerConnection"
+        );
+    }
+    // online.js keeps every other ban.
+    let online = page_policy("online.js");
+    for code in [
+        "if (n < 70) x();",
+        "const t = Math.floor(a);",
+        "new WebSocket(u);",
+        "eval(s);",
+        "navigator.sendBeacon(u, d);",
+    ] {
+        assert!(
+            !scan_page_js_as(code, online).is_empty(),
+            "online.js must still refuse {code:?}"
+        );
+    }
+    // online-config.js may hold numbers, and has none of the other exemptions.
+    let config = page_policy("online-config.js");
+    assert!(scan_page_js_as("channelId: 40,", config).is_empty());
+    assert!(!scan_page_js_as("x = Math.max(a, b);", config).is_empty());
+    assert!(!scan_page_js("channelId: 40,").is_empty());
+    // Absolute URLs: wss:// in online-config.js; in HTML, only the pinned
+    // relays; nowhere else.
+    let relays = vec!["wss://nos.lol".to_string()];
+    let wss = "\"wss://nos.lol\",";
+    assert!(!names_another_origin(wss, config, false, &relays));
+    assert!(names_another_origin(wss, online, false, &relays));
+    assert!(names_another_origin(wss, STRICT, false, &relays));
+    assert!(names_another_origin(
+        "\"https://x.example\"",
+        config,
+        false,
+        &relays
+    ));
+    let meta = "content=\"connect-src 'self' wss://nos.lol\"";
+    assert!(!names_another_origin(meta, STRICT, true, &relays));
+    assert!(names_another_origin(
+        "connect-src 'self' wss://evil.example",
+        STRICT,
+        true,
+        &relays
+    ));
+}
+
+#[test]
+fn connect_src_allows_self_first_and_only_pinned_relays() {
+    let relays = vec![
+        "wss://nos.lol".to_string(),
+        "wss://purplerelay.com".to_string(),
+    ];
+    for csp in [
+        "default-src 'self'; connect-src 'self'; form-action 'none'",
+        "connect-src 'self' wss://nos.lol wss://purplerelay.com",
+        "connect-src 'self' wss://nos.lol",
+    ] {
+        assert_eq!(connect_src_problem(csp, &relays), None, "{csp}");
+    }
+    for csp in [
+        "default-src 'self'",
+        "connect-src wss://nos.lol 'self'",
+        "connect-src 'self' wss://evil.example",
+        "connect-src 'self' https:",
+        "connect-src *",
+        "connect-src 'self' wss://nos.lol.evil.example",
+    ] {
+        assert!(connect_src_problem(csp, &relays).is_some(), "{csp}");
+    }
+    // The pinned list is read from the file, and every entry is a wss URL.
+    assert!(relay_urls().iter().all(|u| u.starts_with("wss://")));
 }
