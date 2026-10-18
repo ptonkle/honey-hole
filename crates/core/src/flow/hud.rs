@@ -3,13 +3,17 @@
 //! face for words and the Fish-Boy's monospace for numbers (one family
 //! with the Fish-Boy, without its green phosphor).
 //!
-//! - top right: the match's time left;
+//! - top right: the match's time left, the clock alone;
 //! - top centre: the popups, stacked;
-//! - bottom left: the speed gauge and the driving/fishing badge;
-//! - bottom right: the radar ping's cooldown, the item slot, and under them
-//!   the map seed when Settings' "Show map seed" is on;
-//! - bottom centre: the key hints, fading after the first minute;
+//! - bottom right: the radar ping's dish (its ring fills as it cools, the
+//!   seconds left inside), the item slot, and over them the map seed when
+//!   Settings' "Show map seed" is on;
 //! - centre: the countdown, "Lines up" at the end, and a wreck's notice.
+//!
+//! Kept minimal on purpose (the person, 2026-10-18: "KISS"): no speed
+//! gauge, no driving/fishing badge (the angler's pose shows the mode), no
+//! key hints (the Title lists the controls), no labels on the cards.
+//! TONE.md "Project decisions" has the rule.
 
 use crate::app::App;
 use crate::fishboy::radar::PingState;
@@ -26,6 +30,8 @@ pub const W: i32 = 1920;
 pub const H: i32 = 1080;
 /// The gap between the HUD's cards and the canvas's edge.
 const EDGE: i32 = 36;
+/// The side of the ping's and the item's square cards.
+const SLOT: i32 = 150;
 
 pub fn rgb(c: [i32; 3]) -> Rgba {
     Rgba::solid(c)
@@ -112,35 +118,6 @@ pub fn polar(c: (i32, i32), r: i32, a: i32) -> (i32, i32) {
     )
 }
 
-fn deg(d: i32) -> i32 {
-    (d as i64 * TURN as i64 / 360) as i32
-}
-
-/// A key cap: the key's name in a small raised box; returns its width.
-pub fn key_cap(list: &mut List, l: &FlowLook, at: (i32, i32), key: &str, size: i32) -> i32 {
-    let font = l.body();
-    let w = font.width(key, size) + size;
-    let h = size * 3 / 2;
-    let r = Rect::new(at.0, at.1 - h / 2, w, h);
-    list.round_rect(
-        rgb([0, 0, 0]).alpha(l.card.shadow_pct),
-        Rgba::NONE,
-        0,
-        Rect::new(r.x, r.y + 4, w, h),
-        8,
-    );
-    list.round_rect(rgb(l.hud.key_cap), rgb(l.card.outline), 3, r, 8);
-    list.text(
-        rgb(l.card.ink),
-        font,
-        size,
-        Align::Centre,
-        (r.x + w / 2, at.1),
-        key,
-    );
-    w
-}
-
 /// A small fish: body and tail, facing right.
 pub fn fish_icon(list: &mut List, at: (i32, i32), s: i32, fill: Rgba, ink: Rgba) {
     let (x, y) = at;
@@ -187,36 +164,6 @@ pub fn bobber_icon(list: &mut List, at: (i32, i32), s: i32, ink: Rgba) {
     list.line(ink, 5, (at.0, at.1 - s * 7 / 10), (at.0, at.1 - s));
 }
 
-/// A little boat for the driving badge.
-fn boat_icon(list: &mut List, at: (i32, i32), s: i32, fill: Rgba, ink: Rgba) {
-    let (x, y) = at;
-    list.poly(
-        fill,
-        ink,
-        3,
-        &[
-            (x - s, y - s / 5),
-            (x + s, y - s / 5),
-            (x + s * 6 / 10, y + s * 4 / 10),
-            (x - s * 7 / 10, y + s * 4 / 10),
-        ],
-    );
-    list.line(
-        ink,
-        4,
-        (x - s * 7 / 10, y - s / 5),
-        (x - s * 7 / 10, y - s * 7 / 10),
-    );
-}
-
-/// A hook for the fishing badge.
-fn hook_icon(list: &mut List, at: (i32, i32), s: i32, ink: Rgba) {
-    let (x, y) = at;
-    list.line(ink, 5, (x + s / 4, y - s), (x + s / 4, y + s / 5));
-    list.arc(ink, 5, (x, y + s / 5), s / 4, 0, TURN / 2);
-    list.line(ink, 5, (x - s / 4, y + s / 5), (x - s / 4, y - s / 5));
-}
-
 impl App {
     /// **Hook for the items system.** The item this browser's seat holds,
     /// for the HUD's item slot; `None` draws the slot empty.
@@ -242,10 +189,9 @@ impl App {
         let clock = crate::app::play::clock_text(remaining);
         self.draw_time(list, l, &clock, remaining);
         status.push(format!("time={clock}"));
+        // for the checks only: no gauge and no mode badge are drawn
         if let Some(b) = self.my_boat() {
             let kmh = (b.speed_mm_per_s as i64 * 36 / 10_000) as i32;
-            self.draw_gauge(list, l, kmh);
-            self.draw_mode(list, l, b.mode);
             status.push(format!("speed={kmh} mode={}", mode_key(b.mode)));
         }
         match self.fishing_hud() {
@@ -264,8 +210,6 @@ impl App {
         let ping = self.draw_ping(list, l);
         status.push(format!("hud_ping={ping}"));
         self.draw_item(list, l);
-        let hints = self.draw_hints(list, l);
-        status.push(format!("hints={hints}"));
         if self.settings.show_seed {
             let seed = g.map.seed.to_string();
             outlined(
@@ -273,7 +217,7 @@ impl App {
                 l.body(),
                 24,
                 Align::Right,
-                (W - EDGE, H - EDGE - 176 - 26),
+                (W - EDGE, H - EDGE - SLOT - 26),
                 &self.t("hud.seed").replace("{seed}", &seed),
                 rgb(l.hud.seed),
                 rgb(l.card.outline),
@@ -303,7 +247,7 @@ impl App {
         }
         if self.my_boat().is_some_and(|b| b.wrecked) {
             let text = self.t("hud.wrecked");
-            let w = l.body().width(&text, 34) + 80;
+            let w = l.body().width(&text, 34) + 120;
             card(list, &l.card, Rect::new((W - w) / 2, H / 2 + 200, w, 76));
             list.text(
                 rgb(l.card.ink),
@@ -359,16 +303,6 @@ impl App {
                 rgb(n.end),
                 rgb(l.card.outline),
             );
-            outlined(
-                list,
-                l.body(),
-                40,
-                Align::Centre,
-                (W / 2, H * 40 / 100 + n.size * 6 / 10),
-                &self.t("hud.ended"),
-                rgb(l.card.light),
-                rgb(l.card.outline),
-            );
             status.push("ended=1".into());
         }
         let count = self.draw_popups(list, l, theme);
@@ -380,17 +314,10 @@ impl App {
         status.push(format!("popup_keys={}", keys.join(",")));
     }
 
+    /// The time left: the clock alone on its card.
     fn draw_time(&self, list: &mut List, l: &FlowLook, clock: &str, remaining: i32) {
-        let r = Rect::new(W - EDGE - 290, EDGE + 54, 290, 132);
+        let r = Rect::new(W - EDGE - 230, EDGE, 230, 96);
         card(list, &l.card, r);
-        list.text(
-            rgb(l.card.soft),
-            l.body(),
-            24,
-            Align::Centre,
-            (r.x + r.w / 2, r.y + 28),
-            &self.t("hud.time_left").to_uppercase(),
-        );
         // the last 30 s in the countdown's warning colour
         let ink = if remaining <= 30_000 {
             l.countdown.end
@@ -401,150 +328,52 @@ impl App {
         list.text(
             rgb(ink),
             mono,
-            70,
+            64,
             Align::Centre,
-            (r.x + r.w / 2, r.y + 82),
+            (r.x + r.w / 2, r.y + r.h / 2 + 2),
             clock,
         );
     }
 
-    /// The speed gauge: a 270° dial from 0 to the nitrous top speed, the
-    /// part past the plain top speed marked, the needle, and the km/h.
-    fn draw_gauge(&self, list: &mut List, l: &FlowLook, kmh: i32) {
-        let h = &l.hud;
-        let r = Rect::new(EDGE, H - EDGE - 262, 300, 262);
-        card(list, &l.card, r);
-        let c = (r.x + r.w / 2, r.y + 138);
-        let rad = 106;
-        let (top, boost) = self.play.as_ref().map_or((58, 87), |p| {
-            let t = p.game.rules.top as i64;
-            let n = t * p.game.rules.nitrous_top_pct as i64 / 100;
-            ((t * 36 / 10_000) as i32, (n * 36 / 10_000) as i32)
-        });
-        // the dial's top: the nitrous speed, up to a whole 10
-        let max = ((boost + 9) / 10 * 10).max(10);
-        let at = |v: i32| deg(135) + (deg(270) as i64 * v.clamp(0, max) as i64 / max as i64) as i32;
-        list.circle(rgb(h.gauge_face), Rgba::NONE, 0, c, rad + 14);
-        list.arc(rgb(h.gauge_tick).alpha(55), 16, c, rad, at(0), at(top));
-        list.arc(rgb(h.gauge_boost).alpha(70), 16, c, rad, at(top), at(max));
-        let fill = if kmh > top { h.gauge_boost } else { h.gauge_fill };
-        if kmh > 0 {
-            list.arc(rgb(fill), 16, c, rad, at(0), at(kmh));
-        }
-        let mut v = 0;
-        while v <= max {
-            let a = at(v);
-            list.line(rgb(h.gauge_tick), 4, polar(c, rad - 22, a), polar(c, rad - 10, a));
-            v += 10;
-        }
-        let a = at(kmh);
-        list.line(rgb(l.card.outline), 12, c, polar(c, rad - 16, a));
-        list.line(rgb(h.needle), 6, c, polar(c, rad - 18, a));
-        list.circle(rgb(h.needle), rgb(l.card.outline), 4, c, 14);
-        let mono = self.fishboy.theme.as_ref().map_or(l.display(), |t| t.mono());
-        list.text(
-            rgb(l.card.ink),
-            mono,
-            54,
-            Align::Centre,
-            (c.0, c.1 + 64),
-            &kmh.to_string(),
-        );
-        list.text(
-            rgb(l.card.soft),
-            l.body(),
-            22,
-            Align::Centre,
-            (c.0, c.1 + 100),
-            &self.t("hud.kmh"),
-        );
-    }
-
-    /// The mode badge beside the gauge: a boat or a hook, the word, and
-    /// the mode's colour.
-    fn draw_mode(&self, list: &mut List, l: &FlowLook, mode: Mode) {
-        let (colour, word) = match mode {
-            Mode::Driving => (l.hud.driving, self.t("hud.driving")),
-            Mode::Fishing => (l.hud.fishing, self.t("hud.fishing")),
-        };
-        let word = word.to_uppercase();
-        let w = l.display().width(&word, 34) + 116;
-        let r = Rect::new(EDGE + 300 + 20, H - EDGE - 262, w, 84);
-        card_in(list, &l.card, r, colour, l.card.outline);
-        let ink = rgb(l.card.outline);
-        let icon = (r.x + 50, r.y + r.h / 2);
-        match mode {
-            Mode::Driving => boat_icon(list, icon, 28, rgb(l.card.fill), ink),
-            Mode::Fishing => hook_icon(list, icon, 26, ink),
-        }
-        list.text(
-            rgb(l.card.ink),
-            l.display(),
-            34,
-            Align::Left,
-            (r.x + 90, r.y + r.h / 2 + 2),
-            &word,
-        );
-    }
-
-    /// The fishing line's prompt at the bottom centre (with the lure's
-    /// depth, the cast's charge or whether the fish is in the zone), and
-    /// while reeling the reel bar and the catch meter on the right.
+    /// The fishing line at the bottom centre: one short word when there is
+    /// one (too fast, the bite, what was landed), the lure's depth as a bare
+    /// number while it sinks or waits, or the cast's charge bar while Space
+    /// is held; and while reeling the reel bar and the catch meter on the
+    /// right, without labels.
     fn draw_fishing(&self, list: &mut List, l: &FlowLook, f: &crate::app::fishing::FishingHud) {
         let font = l.body();
         let h = &l.hud;
-        let second = match (&f.depth, &f.reel) {
-            (Some(d), _) => Some(d.clone()),
-            (None, Some(r)) => Some(self.t(if r.in_zone {
-                "fishing.in_zone"
-            } else {
-                "fishing.out_of_zone"
-            })),
-            _ => None,
-        };
-        let tall = if second.is_some() || f.charge.is_some() {
-            118
-        } else {
-            76
-        };
-        let w = (font.width(&f.prompt, 30) + 80).max(560);
-        let r = Rect::new((W - w) / 2, H - EDGE - 30 - tall, w, tall);
-        card(list, &l.card, r);
-        list.text(
-            rgb(l.card.ink),
-            font,
-            30,
-            Align::Centre,
-            (W / 2, r.y + 38),
-            &f.prompt,
-        );
         if let Some(c) = f.charge {
-            let bar = Rect::new(r.x + 40, r.y + 70, r.w - 80, 26);
+            let r = Rect::new((W - 440) / 2, H - EDGE - 30 - 60, 440, 60);
+            card(list, &l.card, r);
+            let bar = Rect::new(r.x + 24, r.y + 17, r.w - 48, 26);
             list.round_rect(rgb(h.gauge_face), rgb(l.card.outline), 3, bar, 13);
             let fill = Rect::new(bar.x, bar.y, bar.w * c.clamp(0, 100) / 100, bar.h);
             if fill.w > 0 {
                 list.round_rect(rgb(h.gauge_fill), rgb(l.card.outline), 3, fill, 13);
             }
-        } else if let Some(t) = &second {
-            list.text(rgb(l.card.soft), font, 24, Align::Centre, (W / 2, r.y + 84), t);
+        } else if let Some(text) = f.prompt.as_ref().or(f.depth.as_ref()) {
+            let w = font.width(text, 34) + 80;
+            let r = Rect::new((W - w) / 2, H - EDGE - 30 - 72, w, 72);
+            card(list, &l.card, r);
+            list.text(
+                rgb(l.card.ink),
+                font,
+                34,
+                Align::Centre,
+                (W / 2, r.y + r.h / 2 + 1),
+                text,
+            );
         }
         let Some(reel) = &f.reel else {
             return;
         };
         // the reel bar and the catch meter, filling from the bottom
-        let card_r = Rect::new(W - EDGE - 230, 250, 230, 520);
+        let card_r = Rect::new(W - EDGE - 210, 260, 210, 460);
         card(list, &l.card, card_r);
-        let track = Rect::new(card_r.x + 40, card_r.y + 70, 76, 400);
-        let meter = Rect::new(card_r.x + 150, card_r.y + 70, 40, 400);
+        let track = Rect::new(card_r.x + 36, card_r.y + 30, 76, 400);
+        let meter = Rect::new(card_r.x + 138, card_r.y + 30, 40, 400);
         let y_of = |t: Rect, pct: i32| t.bottom() - t.h * pct.clamp(0, 100) / 100;
-        list.text(
-            rgb(l.card.soft),
-            font,
-            22,
-            Align::Centre,
-            (track.x + track.w / 2, card_r.y + 36),
-            &self.t("fishing.reel"),
-        );
         list.round_rect(rgb(h.gauge_face), rgb(l.card.outline), 4, track, 12);
         let (z0, z1) = (y_of(track, reel.zone[1]), y_of(track, reel.zone[0]));
         let zone_c = if reel.in_zone { h.ping_ready } else { h.ping_wait };
@@ -583,18 +412,11 @@ impl App {
                 8,
             );
         }
-        list.text(
-            rgb(l.card.ink),
-            font,
-            20,
-            Align::Centre,
-            (card_r.x + card_r.w / 2, card_r.bottom() - 26),
-            &self.t("fishing.meter"),
-        );
     }
 
-    /// The radar ping's cooldown: a dish whose ring fills as it cools.
-    /// Returns "ready", "sweeping" or "cooling".
+    /// The radar ping's dish: its ring fills as it cools, with the seconds
+    /// left inside; full and green when ready. Returns "ready", "sweeping"
+    /// or "cooling".
     fn draw_ping(&self, list: &mut List, l: &FlowLook) -> &'static str {
         let Some(p) = self.play.as_ref() else {
             return "";
@@ -602,151 +424,65 @@ impl App {
         let g = &p.game;
         let t = &g.tuning.radar;
         let state = g.seats[p.seat].ping.state(g.tick as i64, t);
-        let r = Rect::new(W - EDGE - 176 - 20 - 176, H - EDGE - 176, 176, 176);
+        let r = Rect::new(W - EDGE - SLOT - 16 - SLOT, H - EDGE - SLOT, SLOT, SLOT);
         card(list, &l.card, r);
-        let c = (r.x + r.w / 2, r.y + 74);
+        let c = (r.x + r.w / 2, r.y + r.h / 2);
         let h = &l.hud;
-        list.circle(rgb(h.gauge_face), Rgba::NONE, 0, c, 50);
-        list.circle(Rgba::NONE, rgb(h.gauge_tick).alpha(60), 3, c, 30);
-        list.circle(rgb(h.gauge_tick), Rgba::NONE, 0, c, 6);
-        let secs = |ticks: i64| ((ticks * TICK_MS as i64 + 999) / 1000).to_string();
-        let (word, label, done, colour) = match state {
-            PingState::Ready => ("ready", self.t("hud.ping_ready"), 1000, h.ping_ready),
-            PingState::Sweeping(d) => ("sweeping", self.t("hud.pinging"), d, h.ping_ready),
-            PingState::Cooling(left, d) => (
-                "cooling",
-                self.t("hud.ping_wait").replace("{seconds}", &secs(left)),
-                d,
-                h.ping_wait,
-            ),
+        list.circle(rgb(h.gauge_face), Rgba::NONE, 0, c, 46);
+        list.circle(Rgba::NONE, rgb(h.gauge_tick).alpha(60), 3, c, 28);
+        let (word, done, colour) = match state {
+            PingState::Ready => ("ready", 1000, h.ping_ready),
+            PingState::Sweeping(d) => ("sweeping", d, h.ping_ready),
+            PingState::Cooling(_, d) => ("cooling", d, h.ping_wait),
         };
         let from = -TURN / 4;
-        list.arc(
-            rgb(colour),
-            10,
-            c,
-            50,
-            from,
-            from + (TURN as i64 * done as i64 / 1000) as i32,
-        );
-        if word == "sweeping" {
+        let to = from + (TURN as i64 * done as i64 / 1000) as i32;
+        list.arc(rgb(colour), 10, c, 46, from, to);
+        match state {
             // the sweep's arm going round
-            list.line(
-                rgb(colour),
-                5,
-                c,
-                polar(c, 48, from + (TURN as i64 * done as i64 / 1000) as i32),
-            );
+            PingState::Sweeping(_) => list.line(rgb(colour), 5, c, polar(c, 44, to)),
+            PingState::Cooling(left, _) => {
+                let secs = ((left * TICK_MS as i64 + 999) / 1000).to_string();
+                let mono = self.fishboy.theme.as_ref().map_or(l.display(), |t| t.mono());
+                list.text(rgb(l.card.ink), mono, 34, Align::Centre, c, &secs);
+            }
+            PingState::Ready => list.circle(rgb(h.gauge_tick), Rgba::NONE, 0, c, 6),
         }
-        list.text(
-            rgb(l.card.ink),
-            l.body(),
-            24,
-            Align::Centre,
-            (c.0, r.y + 150),
-            &label,
-        );
         word
     }
 
-    /// The item slot, with the Shift key's cap: empty until the items
-    /// system fills [`App::hud_item`].
+    /// The item slot: the held item's icon and name, or empty (dashed).
     fn draw_item(&self, list: &mut List, l: &FlowLook) {
-        let r = Rect::new(W - EDGE - 176, H - EDGE - 176, 176, 176);
+        let r = Rect::new(W - EDGE - SLOT, H - EDGE - SLOT, SLOT, SLOT);
         card(list, &l.card, r);
-        let slot = Rect::new(r.x + 34, r.y + 22, 108, 92);
+        let slot = r.inset(18);
         list.dash(&[12, 8]);
         list.round_rect(rgb(l.hud.item_slot), rgb(l.card.soft), 4, slot, 16);
         list.dash(&[]);
-        match self.hud_item() {
-            Some(item) => {
-                // its icon (`app/items.rs`) and its name, inside the slot
-                if let Some(t) = self.fishboy.theme.as_ref() {
-                    let icon = Rect::new(slot.x + slot.w / 2 - 32, slot.y + 4, 64, 64);
-                    crate::app::items::draw_icon(
-                        list,
-                        item,
-                        icon,
-                        crate::ui2d::theme::c(t.items.icons.get(item)),
-                        rgb(l.card.ink),
-                    );
-                }
-                let name = self.t(&format!("item.{}", item.key()));
-                let size = crate::app::items::fit(l.body(), &name, 18, slot.w - 8);
-                list.text(
-                    rgb(l.card.ink),
-                    l.body(),
-                    size,
-                    Align::Centre,
-                    (slot.x + slot.w / 2, slot.y + slot.h - 12),
-                    &name,
-                );
-            }
-            None => list.text(
-                rgb(l.card.soft),
-                l.body(),
-                22,
-                Align::Centre,
-                (slot.x + slot.w / 2, slot.y + slot.h / 2),
-                &self.t("hud.item_none"),
-            ),
-        }
-        // the camera waits for a catch (`app/items.rs`)
-        let key = if self.hud_item() == Some(crate::sim::items::Item::Camera) {
-            self.t("items.after_catch")
-        } else {
-            self.t("hint.item_key")
+        let Some(item) = self.hud_item() else {
+            return;
         };
-        let w = l.body().width(&key, 20) + 20;
-        key_cap(list, l, (r.x + (r.w - w) / 2, r.y + 150), &key, 20);
-    }
-
-    /// The key hints along the bottom, fading out once `flow.hints_ms` of
-    /// match clock has passed. Returns their opacity in percent.
-    fn draw_hints(&self, list: &mut List, l: &FlowLook) -> i32 {
-        let Some(p) = self.play.as_ref() else {
-            return 0;
-        };
-        let into = p.game.tick as i64 * TICK_MS as i64;
-        let after = p.game.tuning.flow.hints_ms as i64;
-        let fade = l.hud.hint_fade_ms as i64;
-        let pct = if into < after {
-            100
-        } else {
-            (100 - (into - after) * 100 / fade).max(0) as i32
-        };
-        if pct <= 0 {
-            return 0;
-        }
-        let hints = ["mode", "fishboy", "item", "menu"]
-            .map(|k| (self.t(&format!("hint.{k}_key")), self.t(&format!("hint.{k}"))));
-        let size = 22;
-        let font = l.body();
-        let widths: Vec<i32> = hints
-            .iter()
-            .map(|(k, w)| font.width(k, size) + size + 12 + font.width(w, size))
-            .collect();
-        let gap = 40;
-        let total: i32 = widths.iter().sum::<i32>() + gap * (hints.len() as i32 - 1);
-        let mut x = (W - total) / 2;
-        let y = H - 22;
-        list.alpha(pct);
-        for ((k, w), width) in hints.iter().zip(&widths) {
-            let cap = key_cap(list, l, (x, y), k, size);
-            outlined(
+        // its icon (`app/items.rs`) and its name, inside the slot
+        if let Some(t) = self.fishboy.theme.as_ref() {
+            let icon = Rect::new(slot.x + slot.w / 2 - 30, slot.y + 4, 60, 60);
+            crate::app::items::draw_icon(
                 list,
-                font,
-                size,
-                Align::Left,
-                (x + cap + 12, y),
-                w,
-                rgb(l.card.light),
-                rgb(l.card.outline),
+                item,
+                icon,
+                crate::ui2d::theme::c(t.items.icons.get(item)),
+                rgb(l.card.ink),
             );
-            x += width + gap;
         }
-        list.alpha(100);
-        pct
+        let name = self.t(&format!("item.{}", item.key()));
+        let size = crate::app::items::fit(l.body(), &name, 16, slot.w - 8);
+        list.text(
+            rgb(l.card.ink),
+            l.body(),
+            size,
+            Align::Centre,
+            (slot.x + slot.w / 2, slot.bottom() - 12),
+            &name,
+        );
     }
 
     /// The popups at the top centre, sliding in and fading out. Returns

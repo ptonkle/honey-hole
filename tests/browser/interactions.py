@@ -359,7 +359,7 @@ def step_minigames(page, check):
         page.mouse.move(*at(800 + 160 * math.cos(a), 470 + 160 * math.sin(a)))
     page.wait_for_selector(by_id("minigames.play.power_reel"), timeout=5000)
     rows = page.locator(".panel.minigames tr").all_inner_texts()
-    done = STRINGS["minigames.done"].split("{")[0]
+    done = STRINGS["minigames.done"].split("}")[-1]
     reel = STRINGS["minigames.play.power_reel"]
     check(any(reel in r and done in r for r in rows), f"five clockwise turns finish it {rows}")
     page.click(by_id("minigames.play.nitrous"))
@@ -519,7 +519,7 @@ def step_match_flow(page, check):
     check(screen(page, "play"), "a 4-minute match starts")
     check(ui2d_has(page, "countdown=3", "seed="), "the countdown shows, and the map seed is hidden by default")
     check(ui2d_has(page, "countdown=go", timeout=8000), "the countdown ends with Go")
-    check(ui2d_has(page, "hud_ping=ready", "hints=100", "mode=driving"), "the HUD shows the ping, the hints and the mode")
+    check(ui2d_has(page, "hud_ping=ready", "mode=driving"), "the HUD shows the ping")
     # the seed, from Settings in the match menu
     page.keyboard.press("Escape")
     page.wait_for_selector(".panel.pause", timeout=5000)

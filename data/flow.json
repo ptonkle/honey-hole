@@ -65,26 +65,12 @@
     "rows": [
       { "event": "Announced", "text": "popup.hooked", "style": "tier", "tier": "tier", "fill": { "player": "name:seat", "fish": "fish:kind" } },
       { "event": "Caught", "text": "popup.landed", "style": "tier", "tier": "tier", "fill": { "player": "name:seat", "fish": "fish:kind" } },
-      { "event": "CastRefused", "text": "popup.refused", "style": "plain", "who": "mine" },
       { "event": "Scared", "text": "popup.scared", "style": "plain", "who": "mine" },
       { "event": "Missed", "text": "popup.missed", "style": "plain", "who": "mine" },
       { "event": "LineBroke", "text": "popup.broke", "style": "plain", "who": "mine" },
-      { "event": "FishDropped", "text": "popup.dropped", "style": "plain", "who": "mine" },
       { "event": "Wrecked", "when": { "cause": "grounded" }, "text": "popup.aground", "style": "wreck", "fill": { "player": "name:seat" } },
-      {
-        "event": "Wrecked",
-        "when": { "cause.rammed.by": "*" },
-        "text": "popup.rammed",
-        "style": "wreck",
-        "fill": { "player": "name:cause.rammed.by", "victim": "name:seat" }
-      },
-      { "event": "BuoyWarning", "text": "popup.buoy", "style": "buoy", "group": "buoy" },
-      { "event": "BuoyBeat", "text": "popup.buoy_in", "style": "buoy", "group": "buoy", "fill": { "seconds": "text:left" } },
-      { "event": "BuoySpawned", "text": "popup.buoy_spawned", "style": "buoy", "group": "buoy" },
-      { "event": "ItemPicked", "text": "popup.item_picked", "style": "buoy", "who": "mine", "fill": { "item": "item:item" } },
-      { "event": "ItemPicked", "text": "popup.item_taken", "style": "buoy", "who": "others", "fill": { "player": "name:seat" } },
-      { "event": "ItemWasted", "text": "popup.item_wasted", "style": "plain", "who": "mine", "fill": { "item": "item:item" } },
-      { "event": "ItemRefused", "when": { "why": "after_catch" }, "text": "popup.after_catch", "style": "plain", "who": "mine" }
+      { "event": "Wrecked", "when": { "cause.rammed.by": "*" }, "text": "popup.rammed", "style": "wreck", "fill": { "player": "name:cause.rammed.by", "victim": "name:seat" } },
+      { "event": "BuoySpawned", "text": "popup.buoy_spawned", "style": "buoy" }
     ]
   },
   "postgame": {

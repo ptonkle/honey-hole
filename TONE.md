@@ -17,6 +17,9 @@ The rules every reader-visible string follows: the text in `data/`, the definiti
 
 - **Announcement popups may end with "!".** The person's own words for the hook popup are "(PLAYERNAME has hooked a FISHTYPE!)" (BRIEF.md), and the person's words win over rule 8. So a string under the `popup.` prefix in `data/strings.json` may end with one "!", and nowhere else in it (`ALLOWED` and `popup_strings_end_with_their_only_exclamation` in `crates/core/tests/copy.rs`). Every other string keeps rule 8. (SECOND-ORDER R3.112.)
 
+- **Minigame calls may end with "!" too.** The person's wording for them, 2026-10-18: "sync the teleporter!", "create nitrous!" (`DECISIONS.md`). The same exemption as the popups, for strings under `minigame.`.
+- **Labels and short calls (KISS).** The person, 2026-10-18: "Keep it simple, stupid ... This is a game, there should be skill expression, you don't need to tell the players exactly what is happening and what to do at all times." On screen: labels and short calls; no rules, counts, controls or consequences unless the player can't play without them. Spec details go in code comments, not strings.
+
 ## Word lists for the lint
 
 Phrases on these lists fail `no_text_uses_a_phrase_the_tone_file_rules_out`. Add a project's own phrases at the end. A phrase that is right in one file goes in `ALLOWED` in `copy.rs` with its reason.

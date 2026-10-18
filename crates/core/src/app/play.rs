@@ -416,7 +416,7 @@ impl App {
                     .and_then(|(x, y)| Some((whole(x)?, whole(y)?)))
                     .ok_or_else(|| format!("The mouse move \"{value}\" is not two whole numbers."))?;
                 // the reader's sensitivity and invert-Y (Settings)
-                let (dx, dy) = crate::controls::feel(dx, dy, self.settings.mouse_pct, self.settings.invert_y);
+                let (dx, dy) = crate::controls::feel(dx, dy, self.settings.mouse_pct);
                 p.gather.mouse(dx, dy);
                 // with the Fish-Boy up the mouse points at its screen
                 if !p.menu_open() && !p.game.seats[p.seat].fishboy && !p.game.items.seats[p.seat].captures() {

@@ -103,12 +103,6 @@ impl Reel {
             let inn = at_angle(o, ring - 22, a - TURN / 40);
             p.list.poly(c(look.arrow), Rgba::NONE, 0, &[tip, out, back, inn]);
         }
-        // this turn's progress round the rim, from the top
-        let part = (self.swept - self.banked) as i32;
-        if part > 0 {
-            p.list
-                .arc(c(look.progress), 18, o, r + 30, -QUARTER, -QUARTER + part);
-        }
         // the spool, its line, the spokes turning with the sweep
         let spin = (self.swept % TURN as i64) as i32;
         p.list.circle(c(look.rim), Rgba::NONE, 0, o, r);
@@ -131,7 +125,8 @@ impl Reel {
         p.list.line(c(look.rim), 18, o, knob);
         p.list.circle(c(look.handle), c(look.rim), 5, knob, 34);
         p.list.circle(c(look.hub), c(look.rim), 6, o, r * 22 / 100);
-        // the turns done, as pips under the reel
+        // the turns done, as pips under the reel: the only progress shown
+        // (the spokes turn with the hand; no rim arc and no bottom bar)
         let n = self.t.turns;
         let gap = 46;
         let x0 = o.0 - (n - 1) * gap / 2;

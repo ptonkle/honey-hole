@@ -144,8 +144,6 @@ pub struct FlowTuning {
     pub popup_ms: i32,
     /// at the end: the horn and "Lines up" before the postgame
     pub end_hold_ms: i32,
-    /// the HUD's key hints show for this long of match time, then fade
-    pub hints_ms: i32,
 }
 
 /// Collects range checks; the first failure names its key.
@@ -259,8 +257,7 @@ impl Tuning {
         // the countdown's beeps are cues for 3, 2 and 1 (data/sounds.json)
         c.range("flow.countdown_ms", f.countdown_ms, 0, 3000)
             .range("flow.popup_ms", f.popup_ms, 200, 30_000)
-            .range("flow.end_hold_ms", f.end_hold_ms, 0, 60_000)
-            .range("flow.hints_ms", f.hints_ms, 0, HOUR_MS);
+            .range("flow.end_hold_ms", f.end_hold_ms, 0, 60_000);
         crate::sim::fishing::tuning::check(&mut c, &self.fish, &self.fishing);
         crate::sim::balance::check(&mut c, &self.balance, w.ram_wreck_pct);
         let r = &self.radar;
@@ -338,8 +335,7 @@ pub mod tests {
             "flow": {
                 "countdown_ms": 0,
                 "popup_ms": 2000,
-                "end_hold_ms": 3000,
-                "hints_ms": 60000
+                "end_hold_ms": 3000
             },
             "fish": fish_sample(),
             "fishing": fishing_sample(),

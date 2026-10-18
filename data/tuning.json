@@ -295,11 +295,10 @@
     "ping_sweep_ms": 3000
   },
   "flow": {
-    "_note": "The match's flow (crates/core/src/flow/). countdown_ms: the 3-2-1-Go before a match, the boats held still (0 to 3000: the beeps are cues for 3, 2 and 1). popup_ms: how long each popup stays up (round 1: about 2 s). end_hold_ms: at time 0 the horn sounds and 'Lines up' shows this long before the postgame. hints_ms: the HUD's key hints show for this much match time, then fade.",
+    "_note": "The match's flow (crates/core/src/flow/). countdown_ms: the 3-2-1-Go before a match, the boats held still (0 to 3000: the beeps are cues for 3, 2 and 1). popup_ms: how long each popup stays up (round 1: about 2 s). end_hold_ms: at time 0 the horn sounds and 'Lines up' shows this long before the postgame.",
     "countdown_ms": 3000,
     "popup_ms": 2000,
-    "end_hold_ms": 3000,
-    "hints_ms": 60000
+    "end_hold_ms": 3000
   },
   "minigames": {
     "_note": "The item minigames (crates/core/src/minigame/). Sizes and places are in the minigames' own canvas units (canvas: 1600 x 900, the Fish-Boy screen's), speeds in units a second, times in ms. None can be failed; poor play only takes longer. banner_ms: the one-line instruction shows alone this long before play.",

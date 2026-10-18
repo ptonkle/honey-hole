@@ -54,15 +54,17 @@ impl App {
     }
 
     fn controls_panel(&self) -> Panel {
-        let rows = ["drive", "steer", "mode", "look", "pause"]
-            .iter()
-            .map(|k| {
-                [
-                    self.t(&format!("controls.{k}")),
-                    self.t(&format!("controls.{k}_keys")),
-                ]
-            })
-            .collect();
+        let rows = [
+            "drive", "steer", "mode", "cast", "item", "fishboy", "look", "pause",
+        ]
+        .iter()
+        .map(|k| {
+            [
+                self.t(&format!("controls.{k}")),
+                self.t(&format!("controls.{k}_keys")),
+            ]
+        })
+        .collect();
         Panel::new("controls", self.t("controls.heading"), vec![Item::List { rows }])
     }
 
@@ -109,8 +111,6 @@ impl App {
             value: s.show_seed,
         });
         items.push(self.button("menu.back"));
-        let mut p = Panel::new("settings", self.t("settings.heading"), items);
-        p.sub = self.t("settings.kept");
-        vec![p]
+        vec![Panel::new("settings", self.t("settings.heading"), items)]
     }
 }
