@@ -420,7 +420,12 @@ impl App {
         let boat = self.models.iter().find(|m| m.kind == Kind::Boat)?;
         let angler = self.models.iter().find(|m| m.kind == Kind::Figure);
         let mut instances = Vec::new();
+        // a ghosted boat (after a respawn) is drawn see-through, apart
+        let mut ghosts = Vec::new();
         for b in view.world.boats.iter().filter(|b| !b.wrecked) {
+            // and your own boat while cloaked (`app/items.rs`)
+            let see_through = b.ghosted || (b.cloaked && b.seat == view.seat);
+            let into = if see_through { &mut ghosts } else { &mut instances };
             let slot = crate::sim::SEAT_COLOURS
                 .iter()
                 .position(|c| *c == b.colour)
@@ -433,13 +438,13 @@ impl App {
                 ms,
                 colour,
             };
-            instances.push(on);
+            into.push(on);
             let (pose, turn) = match b.mode {
                 crate::sim::Mode::Driving => (Anim::Drive, 0),
                 crate::sim::Mode::Fishing => (Anim::Fish, b.cast_yaw),
             };
             if let (Some(a), Some(seat)) = (angler, scene::seat(&on, pose.key())) {
-                instances.push(Instance {
+                into.push(Instance {
                     model: a,
                     place: seat.then(&Affine::rot_y(turn)),
                     anim: Some(pose),
@@ -450,7 +455,6 @@ impl App {
         }
         let me = view.world.boats.iter().find(|b| b.seat == view.seat);
         let at = me.map_or(lake.map.spawn.at, |b| P::new(b.x_mm, b.y_mm));
-        // the match's pitch is the whole tilt; the look's is the camera's own
         let cam_look = &lake.look.camera;
         let cam = match self.fishboy_eye() {
             // the Fish-Boy up: first person from the angler's eye, along
@@ -471,9 +475,18 @@ impl App {
                 lake.world(at, 0),
                 yaw_of_heading(view.cam_yaw),
                 0,
-                view.cam_pitch - deg(cam_look.pitch_deg),
+                // the mouse's tilt from where it starts; the look's pitch
+                // is the camera's own (SECOND-ORDER R4.80)
+                view.cam_pitch
+                    - self
+                        .controls
+                        .as_ref()
+                        .map_or(deg(cam_look.pitch_deg), |c| deg(c.mouse.pitch_start_deg)),
             ),
         };
+        // a wreck shakes its player's camera; the postgame turns slowly
+        // round the boat (`flow/`)
+        let cam = self.flow_camera(cam, lake, at);
         // the fish, bobbers and lines, and the underwater camera (not with
         // the Fish-Boy up)
         let under = under && self.fishboy_eye().is_none();
@@ -484,6 +497,7 @@ impl App {
         if !under {
             frame.tris.extend(self.item_tris(lake, &view, eye));
         }
+        self.flow_world(&mut frame, &ghosts);
         Some(frame)
     }
 }

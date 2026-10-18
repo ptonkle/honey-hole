@@ -13,6 +13,10 @@ The rules every reader-visible string follows: the text in `data/`, the definiti
 7. **Colour is never the only cue.** No string names a thing by its colour alone.
 8. **No hype and no stock phrasing.** The lists below are the ones a test can check. Lists of three written for rhythm, slogans and closing flourishes are for the reviewer.
 
+## Project decisions
+
+- **Announcement popups may end with "!".** The person's own words for the hook popup are "(PLAYERNAME has hooked a FISHTYPE!)" (BRIEF.md), and the person's words win over rule 8. So a string under the `popup.` prefix in `data/strings.json` may end with one "!", and nowhere else in it (`ALLOWED` and `popup_strings_end_with_their_only_exclamation` in `crates/core/tests/copy.rs`). Every other string keeps rule 8. (SECOND-ORDER R3.112.)
+
 ## Word lists for the lint
 
 Phrases on these lists fail `no_text_uses_a_phrase_the_tone_file_rules_out`. Add a project's own phrases at the end. A phrase that is right in one file goes in `ALLOWED` in `copy.rs` with its reason.

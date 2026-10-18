@@ -243,7 +243,7 @@ Not: scan, pulse
 
 ### Play
 
-The screen where a match runs: the lake, the boats, and the time left in the corner.
+The screen where a match runs: the lake, the boats, and the HUD over them: the time left, your speed and mode, the radar's ping, your item and the popups.
 
 Not: level, stage, round
 
@@ -259,6 +259,12 @@ An item that makes its player's reel stronger for a while, so a fish comes in fa
 
 Not: super reel
 
+### Postgame
+
+The screen after a match: each player's catches shown one after another as their points add up, then the final ranking. Rematch or Back to Title leaves it.
+
+Not: scoreboard, results screen, game over
+
 ### Radar
 
 The Fish-Boy's green overhead map of the lake. It always shows your boat and its heading and the item buoy, and shows other players only where the last ping found them.
@@ -271,9 +277,15 @@ The minigame after a hook: keep the fish inside the catch zone until the catch m
 
 Not: fight, tug of war
 
+### Rematch
+
+The postgame's button that starts another match with the same players, length and item buoy interval, on a new layout of the lake.
+
+Not: replay, restart, play again
+
 ### Settings
 
-The screen where the reader sets the volume, the text size and their name in matches. Settings last for this visit.
+The screen where the reader sets the volume, the text size, their name in matches and whether the map seed shows in a match. Settings last for this visit.
 
 Not: options, preferences, config
 

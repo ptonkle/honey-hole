@@ -15,6 +15,7 @@ pub mod api;
 pub mod app;
 pub mod controls;
 pub mod fishboy;
+pub mod flow;
 pub mod gfx;
 pub mod glossary;
 pub mod map;

@@ -65,12 +65,19 @@ Collected as the agent makes them; brought up in the morning. Each also has a ro
 - V30. Fish seen from the boat camera are drawn twice their size and at 45% of their depth so they read from 9 m back; under the water they are life size (R3.6).
 - V31. The underwater camera's murk (green-blue, 16 m), the picture-in-picture (26% of the screen's width, top left, white border), the HUD moved to the top right, and the fishing HUD as panels until the 2D layer draws it (R3.7, R3.9, R3.10, R3.11).
 - V32. The hook popup ends with a full stop, not "!", for the tone lint (R3.15).
-- V34. Items (SECOND-ORDER R4.3 to R4.25): an unclaimed buoy moves to the new fair point when the next is due; equal item weights; a 3.5 m pickup; the first buoy a whole interval in.
-- V35. Esc in a minigame, or while picking a teleport's spot, wastes the item; Tab cannot put the Fish-Boy down under its minigame (R4.9, R4.10).
-- V36. The Teleporter: the boat can drive while it charges; a spot on land snaps to water 6 m from land; it lands at rest (R4.16).
-- V37. The camera's offer: Shift uses it, Esc saves it, and after 10 s it is saved (R4.18).
-- V38. Enhanced Radar pings whatever the cooldown and marks the nearest fish of each tier (R4.19).
-- V39. Your cloaked boat is drawn pale to you until the see-through pass merges; the item slot, timers, icons and popups are the agent's (R4.12, R4.20 to R4.22; shots in `notes/shots/items/`).
+- V33. The chase camera: a pivot 1.5 m over the boat, 7 m back, 11° down, aimed 4 m ahead and 0.3 m up, pulled in by land between it and the boat (SECOND-ORDER R4.80, R4.82; `notes/shots/polish/`).
+- V34. The underwater look: murk graded by depth and view, shafts, caustics, the surface's bright window and dark floating shapes, drifting specks and bubbles, weeds and stems by the reeds, rocks and logs on the bed, fish lifted 30% toward their own colours (R4.83 to R4.90; `notes/shots/polish/`).
+- V32. The hook popup ends with a full stop, not "!", for the tone lint (R3.15). Superseded by V33.
+- V33. The hook popup ends with "!" as the person wrote it: popup strings may end with one "!" (a narrow tone exemption, TONE.md; SECOND-ORDER R3.112).
+- V34. The match flow: a 3 s countdown with the boats held still; popups up to 4 at once for 2 s each, landings announced too; the HUD's layout (time top right, gauge and mode badge bottom left, ping and item bottom right, key hints along the bottom fading after a minute); "Lines up" for 3 s before the postgame (R3.110, R3.113, R3.121, R3.122).
+- V35. The postgame: players revealed in seat order, a card every 0.75 s, ties sharing a place; Rematch keeps the setup but draws a new map layout (R3.118, R3.119).
+- V36. The wreck: a lumpy fireball with shards, a short camera shake and an orange flash for the victim; a respawned boat drawn 45% solid while ghosted (R3.116, R3.117). The look: `notes/shots/match-flow/`.
+- V37. Items (SECOND-ORDER R4.3 to R4.25): an unclaimed buoy moves to the new fair point when the next is due; equal item weights; a 3.5 m pickup; the first buoy a whole interval in.
+- V38. Esc in a minigame, or while picking a teleport's spot, wastes the item; Tab cannot put the Fish-Boy down under its minigame (R4.9, R4.10).
+- V39. The Teleporter: the boat can drive while it charges; a spot on land snaps to water 6 m from land; it lands at rest (R4.16).
+- V40. The camera's offer: Shift uses it, Esc saves it, and after 10 s it is saved (R4.18).
+- V41. Enhanced Radar pings whatever the cooldown and marks the nearest fish of each tier (R4.19).
+- V42. Your cloaked boat is drawn see-through and pale to you; the slot's item icons, the effect timers, the camera's offer and the item popups are the agent's (R4.12, R4.20 to R4.22; shots in `notes/shots/items/`).
 
 ## Status
 

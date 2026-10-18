@@ -34,6 +34,9 @@ pub struct Tuning {
     pub radar: RadarTuning,
     /// the item buoy and the items' effects (`sim::items::tuning`)
     pub items: crate::sim::items::tuning::ItemsTuning,
+    /// the match's flow: the countdown, the popups, the end
+    /// (`crates/core/src/flow/`)
+    pub flow: FlowTuning,
     /// the item minigames (`minigame/tuning.rs`)
     pub minigames: crate::minigame::tuning::MinigameTuning,
     /// the sound engine's section, read and checked by `sound::Bank::parse`
@@ -123,6 +126,22 @@ pub struct RadarTuning {
     pub ping_cooldown_ms: i32,
     /// a sweep's crossing of the whole map
     pub ping_sweep_ms: i32,
+}
+
+/// The match's flow (`crates/core/src/flow/`).
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct FlowTuning {
+    #[serde(rename = "_note", default)]
+    pub note: String,
+    /// the 3-2-1-Go before a match, the boats held still
+    pub countdown_ms: i32,
+    /// how long a popup stays up
+    pub popup_ms: i32,
+    /// at the end: the horn and "Lines up" before the postgame
+    pub end_hold_ms: i32,
+    /// the HUD's key hints show for this long of match time, then fade
+    pub hints_ms: i32,
 }
 
 /// Collects range checks; the first failure names its key.
@@ -232,6 +251,12 @@ impl Tuning {
             .range("wreck.bounce_pct", w.bounce_pct, 0, 100)
             .range("wreck.scrape_keep_pct", w.scrape_keep_pct, 0, 100)
             .range("wreck.bump_pct", w.bump_pct, 0, 100);
+        let f = &self.flow;
+        // the countdown's beeps are cues for 3, 2 and 1 (data/sounds.json)
+        c.range("flow.countdown_ms", f.countdown_ms, 0, 3000)
+            .range("flow.popup_ms", f.popup_ms, 200, 30_000)
+            .range("flow.end_hold_ms", f.end_hold_ms, 0, 60_000)
+            .range("flow.hints_ms", f.hints_ms, 0, HOUR_MS);
         crate::sim::fishing::tuning::check(&mut c, &self.fish, &self.fishing);
         let r = &self.radar;
         c.range("radar.ping_sweep_ms", r.ping_sweep_ms, 20, 60_000)
@@ -300,6 +325,14 @@ pub mod tests {
             "radar": {
                 "ping_cooldown_ms": 5000,
                 "ping_sweep_ms": 3000
+            },
+            // no countdown, so a test's first tick moves the boats; the
+            // countdown's own tests set one
+            "flow": {
+                "countdown_ms": 0,
+                "popup_ms": 2000,
+                "end_hold_ms": 3000,
+                "hints_ms": 60000
             },
             "fish": fish_sample(),
             "fishing": fishing_sample(),

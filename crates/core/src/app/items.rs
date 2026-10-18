@@ -25,7 +25,6 @@ use crate::scene::{mm, Instance, Lake};
 use crate::sim::fishing::lake::ahead;
 use crate::sim::items::{claims, Item, SeatItems};
 use crate::sim::view::BoatView;
-use crate::sim::{MatchEvent, TICK_MS};
 use crate::ui2d::theme::{c, Theme};
 use crate::ui2d::{Align, List, Rect, Rgba, Transform};
 
@@ -90,8 +89,6 @@ pub struct ItemsLook {
     pub choose: [i32; 3],
 }
 
-/// Popups last this long (as the fishing's).
-const POPUP_MS: u32 = 2000;
 /// `?debug=items` puts a buoy this far ahead of the boat (or nearer, the
 /// first of these on open water).
 const DEBUG_AHEAD_MM: [i32; 3] = [40_000, 25_000, 15_000];
@@ -223,7 +220,7 @@ fn flat(out: &mut Vec<i32>, p: [V3; 3], colour: Rgb) {
 }
 
 /// The largest text size up to `size` at which `text` fits in `width`.
-fn fit(font: &crate::ui2d::Font, text: &str, size: i32, width: i32) -> i32 {
+pub fn fit(font: &crate::ui2d::Font, text: &str, size: i32, width: i32) -> i32 {
     let w = font.width(text, size).max(1);
     if w <= width {
         size
@@ -456,18 +453,34 @@ impl App {
     /// The item slot, the effects' timers and the camera's offer on the
     /// HUD canvas, and a minigame over the view; the 2D status words for
     /// the browser check.
-    pub(crate) fn draw_items_hud(&self, list: &mut List, theme: &Theme, status: &mut Vec<String>) {
-        let (Some(p), Some(s)) = (self.play.as_ref(), self.my_items()) else {
+    pub(crate) fn draw_items_hud(
+        &self,
+        list: &mut List,
+        theme: &Theme,
+        status: &mut Vec<String>,
+        slot_too: bool,
+    ) {
+        let Some(s) = self.my_items() else {
             return;
         };
+        let [sx, sy, sw, sh] = theme.items.slot;
+        let slot = Rect::new(sx, sy, sw, sh);
+        status.push(format!("item={}", s.held.map_or("none", |i| i.key())));
+        if slot_too {
+            self.draw_slot(list, theme, slot, s.held);
+        }
+        self.draw_effects_and_offer(list, theme, status);
+    }
+
+    /// The item slot of its own (without the flow's HUD).
+    fn draw_slot(&self, list: &mut List, theme: &Theme, slot: Rect, held: Option<Item>) {
         let l = &theme.items;
         let font = theme.mono();
         let ink = c(l.ink);
-        let [sx, sy, sw, sh] = l.slot;
-        let slot = Rect::new(sx, sy, sw, sh);
+        let [sx, sy, sw, sh] = [slot.x, slot.y, slot.w, slot.h];
         list.round_rect(c(l.panel).alpha(85), c(l.edge), 4, slot, 18);
         let icon = Rect::new(sx + (sw - 104) / 2, sy + 14, 104, 104);
-        match s.held {
+        match held {
             Some(item) => {
                 draw_icon(list, item, icon, c(l.icons.get(item)), ink);
                 let name = self.item_name(item);
@@ -509,7 +522,18 @@ impl App {
                 );
             }
         }
-        status.push(format!("item={}", s.held.map_or("none", |i| i.key())));
+    }
+
+    /// The effects' timers above the slot, the camera's offer, and a
+    /// minigame over the view.
+    fn draw_effects_and_offer(&self, list: &mut List, theme: &Theme, status: &mut Vec<String>) {
+        let (Some(p), Some(s)) = (self.play.as_ref(), self.my_items()) else {
+            return;
+        };
+        let l = &theme.items;
+        let font = theme.mono();
+        let ink = c(l.ink);
+        let [sx, sy, sw, _] = l.slot;
 
         // the effects running, stacked above the slot
         let g = &p.game;
@@ -673,59 +697,6 @@ impl App {
             }
         }
         status.push(format!("marks={}", s.marks.len()));
-    }
-
-    /// The items' popups of the last 2 s, newest first.
-    pub(super) fn item_popups(&self) -> Vec<Panel> {
-        let Some(p) = self.play.as_ref() else {
-            return Vec::new();
-        };
-        let now = p.game.tick;
-        let keep = POPUP_MS / TICK_MS as u32;
-        let name = |seat: usize| {
-            p.game
-                .setup
-                .seats
-                .get(seat)
-                .map_or(String::new(), |s| s.name.clone())
-        };
-        let mut out = Vec::new();
-        for (tick, e) in p.log.iter().rev() {
-            if now.saturating_sub(*tick) >= keep {
-                break;
-            }
-            let own = |seat: &usize| *seat == p.seat;
-            let text = match e {
-                MatchEvent::BuoyWarning => Some(self.t("popup.buoy_warning")),
-                MatchEvent::BuoySpawned { .. } => Some(self.t("popup.buoy_spawned")),
-                MatchEvent::ItemPicked { seat, item, dropped } if own(seat) => Some(match dropped {
-                    Some(old) => self
-                        .t("popup.item_replaced")
-                        .replace("{item}", &self.item_name(*item))
-                        .replace("{old}", &self.item_name(*old)),
-                    None => self
-                        .t("popup.item_picked")
-                        .replace("{item}", &self.item_name(*item)),
-                }),
-                MatchEvent::ItemPicked { seat, .. } => {
-                    Some(self.t("popup.item_taken").replace("{player}", &name(*seat)))
-                }
-                MatchEvent::ItemWasted { seat, item } if own(seat) => Some(
-                    self.t("popup.item_wasted")
-                        .replace("{item}", &self.item_name(*item)),
-                ),
-                MatchEvent::ItemRefused {
-                    seat,
-                    why: claims::Refusal::AfterCatch,
-                    ..
-                } if own(seat) => Some(self.t("popup.after_catch")),
-                _ => None,
-            };
-            if let Some(text) = text {
-                out.push(Panel::new("popup item", text, Vec::new()));
-            }
-        }
-        out
     }
 }
 

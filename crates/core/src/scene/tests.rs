@@ -61,7 +61,13 @@ fn look_json() -> Value {
     for k in ["pine", "birch", "maple"] {
         lake["props"][k] = json!(["tree"]);
     }
+    for k in ["weeds", "bed_rocks"] {
+        lake["props"][k] = json!(["rock"]);
+    }
     for k in [
+        "reed_stems",
+        "lily_stems",
+        "bed_log",
         "reeds",
         "lily_pads",
         "shore_rocks",
@@ -77,6 +83,10 @@ fn look_json() -> Value {
         "boulder_permille",
         "log_permille",
         "lily_pct",
+        "weeds_pct",
+        "weed_permille",
+        "bed_rock_permille",
+        "bed_log_permille",
     ] {
         lake["props"][k] = json!(0);
     }
@@ -397,14 +407,20 @@ fn the_boat_camera_stands_behind_and_above_and_keeps_clear_of_the_ground() {
     let l = lake();
     let c = &l.look.camera;
     let target = v3(0, 0, 0);
-    // the boat faces +x (yaw a quarter turn): the eye is behind it, on -x
+    // the boat faces +x (yaw a quarter turn): the eye is behind it, on -x,
+    // back_mm from the pivot at pitch_deg down
     let cam = camera::boat(&l, c, target, QUARTER, 0, 0);
-    assert!(cam.eye.x < -mm(c.back_mm) / 2, "{:?}", cam.eye);
-    assert!(cam.eye.y > mm(c.aim_mm));
+    let down = deg(c.pitch_deg);
+    let want_x = -fx::mul(mm(c.back_mm), fx::cos(down));
+    let want_y = mm(c.pivot_mm) + fx::mul(mm(c.back_mm), fx::sin(down));
+    assert!((cam.eye.x - want_x).abs() < ONE / 50, "{:?}", cam.eye);
+    assert!((cam.eye.y - want_y).abs() < ONE / 50, "{:?}", cam.eye);
     assert!(cam.eye.z.abs() < ONE / 50);
-    // it looks at the aim point over the boat
-    let aim = v3(0, mm(c.aim_mm), 0);
+    // it looks at the aim point ahead of the boat and low over the water
+    let aim = v3(mm(c.ahead_mm), mm(c.aim_mm), 0);
     assert!(near(cam.fwd, aim.sub(cam.eye).norm()));
+    // so it looks down, but less than it would at the boat itself
+    assert!(cam.fwd.y < 0 && cam.fwd.y > target.sub(cam.eye).norm().y);
     // the mouse turns it half round: now in front, on +x
     let round = camera::boat(&l, c, target, QUARTER, HALF, 0);
     assert!(round.eye.x > mm(c.back_mm) / 2);
@@ -413,6 +429,38 @@ fn the_boat_camera_stands_behind_and_above_and_keeps_clear_of_the_ground() {
     hill.heights.iter_mut().for_each(|h| *h = 30_000);
     let low = camera::boat(&hill, c, target, QUARTER, 0, -deg(60));
     assert_eq!(low.eye.y, mm(30_000 + c.clear_mm));
+}
+
+#[test]
+fn land_behind_the_boat_pulls_the_camera_in_and_it_stays_over_the_land() {
+    let mut l = lake();
+    let c = l.look.camera.clone();
+    // a 6 m bank west of the boat: every corner from 4 m behind it (the map's
+    // middle is 60 m, so corners at x 56 m and less)
+    let n = l.map.n;
+    for j in 0..=n {
+        for i in 0..=n {
+            if (i as i32) * CELL <= 56_000 {
+                l.heights[j * (n + 1) + i] = 6000;
+            }
+        }
+    }
+    let cam = camera::boat(&l, &c, v3(0, 0, 0), QUARTER, 0, 0);
+    // pulled in from about 6.9 m to no nearer than min_back_mm along the
+    // orbit (its flat share is at least 0.9 of it at an 11° pitch)
+    let back = -cam.eye.x;
+    assert!(back < mm(4000), "still behind the bank: {:?}", cam.eye);
+    assert!(back >= mm(c.min_back_mm) * 9 / 10, "{:?}", cam.eye);
+    // and never inside the land under it
+    let ground = l.ground_mm(l.map_point(cam.eye));
+    assert!(
+        cam.eye.y >= mm(ground + c.clear_mm) - 2,
+        "{:?} over {ground}",
+        cam.eye
+    );
+    // open water behind: no pull
+    let open = camera::boat(&lake(), &c, v3(0, 0, 0), QUARTER, 0, 0);
+    assert!(-open.eye.x > mm(6000));
 }
 
 #[test]

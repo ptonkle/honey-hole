@@ -131,6 +131,28 @@ pub struct PropsLook {
     pub log: String,
     /// a share of forest cells (permille) holds a fallen log
     pub log_permille: i32,
+    /// under the water: weeds on the bed by the reed beds (`weeds_pct` per
+    /// clump of reeds, within `weed_reach_pct` of the bed's radius) and
+    /// scattered over shallow cells (`weed_permille`), in water
+    /// `weed_depth_mm` deep; each grows to at most `weed_fill_pct` of
+    /// the depth
+    pub weeds: Vec<String>,
+    pub weeds_pct: i32,
+    pub weed_reach_pct: i32,
+    pub weed_permille: i32,
+    pub weed_depth_mm: [i32; 2],
+    pub weed_fill_pct: i32,
+    /// the stalks under each clump of reeds and the stems under each lily
+    /// pad, one metre tall, stretched from the bed to the surface
+    pub reed_stems: String,
+    pub lily_stems: String,
+    /// rocks and sunken logs on the bed of water cells at least
+    /// `bed_min_mm` deep
+    pub bed_rocks: Vec<String>,
+    pub bed_rock_permille: i32,
+    pub bed_log: String,
+    pub bed_log_permille: i32,
+    pub bed_min_mm: i32,
     pub dock: String,
     pub cabin: String,
     pub cabins: u32,
@@ -148,14 +170,21 @@ pub struct CameraLook {
     pub near_mm: i32,
     /// the far plane with the fog off
     pub far_mm: i32,
-    /// the boat camera: behind and above the boat, aimed this high over it
+    /// the boat camera orbits a pivot `pivot_mm` over the boat at
+    /// `back_mm`, `pitch_deg` down before the mouse moves it, and looks at
+    /// a point `ahead_mm` in front of the boat (along the camera's own
+    /// heading) and `aim_mm` over the water, so the bow and the water ahead
+    /// show and the horizon sits in the upper third
     pub back_mm: i32,
-    pub up_mm: i32,
+    pub pivot_mm: i32,
+    pub ahead_mm: i32,
     pub aim_mm: i32,
-    /// its pitch down, degrees, before the mouse moves it
     pub pitch_deg: i32,
-    /// the eye stays this far over the ground and the water
+    /// the eye stays this far over the ground and the water; land between
+    /// the pivot and the eye pulls the eye in, no nearer than `min_back_mm`
+    /// (then it rises instead)
     pub clear_mm: i32,
+    pub min_back_mm: i32,
     /// the tour's speed, as a boat's
     pub tour_mm_per_s: i32,
     /// the overview stands this high over the lake's middle
@@ -209,6 +238,8 @@ impl LakeLook {
             ("fresnel_pow_pct", w.fresnel_pow_pct),
             ("shine", w.shine),
             ("near_mm", self.camera.near_mm),
+            ("back_mm", self.camera.back_mm),
+            ("min_back_mm", self.camera.min_back_mm),
             ("tour_mm_per_s", self.camera.tour_mm_per_s),
         ];
         if let Some((name, _)) = lengths.iter().find(|(_, v)| *v <= 0) {
@@ -247,7 +278,11 @@ impl LakeLook {
             p.log.as_str(),
             p.dock.as_str(),
             p.cabin.as_str(),
+            p.reed_stems.as_str(),
+            p.lily_stems.as_str(),
+            p.bed_log.as_str(),
         ]);
+        out.extend(p.weeds.iter().chain(&p.bed_rocks).map(|s| s.as_str()));
         out.sort();
         out.dedup();
         out

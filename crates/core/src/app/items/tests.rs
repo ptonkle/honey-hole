@@ -43,8 +43,6 @@ fn the_debug_flag_puts_a_buoy_ahead_and_driving_onto_it_fills_the_slot() {
     a.play.as_mut().unwrap().game.boats[0].as_mut().unwrap().set_at(b);
     tick(&mut a);
     assert!(has(&a, "item=nitrous"), "{:?}", status(&a));
-    let picked = a.t("popup.item_picked").replace("{item}", &a.t("item.nitrous"));
-    assert!(a.play_panels().iter().any(|p| p.heading == picked));
 }
 
 #[test]
@@ -66,8 +64,6 @@ fn a_full_screen_minigame_takes_the_pointer_and_esc_loses_the_item() {
     tick(&mut a);
     assert!(!a.ui().pointer);
     assert!(has(&a, "item=none"));
-    let lost = a.t("popup.item_wasted").replace("{item}", &a.t("item.nitrous"));
-    assert!(a.play_panels().iter().any(|p| p.heading == lost));
     assert!(
         !a.play_panels().iter().any(|p| p.kind == "pause"),
         "Esc did not open the menu"
@@ -83,8 +79,8 @@ fn your_own_cloaked_boat_is_tinted_and_others_are_not() {
     assert_eq!(a.boat_colour(colour, &b, 0), colour);
     b.cloaked = true;
     let tint = render::rgb(l.cloak_tint);
-    // 70% of the way from blue to the tint
-    let want = [0, 1, 2].map(|k| colour[k] + (tint[k] - colour[k]) * 70 / 100);
+    // 40% of the way from blue to the tint
+    let want = [0, 1, 2].map(|k| colour[k] + (tint[k] - colour[k]) * 40 / 100);
     assert_eq!(a.boat_colour(colour, &b, 0), want);
     assert_eq!(
         a.boat_colour(colour, &b, 1),
@@ -116,4 +112,25 @@ fn a_click_on_the_radar_picks_the_teleports_destination() {
     a.act("pointer.up", &format!("{x} {y}")).unwrap();
     let g = &a.play.as_ref().unwrap().game;
     assert!(g.items.seats[0].charge.is_some(), "the charge begins");
+}
+
+#[test]
+fn the_flow_announces_a_pickup_with_the_items_name_and_a_wasted_item() {
+    let mut a = started("items,item.nitrous");
+    a.act("data.flow", include_str!("../../../../../data/flow.json"))
+        .unwrap();
+    let b = a.play.as_ref().unwrap().game.items.buoy.unwrap();
+    a.play.as_mut().unwrap().game.boats[0].as_mut().unwrap().set_at(b);
+    tick(&mut a);
+    let texts = |a: &App| -> Vec<String> { a.flow.popups.queue.iter().map(|p| p.text.clone()).collect() };
+    let picked = a.t("popup.item_picked").replace("{item}", &a.t("item.nitrous"));
+    assert!(texts(&a).contains(&picked), "{:?}", texts(&a));
+    // the flow's HUD draws the slot with the item's name
+    assert!(has(&a, "item=nitrous"));
+    a.act("key", "ShiftLeft").unwrap();
+    tick(&mut a);
+    a.act("key", "Escape").unwrap();
+    tick(&mut a);
+    let lost = a.t("popup.item_wasted").replace("{item}", &a.t("item.nitrous"));
+    assert!(texts(&a).contains(&lost), "{:?}", texts(&a));
 }

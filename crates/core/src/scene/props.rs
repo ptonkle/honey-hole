@@ -35,6 +35,10 @@ pub struct Placed {
     pub scale: i32,
     /// a hash for its phase in its loop
     pub hash: u64,
+    /// thousandths of the model's height, when it is stretched up and
+    /// down apart from `scale` (a stem reaching from the bed to the
+    /// surface); 0: as `scale`
+    pub stretch: i32,
 }
 
 const DOCK: u64 = 0x646f_636b;
@@ -44,6 +48,8 @@ const REED: u64 = 0x7265_6564;
 const LILY: u64 = 0x6c69_6c79;
 const ROCK: u64 = 0x726f_636b;
 const LOG: u64 = 0x6c6f_6773;
+const WEED: u64 = 0x7765_6564;
+const BED: u64 = 0x6265_6473;
 
 fn h(map: &Map, salt: u64, a: i32, b: i32) -> u64 {
     hash2(map.seed as u64 ^ salt, a, b)
@@ -116,6 +122,7 @@ pub fn place(lake: &Lake, look: &LakeLook) -> Vec<Placed> {
             heading,
             scale,
             hash,
+            stretch: 0,
         })
     };
 
@@ -211,6 +218,25 @@ pub fn place(lake: &Lake, look: &LakeLook) -> Vec<Placed> {
                 scale,
                 k >> 28,
             );
+            stems(
+                &mut out,
+                lake,
+                &p.reed_stems,
+                *c,
+                ((k >> 12) % TURN as u64) as i32,
+                scale,
+            );
+        }
+        // weeds on the bed round the reed bed
+        let weeds = patch.clumps.len() as i32 * p.weeds_pct / 100;
+        let reach = patch.radius_mm * p.weed_reach_pct / 100;
+        for w in 0..weeds {
+            let k = h(map, WEED, r as i32, w);
+            let q = P::new(
+                patch.at.x + (k % (2 * reach.max(1) as u64)) as i32 - reach,
+                patch.at.y + ((k >> 20) % (2 * reach.max(1) as u64)) as i32 - reach,
+            );
+            weed(&mut out, lake, p, q, k);
         }
         let want = patch.clumps.len() as i32 * p.lily_pct / 100;
         let mut placed = 0;
@@ -240,6 +266,14 @@ pub fn place(lake: &Lake, look: &LakeLook) -> Vec<Placed> {
                 scale,
                 k >> 8,
             );
+            stems(
+                &mut out,
+                lake,
+                &p.lily_stems,
+                q,
+                ((k >> 44) % TURN as u64) as i32,
+                scale,
+            );
             placed += 1;
         }
     }
@@ -258,6 +292,38 @@ pub fn place(lake: &Lake, look: &LakeLook) -> Vec<Placed> {
         let turn = ((k >> 34) % TURN as u64) as i32;
         let scale = 700 + ((k >> 50) % 600) as i32;
         let cell = map.cells[i];
+        // under the water: weeds in the shallows, rocks and logs on the bed
+        if cell.water() {
+            let b = h(map, BED, c.x, c.y);
+            let q = jitter(b, map.cell_mm / 2 - 200);
+            let depth = -lake.ground_mm(q);
+            if cell == Cell::Shallow && ((b >> 50) % 1000) < p.weed_permille as u64 {
+                weed(&mut out, lake, p, q, b >> 3);
+            }
+            if depth >= p.bed_min_mm && !p.bed_rocks.is_empty() && ((b % 1000) as i32) < p.bed_rock_permille {
+                let model = &p.bed_rocks[((b >> 40) % p.bed_rocks.len() as u64) as usize];
+                put(
+                    &mut out,
+                    model,
+                    q,
+                    lake.ground_mm(q) - 150,
+                    turn,
+                    scale * 3 / 4,
+                    b,
+                );
+            } else if depth >= p.bed_min_mm && ((b % 1000) as i32) < p.bed_rock_permille + p.bed_log_permille
+            {
+                put(
+                    &mut out,
+                    &p.bed_log,
+                    q,
+                    lake.ground_mm(q) - 120,
+                    turn,
+                    scale.min(1100),
+                    b,
+                );
+            }
+        }
         if !cell.water() && map.shore[i] <= map.cell_mm && roll < p.shore_rocks_permille {
             let q = jitter(k, map.cell_mm / 3);
             if !clear(q) {
@@ -279,6 +345,45 @@ pub fn place(lake: &Lake, look: &LakeLook) -> Vec<Placed> {
         }
     }
     out
+}
+
+/// A stretched stem model from the bed under `at` up to the surface, if
+/// the water there is deep enough to show one.
+fn stems(out: &mut Vec<Placed>, lake: &Lake, model: &str, at: P, heading: i32, scale: i32) {
+    let bed = lake.ground_mm(at);
+    if bed < -100 {
+        out.push(Placed {
+            model: model.to_string(),
+            at,
+            height_mm: bed,
+            heading,
+            scale,
+            hash: 0,
+            stretch: -bed,
+        });
+    }
+}
+
+/// One weed on the bed at `q`, if the water there is in the look's depths;
+/// sized to stay well under the surface.
+fn weed(out: &mut Vec<Placed>, lake: &Lake, p: &super::look::PropsLook, q: P, k: u64) {
+    let bed = lake.ground_mm(q);
+    if !(p.weed_depth_mm[0]..=p.weed_depth_mm[1]).contains(&-bed) || p.weeds.is_empty() {
+        return;
+    }
+    let model = &p.weeds[(k % p.weeds.len() as u64) as usize];
+    // the tallest weed is about 1.5 m; keep it under weed_fill_pct of the depth
+    let most = (-bed * p.weed_fill_pct / 100 * 1000 / 1500).max(200);
+    let scale = (700 + ((k >> 12) % 600) as i32).min(most);
+    out.push(Placed {
+        model: model.clone(),
+        at: q,
+        height_mm: bed - 40,
+        heading: ((k >> 24) % TURN as u64) as i32,
+        scale,
+        hash: k >> 30,
+        stretch: 0,
+    });
 }
 
 /// How much each cell's ground is forest floor (0..=ONE): the trees within
@@ -420,12 +525,20 @@ pub fn bake(
             }
         };
         let mesh = &meshes[mi];
-        let place = lake.place(p.at, p.height_mm, p.heading, p.scale);
+        let place = if p.stretch > 0 {
+            let (s, t) = (p.scale * ONE / 1000, p.stretch * ONE / 1000);
+            Affine::translate(lake.world(p.at, p.height_mm))
+                .then(&Affine::rot_y(super::yaw_of_heading(p.heading)))
+                .then(&Affine::scale(crate::gfx::geom::v3(s, t, s)))
+        } else {
+            lake.place(p.at, p.height_mm, p.heading, p.scale)
+        };
+        let size = p.scale.max(p.stretch);
         props.push(Prop {
             mesh: mi,
             place,
             at: place.t,
-            radius: (mesh.radius as i64 * p.scale as i64 / 1000) as i32 + super::mm(2000),
+            radius: (mesh.radius as i64 * size as i64 / 1000) as i32 + super::mm(2000),
             phase_ms: (p.hash % mesh.ms as u64) as u32,
         });
     }
