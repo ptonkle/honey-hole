@@ -46,3 +46,12 @@ The agent decided (questions in `brief/questions.md`):
 - P2: rename the folder to `honey-hole/` (done once no agent is working in a worktree under it).
 - P4: no GitHub yet; local deploys only.
 - Unanswered questions keep the agent's suggestions (F5, R2, I1–I4, O2, O3, P3).
+
+## 2026-10-17 (radar look, map name)
+
+> let's do lower fidelity on the radar
+> also call this map "Burt Lake" in the UI
+> not that blocky, do like 80% the fidelity of the original
+> yeah that's good
+
+The agent decided: the radar keeps its first look (fine grid, thin ping rings, sweep, bright shoreline, two water shades, scanlines) at about 80% of the first preview's fidelity: the shoreline is judged in 2.5 px blocks where it used 2 (`tools/maps/preview.py`, `RADAR_CHUNK`). The in-game radar matches this. The first map's on-screen name is Burt Lake (`map.burt_lake`).
