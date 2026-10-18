@@ -1478,7 +1478,7 @@
   },
   {
     "name": "a raised fish-boy makes the boat coast",
-    "file": "crates/core/src/sim/mod.rs",
+    "file": "crates/core/src/sim/items/mod.rs",
     "find": "            b.captured = up;",
     "replace": "            b.captured = false;",
     "test": "raised_the_boat_coasts_and_lowered_it_drives_again"
