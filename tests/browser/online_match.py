@@ -13,7 +13,7 @@ request is aborted and counted as a failure. For each engine it:
   Start is not offered, and A's Start waits for B;
 - A adds an AI player and B's Lobby shows it;
 - B presses Ready; A's Start comes on; A presses it;
-- both tabs reach Play;
+- both tabs reach Play, and both countdowns run out;
 - B holds W, and A sees B's boat leave its spawn
   (`body[data-remote-moved="true"]`, from the core); A holds W and B sees
   A's boat move;
@@ -105,6 +105,22 @@ class Tab:
         except Exception:
             return False
 
+    def ui2d(self, key):
+        """A word of the 2D layer's status (body[data-ui2d]), `key=value`."""
+        for word in (self.page.get_attribute("body", "data-ui2d") or "").split(" "):
+            if word.startswith(key + "="):
+                return word[len(key) + 1:]
+        return None
+
+    def ui2d_has(self, word):
+        try:
+            self.page.wait_for_function(
+                "w => (document.body.dataset.ui2d || '').split(' ').includes(w)", arg=word, timeout=WAIT_MS
+            )
+            return True
+        except Exception:
+            return False
+
     def csp(self):
         return self.page.evaluate("() => window.__builderCsp || []")
 
@@ -184,6 +200,8 @@ def run_engine(p, engine, origin):
     check(ok, "both tabs reach Play")
     if not ok:
         return finish()
+    # the 3-2-1-Go on both (the HUD's status: countdown=N, then countdown=)
+    check(a.ui2d_has("countdown=") and b.ui2d_has("countdown="), "both countdowns run out")
 
     for t, driver, other in ((a, b, "B's boat"), (b, a, "A's boat")):
         driver.page.keyboard.down("KeyW")
@@ -198,9 +216,9 @@ def run_engine(p, engine, origin):
     # the match menu over B: the online match's time runs on
     b.page.keyboard.press("Escape")
     b.page.wait_for_selector(".panel.pause", timeout=WAIT_MS)
-    before = b.page.inner_text(".panel.hud h2")
+    before = b.ui2d("time")
     b.page.wait_for_timeout(1500)
-    after = b.page.inner_text(".panel.hud h2")
+    after = b.ui2d("time")
     check(before != after, f"the online match runs on behind B's menu ({before} -> {after})")
     finish()
 

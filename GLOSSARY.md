@@ -280,7 +280,7 @@ Not: fight, tug of war
 
 ### Rematch
 
-The postgame's button that starts another match with the same players, length and item buoy interval, on a new layout of the lake.
+The postgame's button that starts another match with the same players, length and item buoy interval, on a new layout of the lake. Online, it is the host's, and takes everyone back to the Lobby.
 
 Not: replay, restart, play again
 
