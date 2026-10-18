@@ -1,4 +1,4 @@
-//! The screen flow, Escape, Back, the pause menu, Settings and What's New.
+//! The screen flow, Escape, Back, the in-match menu, Settings and What's New.
 //! Expected screens and values are worked out by hand from the rules in
 //! `app.rs`, not read back from the app.
 
@@ -55,14 +55,20 @@ fn the_app_opens_on_the_title_with_its_menu() {
     assert_eq!(v["panels"][0]["heading"], "TITLE");
     assert_eq!(
         v["panels"][2]["items"][0]["rows"],
-        json!([["CONTROLS.PAUSE", "CONTROLS.PAUSE_KEYS"]])
+        json!([
+            ["CONTROLS.DRIVE", "CONTROLS.DRIVE_KEYS"],
+            ["CONTROLS.STEER", "CONTROLS.STEER_KEYS"],
+            ["CONTROLS.MODE", "CONTROLS.MODE_KEYS"],
+            ["CONTROLS.LOOK", "CONTROLS.LOOK_KEYS"],
+            ["CONTROLS.PAUSE", "CONTROLS.PAUSE_KEYS"]
+        ])
     );
 }
 
 #[test]
 fn each_title_button_opens_its_screen() {
     for (id, screen) in [
-        ("menu.play", Screen::Play),
+        ("menu.play", Screen::Lobby),
         ("menu.settings", Screen::Settings),
         ("menu.notes", Screen::Notes),
     ] {
@@ -74,7 +80,7 @@ fn each_title_button_opens_its_screen() {
 
 #[test]
 fn every_sub_screen_ends_with_back_and_back_goes_to_the_title() {
-    for open in ["menu.settings", "menu.notes"] {
+    for open in ["menu.settings", "menu.notes", "menu.play"] {
         let mut a = app();
         a.act(open, "").unwrap();
         assert_eq!(ids(&a).last().map(String::as_str), Some("menu.back"), "{open}");
@@ -98,46 +104,53 @@ fn escape_on_the_title_and_other_keys_change_nothing() {
     let mut a = app();
     a.act("key", "Escape").unwrap();
     assert_eq!(a.screen, Screen::Title);
-    a.act("menu.play", "").unwrap();
+    a.act("menu.settings", "").unwrap();
     a.act("key", "KeyQ").unwrap();
-    assert_eq!((a.screen, a.paused), (Screen::Play, false));
+    assert_eq!(a.screen, Screen::Settings, "only Escape leaves a screen");
 }
 
 #[test]
-fn escape_in_play_opens_and_closes_the_pause_menu() {
-    let mut a = app();
-    a.act("menu.play", "").unwrap();
-    assert_eq!(kinds(&a), ["play"]);
-    a.act("key", "Escape").unwrap();
-    assert_eq!((a.screen, a.paused), (Screen::Play, true));
-    assert_eq!(kinds(&a), ["play", "pause"]);
-    assert_eq!(ids(&a), ["menu.pause", "menu.resume", "menu.quit"]);
-    a.act("key", "Escape").unwrap();
-    assert_eq!((a.screen, a.paused), (Screen::Play, false));
-    assert_eq!(kinds(&a), ["play"]);
+fn escape_in_play_opens_and_closes_the_match_menu() {
+    let mut a = play::tests::started();
+    assert_eq!(kinds(&a), ["hud"]);
+    play::tests::key(&mut a, "Escape");
+    assert_eq!(kinds(&a), ["hud", "pause"]);
+    assert_eq!(
+        ids(&a),
+        ["menu.pause", "menu.resume", "menu.settings", "menu.quit"]
+    );
+    play::tests::key(&mut a, "Escape");
+    assert_eq!(kinds(&a), ["hud"]);
 }
 
 #[test]
-fn the_pause_button_resume_and_quit() {
-    let mut a = app();
-    a.act("menu.play", "").unwrap();
+fn the_menu_button_resume_and_leave_match() {
+    let mut a = play::tests::started();
     a.act("menu.pause", "").unwrap();
-    assert!(a.paused);
+    play::tests::tick(&mut a);
+    assert!(a.play.as_ref().unwrap().menu_open());
     a.act("menu.resume", "").unwrap();
-    assert!(!a.paused);
+    play::tests::tick(&mut a);
+    assert!(!a.play.as_ref().unwrap().menu_open());
     a.act("menu.pause", "").unwrap();
+    play::tests::tick(&mut a);
     a.act("menu.quit", "").unwrap();
     assert_eq!(a.screen, Screen::Title);
-    // Play opens again with the pause menu closed
-    a.act("menu.play", "").unwrap();
-    assert!(!a.paused);
+    assert!(a.play.is_none(), "leaving ends the match");
 }
 
 #[test]
-fn the_pause_button_does_nothing_off_play() {
+fn the_menu_button_does_nothing_off_play() {
     let mut a = app();
     a.act("menu.pause", "").unwrap();
-    assert!(!a.paused);
+    assert_eq!(a.screen, Screen::Title);
+    assert!(a.play.is_none());
+    // a match running behind Settings: its menu stays shut
+    let mut a = play::tests::started();
+    a.act("menu.settings", "").unwrap();
+    a.act("menu.pause", "").unwrap();
+    play::tests::tick(&mut a);
+    assert!(!a.play.as_ref().unwrap().menu_open());
 }
 
 #[test]
@@ -146,8 +159,7 @@ fn the_version_opens_whats_new_from_the_menus_only() {
     assert!(a.ui().version_opens);
     a.act("version", "").unwrap();
     assert_eq!(a.screen, Screen::Notes);
-    a.act("menu.back", "").unwrap();
-    a.act("menu.play", "").unwrap();
+    let mut a = play::tests::started();
     assert!(!a.ui().version_opens);
     a.act("version", "").unwrap();
     assert_eq!(a.screen, Screen::Play);

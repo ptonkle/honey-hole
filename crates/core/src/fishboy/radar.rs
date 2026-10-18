@@ -1,59 +1,31 @@
 //! The radar: the map in the approved green look, your own boat and its
 //! heading, the item buoy, and the other players as the last ping saw them.
 //!
-//! The radar reads a plain [`RadarView`] (the boats and the buoy), which the
-//! match's world view fills; until the match lands, `demo.rs` fills it. A
-//! [`Ping`] is one player's ping: it starts when the cooldown allows, sweeps
-//! out in a circle from where the player was, crossing the whole map in the
-//! sweep time, and reveals each other player as the sweep passes them,
-//! unless they are cloaked. Both run in ticks (PLAN.md decision 2), and
-//! their numbers come from `data/tuning.json`'s `radar` section.
-
-use serde::Deserialize;
+//! The radar reads a plain [`RadarView`] (the boats and the buoy), which
+//! the match fills (`Match::radar_view`). A [`Ping`] is one player's ping;
+//! the match holds one per seat and steps it each tick. It starts when the
+//! cooldown allows, sweeps out in a circle from where the player was,
+//! crossing the whole map in the sweep time, and reveals each other player
+//! as the sweep passes them, unless they are cloaked. It runs in the
+//! match's ticks, with its numbers from `data/tuning.json`'s `radar`
+//! section (`tuning::RadarTuning`).
 
 use crate::gfx::fx::{self, ONE};
 use crate::map::{Map, P};
+pub use crate::tuning::RadarTuning;
 use crate::ui2d::theme::{c, RadarLook, Theme};
 use crate::ui2d::{Align, Bitmap, List, Rect, Rgba};
 
-/// Milliseconds a tick (PLAN.md decision 2: 50 ticks a second). The match
-/// core will own this number; the radar counts in its ticks.
-pub const TICK_MS: i64 = 20;
-
-/// `data/tuning.json`, section `radar`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct RadarTuning {
-    /// from a ping's start to the next one allowed, per player
-    pub ping_cooldown_ms: i64,
-    /// a sweep's crossing of the whole map
-    pub ping_sweep_ms: i64,
-}
+/// Milliseconds a tick, the match's.
+pub const TICK_MS: i64 = crate::sim::TICK_MS as i64;
 
 impl RadarTuning {
-    /// Reads the `radar` section of the tuning file; the other sections
-    /// belong to other systems.
-    pub fn parse(json: &str) -> Result<RadarTuning, String> {
-        let v: serde_json::Value =
-            serde_json::from_str(json).map_err(|e| format!("The tuning file could not be read: {e}"))?;
-        let section = v
-            .get("radar")
-            .ok_or("The tuning file has no \"radar\" section.")?
-            .clone();
-        let t: RadarTuning =
-            serde_json::from_value(section).map_err(|e| format!("The tuning file's radar section: {e}"))?;
-        if t.ping_sweep_ms < TICK_MS || t.ping_cooldown_ms < t.ping_sweep_ms {
-            return Err("A ping's sweep must take a tick or more and end before its cooldown.".into());
-        }
-        Ok(t)
-    }
-
     pub fn cooldown_ticks(&self) -> i64 {
-        self.ping_cooldown_ms / TICK_MS
+        self.ping_cooldown_ms as i64 / TICK_MS
     }
 
     pub fn sweep_ticks(&self) -> i64 {
-        self.ping_sweep_ms / TICK_MS
+        self.ping_sweep_ms as i64 / TICK_MS
     }
 }
 
@@ -234,6 +206,11 @@ pub fn height_at(map: &Map, x_mm: i32, y_mm: i32) -> i32 {
     ((a * (1024 - ty) + b * ty) >> 20) as i32
 }
 
+/// The radar picture's id for a map (the page caches the picture by it).
+pub fn bitmap_id(map: &Map) -> String {
+    format!("radar-{}-{}", map.setting.id(), map.seed)
+}
+
 /// The radar's picture of a map: one pixel per block of `block_mm`, land
 /// against two water shades with a bright shoreline wherever a block's
 /// neighbour is the other kind, every other row darker. Made once a match.
@@ -278,7 +255,7 @@ pub fn map_bitmap(map: &Map, look: &RadarLook) -> Bitmap {
     let mut palette: Vec<Rgba> = base.to_vec();
     palette.extend(base.iter().map(|p| p.shade(look.scan_pct)));
     Bitmap {
-        id: format!("radar-{}-{}", map.setting.id(), map.seed),
+        id: bitmap_id(map),
         w: blocks as i32,
         h: blocks as i32,
         pixels,

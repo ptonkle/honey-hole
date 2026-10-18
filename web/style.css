@@ -146,6 +146,17 @@ table { border-collapse: collapse; width: 100%; }
   display: none;
 }
 body[data-screen="gallery"] #scene { display: block; }
+body[data-screen="play"] #scene { display: block; }
+/* Play: the HUD in the top corner over the lake */
+body[data-screen="play"] #menus {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  margin: 0;
+  padding: 0;
+  width: 16rem;
+}
+.panel.hud { background: color-mix(in srgb, var(--panel) 80%, transparent); }
 body[data-screen="gallery"] #menus {
   position: fixed;
   left: 1rem;
@@ -156,6 +167,7 @@ body[data-screen="gallery"] #menus {
 }
 .panel.gallery { background: color-mix(in srgb, var(--panel) 88%, transparent); }
 .panel.notice { color: var(--error); }
+.field.text input { font: inherit; padding: 0.35rem 0.5rem; }
 
 /* ---- Play: the world, and the 2D layer over it (the HUD, the Fish-Boy) ---- */
 body[data-screen="play"] #scene { display: block; }

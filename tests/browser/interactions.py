@@ -100,25 +100,40 @@ def step_notes(page, check):
 
 
 def step_play(page, check):
-    # Play and its pause menu
+    # Play opens the match setup; Start match puts a boat on the lake, and
+    # holding W drives it
     page.click(by_id("menu.play"))
-    check(screen(page, "play"), "Play opens from the Title")
+    check(screen(page, "lobby"), "Play opens the match setup")
+    check(page.inner_text(".panel.lobby h2") == STRINGS["lobby.heading"], "the setup is headed New match")
+    check(page.locator(by_id("lobby.ai")).count() == 1, "the setup offers AI players")
+    page.click(by_id("lobby.start"))
+    check(screen(page, "play"), "Start match opens Play")
+    check(page.inner_text("#message") == "", "the match files load without a refusal")
     check(page.is_disabled("#version"), "the version does not open What's New from Play")
-    check(page.locator(".panel.pause").count() == 0, "Play opens with the pause menu closed")
+    page.wait_for_selector("body[data-drawn]", state="attached", timeout=10000)
+    check(page.is_visible("#scene"), "the lake is drawn behind the HUD")
+    start = page.inner_text(".panel.hud h2")
+    check(start.startswith("8:00") or start.startswith("7:5"), f"the match starts with 8 minutes left ({start})")
+    page.keyboard.down("KeyW")
+    # the HUD reads "Driving · {speed} km/h"; 20 km/h is about 1.7 s of W
+    page.wait_for_function(
+        "() => { const s = document.querySelector('.panel.hud .sub');"
+        " return s && (s.textContent.split(' km/h')[0].split(' ').pop() | 0) >= 20; }",
+        timeout=10000,
+    )
+    page.keyboard.up("KeyW")
+    check(True, "holding W drives the boat up to speed")
+    check(page.inner_text(".panel.hud h2") != start, "the time left counts down")
     page.keyboard.press("Escape")
     page.wait_for_selector(".panel.pause", timeout=5000)
-    check(page.inner_text(".panel.pause h2") == STRINGS["pause.heading"], "Escape in Play opens the pause menu")
+    check(page.inner_text(".panel.pause h2") == STRINGS["pause.heading"], "Esc opens the menu, and the offline match waits")
     page.keyboard.press("Escape")
     page.wait_for_selector(".panel.pause", state="detached", timeout=5000)
-    check(page.locator(".panel.pause").count() == 0, "Escape again closes it")
+    check(page.locator(".panel.pause").count() == 0, "Esc again closes it")
     page.click(by_id("menu.pause"))
     page.wait_for_selector(".panel.pause", timeout=5000)
-    page.click(by_id("menu.resume"))
-    page.wait_for_selector(".panel.pause", state="detached", timeout=5000)
-    check(screen(page, "play"), "Resume closes the pause menu and stays in Play")
-    page.keyboard.press("Escape")
     page.click(by_id("menu.quit"))
-    check(screen(page, "title"), "Quit to Title goes to the Title")
+    check(screen(page, "title"), "Leave match goes to the Title")
     check(page.inner_text("#message") == "", "no error message after the round trip")
 
 

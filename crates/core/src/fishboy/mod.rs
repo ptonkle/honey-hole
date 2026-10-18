@@ -15,14 +15,15 @@
 //! lands (SECOND-ORDER R2.60). The tabs: the radar (`radar.rs`), the
 //! Fishpedia and your catch list (`fishpedia.rs`).
 //!
-//! Until the match core lands, Play runs `demo.rs` behind it and draws a
-//! plain stand-in lake (`standin.rs`); both read and fill the same view
-//! structs the match will.
+//! Whether it is up is the match's (`Match::set_fishboy`: Tab is a
+//! `SeatInput` edge, Esc goes through `Match::cancel_layers`, and a raised
+//! Fish-Boy makes the boat coast); the app keeps only what is drawn: the
+//! tab, the slide up and down, and the pointer. The radar, the Fishpedia
+//! and the catch list read the match through plain view structs
+//! (`RadarView`, `FishpediaRow`, `CatchRow`).
 
-pub mod demo;
 pub mod fishpedia;
 pub mod radar;
-pub mod standin;
 #[cfg(test)]
 mod tests;
 
@@ -36,8 +37,8 @@ use crate::roster::{tier_key, Roster, TIERS};
 use crate::ui2d::theme::{c, Theme};
 use crate::ui2d::{Align, Bitmap, Built, List, Pass, Rect, Rgba, Transform};
 
-use demo::Demo;
-use radar::{PingState, RadarScene, RadarTuning};
+use fishpedia::{CatchRow, FishpediaRow};
+use radar::{PingState, RadarScene, RadarView};
 
 /// The Fish-Boy's model id.
 pub const MODEL: &str = "fishboy";
@@ -77,13 +78,13 @@ impl Tab {
     }
 }
 
-/// The Fish-Boy's state, its data files and the demo match behind it.
+/// The Fish-Boy as drawn, and its data files.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FishBoy {
     pub theme: Option<Theme>,
     pub roster: Roster,
-    pub tuning: Option<RadarTuning>,
-    /// raised, or being raised
+    /// raised, or being raised: follows the match's seat
+    /// (`SeatState::fishboy`) each frame
     pub open: bool,
     /// the tab shown, kept while it is down
     pub tab: Tab,
@@ -95,7 +96,7 @@ pub struct FishBoy {
     /// down (for minigames on the Fish-Boy)
     pub pointer: Option<(i32, i32)>,
     pub pointer_down: bool,
-    pub demo: Option<Demo>,
+    /// the radar's picture of this match's map, made once a match
     pub radar_map: Option<Bitmap>,
 }
 
@@ -104,14 +105,12 @@ impl Default for FishBoy {
         FishBoy {
             theme: None,
             roster: Roster::default(),
-            tuning: None,
             open: false,
             tab: Tab::Radar,
             moved_at: i64::MIN / 4,
             dpr_pct: 100,
             pointer: None,
             pointer_down: false,
-            demo: None,
             radar_map: None,
         }
     }
@@ -282,54 +281,46 @@ impl App {
             .collect()
     }
 
-    /// Entering Play: the demo match starts, the Fish-Boy down.
-    pub(crate) fn fishboy_enter_play(&mut self) {
-        self.fishboy.reset();
-        let names: Vec<String> = PLAYER_COLOURS
-            .iter()
-            .map(|c| self.t(&format!("colour.{c}")))
-            .collect();
-        self.fishboy.demo = Some(Demo::new(&self.fishboy.roster, names, self.clock));
-        let map_bitmap = match (&self.fishboy.demo, &self.fishboy.theme) {
-            (Some(d), Some(t)) => Some(radar::map_bitmap(&d.map, &t.radar)),
-            _ => None,
-        };
-        self.fishboy.radar_map = map_bitmap;
+    /// Whether this browser's seat has its Fish-Boy up in the match.
+    fn seat_up(&self) -> bool {
+        self.play
+            .as_ref()
+            .is_some_and(|p| p.game.seats[p.seat].fishboy)
     }
 
-    /// The clock moved: the demo match catches up.
+    /// Each frame, after the match's ticks: the device follows the seat
+    /// (sliding up or down from where it is), and a new match's map gets
+    /// its radar picture. Off Play it is put straight down.
     pub(crate) fn fishboy_advance(&mut self) {
-        if self.screen != Screen::Play || self.paused {
+        let up = self.screen == Screen::Play && self.seat_up();
+        if self.screen != Screen::Play || self.play.is_none() {
+            self.fishboy.reset();
+        } else if up != self.fishboy.open {
+            self.fishboy.toggle(self.clock);
+        }
+        let (Some(p), Some(t)) = (self.play.as_ref(), self.fishboy.theme.as_ref()) else {
+            self.fishboy.radar_map = None;
             return;
-        }
-        if let (Some(d), Some(t)) = (self.fishboy.demo.as_mut(), self.fishboy.tuning.as_ref()) {
-            d.advance(self.clock, t);
+        };
+        let id = radar::bitmap_id(&p.game.map);
+        if self.fishboy.radar_map.as_ref().is_none_or(|b| b.id != id) {
+            self.fishboy.radar_map = Some(radar::map_bitmap(&p.game.map, &t.radar));
         }
     }
 
+    /// A ping: tapped into this seat's next input, so it reaches the match
+    /// by the same path as the AI's and an online player's.
     fn fishboy_ping(&mut self) {
-        if let (Some(d), Some(t)) = (self.fishboy.demo.as_mut(), self.fishboy.tuning.as_ref()) {
-            d.ping(t);
-        }
+        self.tap("ping", false);
     }
 
-    /// A key in Play: Tab raises and lowers the Fish-Boy; with it up, Esc
-    /// lowers it, 1 to 3 pick a tab and Space pings on the radar. Returns
-    /// whether the key was used.
+    /// A key while the Fish-Boy is up: 1 to 3 pick a tab, and Space on the
+    /// Radar tab pings (Space still reaches the match as the cast, which
+    /// does nothing while it is up). Returns whether the key is used up
+    /// here. Tab and Esc are the match's (`controls.json`).
     pub(crate) fn fishboy_key(&mut self, code: &str) -> bool {
-        if self.screen != Screen::Play || self.paused {
+        if self.screen != Screen::Play || !self.seat_up() || self.play.as_ref().is_some_and(|p| p.menu_open()) {
             return false;
-        }
-        if code == "Tab" {
-            self.fishboy.toggle(self.clock);
-            return true;
-        }
-        if !self.fishboy.open {
-            return false;
-        }
-        if code == "Escape" {
-            self.fishboy.toggle(self.clock);
-            return true;
         }
         if let Some(t) = Tab::ALL.into_iter().find(|t| t.digit() == code) {
             self.fishboy.tab = t;
@@ -337,19 +328,8 @@ impl App {
         }
         if code == "Space" && self.fishboy.tab == Tab::Radar {
             self.fishboy_ping();
-            return true;
         }
         false
-    }
-
-    /// The keys the page keeps from the browser (Tab would move the focus,
-    /// Space scroll).
-    pub fn captured_keys(&self) -> Vec<String> {
-        if self.screen == Screen::Play {
-            vec!["Tab".into(), "Space".into()]
-        } else {
-            Vec::new()
-        }
     }
 
     /// The Fish-Boy's tab while it is up, for the page's `data-fishboy`.
@@ -384,16 +364,12 @@ impl App {
             "data.fish" => {
                 self.fishboy.roster = Roster::parse(value)?;
             }
-            "data.tuning" => {
-                self.fishboy.tuning = Some(RadarTuning::parse(value)?);
-            }
-            "fishboy.toggle" if self.screen == Screen::Play => self.fishboy.toggle(self.clock),
             "fishboy.tab" => {
                 self.fishboy.tab =
                     Tab::from_key(value).ok_or_else(|| format!("There is no Fish-Boy tab \"{value}\"."))?;
             }
-            "fishboy.ping" if self.screen == Screen::Play => self.fishboy_ping(),
-            "fishboy.toggle" | "fishboy.ping" => {}
+            "fishboy.ping" if self.seat_up() => self.fishboy_ping(),
+            "fishboy.ping" => {}
             "pointer.move" | "pointer.down" | "pointer.up" => {
                 let at = self.pointer_at(value)?;
                 self.fishboy.pointer = at;
@@ -415,7 +391,7 @@ impl App {
 
     /// A press on the screen at (x, y) screen units: a tab, or the ping.
     fn fishboy_click(&mut self, x: i32, y: i32) {
-        if !self.fishboy.open || self.paused {
+        if !self.seat_up() || self.play.as_ref().is_some_and(|p| p.menu_open()) {
             return;
         }
         if let Some((t, _)) = self.tab_rects().into_iter().find(|(_, r)| r.contains(x, y)) {
@@ -425,6 +401,56 @@ impl App {
         if self.fishboy.tab == Tab::Radar && radar::PING_BUTTON.contains(x, y) {
             self.fishboy_ping();
         }
+    }
+
+    /// The boats and the buoy as this seat's radar draws them: the match's
+    /// radar view, with each boat where the drawing has it between ticks.
+    pub fn fishboy_radar_view(&self) -> Option<RadarView> {
+        let p = self.play.as_ref()?;
+        let mut view = p.game.radar_view(p.seat);
+        let world = self.play_view()?.world;
+        for (b, w) in view.boats.iter_mut().zip(&world.boats) {
+            b.at = crate::map::P::new(w.x_mm, w.y_mm);
+            b.heading = w.heading;
+        }
+        Some(view)
+    }
+
+    /// Each kind of fish in this match and how many are left, in the
+    /// roster's order.
+    pub fn fishpedia_rows(&self) -> Vec<FishpediaRow> {
+        let Some(p) = self.play.as_ref() else {
+            return Vec::new();
+        };
+        let left = p.game.fish_left();
+        self.fishboy
+            .roster
+            .0
+            .iter()
+            .filter_map(|k| {
+                let n = left.iter().find(|(id, _)| *id == k.id)?.1;
+                Some(FishpediaRow {
+                    kind: k.id.clone(),
+                    tier: k.tier,
+                    left: n,
+                })
+            })
+            .collect()
+    }
+
+    /// This seat's catches, in the order landed.
+    pub fn catch_rows(&self) -> Vec<CatchRow> {
+        let Some(p) = self.play.as_ref() else {
+            return Vec::new();
+        };
+        p.game.scores[p.seat]
+            .catches
+            .iter()
+            .map(|c| CatchRow {
+                kind: c.kind.clone(),
+                length_mm: c.length_mm,
+            })
+            .collect()
     }
 
     // ---- drawing ----
@@ -442,7 +468,7 @@ impl App {
         let mut status = vec![format!("fishboy={}", self.fishboy_shown())];
         match self.fishboy_raised() {
             None => {
-                if !self.paused {
+                if !self.play.as_ref().is_some_and(|p| p.menu_open()) {
                     // the HUD: how to raise it
                     let hud = theme.hud.canvas;
                     list.layer(Transform::letterbox(
@@ -507,18 +533,19 @@ impl App {
             (w - 24, TAB_Y + TAB_H + 4),
         );
 
-        let demo = self.fishboy.demo.as_ref();
         match self.fishboy.tab {
             Tab::Radar => {
                 self.corner_hint(list, theme);
-                if let (Some(d), Some(t), Some(b)) = (
-                    demo,
-                    self.fishboy.tuning.as_ref(),
+                if let (Some(p), Some(b), Some(view)) = (
+                    self.play.as_ref(),
                     self.fishboy.radar_map.as_ref(),
+                    self.fishboy_radar_view(),
                 ) {
-                    let view = d.view();
-                    let tick = d.tick;
-                    let state = d.ping.state(tick, t);
+                    let g = &p.game;
+                    let t = &g.tuning.radar;
+                    let ping = &g.seats[p.seat].ping;
+                    let tick = g.tick as i64;
+                    let state = ping.state(tick, t);
                     let secs = |ticks: i64| ((ticks * radar::TICK_MS + 999) / 1000).to_string();
                     let ping_status = match state {
                         PingState::Ready => self.t("radar.ping.ready"),
@@ -535,7 +562,7 @@ impl App {
                             if i == view.me {
                                 return self.t("radar.you");
                             }
-                            match d.ping.sightings.get(i).copied().flatten() {
+                            match ping.sightings.get(i).copied().flatten() {
                                 Some(s) => self.t("radar.seen").replace(
                                     "{seconds}",
                                     &((tick - s.tick) * radar::TICK_MS / 1000).to_string(),
@@ -544,7 +571,7 @@ impl App {
                             }
                         })
                         .collect();
-                    let blips = d.ping.sightings.iter().filter(|s| s.is_some()).count();
+                    let blips = ping.sightings.iter().filter(|s| s.is_some()).count();
                     status.push(format!(
                         "ping={} blips={blips}",
                         match state {
@@ -555,14 +582,14 @@ impl App {
                     ));
                     let scene = RadarScene {
                         theme,
-                        map: &d.map,
+                        map: &g.map,
                         bitmap: b,
                         view: &view,
-                        ping: &d.ping,
+                        ping,
                         tuning: t,
                         tick,
-                        region: radar::region(&d.map, RADAR_MARGIN_MM),
-                        title: self.t(d.map.setting.name_key()).to_uppercase(),
+                        region: radar::region(&g.map, RADAR_MARGIN_MM),
+                        title: self.t(g.map.setting.name_key()).to_uppercase(),
                         buoy: self.t("radar.buoy"),
                         ping_label: self.t("radar.ping").to_uppercase(),
                         ping_status,
@@ -572,45 +599,41 @@ impl App {
                 }
             }
             Tab::Fishpedia => {
-                if let Some(d) = demo {
-                    let rows = d.fishpedia(&self.fishboy.roster);
-                    let total: u32 = rows.iter().map(|r| r.left).sum();
-                    list.text(
-                        phos,
-                        font,
-                        32,
-                        Align::Right,
-                        (w - 50, TAB_Y + TAB_H / 2),
-                        &self
-                            .t("fishpedia.total")
-                            .replace("{count}", &total.to_string())
-                            .to_uppercase(),
-                    );
-                    let words = fishpedia::Words {
-                        tier: self.tier_names(),
-                        left: self.t("fishpedia.left"),
-                        none_left: self.t("fishpedia.none_left"),
-                    };
-                    let has = |id: &str| self.models.iter().any(|m| m.id == id);
-                    let ms = ((self.clock / 1000) % crate::model::MAX_MS as i64) as u32;
-                    fishpedia::draw(list, theme, &self.fishboy.roster, &rows, &words, &has, ms);
-                    status.push(format!("fish_left={total}"));
-                }
+                let rows = self.fishpedia_rows();
+                let total: u32 = rows.iter().map(|r| r.left).sum();
+                list.text(
+                    phos,
+                    font,
+                    32,
+                    Align::Right,
+                    (w - 50, TAB_Y + TAB_H / 2),
+                    &self
+                        .t("fishpedia.total")
+                        .replace("{count}", &total.to_string())
+                        .to_uppercase(),
+                );
+                let words = fishpedia::Words {
+                    tier: self.tier_names(),
+                    left: self.t("fishpedia.left"),
+                    none_left: self.t("fishpedia.none_left"),
+                };
+                let has = |id: &str| self.models.iter().any(|m| m.id == id);
+                let ms = ((self.clock / 1000) % crate::model::MAX_MS as i64) as u32;
+                fishpedia::draw(list, theme, &self.fishboy.roster, &rows, &words, &has, ms);
+                status.push(format!("fish_left={total}"));
             }
             Tab::Catch => {
                 self.corner_hint(list, theme);
-                if let Some(d) = demo {
-                    let rows = d.my_catches(&self.fishboy.roster);
-                    let words = fishpedia::CatchWords {
-                        heading: self.t("catch.heading"),
-                        none: self.t("catch.none"),
-                        feet: self.t("catch.feet"),
-                        tier: self.tier_names(),
-                        count: self.t("catch.count"),
-                    };
-                    fishpedia::draw_catches(list, theme, &self.fishboy.roster, &rows, &words);
-                    status.push(format!("catches={}", rows.len()));
-                }
+                let rows = self.catch_rows();
+                let words = fishpedia::CatchWords {
+                    heading: self.t("catch.heading"),
+                    none: self.t("catch.none"),
+                    feet: self.t("catch.feet"),
+                    tier: self.tier_names(),
+                    count: self.t("catch.count"),
+                };
+                fishpedia::draw_catches(list, theme, &self.fishboy.roster, &rows, &words);
+                status.push(format!("catches={}", rows.len()));
             }
         }
 

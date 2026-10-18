@@ -28,17 +28,17 @@
     "test": "an_unknown_action_is_refused_by_name"
   },
   {
-    "name": "escape toggles the pause menu in play",
-    "file": "crates/core/src/app.rs",
-    "find": "Screen::Play => self.paused = !self.paused,",
-    "replace": "Screen::Play => self.paused = true,",
-    "test": "escape_in_play_opens_and_closes_the_pause_menu"
+    "name": "esc opens the in-match menu",
+    "file": "crates/core/src/sim/mod.rs",
+    "find": "if i.pressed.cancel {",
+    "replace": "if false {",
+    "test": "esc_opens_the_menu_and_an_offline_match_waits_under_it"
   },
   {
     "name": "escape on a sub-screen goes to the title",
     "file": "crates/core/src/app.rs",
-    "find": "Screen::Settings | Screen::Notes | Screen::Gallery | Screen::Sounds => self.go(Screen::Title),",
-    "replace": "Screen::Settings | Screen::Gallery | Screen::Sounds => self.go(Screen::Title), Screen::Notes => {}",
+    "find": "Screen::Settings | Screen::Notes | Screen::Gallery | Screen::Lobby | Screen::Sounds => self.back(),",
+    "replace": "Screen::Settings | Screen::Gallery | Screen::Lobby | Screen::Sounds => self.back(), Screen::Notes => {}",
     "test": "escape_on_a_sub_screen_goes_back_to_the_title"
   },
   {
@@ -51,8 +51,8 @@
   {
     "name": "back goes to the title",
     "file": "crates/core/src/app.rs",
-    "find": "\"menu.back\" | \"menu.quit\" => self.go(Screen::Title),",
-    "replace": "\"menu.quit\" => self.go(Screen::Title), \"menu.back\" => {}",
+    "find": "\"menu.back\" => self.back(),",
+    "replace": "\"menu.back\" => {}",
     "test": "every_sub_screen_ends_with_back_and_back_goes_to_the_title"
   },
   {
@@ -70,38 +70,38 @@
     "test": "every_sub_screen_ends_with_back"
   },
   {
-    "name": "a new screen closes the pause menu",
-    "file": "crates/core/src/app.rs",
-    "find": "        self.paused = false;\n    }",
-    "replace": "    }",
-    "test": "the_pause_button_resume_and_quit"
+    "name": "leaving a match ends it",
+    "file": "crates/core/src/app/play.rs",
+    "find": "        self.play = None;\n        self.settings_return = false;",
+    "replace": "        self.settings_return = false;",
+    "test": "the_menu_button_resume_and_leave_match"
   },
   {
-    "name": "resume closes the pause menu",
+    "name": "resume closes the in-match menu",
     "file": "crates/core/src/app.rs",
-    "find": "\"menu.resume\" => self.paused = false,",
+    "find": "\"menu.resume\" => self.tap(\"menu\", true),",
     "replace": "\"menu.resume\" => {}",
-    "test": "the_pause_button_resume_and_quit"
+    "test": "the_menu_button_resume_and_leave_match"
   },
   {
-    "name": "the pause button works in play only",
+    "name": "the menu button works in play only",
     "file": "crates/core/src/app.rs",
     "find": "\"menu.pause\" if self.screen == Screen::Play =>",
     "replace": "\"menu.pause\" if true =>",
-    "test": "the_pause_button_does_nothing_off_play"
+    "test": "the_menu_button_does_nothing_off_play"
   },
   {
-    "name": "the pause menu shows only while paused",
-    "file": "crates/core/src/app/menus.rs",
-    "find": "if self.paused {",
-    "replace": "if true {",
-    "test": "escape_in_play_opens_and_closes_the_pause_menu"
+    "name": "the in-match menu shows only while open",
+    "file": "crates/core/src/app/play.rs",
+    "find": "} else if p.menu_open() {",
+    "replace": "} else if true {",
+    "test": "escape_in_play_opens_and_closes_the_match_menu"
   },
   {
     "name": "the version opens what's new from the menus only",
     "file": "crates/core/src/app.rs",
-    "find": "Screen::Title | Screen::Settings | Screen::Notes | Screen::Gallery | Screen::Sounds\n        )",
-    "replace": "Screen::Title | Screen::Settings | Screen::Notes | Screen::Gallery | Screen::Sounds | Screen::Play\n        )",
+    "find": "                | Screen::Lobby\n                | Screen::Sounds\n",
+    "replace": "                | Screen::Lobby\n                | Screen::Sounds\n                | Screen::Play\n",
     "test": "the_version_opens_whats_new_from_the_menus_only"
   },
   {
@@ -628,6 +628,251 @@
     "find": "[(css_w * dpr_pct / 100).max(1), (css_h * dpr_pct / 100).max(1)]",
     "replace": "[css_w * dpr_pct / 100, css_h * dpr_pct / 100]",
     "test": "the_buffer_is_the_css_size_at_the_pixel_ratio_and_never_empty"
+  },
+  {
+    "name": "w accelerates to top speed in accel_ms",
+    "file": "crates/core/src/sim/mod.rs",
+    "find": "accel: per_tick(top, b.accel_ms),",
+    "replace": "accel: per_tick(top, b.accel_ms * 2),",
+    "test": "w_reaches_top_speed_in_five_seconds"
+  },
+  {
+    "name": "throttle stops at top speed",
+    "file": "crates/core/src/sim/boat.rs",
+    "find": "fx::approach(fwd, top, accel)",
+    "replace": "fx::approach(fwd, top * 2, accel)",
+    "test": "w_reaches_top_speed_in_five_seconds"
+  },
+  {
+    "name": "a boat moves its speed each tick",
+    "file": "crates/core/src/sim/collide.rs",
+    "find": "old[0] + b.vel_um[0] as i64 * step / 1000,",
+    "replace": "old[0] + b.vel_um[0] as i64 * step / 900,",
+    "test": "crossing_half_a_kilometre"
+  },
+  {
+    "name": "turning scales with speed",
+    "file": "crates/core/src/sim/boat.rs",
+    "find": "let speed = self.forward_speed().abs().min(r.turn_full_at);",
+    "replace": "let speed = r.turn_full_at;",
+    "test": "turning_is_slow_at_rest"
+  },
+  {
+    "name": "land bounces a slow boat back",
+    "file": "crates/core/src/sim/collide.rs",
+    "find": "let back = -normal * r.bounce_pct as i64 / 100;",
+    "replace": "let back = 0;",
+    "test": "land_below_half_top_speed_bounces"
+  },
+  {
+    "name": "land wrecks at half top speed",
+    "file": "crates/core/src/sim/collide.rs",
+    "find": "if into >= r.land_wreck {",
+    "replace": "if into > r.land_wreck {",
+    "test": "land_at_half_top_speed_wrecks"
+  },
+  {
+    "name": "a bounce scrapes speed along the shore",
+    "file": "crates/core/src/sim/collide.rs",
+    "find": "let keep = r.scrape_keep_pct as i64;",
+    "replace": "let keep = 100;",
+    "test": "a_glancing_hit_slides"
+  },
+  {
+    "name": "a ram wrecks at eighty percent",
+    "file": "crates/core/src/sim/collide.rs",
+    "find": "(a_toward >= r.ram_wreck, b_toward >= r.ram_wreck)",
+    "replace": "(a_toward > r.ram_wreck, b_toward > r.ram_wreck)",
+    "test": "a_ram_at_eighty_percent"
+  },
+  {
+    "name": "a ram stalls the rammer",
+    "file": "crates/core/src/sim/collide.rs",
+    "find": "boat.stall_until = stall;",
+    "replace": "boat.stall_until = 0;",
+    "test": "a_ram_at_eighty_percent"
+  },
+  {
+    "name": "a slow hit bumps the boats apart",
+    "file": "crates/core/src/sim/collide.rs",
+    "find": "-rel * (100 + m.rules.bump_pct as i64) / 200",
+    "replace": "0",
+    "test": "a_ram_at_seventy_nine"
+  },
+  {
+    "name": "a wreck respawns after the delay",
+    "file": "crates/core/src/sim/mod.rs",
+    "find": "let respawn = tick + self.rules.respawn_ticks;",
+    "replace": "let respawn = tick + self.rules.respawn_ticks + 1;",
+    "test": "a_wrecked_boat_respawns"
+  },
+  {
+    "name": "a ghost passes through boats",
+    "file": "crates/core/src/sim/collide.rs",
+    "find": "|| a.ghosted(tick) || b.ghosted(tick)",
+    "replace": "",
+    "test": "a_wrecked_boat_respawns"
+  },
+  {
+    "name": "the timer ends the match",
+    "file": "crates/core/src/sim/mod.rs",
+    "find": "if self.tick >= self.rules.length_ticks {",
+    "replace": "if self.tick > self.rules.length_ticks {",
+    "test": "the_timer_ends"
+  },
+  {
+    "name": "q keeps momentum",
+    "file": "crates/core/src/sim/mod.rs",
+    "find": "self.events.push(MatchEvent::ModeChanged { seat, mode: b.mode });",
+    "replace": "b.vel_um = [0, 0];\n            self.events.push(MatchEvent::ModeChanged { seat, mode: b.mode });",
+    "test": "q_switches_to_fishing"
+  },
+  {
+    "name": "fishing mode has no throttle",
+    "file": "crates/core/src/sim/boat.rs",
+    "find": "let motor = self.mode == Mode::Driving && ",
+    "replace": "let motor = ",
+    "test": "q_switches_to_fishing"
+  },
+  {
+    "name": "the cast swivels within its limit",
+    "file": "crates/core/src/sim/boat.rs",
+    "find": ".clamp(-r.swivel_limit, r.swivel_limit)",
+    "replace": "",
+    "test": "q_switches_to_fishing"
+  },
+  {
+    "name": "reverse is slow",
+    "file": "crates/core/src/sim/boat.rs",
+    "find": "fx::approach(fwd, -reverse, reverse_accel)",
+    "replace": "fx::approach(fwd, -reverse * 2, reverse_accel)",
+    "test": "s_brakes_then_reverses"
+  },
+  {
+    "name": "the spawn spreads seats left to right",
+    "file": "crates/core/src/sim/mod.rs",
+    "find": "let left = -off;",
+    "replace": "let left = off;",
+    "test": "the_boats_start_side_by_side"
+  },
+  {
+    "name": "an offline match waits under the menu",
+    "file": "crates/core/src/sim/mod.rs",
+    "find": "        if self.paused() {\n            return &self.events;\n        }\n",
+    "replace": "",
+    "test": "esc_opens_the_menu_and_an_offline_match"
+  },
+  {
+    "name": "a captured boat ignores the keys",
+    "file": "crates/core/src/sim/boat.rs",
+    "find": "        if self.captured {\n            return;\n        }\n",
+    "replace": "",
+    "test": "a_captured_boat_coasts"
+  },
+  {
+    "name": "nitrous raises top speed",
+    "file": "crates/core/src/sim/boat.rs",
+    "find": "Self::pct(r.top, r.nitrous_top_pct)",
+    "replace": "r.top",
+    "test": "nitrous_raises_top_speed"
+  },
+  {
+    "name": "boats move in a match",
+    "file": "crates/core/src/sim/collide.rs",
+    "find": "        b.pos_um = new;\n        return LandHit::Clear;",
+    "replace": "        return LandHit::Clear;",
+    "test": "two_matches_with_the_same_inputs"
+  },
+  {
+    "name": "grounding speed follows the tuning",
+    "file": "crates/core/src/sim/mod.rs",
+    "find": "land_wreck: (top as i64 * w.land_wreck_pct as i64 / 100) as i32,",
+    "replace": "land_wreck: top / 2,",
+    "test": "every_rule_follows_the_tuning"
+  },
+  {
+    "name": "the view interpolates",
+    "file": "crates/core/src/sim/view.rs",
+    "find": "let x = lerp(b.prev_um[0], b.pos_um[0]) / UM;",
+    "replace": "let x = b.pos_um[0] / UM;",
+    "test": "the_view_draws_each_boat"
+  },
+  {
+    "name": "a tuning value out of range is refused",
+    "file": "crates/core/src/tuning.rs",
+    "find": ".range(\"boat.top_speed_mm_per_s\", b.top_speed_mm_per_s, 1000, 60_000)",
+    "replace": ".range(\"boat.top_speed_mm_per_s\", b.top_speed_mm_per_s, 0, 60_000)",
+    "test": "a_value_out_of_range_is_refused"
+  },
+  {
+    "name": "a key coming up is a release",
+    "file": "crates/core/src/controls.rs",
+    "find": "self.released.set(action, true);",
+    "replace": "",
+    "test": "keys_map_to_actions"
+  },
+  {
+    "name": "a key bound twice is refused",
+    "file": "crates/core/src/controls.rs",
+    "find": "if let Some(other) = keys.insert(code.clone(), action.clone()) {",
+    "replace": "if let Some(other) = keys.insert(code.clone(), action.clone()).filter(|_| false) {",
+    "test": "an_unknown_action_or_a_key_bound_twice"
+  },
+  {
+    "name": "ticks catch up a quarter second at most",
+    "file": "crates/core/src/app/play.rs",
+    "find": "while p.pending_us >= step_us && ran < MAX_CATCH_UP {",
+    "replace": "while p.pending_us >= step_us {",
+    "test": "ticks_follow_the_clock"
+  },
+  {
+    "name": "the setup's length reaches the match",
+    "file": "crates/core/src/app/play.rs",
+    "find": "s.length_ms = lobby.length_ms;",
+    "replace": "",
+    "test": "the_lobby_setup_feeds"
+  },
+  {
+    "name": "a typed map seed must be checked",
+    "file": "crates/core/src/app/play.rs",
+    "find": "if list.maps.iter().any(|e| e.seed == seed) {",
+    "replace": "if true {",
+    "test": "a_typed_map_seed"
+  },
+  {
+    "name": "the mouse turns the camera clockwise",
+    "file": "crates/core/src/app/play.rs",
+    "find": "fx::wrap(p.cam_yaw - (dx",
+    "replace": "fx::wrap(p.cam_yaw + (dx",
+    "test": "the_mouse_turns"
+  },
+  {
+    "name": "fractions of a pixel count by their whole part",
+    "file": "crates/core/src/app/play.rs",
+    "find": "\"\" | \"-\" if !frac.is_empty() => Some(0),",
+    "replace": "\"\" | \"-\" if !frac.is_empty() => None,",
+    "test": "the_mouse_turns"
+  },
+  {
+    "name": "settings from a match go back to it",
+    "file": "crates/core/src/app.rs",
+    "find": "if self.screen == Screen::Settings && self.settings_return && self.play.is_some() {",
+    "replace": "if false {",
+    "test": "settings_from_the_match_menu"
+  },
+  {
+    "name": "the menu takes the mouse",
+    "file": "crates/core/src/app.rs",
+    "find": "!p.menu_open() && !p.game.ended",
+    "replace": "!p.game.ended",
+    "test": "settings_from_the_match_menu"
+  },
+  {
+    "name": "the pause button works in play only",
+    "file": "crates/core/src/app.rs",
+    "find": "\"menu.pause\" if self.screen == Screen::Play =>",
+    "replace": "\"menu.pause\" if true =>",
+    "test": "the_pause_button_does_nothing_off_play"
   },
   {
     "name": "the line-up stands models end to end at their lengths",

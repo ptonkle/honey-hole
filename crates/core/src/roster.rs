@@ -15,6 +15,8 @@ pub struct FishKind {
     pub model: String,
     pub base_length_mm: i32,
     pub value: i32,
+    /// how many a match starts with
+    pub count: u32,
 }
 
 #[derive(Deserialize)]
@@ -35,6 +37,7 @@ struct FileFish {
     model: String,
     base_length_mm: i32,
     value: i32,
+    count: u32,
 }
 
 /// The tiers from best to least, as the Fishpedia lists them.
@@ -82,6 +85,7 @@ impl Roster {
                 model: f.model,
                 base_length_mm: f.base_length_mm,
                 value: f.value,
+                count: f.count,
             });
         }
         Ok(Roster(out))
@@ -98,7 +102,7 @@ mod tests {
 
     #[test]
     fn a_roster_reads_its_tiers_and_refuses_a_bad_fish_by_name() {
-        let ok = r#"{"fish": [{"id": "a", "name": "A", "tier": "rare", "model": "a", "base_length_mm": 300, "value": 4}]}"#;
+        let ok = r#"{"fish": [{"id": "a", "name": "A", "tier": "rare", "model": "a", "base_length_mm": 300, "value": 4, "count": 2}]}"#;
         let r = Roster::parse(ok).unwrap();
         assert_eq!(r.get("a").unwrap().tier, Tier::Rare);
         let bad = ok.replace("rare", "mythic");
@@ -107,8 +111,8 @@ mod tests {
             Err("The fish \"a\" has no tier \"mythic\".".into())
         );
         let twice = r#"{"fish": [
-            {"id": "a", "name": "A", "tier": "rare", "model": "a", "base_length_mm": 300, "value": 4},
-            {"id": "a", "name": "B", "tier": "rare", "model": "a", "base_length_mm": 300, "value": 4}]}"#;
+            {"id": "a", "name": "A", "tier": "rare", "model": "a", "base_length_mm": 300, "value": 4, "count": 2},
+            {"id": "a", "name": "B", "tier": "rare", "model": "a", "base_length_mm": 300, "value": 4, "count": 2}]}"#;
         assert_eq!(
             Roster::parse(twice),
             Err("The fish \"a\" is listed twice.".into())

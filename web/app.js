@@ -110,6 +110,21 @@ function select(item) {
   return wrap;
 }
 
+function text(item) {
+  const wrap = make("div", "field text");
+  const label = make("label", "", item.label);
+  const input = make("input");
+  input.type = "text";
+  input.id = item.id;
+  input.value = item.value;
+  input.maxLength = item.max;
+  if (item.placeholder) input.placeholder = item.placeholder;
+  label.htmlFor = item.id;
+  on(item.id, "change", (t) => send(item.id, t.value));
+  wrap.append(label, input);
+  return wrap;
+}
+
 function list(item) {
   const table = make("table", "pairs");
   item.rows.forEach((r) => {
@@ -149,7 +164,7 @@ function notes(item) {
   return box;
 }
 
-const builders = { button, slider, toggle, select, list, table, notes };
+const builders = { button, slider, toggle, select, text, list, table, notes };
 
 // The panels as the core gives them, built as a fresh tree off the page.
 function buildMenus() {
@@ -263,7 +278,9 @@ function drawMenus() {
   // an element that had to be replaced gets the focus back (and a text
   // field its caret); when it is gone (a new screen), the screen's first
   // control takes the focus, so the keyboard carries on from there
-  if (!focused || kept.isConnected) return;
+  // (while the core captures the keys, no control takes the focus: Space
+  // is the cast, not a click)
+  if (!focused || kept.isConnected || ui.capture) return;
   const again = el(focused) || menus.querySelector("button, input, select");
   if (!again) return;
   again.focus();
@@ -302,13 +319,32 @@ function typing(e) {
 function bindInput() {
   ["click", "change", "input", "keydown"].forEach((type) => el("menus").addEventListener(type, dispatch));
   el("version").addEventListener("click", () => send("version", ""));
-  // every key goes to the core, which decides what it does
+  // every key goes to the core, which decides what it does; while the core
+  // captures input (a match), the browser does nothing with it (Tab, Space)
   window.addEventListener("keydown", (e) => {
-    if (typing(e)) return;
-    // keys the core uses in Play that the browser would take (Tab, Space)
-    if (ui && ui.keys.includes(e.code)) e.preventDefault();
-    if (e.repeat) return;
+    if (ui && ui.capture) e.preventDefault();
+    if (e.repeat || typing(e)) return;
     send("key", e.code);
+  });
+  window.addEventListener("keyup", (e) => {
+    if (typing(e)) return;
+    send("key.up", e.code);
+  });
+  window.addEventListener("blur", () => send("keys.release", ""));
+  const scene = el("scene");
+  window.addEventListener("mousemove", (e) => {
+    if (ui && ui.capture) send("mouse.move", e.movementX + "," + e.movementY);
+  });
+  scene.addEventListener("mousedown", (e) => {
+    if (!ui || !ui.capture) return;
+    if (document.pointerLockElement !== scene && scene.requestPointerLock) scene.requestPointerLock();
+    send("mouse.down", String(e.button));
+  });
+  window.addEventListener("mouseup", (e) => {
+    if (ui && ui.capture) send("mouse.up", String(e.button));
+  });
+  scene.addEventListener("contextmenu", (e) => {
+    if (ui && ui.capture) e.preventDefault();
   });
   watchSelects();
   // the pointer over the 2D layer, in CSS pixels (the core turns it into
@@ -351,6 +387,8 @@ function frame(now) {
     const list = JSON.parse(game.ui2d_strings());
     overlay.draw(game.ui2d_values(), list.strings);
     document.body.dataset.ui2d = list.status;
+    // a match's clock moves: its view model is asked for each frame
+    if (ui.live) draw(JSON.parse(game.ui()));
     if (ui.panels.length) document.body.dataset.drawn = ui.panels[0].heading;
   }
   requestAnimationFrame(frame);
@@ -373,10 +411,20 @@ async function main() {
   draw(JSON.parse(game.load_models(models, look)));
   send("data.ui2d", ui2dLook);
   send("data.fish", fish);
-  send("data.tuning", tuning);
   const ui2dNumbers = JSON.parse(game.ui2d_numbers());
   passLayout = ui2dNumbers.pass;
   overlay = makeOverlay(el("overlay"), ui2dNumbers, (id) => bitmapFrom(game.bitmap_rgba(id), game.bitmap_size(id)));
+  // the match's files, each checked by the core (refused by name)
+  const files = [
+    ["data.tuning", tuning],
+    ["data.controls", await (await fetch("data/controls.json")).text()],
+    ["data.names", await (await fetch("data/names.json")).text()],
+    ["data.maps", await (await fetch("data/maps/michigan-lake.json")).text()],
+  ];
+  files.forEach(([name, text]) => {
+    const result = JSON.parse(game.act(name, text));
+    if (result.error) el("message").textContent = result.error;
+  });
   draw(JSON.parse(game.load_sounds(sounds, tuning)));
   startAudio(game);
   renderer = makeRenderer(el("scene"), JSON.parse(game.numbers()), { vertex, fragment });
