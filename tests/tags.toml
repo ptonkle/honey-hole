@@ -71,6 +71,7 @@ tags = ["boundary"]
 "crates/core/tests/copy.rs" = ["copy"]
 "crates/core/tests/data_files.rs" = ["copy", "whatsnew"]
 "crates/core/tests/no_storage.rs" = ["page"]
+"crates/core/tests/fishboy.rs" = ["models"]
 "crates/shim/**" = ["all"]
 "web/**" = ["page"]
 "data/strings.json" = ["copy"]
@@ -162,6 +163,7 @@ tags = ["boundary"]
 "test:copy" = ["copy"]
 "test:data_files" = ["copy", "whatsnew"]
 "test:no_storage" = ["page"]
+"test:fishboy" = ["models"]
 
 # ---------------------------------------------------------------------------
 # Browser steps (tests/browser/interactions.py STEPS) -> tags. The load and

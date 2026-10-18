@@ -26,6 +26,12 @@ The keys the game uses, listed on the Title.
 
 Not: keybindings, hotkeys, bindings
 
+### Fish-Boy
+
+The angler's computer, strapped to the left forearm. Raised to the face, its screen fills most of the view and shows the game's tabs, with the lake still in sight round its edge.
+
+Not: Pip-Boy, pipboy, fishboy, PDA
+
 ### Minor version
 
 A version whose last number is not zero. It holds fixes only, and What's New lists it when the reader asks.
