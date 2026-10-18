@@ -34,6 +34,8 @@ pub struct Tuning {
     pub radar: RadarTuning,
     /// the item buoy and the items' effects (`sim::items::tuning`)
     pub items: crate::sim::items::tuning::ItemsTuning,
+    /// the AI players (`ai/tuning.rs`)
+    pub ai: crate::ai::tuning::AiTuning,
     /// the match's flow: the countdown, the popups, the end
     /// (`crates/core/src/flow/`)
     pub flow: FlowTuning,
@@ -265,6 +267,7 @@ impl Tuning {
                 r.ping_sweep_ms <= r.ping_cooldown_ms,
                 "radar.ping_sweep_ms must end before radar.ping_cooldown_ms.",
             );
+        crate::ai::tuning::check(&mut c, &self.ai);
         self.minigames.check(&mut c);
         crate::sim::items::tuning::check(&mut c, &self.items);
         c.done()
@@ -337,7 +340,8 @@ pub mod tests {
             "fish": fish_sample(),
             "fishing": fishing_sample(),
             "items": items_sample(),
-            "minigames": crate::minigame::tuning::tests::sample_json()
+            "minigames": crate::minigame::tuning::tests::sample_json(),
+            "ai": ai_sample()
         })
     }
 
@@ -361,6 +365,13 @@ pub mod tests {
             "teleport_clear_mm": 6000,
             "camera_prompt_ms": 8000
         })
+    }
+
+    /// The AI section, for tests: the shipped file's numbers.
+    pub fn ai_sample() -> serde_json::Value {
+        let file: serde_json::Value =
+            serde_json::from_str(include_str!("../../../data/tuning.json")).unwrap();
+        file["ai"].clone()
     }
 
     /// The fish section, round numbers for tests.

@@ -202,3 +202,48 @@ fn the_hud_panel_holds_the_menu_button_and_the_page_keeps_the_keys() {
     assert_eq!(clock_text(59_000), "0:59");
     assert_eq!(clock_text(0), "0:00");
 }
+
+#[test]
+fn ai_seats_drive_their_own_boats_in_an_offline_match() {
+    let mut a = lobby();
+    a.act("lobby.ai", "3").unwrap();
+    a.act("lobby.start", "").unwrap();
+    a.advance(0);
+    let start: Vec<_> = game(&a).boats.iter().flatten().map(|b| b.at()).collect();
+    // ten seconds of page time, the person's boat left alone
+    for _ in 0..500 {
+        tick(&mut a);
+    }
+    let g = game(&a);
+    assert_eq!(
+        g.boat(0).unwrap().at(),
+        start[0],
+        "the person's boat moved by itself"
+    );
+    let moved = (1..4)
+        .filter(|&s| g.boat(s).unwrap().at().dist(start[s]) > 20_000)
+        .count();
+    assert!(moved >= 1, "no AI boat went 20 m in 10 s");
+    // the page is told how many are under way (the browser check reads it)
+    assert!(a.ui().ai_moving >= 1);
+}
+
+#[test]
+fn watch_mode_hands_the_persons_seat_to_an_ai() {
+    let mut a = lobby();
+    a.act("debug.flags", "watch").unwrap();
+    a.act("lobby.start", "").unwrap();
+    a.advance(0);
+    assert_eq!(game(&a).setup.seats[0].occupant, Occupant::Ai(Difficulty::Hard));
+    let start = game(&a).boat(0).unwrap().at();
+    for _ in 0..500 {
+        tick(&mut a);
+    }
+    assert!(
+        game(&a).boat(0).unwrap().at().dist(start) > 20_000,
+        "the watched boat stayed put"
+    );
+    // Esc still opens the match menu
+    key(&mut a, "Escape");
+    assert!(a.play.as_ref().unwrap().menu_open());
+}

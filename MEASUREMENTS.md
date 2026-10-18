@@ -18,6 +18,10 @@ The state measured rather than recalled, so later changes can be compared with i
 
 Frame rate, Chromium 1920x1080 on this machine's GPU (AMD Radeon through WSL's D3D12, ANGLE), 3 s each: tour 59.9, reeds 59.9, island 60.0, spawn 60.0, dock 59.6, overview without fog 60.2 fps (capped at 60). A match on the lake (Play, Start match, the boat camera at the spawn): 60.2 fps. Before the sways were baked as one harmonic (SECOND-ORDER R2.31): tour 46.2, reeds 46.9 fps at 65 to 69 draw calls.
 
+## The AI players
+
+`cargo run --release --example playtest -- 48 1`, 2026-10-18, branch `ai`: 0.9 µs per AI player per tick on average (native, release; four AI players, 48 eight-minute matches, 1,152,000 ticks), against a budget of 300 µs. Path searches make the costly ticks: 52 ticks took the four AI players over 1 ms together, the slowest 6 ms. The match step itself took 2.9 µs a tick. Not measured in WebAssembly, which is usually a few times slower than native.
+
 ## Not measured
 
 Devices, browsers and conditions no measurement here covers.

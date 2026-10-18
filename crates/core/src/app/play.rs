@@ -94,6 +94,11 @@ pub struct Play {
     pub cam_pitch: i32,
     /// the latest events, oldest first, with their ticks
     pub log: Vec<(u32, MatchEvent)>,
+    /// the AI seats' brains (`ai/`), which make their inputs each tick
+    pub ai: crate::ai::Crew,
+    /// an AI plays this browser's seat too (`?debug=watch`): the keys do
+    /// nothing to the boat
+    pub watch: bool,
 }
 
 impl Play {
@@ -320,6 +325,10 @@ impl App {
     /// Starts a match with this setup on this checked layout (New match's
     /// Start match, and the postgame's Rematch).
     pub(crate) fn begin(&mut self, setup: Setup, map_seed: u32) -> Result<(), String> {
+        let mut setup = setup;
+        if self.debug_watch {
+            setup.seats[0].occupant = Occupant::Ai(Difficulty::Hard);
+        }
         let t = self.need(&self.tuning, "tuning")?.clone();
         let controls = self.need(&self.controls, "controls")?.clone();
         let map = generate(Setting::MichiganLake, map_seed);
@@ -332,6 +341,7 @@ impl App {
         if !self.fishboy.roster.0.is_empty() {
             game.stock(&self.fishboy.roster)?;
         }
+        let ai = crate::ai::Crew::new(&game);
         self.play = Some(Play {
             game,
             seat: 0,
@@ -341,6 +351,8 @@ impl App {
             cam_yaw: 0,
             cam_pitch: deg(controls.mouse.pitch_start_deg),
             log: Vec::new(),
+            ai,
+            watch: self.debug_watch,
         });
         self.flow.reset();
         self.go(Screen::Play);
@@ -416,8 +428,16 @@ impl App {
         let mut ran = 0;
         let mut heard = Vec::new();
         while p.pending_us >= step_us && ran < MAX_CATCH_UP {
-            let mut inputs = vec![sim::SeatInput::default(); p.game.seats.len()];
-            inputs[p.seat] = p.gather.take();
+            // the AI seats play by the same inputs (`ai/`)
+            let mut inputs = p.ai.inputs(&p.game);
+            let mine = p.gather.take();
+            if p.watch {
+                // the menu still answers the person
+                inputs[p.seat].pressed.cancel |= mine.pressed.cancel;
+                inputs[p.seat].pressed.menu |= mine.pressed.menu;
+            } else {
+                inputs[p.seat] = mine;
+            }
             let tick = p.game.tick;
             for e in p.game.step(&inputs) {
                 p.log.push((tick + 1, e.clone()));

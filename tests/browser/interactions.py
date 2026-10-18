@@ -416,6 +416,21 @@ def step_items(page, check):
     page.keyboard.up("KeyW")
     page.keyboard.press("ShiftLeft")
     check(ui2d_has(page, "effects=cloak", timeout=5000), "the cloak runs, with its timer on the HUD")
+
+
+def step_ai(page, check):
+    # A match with three AI players: at least one AI boat gets under way by
+    # itself (the core counts them in data-ai-moving).
+    page.click(by_id("menu.play"))
+    check(screen(page, "lobby"), "Play opens the match setup")
+    page.select_option(by_id("lobby.ai"), "3")
+    page.wait_for_selector(by_id("lobby.ai.3"), state="attached", timeout=5000)
+    check(page.locator(by_id("lobby.ai.3")).count() == 1, "three AI players each get a difficulty")
+    page.click(by_id("lobby.start"))
+    check(screen(page, "play"), "Start match opens Play")
+    page.wait_for_selector("body[data-drawn]", state="attached", timeout=10000)
+    page.wait_for_function("() => (document.body.dataset.aiMoving | 0) >= 1", timeout=20000)
+    check(True, "an AI boat drives off on its own")
     page.keyboard.press("Escape")
     page.wait_for_selector(".panel.pause", timeout=5000)
     page.click(by_id("menu.quit"))
@@ -480,6 +495,7 @@ STEPS = [
     ("minigames", step_minigames),
     ("fishing", step_fishing),
     ("items", step_items),
+    ("ai", step_ai),
     ("match_flow", step_match_flow),
 ]
 
