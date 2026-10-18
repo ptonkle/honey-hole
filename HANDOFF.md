@@ -58,6 +58,7 @@ The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the 
 2026-10-17, the item buoy as a giant bobber (branch `worktree-agent-aedf5b313381339fe`, after f08c629): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 136 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 88 of 88 breaks caught.
 2026-10-17, the true-size line-up and the fish shapes from above (branch `worktree-agent-a28fb9a4d934aae73`, after 8a848c5): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 144 checks); `count-tests.sh`: 138 passed, 0 failed, 0 ignored; `scripts/break_tests.py line-up`: 4 of 4 new breaks caught.
 2026-10-17, six more roster fish (branch `worktree-agent-ad8a32d5f83ca73c9`, after 443a6fd): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 173 passed, 0 failed, 0 ignored; `scripts/break_tests.py roster panic sampled`: 3 of 3 new breaks caught.
+2026-10-17, the match core (Match, boats, collisions, wrecks, respawn, timer, tuning.json, controls.json, New match, Play with a stand-in lake) (branch `worktree-agent-a0098b4853bad3d19`, after 650e51e): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 208 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 124 of 124 breaks caught before the merge with the sound engine.
 
 ## The next action
 
