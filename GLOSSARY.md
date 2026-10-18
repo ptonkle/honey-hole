@@ -63,7 +63,7 @@ Not: showcase, viewer, model viewer
 
 ### Item buoy
 
-The floating yellow box marked with a question mark that holds a hidden item. A player who drives through it takes the item.
+The giant floating fishing bobber, glowing at its seam and topped by a beacon, that holds a hidden item. A player who drives through it takes the item.
 
 Not: crate, loot box
 
