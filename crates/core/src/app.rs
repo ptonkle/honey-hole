@@ -19,6 +19,7 @@ use crate::view::{Item, Panel};
 pub mod gallery;
 mod menus;
 mod notes;
+pub mod sounds;
 #[cfg(test)]
 mod tests;
 
@@ -37,6 +38,8 @@ pub enum Screen {
     Play,
     /// each model turning, for a look at the art (`app/gallery.rs`)
     Gallery,
+    /// every sound, played on a click (`app/sounds.rs`)
+    Sounds,
 }
 
 /// How large the menus' text is drawn. The page scales its text by it.
@@ -126,6 +129,9 @@ pub struct App {
     pub size: [i32; 2],
     /// the page could not start WebGL 2
     pub scene_unavailable: bool,
+    /// the sound recipes and the cues waiting for the page (`load_sounds`)
+    pub sound: Option<crate::sound::Sound>,
+    pub sounds: sounds::SoundsScreen,
 }
 
 impl App {
@@ -145,6 +151,8 @@ impl App {
             clock: 0,
             size: [1, 1],
             scene_unavailable: false,
+            sound: None,
+            sounds: sounds::SoundsScreen::default(),
         })
     }
 
@@ -164,7 +172,7 @@ impl App {
     fn escape(&mut self) {
         match self.screen {
             Screen::Play => self.paused = !self.paused,
-            Screen::Settings | Screen::Notes | Screen::Gallery => self.go(Screen::Title),
+            Screen::Settings | Screen::Notes | Screen::Gallery | Screen::Sounds => self.go(Screen::Title),
             Screen::Title => {}
         }
     }
@@ -174,7 +182,7 @@ impl App {
     pub fn version_opens_notes(&self) -> bool {
         matches!(
             self.screen,
-            Screen::Title | Screen::Settings | Screen::Notes | Screen::Gallery
+            Screen::Title | Screen::Settings | Screen::Notes | Screen::Gallery | Screen::Sounds
         )
     }
 
@@ -189,12 +197,16 @@ impl App {
     /// The one door for buttons, settings, keys and screens. `name` is a
     /// dotted action name, `value` the control's new value.
     pub fn act(&mut self, name: &str, value: &str) -> Result<(), String> {
+        if name.starts_with("menu.") {
+            self.click();
+        }
         match name {
             "key" => self.key(value),
             "menu.play" => self.go(Screen::Play),
             "menu.settings" => self.go(Screen::Settings),
             "menu.notes" => self.go(Screen::Notes),
             "menu.gallery" => self.go(Screen::Gallery),
+            "menu.sounds" => self.go(Screen::Sounds),
             "scene.unavailable" => self.scene_unavailable = true,
             "version" if self.version_opens_notes() => self.go(Screen::Notes),
             "version" => {}
@@ -205,6 +217,7 @@ impl App {
             "notes.minor" => self.settings.notes_minor = value == "on",
             _ if name.starts_with("settings.") => self.settings_act(name, value)?,
             _ if name.starts_with("gallery.") => self.gallery_act(name, value)?,
+            _ if name.starts_with("sounds.") => self.sounds_act(name, value)?,
             other => return Err(format!("Unknown action \"{other}\".")),
         }
         Ok(())
@@ -231,6 +244,7 @@ impl App {
             Screen::Notes => self.notes_panels(),
             Screen::Play => self.play_panels(),
             Screen::Gallery => self.gallery_panels(),
+            Screen::Sounds => self.sounds_panels(),
         };
         Ui {
             screen: self.screen,
