@@ -9,9 +9,16 @@ Expected values in these checks are worked out by hand from the brief (C4),
 never copied from the tool's own output. Wait on a selector or a data-*
 attribute the page sets, never on a fixed time: on CI the page may draw with
 a CPU and run slowly.
+
+The interactions are steps, `step_<name>(page, check)`, listed in STEPS. Each
+starts and ends on the Title, so any of them can run alone after `boot`.
+tests/tags.toml tags each step ([browser]); scripts/quick-check.sh runs only
+the steps a change needs, through BUILDER_STEPS. A new step goes in STEPS and
+in [browser], or `scripts/tags.py guard` fails.
 """
 
 import json
+import os
 import pathlib
 
 DATA = pathlib.Path(__file__).resolve().parents[2] / "data"
@@ -32,7 +39,7 @@ def focused(page):
     return page.evaluate("() => document.activeElement && document.activeElement.id")
 
 
-def run(page, check, engine):
+def step_boot(page, check):
     check(screen(page, "title"), "the page opens on the Title")
     check(page.inner_text(".panel.title h2") == STRINGS["title"], "the Title shows the game's name")
     menu = page.locator(".panel.menu .button").all_inner_texts()
@@ -43,6 +50,8 @@ def run(page, check, engine):
     check(page.inner_text("#version") == "v0.1.0", "the version shows in the corner")
     check(page.inner_text("#message") == "", "no error message is shown")
 
+
+def step_settings(page, check):
     # Settings: the volume slider, the text size select, Back
     page.click(by_id("menu.settings"))
     check(screen(page, "settings"), "Settings opens from the Title")
@@ -72,6 +81,8 @@ def run(page, check, engine):
     page.keyboard.press("Escape")
     check(screen(page, "title"), "Escape on Settings goes to the Title")
 
+
+def step_notes(page, check):
     # What's New, from its button and from the version
     page.click(by_id("menu.notes"))
     check(screen(page, "notes"), "What's New opens from the Title")
@@ -87,6 +98,8 @@ def run(page, check, engine):
     page.keyboard.press("Escape")
     check(screen(page, "title"), "Escape on What's New goes to the Title")
 
+
+def step_play(page, check):
     # Play and its pause menu
     page.click(by_id("menu.play"))
     check(screen(page, "play"), "Play opens from the Title")
@@ -107,3 +120,32 @@ def run(page, check, engine):
     page.click(by_id("menu.quit"))
     check(screen(page, "title"), "Quit to Title goes to the Title")
     check(page.inner_text("#message") == "", "no error message after the round trip")
+
+
+# The steps in order, by name; `boot` always runs.
+STEPS = [("boot", step_boot), ("settings", step_settings), ("notes", step_notes), ("play", step_play)]
+
+
+def chosen_steps():
+    """The steps this run takes: all, or `boot` and those in BUILDER_STEPS."""
+    wanted = os.environ.get("BUILDER_STEPS")
+    chosen = None if wanted is None else set(wanted.split()) | {"boot"}
+    return [(n, s) for n, s in STEPS if chosen is None or n in chosen]
+
+
+def run(page, check, engine, report, first=1):
+    """Runs the chosen steps; `report` (tests/browser/progress.py) shows each
+    one start and end. `first` is the first step's number in the engine's
+    count (the check's own load step comes before)."""
+    steps = chosen_steps()
+    skipped = [n for n, _ in STEPS if n not in dict(steps)]
+    if skipped:
+        report.note(f"  (skipping {len(skipped)} steps not picked: {', '.join(skipped)})")
+    for k, (name, step) in enumerate(steps, first):
+        report.step_start(k, name)
+        try:
+            step(page, check)
+        except BaseException:
+            report.step_end(error=True)
+            raise
+        report.step_end()

@@ -1,0 +1,155 @@
+# Test tags: which tests a change needs.
+#
+# scripts/quick-check.sh reads this file: changed files -> tags (through
+# [sources]), then runs only the cargo tests, browser steps and other checks
+# whose tags meet those (through [tests] and [browser]). scripts/check.sh
+# still runs everything. `scripts/tags.py guard` (step 4 of check.sh) fails
+# when a cargo test, a browser step or a tracked file is not classified here,
+# when a key matches nothing (stale), or when a tag is not in [tags].
+#
+# A test carries every tag whose change could break it, not only its topic.
+# When unsure, add the tag: an extra tag only costs time. Start a new tag only
+# when a part of the game has tests of its own that other changes need not run.
+
+[tags]
+all = "foundations (the crate root, the shim, the build, Cargo files, the check and tag scripts): run everything"
+boundary = "the Builder boundary tests: purity scanner, dependency allowlist, shim and page scans, CSP (always run: they scan every file)"
+menus = "the screens the core describes (`ui`), their flow through `act`, Settings and the pause menu: api.rs, app.rs, app/menus.rs, view.rs"
+whatsnew = "What's New: the version, the patch notes and their screen (patch_notes.rs, app/notes.rs, data/patch-notes.json)"
+copy = "reader-visible words: data/strings.json, GLOSSARY.md, TONE.md, README.md, and the core's readers of them"
+page = "the static page (web/) and the browser check's harness: every browser step runs"
+art = "the art pipeline (tools/art/) and the style packs (styles/): tests/art_check.py"
+notes = "the notebooks and other documents: the notebook form check only"
+tooling = "scripts outside the check (serve, publish, audits, watch window): nothing beyond the always-run tests"
+
+# Hitting a tag also hits these, for a tag whose change reaches another's
+# tests: `a = ["b"]`.
+[implies]
+
+# Tags whose tests always run in a quick check.
+[always]
+tags = ["boundary"]
+
+# ---------------------------------------------------------------------------
+# Changed file -> tags. Globs over the repository path (`*` stays within one
+# path segment, `**` crosses them). Every glob that matches adds its tags.
+# A file that matches no glob runs everything; `[]` means run nothing for it.
+# There is deliberately no catch-all for crates/core/src: a new module gets
+# its own row (and its tests their own [tests] keys), or the guard fails.
+[sources]
+"Cargo.toml" = ["all"]
+"Cargo.lock" = ["all"]
+"rust-toolchain.toml" = ["all"]
+"rustfmt.toml" = ["tooling"]
+".gitignore" = ["tooling"]
+"crates/core/Cargo.toml" = ["all"]
+"crates/core/src/lib.rs" = ["all"]
+"crates/core/src/api.rs" = ["menus"]
+"crates/core/src/app.rs" = ["menus"]
+"crates/core/src/app/menus.rs" = ["menus"]
+"crates/core/src/app/notes.rs" = ["whatsnew"]
+"crates/core/src/app/tests.rs" = ["menus"]
+"crates/core/src/view.rs" = ["menus"]
+"crates/core/src/patch_notes.rs" = ["whatsnew"]
+"crates/core/src/strings.rs" = ["copy"]
+"crates/core/src/glossary.rs" = ["copy"]
+"crates/core/tests/boundary.rs" = ["boundary"]
+"crates/core/tests/copy.rs" = ["copy"]
+"crates/core/tests/data_files.rs" = ["copy", "whatsnew"]
+"crates/core/tests/no_storage.rs" = ["page"]
+"crates/shim/**" = ["all"]
+"web/**" = ["page"]
+"data/strings.json" = ["copy"]
+"data/patch-notes.json" = ["whatsnew"]
+"data/art.json" = ["art"]
+"styles/**" = ["art"]
+"tools/art/**" = ["art"]
+"tests/art_check.py" = ["art"]
+"tests/browser/check.py" = ["page"]
+"tests/browser/engines.py" = ["page"]
+"tests/browser/progress.py" = ["page"]
+"tests/browser/interactions.py" = ["page"]
+"tests/breaks.json" = ["tooling"]
+"tests/tags.toml" = ["all"]
+"scripts/tags.py" = ["all"]
+"scripts/check.sh" = ["all"]
+"scripts/checkrun.py" = ["all"]
+"scripts/build.sh" = ["all"]
+"scripts/wasm_imports.py" = ["tooling"]
+"scripts/notebook_check.py" = ["notes"]
+"scripts/quick-check.sh" = ["tooling"]
+"scripts/timed-checks.sh" = ["tooling"]
+"scripts/watch-check.sh" = ["tooling"]
+"scripts/check-dashboard.py" = ["tooling"]
+"scripts/setup.sh" = ["tooling"]
+"scripts/serve.py" = ["tooling"]
+"scripts/publish.sh" = ["tooling"]
+"scripts/mutants.sh" = ["tooling"]
+"scripts/break_tests.py" = ["tooling"]
+"scripts/count-tests.sh" = ["tooling"]
+"*.md" = ["notes"]
+"README.md" = ["copy"]
+"GLOSSARY.md" = ["copy"]
+"TONE.md" = ["copy"]
+"notes/**" = ["notes"]
+".claude/**" = ["notes"]
+
+# ---------------------------------------------------------------------------
+# Line rules: a file takes these tags instead of its [sources] ones when every
+# changed line of its diff matches one of the patterns (Python regular
+# expressions). A release that only bumps VERSION in app.rs runs What's
+# New's tests (the newest notes are this version; the version is drawn), not
+# every menu test.
+[lines]
+"crates/core/src/app.rs" = { patterns = ['^pub const VERSION: &str = "[^"]*";$'], tags = ["whatsnew"] }
+
+# Function -> tags, for a big file whose functions belong to different
+# features: per file, Python regular expressions over the name of the
+# outermost `fn` (or `def`) holding a changed line (its doc comments and
+# attributes count as part of it). Every matching regex adds its tags; a
+# changed line in no named function, or in one no regex names, takes the
+# file's [sources] tags. Outside any fn, a struct or enum holding the line,
+# or a one-line `const`/`static` it declares, is named the same way.
+#   [functions."crates/core/src/app.rs"]
+#   '^(escape|key)$' = ["keys"]
+[functions]
+
+# A changed line inside `def step_<name>` of this file runs that browser step
+# only; any other line takes the file's [sources] tags (page: every step).
+[steps]
+"tests/browser/interactions.py" = '^step_(\w+)$'
+
+# Test files run their own tests, not every test of their topic: a changed
+# crates/core/tests/<file>.rs runs test:<file>; a changed *tests.rs under
+# crates/core/src runs its module's tests; a changed line inside a
+# `#[cfg(test)] mod` runs the test it sits in (or that module's tests, for a
+# helper). Their [sources] tags apply only when no such test exists.
+
+# ---------------------------------------------------------------------------
+# Cargo tests -> tags. A key is `<target>:<name prefix>`: `lib:` for the
+# core's own tests by module path, `shim:` for the shim's, `test:<file>` for
+# an integration test file (crates/core/tests/<file>.rs), optionally with
+# `:<name prefix>`. The longest matching key wins, so a mixed module can be
+# split by test name.
+[tests]
+"lib:api::" = ["menus", "copy", "whatsnew"]
+"lib:app::tests::" = ["menus", "copy"]
+"lib:app::tests::whats_new_" = ["menus", "copy", "whatsnew"]
+"lib:app::tests::the_version_opens_" = ["menus", "copy", "whatsnew"]
+"lib:glossary::" = ["copy"]
+"lib:patch_notes::" = ["whatsnew"]
+"lib:strings::" = ["copy"]
+"lib:view::" = ["menus"]
+"test:boundary" = ["boundary"]
+"test:copy" = ["copy"]
+"test:data_files" = ["copy", "whatsnew"]
+"test:no_storage" = ["page"]
+
+# ---------------------------------------------------------------------------
+# Browser steps (tests/browser/interactions.py STEPS) -> tags. The load and
+# idle watch and the closing error and request checks run with every step.
+[browser]
+boot = ["menus", "copy", "whatsnew", "page"]
+settings = ["menus", "copy", "page"]
+notes = ["menus", "copy", "whatsnew", "page"]
+play = ["menus", "copy", "page"]
