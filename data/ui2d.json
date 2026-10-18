@@ -1,0 +1,178 @@
+{
+  "_note": "The 2D layer's look (crates/core/src/ui2d/theme.rs). Colours are 0-255. fonts: CSS families, a weight, and the glyph advance in percent of the size (the core lays labels out by it). fishboy: the screen's virtual canvas, the first-person field of view in degrees, the screen's share of the view (percent of width or height, whichever binds), and how long raising it takes. radar: the map picture in blocks of block_mm (2.5 m: the person's 80% fidelity), its colours, the fine grid, range rings, the ping's sweep band and the players' radar colours. tiers: each tier's colour and frame shape (double, notched, dashed, plain). standin: the plain lake drawn behind the Fish-Boy until the world renderer lands.",
+  "fonts": {
+    "mono": { "family": "ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace", "weight": "bold", "advance": 60 },
+    "banner": {
+      "family": "'Rockwell Extra Bold', 'Rockwell', 'Roboto Slab', 'Zilla Slab', 'Clarendon', 'Bookman Old Style', 'DejaVu Serif', 'Bitstream Charter', serif",
+      "weight": "bold",
+      "advance": 76
+    }
+  },
+  "hud": { "canvas": [1920, 1080], "ink": [248, 239, 220] },
+  "fishboy": {
+    "canvas": [1600, 900],
+    "fov_deg": 50,
+    "screen_pct": 80,
+    "raise_ms": 380,
+    "eye_mm": 1500,
+    "look_down_deg": 4,
+    "light": { "fog": [0, 0, 0], "sun_dir": [-30, 70, 80], "sun": [175, 170, 160], "sky": [175, 180, 186], "ground": [110, 112, 110] }
+  },
+  "screen": {
+    "background": [4, 16, 8],
+    "phosphor": [120, 255, 140],
+    "dim": [34, 120, 52],
+    "ink": [4, 22, 10],
+    "scanline_every": 4,
+    "scanline_pct": 22,
+    "warning": [255, 120, 100]
+  },
+  "radar": {
+    "panel": [4, 18, 8],
+    "land": [32, 104, 44],
+    "shallow": [14, 58, 24],
+    "deep": [8, 38, 16],
+    "shore": [120, 255, 140],
+    "deep_mm": 1800,
+    "block_mm": 2500,
+    "scan_pct": 82,
+    "grid": [20, 80, 30],
+    "grid_lines": 12,
+    "ring": [60, 180, 80],
+    "ring_m": 90,
+    "sweep": [120, 255, 140],
+    "sweep_band_m": 40,
+    "sweep_pct": 40,
+    "players": { "blue": [110, 160, 255], "red": [255, 96, 84], "green": [150, 240, 120], "yellow": [255, 220, 80] },
+    "label_back": [2, 12, 5]
+  },
+  "tiers": {
+    "legendary": { "colour": [255, 140, 26], "frame": "double" },
+    "rare": { "colour": [176, 112, 255], "frame": "notched" },
+    "uncommon": { "colour": [80, 150, 255], "frame": "dashed" },
+    "common": { "colour": [70, 210, 80], "frame": "plain" }
+  },
+  "fishpedia": { "box_colour": [16, 38, 84], "box_line": [60, 100, 170], "gone_pct": 35, "silhouette": [70, 110, 170] },
+  "standin": {
+    "water": [52, 102, 128],
+    "land": [78, 116, 62],
+    "light": { "fog": [184, 198, 204], "sun_dir": [-45, 80, 55], "sun": [150, 144, 132], "sky": [140, 150, 162], "ground": [86, 88, 84] },
+    "fog_m": [50, 240]
+  },
+  "minigames": {
+    "_note": "The item minigames' look (crates/core/src/minigame/look.rs). Colours are 0-255; sizes are in the minigames' 1600 x 900 canvas units. banner: the WarioWare-style instruction band (its text pops from 60% to size over pop_ms; dim_pct darkens the minigame under it). bezel: the Fish-Boy's case drawn round an on-device minigame on the Minigames screen. cloak and enhanced_radar are on the Fish-Boy, so they are in its phosphor greens. camera.fish: the flying fish's colours, taken in turn; viewfinder_size and bracket: the viewfinder cursor.",
+    "banner": {
+      "band": [217, 162, 30],
+      "edge": [43, 33, 24],
+      "ink": [248, 239, 220],
+      "shadow": [150, 64, 15],
+      "size": 92,
+      "band_h": 200,
+      "pop_ms": 180,
+      "dim_pct": 45
+    },
+    "text": [248, 239, 220],
+    "text_size": 38,
+    "bar": [217, 162, 30],
+    "bar_back": [24, 42, 29],
+    "bezel": [44, 50, 40],
+    "frame": { "paper": [241, 229, 202], "ink": [43, 33, 24], "width": 30, "keyline": 5, "radius": 16, "stripes": [[201, 88, 31], [217, 162, 30], [44, 127, 122]], "stripe_h": 6, "dots": [201, 88, 31], "dot_step": 16, "dots_w": 120 },
+    "cloak": {
+      "background": [4, 16, 8],
+      "grid": [18, 60, 26],
+      "rim": [150, 255, 160],
+      "floor": [52, 150, 70],
+      "bench": [110, 220, 120],
+      "motor": [190, 255, 190],
+      "deck": [80, 190, 96],
+      "eraser": [255, 170, 190],
+      "eraser_edge": [255, 240, 245]
+    },
+    "power_reel": {
+      "background": [29, 87, 84],
+      "spool": [227, 209, 170],
+      "line": [44, 127, 122],
+      "rim": [43, 33, 24],
+      "hub": [217, 162, 30],
+      "handle": [201, 88, 31],
+      "arrow": [248, 239, 220],
+      "pip_off": [44, 110, 106],
+      "pip_on": [217, 162, 30]
+    },
+    "nitrous": {
+      "background": [24, 42, 29],
+      "arena": [38, 64, 45],
+      "arena_line": [120, 150, 108],
+      "nitrogen": [60, 118, 196],
+      "oxygen": [201, 70, 40],
+      "atom_ink": [248, 239, 220],
+      "bin": [30, 52, 36],
+      "bin_line": [227, 209, 170],
+      "wrong": [217, 162, 30]
+    },
+    "teleporter": {
+      "background": [42, 30, 44],
+      "glow": [110, 58, 84],
+      "circle": [201, 88, 31],
+      "edge": [248, 239, 220],
+      "ring": [233, 191, 85],
+      "ring_ready": [59, 149, 143],
+      "number": [248, 239, 220],
+      "hit": [59, 149, 143],
+      "miss": [214, 72, 52]
+    },
+    "camera": {
+      "sky": [150, 188, 184],
+      "sky_low": [226, 214, 180],
+      "water": [44, 110, 106],
+      "water_line": [227, 209, 170],
+      "fish": [[110, 130, 70], [205, 160, 60], [80, 118, 130], [176, 100, 52], [124, 140, 100]],
+      "belly": [248, 239, 220],
+      "eye": [43, 33, 24],
+      "flash": [255, 255, 255],
+      "photo": [248, 239, 220],
+      "viewfinder": [248, 239, 220],
+      "viewfinder_size": [220, 160],
+      "bracket": 44
+    },
+    "enhanced_radar": {
+      "background": [4, 16, 8],
+      "frame": [34, 120, 52],
+      "fish": [52, 170, 80],
+      "fish_line": [120, 255, 140],
+      "eye": [4, 22, 10],
+      "track": [60, 180, 80],
+      "knob": [14, 40, 20],
+      "knob_line": [120, 255, 140],
+      "snap": [200, 255, 210]
+    }
+  },
+  "items": {
+    "_note": "The items on screen (crates/core/src/app/items.rs). slot: the item slot on the HUD canvas, [x, y, w, h] (bottom right); effect_h: each running effect's timer row, stacked above it; offer: the High-Quality Camera's offer after a catch (bottom middle). icons: each item's colour in its icon. cloak_tint, cloak_tint_pct: your own boat while cloaked is drawn this far toward the tint, to read as see-through. trail: the nitrous trail's colour, and its length and width behind the boat (mm). shimmer: the teleport's charge round the boat: its colour, radius and strands' full height (mm). choose: the teleport's destination marker on the radar.",
+    "slot": [1708, 868, 176, 176],
+    "panel": [38, 64, 45],
+    "edge": [241, 229, 202],
+    "ink": [248, 239, 220],
+    "dim": [160, 150, 128],
+    "key_cap": [241, 229, 202],
+    "icons": {
+      "cloak": [150, 190, 230],
+      "power_reel": [255, 170, 60],
+      "nitrous": [80, 170, 255],
+      "teleporter": [220, 110, 255],
+      "camera": [200, 204, 210],
+      "enhanced_radar": [120, 255, 140]
+    },
+    "effect_h": 64,
+    "offer": [500, 640, 920, 170],
+    "cloak_tint": [200, 225, 240],
+    "cloak_tint_pct": 40,
+    "trail": [90, 190, 255],
+    "trail_mm": 9000,
+    "trail_width_mm": 1400,
+    "shimmer": [230, 150, 255],
+    "shimmer_mm": 3200,
+    "shimmer_height_mm": 5000,
+    "choose": [233, 191, 85]
+  }
+}

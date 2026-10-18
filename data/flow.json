@@ -1,0 +1,100 @@
+{
+  "_note": "The match flow's look and popup table (crates/core/src/flow/look.rs). Colours are 0-255 and opacities percent; times ms; sizes in the HUD's 1920 x 1080 units, the burst's in mm. fonts: display (big words) and body (labels), CSS families with the glyph advance in percent of the size. popups.rows: each names a MatchEvent by its JSON type, an optional 'when' (dotted field paths that must equal a value, or '*' for any), the string key of its text, a style, how to fill each {placeholder} (name:<field> a seat's player name, fish:<field> a roster id's fish name, tier:<field> a tier's name, text:<field> the value), the field holding a tier for a tier style, who sees it (all, mine, others; by the event's seat) and a group (popups in one group replace each other in place). The first row that matches an event is used. postgame: the reveal's pacing. burst: a wreck's explosion and the wrecked player's camera shake. ghost_pct: how solid a ghosted boat is drawn.",
+  "fonts": {
+    "display": {
+      "family": "'Rockwell Extra Bold', 'Rockwell', 'Roboto Slab', 'Zilla Slab', 'Clarendon', 'Bookman Old Style', 'DejaVu Serif', 'Bitstream Charter', serif",
+      "weight": "bold",
+      "advance": 76
+    },
+    "body": {
+      "family": "'Bahnschrift SemiCondensed', 'Avenir Next Condensed', 'Roboto Condensed', 'Arial Narrow', 'Ubuntu Sans', 'DejaVu Sans', sans-serif",
+      "weight": "bold condensed",
+      "advance": 54
+    }
+  },
+  "card": {
+    "fill": [241, 229, 202],
+    "fill_pct": 97,
+    "outline": [43, 33, 24],
+    "outline_w": 4,
+    "radius": 18,
+    "shadow": 8,
+    "shadow_pct": 100,
+    "ink": [43, 33, 24],
+    "soft": [110, 90, 67],
+    "light": [248, 239, 220],
+    "shadow_colour": [38, 64, 45],
+    "stripes": [[201, 88, 31], [217, 162, 30], [44, 127, 122]],
+    "stripe_h": 3,
+    "stripe_at": 7,
+    "dots": [201, 88, 31],
+    "dots_pct": 0,
+    "dot_step": 12,
+    "dots_w_pct": 55,
+    "dots_h_pct": 70
+  },
+  "hud": {
+    "gauge_face": [227, 209, 170],
+    "gauge_tick": [110, 90, 67],
+    "gauge_fill": [44, 127, 122],
+    "gauge_boost": [201, 88, 31],
+    "needle": [201, 88, 31],
+    "ping_ready": [44, 127, 122],
+    "ping_wait": [217, 162, 30],
+    "item_slot": [227, 209, 170],
+    "seed": [248, 239, 220],
+    "wreck_flash": [201, 88, 31],
+    "wreck_flash_pct": 35,
+    "wreck_flash_ms": 700
+  },
+  "countdown": { "number": [233, 191, 85], "go": [218, 112, 54], "size": 260, "pop_ms": 260, "go_ms": 900, "end": [201, 88, 31] },
+  "popups": {
+    "max_shown": 4,
+    "slide_ms": 220,
+    "fade_ms": 300,
+    "styles": {
+      "tier": { "fill": [38, 64, 45], "outline": [248, 239, 220], "ink": [248, 239, 220], "icon": "fish", "tier": true },
+      "wreck": { "fill": [241, 229, 202], "outline": [201, 88, 31], "ink": [43, 33, 24], "icon": "burst" },
+      "buoy": { "fill": [241, 229, 202], "outline": [44, 127, 122], "ink": [43, 33, 24], "icon": "bobber" },
+      "plain": { "fill": [241, 229, 202], "outline": [43, 33, 24], "ink": [43, 33, 24], "icon": "none" }
+    },
+    "rows": [
+      { "event": "Announced", "text": "popup.hooked", "style": "tier", "tier": "tier", "fill": { "player": "name:seat", "fish": "fish:kind" } },
+      { "event": "Caught", "text": "popup.landed", "style": "tier", "tier": "tier", "fill": { "player": "name:seat", "fish": "fish:kind" } },
+      { "event": "Scared", "text": "popup.scared", "style": "plain", "who": "mine" },
+      { "event": "Missed", "text": "popup.missed", "style": "plain", "who": "mine" },
+      { "event": "LineBroke", "text": "popup.broke", "style": "plain", "who": "mine" },
+      { "event": "Wrecked", "when": { "cause": "grounded" }, "text": "popup.aground", "style": "wreck", "fill": { "player": "name:seat" } },
+      { "event": "Wrecked", "when": { "cause.rammed.by": "*" }, "text": "popup.rammed", "style": "wreck", "fill": { "player": "name:cause.rammed.by", "victim": "name:seat" } },
+      { "event": "BuoySpawned", "text": "popup.buoy_spawned", "style": "buoy" }
+    ]
+  },
+  "postgame": {
+    "first_ms": 900,
+    "card_ms": 750,
+    "gap_ms": 900,
+    "rank_ms": 1200,
+    "count_ms": 400,
+    "backdrop": [24, 42, 29],
+    "backdrop_pct": 62,
+    "card": [248, 239, 220],
+    "winner": [217, 162, 30],
+    "fish_box": [29, 87, 84],
+    "orbit_ms": 60000
+  },
+  "burst": {
+    "ms": 1100,
+    "shards": 26,
+    "shard_mm": 700,
+    "speed_mm_per_s": 9000,
+    "up_mm_per_s": 9000,
+    "fall_mm_per_s2": 20000,
+    "fireball_mm": 2400,
+    "swell_pct": 22,
+    "colours": [[255, 246, 170], [255, 186, 60], [236, 92, 36], [90, 80, 76]],
+    "shake_ms": 650,
+    "shake_mm": 450,
+    "shake_hz": 14
+  },
+  "ghost_pct": 45
+}

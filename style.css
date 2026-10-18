@@ -1,0 +1,680 @@
+/* Honey Hole's menus: a 1970s outdoors magazine (DECISIONS.md,
+   2026-10-18): warm paper boxes with rounded corners, the triple stripe,
+   a dot screen in the corner, chunky slab-serif headlines and condensed
+   capitals for labels, over a live view of Burt Lake (app/title.rs). The
+   match HUD draws the same look on the 2D layer (data/flow.json). The page
+   lays out what the core returns; every colour is a variable here or a
+   value in data/. */
+:root {
+  /* the paper and its ink */
+  --paper: #f1e5ca;
+  --paper-light: #f8efdc;
+  --paper-shade: #e3d1aa;
+  --ink: #2b2118;
+  --soft: #6e5a43;
+  /* the magazine's four inks: faded burnt orange, mustard, teal and deep
+     forest green */
+  --orange: #c9581f;
+  --orange-light: #da7036;
+  --orange-deep: #96400f;
+  --mustard: #d9a21e;
+  --mustard-light: #e9bf55;
+  --teal: #2c7f7a;
+  --teal-light: #3b958f;
+  --teal-deep: #1d5754;
+  --forest: #26402d;
+  --forest-deep: #182a1d;
+  /* the players' colours (data/look.json "players") */
+  --seat-blue: rgb(38, 104, 214);
+  --seat-red: rgb(210, 48, 44);
+  --seat-green: rgb(52, 160, 72);
+  --seat-yellow: rgb(238, 196, 40);
+  /* the faces: system families only, no font file and no other origin.
+     A slab serif for headlines (data/flow.json "display") and condensed
+     capitals for labels and buttons ("body"); a book serif for reading. */
+  --slab: "Rockwell Extra Bold", "Rockwell", "Roboto Slab", "Zilla Slab", "Clarendon", "Clarendon BT",
+    "Bookman Old Style", "DejaVu Serif", "Bitstream Charter", serif;
+  --cond: "Bahnschrift SemiCondensed", "Bahnschrift", "Avenir Next Condensed", "Roboto Condensed",
+    "Arial Narrow", "Ubuntu Sans", "Liberation Sans Narrow", "DejaVu Sans", sans-serif;
+  --book: "Charter", "Bitstream Charter", "Iowan Old Style", "Cambria", "DejaVu Serif", serif;
+  /* the triple stripe, top to bottom */
+  --stripes: linear-gradient(180deg, var(--orange) 0 33.4%, var(--mustard) 33.4% 66.7%, var(--teal) 66.7%);
+  /* a dot screen, for small accents in a corner */
+  --dots: radial-gradient(circle, var(--orange) 0 30%, transparent 34%);
+  --keyline: 0.14rem;
+  --radius: 1rem;
+  /* a solid offset shadow in forest green: the print's second plate */
+  --lift: 0.45rem 0.5rem 0 var(--forest);
+  /* the in-match DOM panels (fishing, popups) read these */
+  --panel: var(--paper);
+  --muted: var(--soft);
+  --accent: var(--teal);
+  --accent-ink: var(--paper-light);
+  --shade: rgba(24, 42, 29, 0.6);
+  --error: #a3261a;
+  /* the lake behind the menus before the scene draws, or without WebGL */
+  --water-top: #7e9f98;
+  --water-deep: #22403a;
+  /* the text grows a little with the window, so 1080p reads as a laptop
+     does; the Text size setting scales it */
+  --base: clamp(15px, 0.55vw + 8px, 20px);
+  --scale: 1;
+}
+/* the Text size setting, from the core */
+html { font-size: calc(var(--base) * var(--scale)); }
+html[data-text-size="small"] { --scale: 0.875; }
+html[data-text-size="large"] { --scale: 1.25; }
+
+* { box-sizing: border-box; }
+/* A display rule elsewhere must not show what the page hid. */
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(180deg, var(--water-top), var(--water-deep)) fixed;
+  color: var(--ink);
+  font: 600 1rem/1.4 var(--cond);
+  font-stretch: condensed;
+}
+#menus {
+  position: relative;
+  max-width: 36rem;
+  margin: 0 auto;
+  padding: 2.5rem 1rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.3rem;
+}
+#message { position: relative; margin: 0 auto; max-width: 36rem; padding: 0 1rem; }
+#message:not(:empty) {
+  background: var(--paper);
+  color: var(--error);
+  border: var(--keyline) solid var(--error);
+  border-radius: var(--radius);
+  padding: 0.6rem 1rem;
+  margin-bottom: 1rem;
+}
+
+/* ---- boxes: paper, the triple stripe across the top, a dot screen in
+   the bottom corner ---- */
+.panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--paper);
+  border: var(--keyline) solid var(--ink);
+  border-radius: var(--radius);
+  box-shadow: var(--lift);
+  padding: 1.55rem 1.4rem 1.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.panel::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 0.75rem;
+  background: var(--stripes);
+  border-bottom: var(--keyline) solid var(--ink);
+}
+.panel::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 11rem;
+  height: 7rem;
+  z-index: -1;
+  background: var(--dots) 0 0 / 0.6rem 0.6rem;
+  opacity: 0.32;
+  -webkit-mask-image: linear-gradient(135deg, transparent 38%, #000 100%);
+  mask-image: linear-gradient(135deg, transparent 38%, #000 100%);
+}
+.panel h2 {
+  margin: 0;
+  font: 800 2rem/1.1 var(--slab);
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.panel .sub {
+  margin: -0.3rem 0 0;
+  color: var(--teal-deep);
+  font-weight: 700;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+  font-size: 0.9rem;
+}
+.panel.menu { gap: 0.85rem; }
+.panel.menu h2 { text-align: center; }
+
+/* the Title's name: the masthead (data/wordmark.svg) over the heading's
+   text, which stays for screen readers and the check */
+.panel.title {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  overflow: visible;
+}
+.panel.title::before,
+.panel.title::after { content: none; }
+.panel.title h2 {
+  height: 8.5rem;
+  background: url("data/wordmark.svg") left center / contain no-repeat;
+  color: transparent;
+  overflow: hidden;
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* ---- buttons: solid ink blocks with a paper keyline inside, condensed
+   capitals ---- */
+.button {
+  --fill: var(--orange);
+  --fill-hover: var(--orange-light);
+  --label: var(--paper-light);
+  font: 700 1.2rem/1.15 var(--cond);
+  font-stretch: condensed;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.07em;
+  padding: 0.75rem 1.3rem;
+  border: var(--keyline) solid var(--ink);
+  border-radius: 0.65rem;
+  background: var(--fill);
+  color: var(--label);
+  box-shadow: inset 0 0 0 0.2rem var(--fill), inset 0 0 0 0.3rem var(--paper-light), 0.25rem 0.28rem 0 var(--ink);
+  cursor: pointer;
+  text-align: center;
+  transition: transform 80ms ease-out, box-shadow 80ms ease-out, background-color 120ms;
+}
+.button:hover:not(:disabled) {
+  background: var(--fill-hover);
+  box-shadow: inset 0 0 0 0.2rem var(--fill-hover), inset 0 0 0 0.3rem var(--paper-light), 0.32rem 0.36rem 0 var(--ink);
+  transform: translate(-0.06rem, -0.06rem);
+}
+.button:active:not(:disabled) {
+  transform: translate(0.2rem, 0.22rem);
+  box-shadow: inset 0 0 0 0.2rem var(--fill), inset 0 0 0 0.3rem var(--paper-light), 0.04rem 0.05rem 0 var(--ink);
+}
+/* the Title's other two ways in are teal */
+.button[id="menu.settings"],
+.button[id="menu.notes"] { --fill: var(--teal); --fill-hover: var(--teal-light); }
+/* the way out of a screen: paper, inked */
+.button[id="menu.back"],
+.button[id="menu.quit"],
+.button[id="online.leave"] {
+  --fill: var(--paper-light);
+  --fill-hover: #fffaf0;
+  --label: var(--ink);
+}
+.button.quiet {
+  --fill: var(--teal-deep);
+  --fill-hover: var(--teal);
+  align-self: flex-start;
+  font-size: 0.9rem;
+  letter-spacing: 0.09em;
+  padding: 0.38rem 0.9rem;
+  border-width: 0.12rem;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 0.14rem var(--fill), inset 0 0 0 0.22rem var(--paper-light), 0.16rem 0.2rem 0 var(--ink);
+}
+.button.quiet:hover:not(:disabled) {
+  box-shadow: inset 0 0 0 0.14rem var(--fill-hover), inset 0 0 0 0.22rem var(--paper-light), 0.22rem 0.26rem 0 var(--ink);
+}
+.button:disabled { opacity: 0.5; cursor: default; box-shadow: none; }
+/* the focus: a thick mustard ring with an ink edge, plain at any size */
+.button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+#version:focus-visible,
+.panel h2[id]:focus-visible {
+  outline: 0.25rem solid var(--mustard);
+  outline-offset: 0.2rem;
+  box-shadow: 0 0 0 0.5rem var(--ink);
+}
+.button:focus-visible {
+  background: var(--fill-hover);
+  box-shadow: inset 0 0 0 0.2rem var(--fill-hover), inset 0 0 0 0.3rem var(--paper-light), 0 0 0 0.52rem var(--ink);
+}
+.badge {
+  margin-left: 0.5rem;
+  padding: 0 0.45rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  border: 0.12rem solid currentColor;
+}
+
+/* ---- fields: the label in a column of its own, the control beside it ---- */
+.field { display: flex; align-items: center; gap: 0.85rem; }
+.field label, .toggle span { flex: 1; }
+.field label,
+.toggle span {
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+}
+.field:not(.toggle):not(.meter) {
+  display: grid;
+  grid-template-columns: minmax(7rem, 11rem) minmax(0, 1fr) auto;
+}
+.field:not(.toggle):not(.meter) > :nth-child(2):last-child { grid-column: 2 / -1; }
+.field select { justify-self: start; max-width: 100%; }
+.slider input { accent-color: var(--orange); height: 1.6rem; width: 100%; margin: 0; }
+.slider-value {
+  min-width: 3.6rem;
+  text-align: center;
+  font: 800 1rem var(--slab);
+  font-variant-numeric: tabular-nums;
+  color: var(--paper-light);
+  background: var(--teal-deep);
+  border-radius: 0.4rem;
+  padding: 0.1rem 0.35rem;
+}
+.field select,
+.field.text input {
+  font: 700 1.05rem var(--cond);
+  font-stretch: condensed;
+  color: var(--ink);
+  background: var(--paper-light);
+  border: var(--keyline) solid var(--ink);
+  border-radius: 0.45rem;
+  padding: 0.35rem 0.55rem;
+}
+.field.text input { width: 100%; min-width: 0; }
+.field.text input::placeholder { color: var(--soft); opacity: 0.8; }
+.toggle { cursor: pointer; }
+
+/* the room code, big, with its Copy button; Copy link below it */
+.copy-code {
+  font: 800 2rem/1 var(--slab);
+  letter-spacing: 0.18em;
+  color: var(--orange-deep);
+  user-select: all;
+}
+.button[id="online.copy_link"] { align-self: flex-end; margin-top: -0.5rem; }
+/* the clipboard fallback's scratch field, off screen */
+.copy-scratch { position: fixed; top: 0; left: -100vw; opacity: 0; }
+.toggle input { margin: 0; width: 1.35rem; height: 1.35rem; accent-color: var(--orange); }
+
+/* ---- lists and tables ---- */
+table { border-collapse: separate; border-spacing: 0 0.32rem; width: 100%; }
+.pairs th { text-align: left; font-weight: 600; padding: 0.25rem 0; }
+.pairs td {
+  text-align: right;
+  padding: 0.25rem 0;
+  color: var(--orange-deep);
+  font: 800 0.95rem var(--slab);
+}
+.pairs tr + tr th, .pairs tr + tr td { border-top: 0.12rem dotted rgba(43, 33, 24, 0.35); }
+.cells th {
+  text-align: left;
+  color: var(--teal-deep);
+  font-size: 0.8rem;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.1em;
+  padding: 0 0.6rem;
+}
+.cells td {
+  text-align: left;
+  padding: 0.42rem 0.6rem;
+  background: var(--paper-light);
+  border-top: 0.12rem solid var(--ink);
+  border-bottom: 0.12rem solid var(--ink);
+}
+.cells td:first-child { border-left: 0.12rem solid var(--ink); border-radius: 0.45rem 0 0 0.45rem; }
+.cells td:last-child { border-right: 0.12rem solid var(--ink); border-radius: 0 0.45rem 0.45rem 0; }
+.cells tr.marked td { background: var(--mustard-light); }
+/* a seat's row: its player colour as a block and a roundel by its name */
+tr.tone-blue { --seat: var(--seat-blue); }
+tr.tone-red { --seat: var(--seat-red); }
+tr.tone-green { --seat: var(--seat-green); }
+tr.tone-yellow { --seat: var(--seat-yellow); }
+.cells tr.tone td:first-child { border-left: 0.6rem solid var(--seat); white-space: nowrap; }
+.cells tr.tone td:first-child::before {
+  content: "";
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.45rem;
+  vertical-align: -0.14rem;
+  border-radius: 50%;
+  background: var(--seat);
+  border: 0.12rem solid var(--ink);
+  box-shadow: inset 0 0 0 0.14rem var(--paper-light);
+}
+
+/* ---- What's New ---- */
+.notes { display: flex; flex-direction: column; gap: 0.8rem; }
+.note {
+  background: var(--paper-light);
+  border: 0.12rem solid var(--ink);
+  border-radius: 0.7rem;
+  padding: 0.6rem 0.9rem 0.7rem;
+}
+.note-head { margin: 0; font-size: 1rem; display: flex; gap: 0.6rem; align-items: center; }
+.note-version {
+  font: 800 1.05rem var(--slab);
+  color: var(--paper-light);
+  background: var(--orange);
+  border-radius: 999px;
+  padding: 0.05rem 0.7rem;
+}
+.note-date { color: var(--teal-deep); font-size: 0.85rem; font-variant-caps: all-small-caps; letter-spacing: 0.08em; }
+.note ul { margin: 0.4rem 0 0; padding-left: 1.2rem; font: 400 1rem/1.45 var(--book); }
+.note li { margin: 0.25rem 0; }
+.note li::marker { color: var(--orange); }
+.note.minor { margin-left: 1.2rem; font-size: 0.9rem; }
+
+/* ---- the version in the corner: on the menus, the issue's roundel ---- */
+#version {
+  position: fixed;
+  right: 0.75rem;
+  bottom: 0.5rem;
+  font: 700 0.8rem var(--cond);
+  color: var(--ink);
+  background: var(--paper);
+  border: 0.12rem solid var(--ink);
+  border-radius: 999px;
+  padding: 0.1rem 0.55rem;
+  cursor: pointer;
+  z-index: 2;
+}
+body[data-backdrop="on"]:not([data-screen="minigames"]) #version {
+  right: 1.4rem;
+  bottom: 1.2rem;
+  width: 5.2rem;
+  height: 5.2rem;
+  padding: 0;
+  border: 0.14rem solid var(--ink);
+  background: radial-gradient(circle, var(--mustard) 0 58%, var(--ink) 58% 60%, var(--mustard) 60%);
+  box-shadow: inset 0 0 0 0.3rem var(--mustard), inset 0 0 0 0.42rem var(--paper-light), 0.25rem 0.3rem 0 var(--forest);
+  font: 800 1.05rem/1 var(--slab);
+  transform: rotate(-12deg);
+}
+#version:disabled { cursor: default; opacity: 0.7; }
+#version:empty { display: none; }
+
+/* ---- the 3D scene: the menus' backdrop, the Gallery's and the Lake
+   preview's scene, and Play ---- */
+#scene {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+}
+body[data-backdrop="on"] #scene,
+body[data-screen="gallery"] #scene,
+body[data-screen="lake"] #scene { display: block; }
+body[data-screen="play"] #scene { display: block; }
+
+/* ---- the Title: the masthead and the menu at the left, the lake
+   drifting by, the controls at the bottom right ---- */
+body[data-screen="title"] #menus {
+  max-width: 58rem;
+  margin: 0 0 0 max(1rem, 5vw);
+  padding-top: max(1.5rem, 6vh);
+}
+body[data-screen="title"] .panel.menu { width: min(24rem, 100%); padding: 1.7rem 1.5rem 1.6rem; }
+body[data-screen="title"] .panel.menu .button { font-size: 1.4rem; padding: 0.8rem 1.3rem; }
+body[data-screen="title"] .panel.menu .button[id="menu.play"] { font: 800 2.1rem/1.1 var(--slab); padding: 0.85rem 1.3rem; letter-spacing: 0.04em; }
+.panel.workshop {
+  width: fit-content;
+  max-width: 100%;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.75rem 1rem 0.95rem;
+  background: var(--paper-shade);
+  box-shadow: 0.3rem 0.35rem 0 var(--forest);
+}
+.panel.workshop::before,
+.panel.workshop::after { content: none; }
+.panel.workshop h2 {
+  flex-basis: 100%;
+  font: 700 0.85rem var(--cond);
+  font-stretch: condensed;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.14em;
+  color: var(--soft);
+}
+.panel.workshop .button.quiet { font-size: 0.88rem; }
+/* the controls: a field-guide box with a teal head */
+.panel.controls { gap: 0.4rem; padding-top: 0; }
+.panel.controls::before { content: none; }
+.panel.controls h2 {
+  margin: 0 -1.4rem 0.3rem;
+  padding: 0.55rem 1.4rem 0.5rem;
+  background: var(--teal);
+  color: var(--paper-light);
+  font: 700 1.05rem var(--cond);
+  font-stretch: condensed;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.14em;
+  border-bottom: var(--keyline) solid var(--ink);
+  box-shadow: inset 0 -0.3rem 0 var(--mustard), inset 0 -0.42rem 0 var(--ink);
+  padding-bottom: 0.85rem;
+}
+.panel.controls .pairs { font-size: 0.95rem; }
+@media (min-width: 64rem) and (min-height: 36rem) {
+  body[data-screen="title"] .panel.controls {
+    position: fixed;
+    right: max(1rem, 3vw);
+    bottom: 3rem;
+    width: 21rem;
+  }
+  /* the issue's roundel moves up out of the controls' way */
+  body[data-screen="title"] #version { bottom: auto; top: 1.6rem; right: 2rem; }
+}
+
+/* the in-match menu sits over Play */
+.panel.pause {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(22rem, calc(100% - 2rem));
+  height: fit-content;
+  box-shadow: var(--lift), 0 0 0 100vmax var(--shade);
+  z-index: 1;
+  text-align: center;
+}
+.panel.pause .button { font-size: 1.25rem; }
+
+/* Play: the HUD in the top corner over the lake */
+body[data-screen="play"] #menus {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  margin: 0;
+  padding: 0;
+  width: 16rem;
+}
+.panel.hud { background: color-mix(in srgb, var(--panel) 80%, transparent); }
+/* the HUD keeps to the right: the fishing's picture-in-picture of the boat
+   takes the top-left corner */
+body[data-screen="play"] .panel.hud { position: fixed; top: 1rem; right: 1rem; width: 16rem; }
+
+/* ---- fishing (app/fishing.rs): the line's state and its meters at the
+   right, popups across the top in the tier's colour, always with its name */
+.panel.fishing {
+  position: fixed;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16rem;
+  background: color-mix(in srgb, var(--panel) 85%, transparent);
+}
+.panel.fishing h2 { font-size: 1.05rem; }
+.panel.fishing:has(.meter.vertical) { display: grid; grid-template-columns: 1fr 1fr; gap: 0 0.75rem; }
+.panel.fishing:has(.meter.vertical) h2,
+.panel.fishing:has(.meter.vertical) .sub { grid-column: 1 / -1; }
+.field.meter { display: flex; flex-direction: column; gap: 0.25rem; }
+.meter-label { font-weight: 600; }
+.meter-text { color: var(--muted); font-size: 0.85rem; }
+.meter-bar {
+  position: relative;
+  height: 0.9rem;
+  border: 1px solid var(--ink);
+  border-radius: 0.3rem;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  overflow: hidden;
+}
+.meter-fill { position: absolute; left: 0; top: 0; bottom: 0; width: var(--at); background: var(--accent); }
+.meter:not(.vertical) .meter-bar { align-self: stretch; }
+.meter.vertical { align-items: center; text-align: center; }
+.meter.vertical .meter-bar { width: 2.2rem; height: 16rem; }
+.meter.vertical .meter-fill { top: auto; right: 0; width: auto; height: var(--at); background: var(--teal); }
+.meter-zone {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: var(--from);
+  height: calc(var(--to) - var(--from));
+  background: color-mix(in srgb, var(--teal) 55%, transparent);
+  border-top: 2px solid var(--teal-deep);
+  border-bottom: 2px solid var(--teal-deep);
+}
+.meter-marker {
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  bottom: var(--at);
+  height: 0.7rem;
+  margin-bottom: -0.35rem;
+  border-radius: 50% 40% 40% 50%;
+  background: var(--orange);
+  border: 2px solid var(--ink);
+}
+.panel.popup {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 1rem;
+  min-width: 22rem;
+  text-align: center;
+  border-width: 3px;
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+}
+.panel.popup ~ .panel.popup { top: 6rem; }
+.panel.popup ~ .panel.popup ~ .panel.popup { top: 11rem; }
+.panel.popup h2 { font-size: 1.15rem; margin: 0; }
+.panel.popup .sub { font-weight: 700; margin: 0.2rem 0 0; }
+.panel.tier-legendary { border-color: #e8871e; } .panel.tier-legendary .sub { color: #c46a0c; }
+.panel.tier-rare { border-color: #8e44c9; } .panel.tier-rare .sub { color: #7a34b4; }
+.panel.tier-uncommon { border-color: #2f7fd0; } .panel.tier-uncommon .sub { color: #2468ad; }
+.panel.tier-common { border-color: #3a9a48; } .panel.tier-common .sub { color: #2e7d3a; }
+
+/* ---- the Gallery and the Lake preview: their box at the top left over
+   the scene ---- */
+body[data-screen="gallery"] #menus,
+body[data-screen="lake"] #menus {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  margin: 0;
+  padding: 0;
+  width: 21rem;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  /* room for the boxes' shadow inside the scroll box */
+  padding: 0 0.6rem 0.7rem 0;
+}
+.panel.gallery,
+.panel.lake { background: color-mix(in srgb, var(--panel) 94%, transparent); }
+.panel.gallery h2,
+.panel.lake h2 { font-size: 1.5rem; }
+.panel.gallery .field,
+.panel.lake .field { font-size: 0.92rem; }
+/* a narrow box: the label takes only its own width */
+.panel.gallery .field:not(.toggle),
+.panel.lake .field:not(.toggle) { grid-template-columns: auto minmax(0, 1fr) auto; }
+.panel.gallery .field select,
+.panel.lake .field select { justify-self: stretch; }
+.panel.notice { color: var(--error); }
+
+/* ---- Play: the world, and the 2D layer over it (the HUD, the Fish-Boy) ---- */
+#overlay {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+}
+body[data-screen="play"] #overlay { display: block; }
+/* the 2D layer takes the pointer only while the Fish-Boy is up; otherwise
+   a click reaches the 3D canvas (which locks the pointer for the camera) */
+#overlay { pointer-events: none; }
+body[data-pointer="on"] #overlay { pointer-events: auto; }
+/* the menus' column lets the pointer through to the 2D layer, their
+   panels do not */
+body[data-screen="play"] #menus { pointer-events: none; position: relative; }
+body[data-screen="play"] .panel { pointer-events: auto; }
+/* ---- the Minigames screen: its list over the scene, and a minigame on
+   the 2D layer, which draws its own cursor when the core says so ---- */
+body[data-screen="minigames"] #scene,
+body[data-screen="minigames"] #overlay { display: block; }
+body[data-screen="minigames"] #menus { position: relative; }
+.panel.minigames { background: color-mix(in srgb, var(--panel) 96%, transparent); }
+.panel.minigames .button { font-size: 1.05rem; padding: 0.5rem 1rem; }
+body[data-cursor="none"] #overlay { cursor: none; }
+/* ---- the Sounds screen: a grid of sound buttons, then the loops ---- */
+body[data-screen="sounds"] #menus { max-width: 64rem; }
+.panel.sounds {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+}
+.panel.sounds h2, .panel.sounds .sub { grid-column: 1 / -1; }
+.panel.sounds .button { font-size: 0.95rem; padding: 0.45rem 0.7rem; }
+.panel.gallery-more {
+  background: color-mix(in srgb, var(--panel) 94%, transparent);
+  padding: 0.6rem 0.85rem;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.panel.gallery-more::before { content: none; }
+
+/* ---- the match flow (crates/core/src/flow/): the HUD is drawn on the 2D
+   layer; the panel keeps only the Menu button, small in the bottom-left
+   corner, clear of the time box at the top right ---- */
+body[data-screen="play"] .panel.hud {
+  top: auto;
+  right: auto;
+  bottom: 1rem;
+  left: 1rem;
+  width: auto;
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+  overflow: visible;
+}
+body[data-screen="play"] .panel.hud::before,
+body[data-screen="play"] .panel.hud::after { content: none; }
+/* the postgame: the lake and the 2D layer's reveal, its buttons along the
+   bottom */
+body[data-screen="postgame"] #scene,
+body[data-screen="postgame"] #overlay { display: block; }
+body[data-screen="postgame"] #menus { pointer-events: none; }
+body[data-screen="postgame"] .panel.postgame {
+  pointer-events: auto;
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 1.2rem;
+  background: none;
+  border: none;
+  box-shadow: none;
+  overflow: visible;
+  padding: 0.4rem 0.6rem 0.8rem;
+}
+body[data-screen="postgame"] .panel.postgame::before,
+body[data-screen="postgame"] .panel.postgame::after { content: none; }
+body[data-screen="postgame"] .panel.postgame { flex-direction: row; }
+body[data-screen="postgame"] .panel.postgame .button { font-size: 1.3rem; padding: 0.7rem 1.6rem; }

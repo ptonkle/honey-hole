@@ -1,0 +1,413 @@
+{
+  "_note": "Every gameplay number that may change, read and checked by crates/core/src/tuning.rs when the page starts. Units are in each key's name: _ms milliseconds, _mm millimetres, _mm_per_s millimetres a second, _deg degrees, _deg_per_s degrees a second, _pct percent. A missing, unknown or out-of-range key is refused by name. Other systems (fishing, items, radar, fish) add their own section here and its struct in tuning.rs.",
+  "match": {
+    "_note": "length_ms: 8 minutes (BRIEF), the default the match setup offers among length_choices_ms. buoy_interval_ms: an item buoy every minute (BRIEF), the default among buoy_interval_choices_ms; the items system reads the match's own value (Match::setup). seats: lobby slots, coloured blue, red, green, yellow. spawn_spread_mm: the gap between neighbouring boats at the spawn, side by side across the heading.",
+    "length_ms": 480000,
+    "length_choices_ms": [
+      240000,
+      480000,
+      720000
+    ],
+    "buoy_interval_ms": 60000,
+    "buoy_interval_choices_ms": [
+      30000,
+      60000,
+      90000,
+      120000
+    ],
+    "seats": 4,
+    "spawn_spread_mm": 5000
+  },
+  "boat": {
+    "_note": "top_speed 16 m/s is the speed the map size was chosen for (map/mod.rs BOAT_TOP_SPEED_MM_PER_S). accel_ms: W from rest to top speed (BRIEF: about 5 s). With no throttle the boat slows from top speed to rest in coast_ms; S while moving forward brakes from top to rest in brake_ms; sideways slip dies from top speed in side_drag_ms. Turning: turn_deg_per_s once the boat moves at turn_full_at_pct of top speed or faster, turn_at_rest_pct of it at rest, and in between in proportion. In fishing mode A and D swivel the cast at swivel_deg_per_s, up to swivel_limit_deg either side of the bow. The hull for collisions: a rounded box half_length_mm plus half_beam_mm from the middle to the bow, half_beam_mm to each side. nitrous: the items system turns it on; each figure is a percent of the plain one.",
+    "top_speed_mm_per_s": 16000,
+    "accel_ms": 5000,
+    "reverse_speed_mm_per_s": 4000,
+    "reverse_accel_ms": 2000,
+    "brake_ms": 2000,
+    "coast_ms": 6000,
+    "side_drag_ms": 800,
+    "turn_deg_per_s": 100,
+    "turn_at_rest_pct": 30,
+    "turn_full_at_pct": 40,
+    "swivel_deg_per_s": 120,
+    "swivel_limit_deg": 135,
+    "half_length_mm": 1000,
+    "half_beam_mm": 850,
+    "nitrous": {
+      "accel_pct": 200,
+      "top_speed_pct": 150,
+      "turn_pct": 150
+    }
+  },
+  "wreck": {
+    "_note": "A boat wrecks another when its speed toward it is ram_wreck_pct of top speed or more (BRIEF: 80%, judged without nitrous), and its own motor stalls for stall_ms (round 1, B1). A boat wrecks on land when its speed toward the land is land_wreck_pct of top speed or more (BRIEF: 50%); slower, it bounces back at bounce_pct of that speed and keeps scrape_keep_pct of its speed along the shore. Slower boat hits bump both boats apart at bump_pct. A wrecked boat comes back at the spawn after respawn_ms (BRIEF: 2 s), ghosted for ghost_ms (round 1, B3): it passes through boats and cannot wreck or be wrecked by one.",
+    "ram_wreck_pct": 80,
+    "land_wreck_pct": 50,
+    "stall_ms": 3000,
+    "respawn_ms": 2000,
+    "ghost_ms": 3000,
+    "bounce_pct": 30,
+    "scrape_keep_pct": 70,
+    "bump_pct": 50
+  },
+  "balance": {
+    "_note": "Knobs for the ramming question (crates/core/src/sim/balance.rs; notes/balance-options.md; PLAN.md V-balance). Each knob's off value is the game before it: announce_delay_ms 0, rammed_swim_mm 12000 (fish.freed_swim_mm), reeling_ram_wreck_pct 80, reeling_anchored false, rammer_wreck_pct 0. Applied 2026-10-18 from the measurements (V-balance): legendary announce_delay_ms 20000 (round 1, B4: 'leggendaries ar not announced for 20 seconds') and rare and legendary rammed_swim_mm 80000; announce_delay_ms.legendary back to 0 undoes the main change. announce_delay_ms: a hook's popup (and its sound) comes this long after the hook, by tier; a fish landed or lost before then is never announced, and the AI hears only the popup. rammed_swim_mm: how far a fish knocked off a line by a ram swims off, by tier (any other lost fish swims fish.freed_swim_mm). reeling_ram_wreck_pct: the speed toward a boat reeling a fish in, in percent of top speed, that wrecks it (BRIEF: 80%, the same as wreck.ram_wreck_pct). reeling_anchored: a boat reeling a fish in is not pushed by a bump. rammer_wreck_pct: a rammer this fast toward its victim is wrecked too (0: never; round 1, B1: the rammer only stalls). The last three change rules the person set, so they stay as the person set them unless the person says otherwise.",
+    "announce_delay_ms": {
+      "common": 0,
+      "uncommon": 0,
+      "rare": 0,
+      "legendary": 20000
+    },
+    "rammed_swim_mm": {
+      "common": 12000,
+      "uncommon": 12000,
+      "rare": 80000,
+      "legendary": 80000
+    },
+    "reeling_ram_wreck_pct": 80,
+    "reeling_anchored": false,
+    "rammer_wreck_pct": 0
+  },
+  "fish": {
+    "_note": "The fish in the lake (crates/core/src/sim/fishing/lake.rs). Each kind's count in data/fish.json (the BRIEF's example spread) moves by up to count_variance_pct either way by the match seed; commons and uncommons swim in schools of 2-4 and rares and legendaries alone (map/fish.rs places them, at their tier's depths). A fish's length is length_min_pct to length_max_pct of its kind's base length (BRIEF: about 1.5 times). A school wanders within roam_radius_mm of where it was placed at roam_speed_mm_per_s, resting roam_rest_min_ms to roam_rest_max_ms between legs; its fish keep up at follow_speed_mm_per_s. A fish that gets free swims freed_swim_mm off at freed_speed_mm_per_s, then roams from there (the person: 'maybe they swim a bit away'). Sight: a fish shows from a boat within sight_shallow_mm when it swims at sight_shallow_depth_mm or shallower, falling in proportion to sight_deep_mm at sight_deep_depth_mm and deeper (the person: close only, but more generous for legendaries); with your line in, also within sight_lure_mm of your lure.",
+    "count_variance_pct": 20,
+    "length_min_pct": 100,
+    "length_max_pct": 150,
+    "roam_radius_mm": 10000,
+    "roam_speed_mm_per_s": 400,
+    "roam_rest_min_ms": 1000,
+    "roam_rest_max_ms": 4000,
+    "follow_speed_mm_per_s": 800,
+    "freed_swim_mm": 12000,
+    "freed_speed_mm_per_s": 3000,
+    "sight_shallow_mm": 40000,
+    "sight_deep_mm": 25000,
+    "sight_shallow_depth_mm": 1000,
+    "sight_deep_depth_mm": 12000,
+    "sight_lure_mm": 15000
+  },
+  "fishing": {
+    "_note": "Casting, the bite and the reel (crates/core/src/sim/fishing/mod.rs). A cast is refused above cast_max_speed_mm_per_s (the person: only nearly stopped). Holding Space for charge_full_ms casts cast_max_mm, a tap cast_min_mm, in proportion between; the bobber flies for cast_flight_ms, and the lure sinks at sink_mm_per_s until Space or bed_clear_mm over the lake bed. A boat faster than drag_reel_in_mm_per_s reels an unhooked line in, and faster than drag_snap_mm_per_s breaks a line with a fish on. A roaming fish within attract_radius_mm comes over when its depth matches the lure's; with the depths attract_depth_mm apart or more, only attract_far_pct of that radius (round 1, F3). Once there it waits wait_min_ms to wait_max_ms, nibbles nibbles_min to nibbles_max times, nibble_gap_min_ms to nibble_gap_max_ms apart, then bites; Space within hook_window_ms hooks it (BRIEF: 0.75 s; a tick is 20 ms, so it runs 38 ticks, 760 ms). A catch is worth its kind's value (data/fish.json) times tier_value_pct (round 1: 1, 2, 3 and 5 times) times its length over its kind's base. camera_value_pct: the High-Quality Camera (BRIEF: 1.5 times). A landed fish is held up for landed_ms.",
+    "cast_max_speed_mm_per_s": 1500,
+    "charge_full_ms": 1500,
+    "cast_min_mm": 4000,
+    "cast_max_mm": 25000,
+    "cast_flight_ms": 900,
+    "sink_mm_per_s": 1500,
+    "bed_clear_mm": 200,
+    "drag_reel_in_mm_per_s": 3000,
+    "drag_snap_mm_per_s": 5000,
+    "attract_radius_mm": 7000,
+    "attract_depth_mm": 3000,
+    "attract_far_pct": 30,
+    "approach_speed_mm_per_s": 900,
+    "wait_min_ms": 2000,
+    "wait_max_ms": 6000,
+    "nibbles_min": 1,
+    "nibbles_max": 3,
+    "nibble_gap_min_ms": 700,
+    "nibble_gap_max_ms": 1400,
+    "hook_window_ms": 750,
+    "reel": {
+      "_note": "The reel minigame (crates/core/src/sim/fishing/reel.rs), Stardew Valley style. Bar positions and speeds are thousandths of the bar's height. The catch zone is zone_permille high; holding Space lifts it at lift_per_s2, letting go it falls at gravity_per_s2, up to zone_top_speed_per_s either way. The catch meter starts at start_pct, fills with the fish in the zone so a perfect reel takes perfect_ms (round 1, F1: 3, 5, 10 and 20 s), and drains from full to empty in drain_ms with it out; the line breaks only when it is empty (the person's answer). The fish's marker moves at up to fish_speed_per_s, keeps a course for about fish_turn_ms, and darts to the far end of the bar fish_dart_pct of the time: rarer fish fight harder. The ratchet ticks every tick_ms while Space is held; the fish is pulled up to surface_depth_mm by the time it lands.",
+      "zone_permille": 420,
+      "gravity_per_s2": 800,
+      "lift_per_s2": 900,
+      "zone_top_speed_per_s": 700,
+      "start_pct": 50,
+      "perfect_ms": {
+        "common": 3000,
+        "uncommon": 5000,
+        "rare": 10000,
+        "legendary": 20000
+      },
+      "drain_ms": {
+        "common": 12000,
+        "uncommon": 12000,
+        "rare": 15000,
+        "legendary": 30000
+      },
+      "fish_speed_per_s": {
+        "common": 200,
+        "uncommon": 280,
+        "rare": 300,
+        "legendary": 340
+      },
+      "fish_turn_ms": {
+        "common": 1500,
+        "uncommon": 1200,
+        "rare": 1000,
+        "legendary": 900
+      },
+      "fish_dart_pct": {
+        "common": 0,
+        "uncommon": 4,
+        "rare": 6,
+        "legendary": 10
+      },
+      "tick_ms": 90,
+      "surface_depth_mm": 300
+    },
+    "strike": {
+      "_note": "A fish at the lure, moving (crates/core/src/sim/fishing/strike.rs); motion only, the nibbles' and the bite's timing is the rule above. Once at the lure it waits with its mouth rest_gap_mm off; lead_ms before each nibble it darts in at speed_mm_per_s until its mouth is touch_gap_mm from the lure, then backs off at back_mm_per_s (T1). On the bite it darts in until its mouth is bite_gap_mm from the lure (below 0: the lure in its mouth) and holds there through the hook window (T4).",
+      "speed_mm_per_s": 3000,
+      "back_mm_per_s": 1000,
+      "lead_ms": 200,
+      "rest_gap_mm": 300,
+      "touch_gap_mm": 0,
+      "bite_gap_mm": -20
+    },
+    "tier_value_pct": {
+      "common": 100,
+      "uncommon": 200,
+      "rare": 300,
+      "legendary": 500
+    },
+    "camera_value_pct": 150,
+    "landed_ms": 2000
+  },
+  "ai": {
+    "_note": "The AI players (crates/core/src/ai/). They see only what their seat could: the fish in sight (Match::fishing_view), rivals within the fog distance with no land between, rivals heard within hear_mm (a rival's motor is heard from about 5 s away at top speed), their own pings, and the hook popups. Driving: a path over a grid of path_cell_mm cells, each open when all its water is path_clear_mm or more from land and dearer nearer than path_roomy_mm, pulled straight only through water path_roomy_mm from land; at most path_searches_per_tick path searches a tick between all the AI players (one that would go over waits a tick on its old path), so no tick costs more than that; with land within look_ahead_mm ahead, or within near_land_mm on any side, the boat keeps under careful_speed_pct of top speed, below the 50% that grounds a boat, and it brakes with brake_use_pct of its braking. Fishing: it stops cast_stop_mm short of the fish it chose (the most points for the time it would take), casts at it, stops the lure at its depth, reels in after lure_wait_ms with nothing coming, and leaves a fish after tries_per_fish misses. Hunting: on a rival's hook it reckons the fish's points against fishing_rate_per_min of its own, and goes only if it can get there before the rival's reel ends (rival_reel_ms, a steady player's time by tier); it rams at ram_speed_pct of top speed or more (80% wrecks) after a straight run of ram_runup_mm. Evading: a rival pointed at it, closing faster than threat_speed_pct of top speed and arriving within flee_within_ms (and before its own reel ends), may make it drop the line and dodge across the rival's course for flee_ms; with a fish on worth more than respawn_cost_ms of its fishing (the trip back from the spawn) it keeps reeling. A ping's sighting is chased for sighting_keep_ms. Its usual ping (skill ping_every_ms) comes while its lure waits quietly, and while it drives about only with ping_driving true (the boat coasts through each sweep); a rival's hook with the rival nowhere known gets a ping either way. skill: per difficulty, the reaction to a bite, the reel's lag and noise (thousandths of the bar), the cast's aim and charge noise, aggression (how readily it hunts), the chance it evades, and how often it pings.",
+    "path_cell_mm": 8000,
+    "path_clear_mm": 4000,
+    "path_roomy_mm": 12000,
+    "path_searches_per_tick": 1,
+    "waypoint_mm": 8000,
+    "look_ahead_mm": 40000,
+    "near_land_mm": 8000,
+    "careful_speed_pct": 40,
+    "brake_use_pct": 60,
+    "ram_speed_pct": 90,
+    "ram_runup_mm": 45000,
+    "cast_stop_mm": 12000,
+    "lure_wait_ms": 12000,
+    "tries_per_fish": 2,
+    "hear_mm": 80000,
+    "threat_speed_pct": 60,
+    "flee_within_ms": 3500,
+    "respawn_cost_ms": 30000,
+    "flee_ms": 4000,
+    "rival_reel_ms": {
+      "common": 3000,
+      "uncommon": 6500,
+      "rare": 14000,
+      "legendary": 33000
+    },
+    "fishing_rate_per_min": 40,
+    "sighting_keep_ms": 20000,
+    "ping_driving": false,
+    "skill": {
+      "easy": {
+        "reaction_min_ms": 350,
+        "reaction_max_ms": 800,
+        "reel_lag_ms": 40,
+        "reel_noise_permille": 90,
+        "aim_noise_deg": 12,
+        "charge_noise_pct": 15,
+        "aggression_pct": 15,
+        "evade_pct": 30,
+        "ping_every_ms": 45000
+      },
+      "normal": {
+        "reaction_min_ms": 220,
+        "reaction_max_ms": 480,
+        "reel_lag_ms": 20,
+        "reel_noise_permille": 50,
+        "aim_noise_deg": 6,
+        "charge_noise_pct": 8,
+        "aggression_pct": 45,
+        "evade_pct": 60,
+        "ping_every_ms": 25000
+      },
+      "hard": {
+        "reaction_min_ms": 150,
+        "reaction_max_ms": 300,
+        "reel_lag_ms": 0,
+        "reel_noise_permille": 30,
+        "aim_noise_deg": 2,
+        "charge_noise_pct": 3,
+        "aggression_pct": 75,
+        "evade_pct": 90,
+        "ping_every_ms": 15000
+      }
+    },
+    "items": {
+      "_note": "When an AI player goes for the item buoy and uses its item (crates/core/src/ai/items.rs), and how it plays the minigames through the pointer (ai/hand.rs). use_items false: no buoys, no items; use_held false: buoys fetched but never used (a playtest's comparisons, notes/playtests.md). The buoy: a trip of up to buoy_worth_ms (buoy_worth_held_ms holding an item, which the new one would replace); never with a fish at the lure or on the line, nor while hunting or fleeing. Nitrous: on a drive of nitrous_min_mm or more, or a hunt of nitrous_hunt_min_mm. Teleporter: to a hunted rival (landing teleport_short_mm short, for the run-in) or an Enhanced Radar's rare or legendary fish, teleport_min_mm or further, with teleport_lead_ms of the rival's reel left; held teleport_explore_after_ms with neither, to the far water it would explore. Cloaking Tech: on a hunt cloak_hunt_min_mm or more off, and for a fish of cloak_min_tier or rarer before the cast at it (cloak_before_cast; false: on hooking it). Power Reel: on hooking a fish of power_reel_min_tier or rarer (power_reel_on_hook; false: before casting at one). Camera: on a catch of camera_min_tier or rarer, or any catch with under camera_any_left_ms left. Enhanced Radar: after radar_blind_ms exploring with no fish in sight. hand, by difficulty: the pointer's speed (canvas units a second), a pause after each grab, drop, click or photo, its aim's miss (canvas units), its timing's miss on a closing ring, and the Power Reel's circling (thousandths of a turn a second).",
+      "use_items": true,
+      "use_held": true,
+      "buoy_worth_ms": 15000,
+      "buoy_worth_held_ms": 6000,
+      "nitrous_min_mm": 400000,
+      "nitrous_hunt_min_mm": 120000,
+      "teleport_min_mm": 180000,
+      "teleport_lead_ms": 14000,
+      "teleport_short_mm": 35000,
+      "teleport_explore_after_ms": 60000,
+      "cloak_hunt_min_mm": 100000,
+      "cloak_min_tier": "rare",
+      "cloak_before_cast": true,
+      "power_reel_min_tier": "rare",
+      "power_reel_on_hook": true,
+      "camera_min_tier": "rare",
+      "camera_any_left_ms": 45000,
+      "radar_blind_ms": 8000,
+      "hand": {
+        "easy": {"speed_per_s": 1400, "pause_ms": 450, "aim_noise": 26, "timing_noise_ms": 240, "reel_permille_per_s": 900},
+        "normal": {"speed_per_s": 2400, "pause_ms": 250, "aim_noise": 14, "timing_noise_ms": 130, "reel_permille_per_s": 1600},
+        "hard": {"speed_per_s": 3800, "pause_ms": 120, "aim_noise": 6, "timing_noise_ms": 60, "reel_permille_per_s": 2600}
+      }
+    }
+  },
+  "audio": {
+    "_note": "Read by crates/core/src/sound/motor.rs. Gains run 0 to 1 and pitches are multiples of the recipe's own (1 is as written, 2 an octave up). Times in seconds unless the key says ms; distances in mm.",
+    "rival_motor": {
+      "_note": "A rival's motor heard from your boat. Silent beyond the distance a rival covers in hear_seconds at the boat's top speed (the brief: about 5 s), louder as it nears, full within full_within_mm. curve 1 rises evenly, 2 slowly at first and quickly near. The true Doppler shift of a 16 m/s boat is under a semitone, so doppler_scale exaggerates it; the pitch is kept between lowest_pitch and highest_pitch.",
+      "hear_seconds": 5,
+      "full_within_mm": 6000,
+      "loudest": 0.6,
+      "curve": 2,
+      "sound_speed_mm_per_s": 343000,
+      "doppler_scale": 3,
+      "lowest_pitch": 0.6,
+      "highest_pitch": 1.6
+    },
+    "own_motor": {
+      "_note": "Your own motor: idle when still with no throttle, full at top speed with the throttle held. throttle_share is how much of the rise comes from holding W or S rather than from the speed.",
+      "idle_gain": 0.12,
+      "full_gain": 0.26,
+      "idle_pitch": 1,
+      "full_pitch": 2.4,
+      "throttle_share": 0.35
+    },
+    "line_tension": {
+      "_note": "The line's drag during the reel (it replaced a whine): silent below starts_at tension (0 to 1, where 1 snaps the line), then the line_drag cue ticks slow_ticks_per_s just past it up to fast_ticks_per_s at full, from low_pitch to high_pitch, each tick at gain (of the cue as written).",
+      "starts_at": 0.35,
+      "slow_ticks_per_s": 3,
+      "fast_ticks_per_s": 16,
+      "gain": 0.8,
+      "low_pitch": 0.85,
+      "high_pitch": 1.25
+    },
+    "ratchet": {
+      "_note": "The reel's ratchet clicks: clicks a second at the slowest reel and at full speed, and the click's pitch at each.",
+      "slow_clicks_per_s": 6,
+      "fast_clicks_per_s": 28,
+      "slow_pitch": 1,
+      "fast_pitch": 1.35
+    },
+    "pass_by": {
+      "_note": "The Sounds screen's pass-by: a rival at top speed on a straight line side_mm to your side, starting and ending overrun (a share of the hearing distance) beyond hearing.",
+      "side_mm": 5000,
+      "overrun": 0.15
+    }
+  },
+  "radar": {
+    "_note": "The Fish-Boy's radar (crates/core/src/fishboy/radar.rs). ping_cooldown_ms: from one ping's start to the next allowed, per player (BRIEF: 5 s). ping_sweep_ms: how long the sweep takes to cross the whole map from where the player pinged (BRIEF: about 3 s); it must end before the cooldown does.",
+    "ping_cooldown_ms": 5000,
+    "ping_sweep_ms": 3000
+  },
+  "flow": {
+    "_note": "The match's flow (crates/core/src/flow/). countdown_ms: the 3-2-1-Go before a match, the boats held still (0 to 3000: the beeps are cues for 3, 2 and 1). popup_ms: how long each popup stays up (round 1: about 2 s). end_hold_ms: at time 0 the horn sounds and 'Lines up' shows this long before the postgame.",
+    "countdown_ms": 3000,
+    "popup_ms": 2000,
+    "end_hold_ms": 3000
+  },
+  "minigames": {
+    "_note": "The item minigames (crates/core/src/minigame/). Sizes and places are in the minigames' own canvas units (canvas: 1600 x 900, the Fish-Boy screen's), speeds in units a second, times in ms. None can be failed; poor play only takes longer. banner_ms: the one-line instruction shows alone this long before play.",
+    "canvas": [
+      1600,
+      900
+    ],
+    "banner_ms": 1400,
+    "cloak": {
+      "_note": "Cloaking Tech: rub out an overhead picture of a boat. picture: its size; cols x rows: the coverage grid over it; eraser: the eraser square's side; done_pct: done when this share of the boat is erased (BRIEF: about 98%); tick_every_pct: a tick sounds each time this much more is gone.",
+      "picture": [
+        1200,
+        600
+      ],
+      "cols": 60,
+      "rows": 30,
+      "eraser": 90,
+      "done_pct": 98,
+      "tick_every_pct": 20
+    },
+    "power_reel": {
+      "_note": "Power Reel: circle the pointer clockwise round the reel turns times (BRIEF: 5). radius: the reel drawn; dead_zone: the pointer this close to the middle counts for nothing. Anticlockwise winds back only the turn in progress.",
+      "turns": 5,
+      "radius": 220,
+      "dead_zone": 40
+    },
+    "nitrous": {
+      "_note": "Nitrous: drag nitrogen N atoms and oxygen O atoms into their bins (BRIEF: 8 and 4). atom_radius: an atom's size; the atoms bounce round the box at speed_min_per_s to speed_max_per_s; grab_slop: a press this far outside an atom still picks it up; an atom dropped in the wrong bin flies back out at bounce_out_per_s; bin_h: the bins' height.",
+      "nitrogen": 8,
+      "oxygen": 4,
+      "atom_radius": 34,
+      "speed_min_per_s": 160,
+      "speed_max_per_s": 280,
+      "grab_slop": 18,
+      "bounce_out_per_s": 700,
+      "bin_h": 200
+    },
+    "teleporter": {
+      "_note": "Teleporter, osu!-style: hits circles right to finish (BRIEF: 10). radius: a circle's; its ring starts at ring_start_pct of that and closes on its edge over approach_ms; a click inside it within window_ms either side of the meeting is a hit, any other click on it or none is a miss. A circle appears every spawn_every_ms, margin from the canvas's edges and min_gap from the others where it can. feedback_ms: a hit's or miss's mark fades.",
+      "hits": 10,
+      "radius": 72,
+      "ring_start_pct": 320,
+      "approach_ms": 1100,
+      "window_ms": 180,
+      "spawn_every_ms": 750,
+      "margin": 130,
+      "min_gap": 240,
+      "feedback_ms": 450
+    },
+    "camera": {
+      "_note": "High-Quality Camera: photograph photos fish (BRIEF: 10). A fish leaps in from the left, right or bottom edge every spawn_min_ms to spawn_max_ms, at most max_fish at once; fish_len: its length; speed_min_per_s to speed_max_per_s: a sideways throw's speed; gravity_per_s2: the pull down; hit_pct: a click this near the fish's middle, percent of its half length, photographs it; flash_ms: the flash after a photo.",
+      "photos": 10,
+      "spawn_min_ms": 450,
+      "spawn_max_ms": 1100,
+      "max_fish": 4,
+      "fish_len": 170,
+      "speed_min_per_s": 280,
+      "speed_max_per_s": 480,
+      "gravity_per_s2": 520,
+      "hit_pct": 110,
+      "flash_ms": 180
+    },
+    "enhanced_radar": {
+      "_note": "Enhanced Radar: three sliders, each with a hidden sweet spot (thousandths of the track, sweet_margin_permille from either end), each starting at least start_gap_permille from it. Within snap_within_pct of every spot (BRIEF: 10%) the picture snaps sharp for snap_ms (BRIEF: a second), then it is done. A slider's fault is whole at falloff_permille from its spot or further: slider one blurs the picture up to blur_max, slider two pixelates it up to pixel_max, slider three doubles it up to ghost_max apart.",
+      "snap_within_pct": 10,
+      "snap_ms": 1000,
+      "sweet_margin_permille": 100,
+      "start_gap_permille": 250,
+      "falloff_permille": 450,
+      "blur_max": 36,
+      "pixel_max": 64,
+      "ghost_max": 90
+    }
+  },
+  "items": {
+    "_note": "The item buoy and the items (crates/core/src/sim/items/). A buoy spawns every match.buoy_interval_ms (the setup's choice) at a fair point, a similar boat trip from every player (map/buoy.rs). warning_ms before it, everyone gets the warning popup, then the countdown's beats, beat_ms apart, the last as it spawns (BRIEF: a 5-beat countdown). A boat whose middle comes within pickup_radius_mm takes it and gets an item drawn by weights (each weight's share of their total). unclaimed_moves: when the next buoy is due and the last is still there, it moves to the new fair point (false: it stays, and no other comes until it is taken). The effects: Cloaking Tech hides the player from pings for cloak_ms (BRIEF: 1 min); the Power Reel reels at power_reel_pct for power_reel_ms (BRIEF: 2x for 20 s); nitrous runs nitrous_ms (BRIEF: 15 s; its multipliers are boat.nitrous); the Teleporter charges for teleport_charge_ms (BRIEF: 5 s) and lands at least teleport_clear_mm from land; the High-Quality Camera's offer after a catch stays up camera_prompt_ms, then the camera is kept for later (its 1.5x is fishing.camera_value_pct). reel_holds_in_minigame: while a minigame plays or a teleport's spot is being picked, a fish on the line waits, its reel bar still (SECOND-ORDER R5.31; false: the reel fights on with no Space and the line may break, R4.11).",
+    "warning_ms": 5000,
+    "beats": 5,
+    "beat_ms": 1000,
+    "pickup_radius_mm": 3500,
+    "unclaimed_moves": true,
+    "weights": {
+      "cloak": 10,
+      "power_reel": 10,
+      "nitrous": 10,
+      "teleporter": 10,
+      "camera": 10,
+      "enhanced_radar": 10
+    },
+    "cloak_ms": 60000,
+    "power_reel_ms": 20000,
+    "power_reel_pct": 200,
+    "nitrous_ms": 15000,
+    "teleport_charge_ms": 5000,
+    "teleport_clear_mm": 6000,
+    "camera_prompt_ms": 10000,
+    "reel_holds_in_minigame": true
+  }
+}

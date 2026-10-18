@@ -1,0 +1,22 @@
+[
+  {
+    "version": "0.2.0",
+    "date": "2026-10-18",
+    "notes": [
+      "New: full matches on Burt Lake against up to three AI players.",
+      "New: online play by room code, up to four players.",
+      "New: thirteen fish to catch, from bluegill to lake sturgeon.",
+      "New: six items to find in the item buoys.",
+      "New: the Fish-Boy, with the radar, the Fishpedia and My catch.",
+      "New: ram your rivals.",
+      "New: sounds, menus and a postgame."
+    ]
+  },
+  {
+    "version": "0.1.0",
+    "date": "2026-10-17",
+    "notes": [
+      "First version: the Title, Settings, What's New and a stand-in Play screen with a pause menu."
+    ]
+  }
+]

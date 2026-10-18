@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- The transport test page (copied from Ape Race and Mandible). Not linked from the game.
+       The policy is index.html's, with connect-src adding the pinned Nostr
+       relays from web/online-config.js (BUILDER-SPEC.md, D4 change). -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' wss://nos.lol wss://relay.mostr.pub wss://purplerelay.com wss://nostr.data.haus wss://relay.agorist.space; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Transport test</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css?v=db235a2373e3">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="icon" href="icon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="icon-180.png">
+</head>
+<body data-ready="false">
+  <main>
+    <h1>Transport test</h1>
+    <p>Me: <code id="me"></code></p>
+    <fieldset>
+      <legend>Pasted code</legend>
+      <button id="host-code" type="button">Host by code</button>
+      <button id="invite" type="button">Next invitation</button>
+      <p><label>My code<br><textarea id="my-code" rows="3" cols="60" readonly></textarea></label></p>
+      <p><label>Their code<br><textarea id="their-code" rows="3" cols="60"></textarea></label></p>
+      <button id="use-code" type="button">Use their code</button>
+    </fieldset>
+    <fieldset>
+      <legend>Room code (public relays)</legend>
+      <label>Room <input id="room"></label>
+      <button id="host-room" type="button">Host room</button>
+      <button id="join-room" type="button">Join room</button>
+    </fieldset>
+    <fieldset>
+      <legend>Send</legend>
+      <label>Text <input id="text"></label>
+      <label>To peer (empty: everyone) <input id="to"></label>
+      <button id="send" type="button">Send</button>
+      <button id="leave" type="button">Leave</button>
+    </fieldset>
+    <p id="status" role="status"></p>
+    <ol id="log"></ol>
+  </main>
+  <script type="module" src="nettest.js?v=db235a2373e3"></script>
+</body>
+</html>
