@@ -3022,5 +3022,61 @@
     "find": "None => -mm(look.bite.nibble_dip_mm(l.nibble_ms)),",
     "replace": "None => 0,",
     "test": "a_nibble_dips_the_bobber_and_lets_it_back_up"
+  },
+  {
+    "name": "aim: the marker shows the charge a tick behind the cast",
+    "file": "crates/core/src/sim/fishing/view.rs",
+    "find": "charge_permille(&fi.tuning, self.tick + 1 - l.since)",
+    "replace": "charge_permille(&fi.tuning, self.tick - l.since)",
+    "test": "the_cast_lands_where_the_aim_marker_shows"
+  },
+  {
+    "name": "aim: the marker ignores the swivel",
+    "file": "crates/core/src/sim/fishing/view.rs",
+    "find": "rod, b.heading + b.cast_yaw, power).0",
+    "replace": "rod, b.heading, power).0",
+    "test": "the_cast_lands_where_the_aim_marker_shows"
+  },
+  {
+    "name": "aim: the marker is not drawn",
+    "file": "crates/core/src/app/fishing.rs",
+    "find": "look.aim.marker(&mut tris, lake, at, clock_ms);",
+    "replace": "let _ = at;",
+    "test": "the_aim_marker_is_drawn_where_the_bobber_lands"
+  },
+  {
+    "name": "aim: the marker is drawn beside the aim",
+    "file": "crates/core/src/app/fishing.rs",
+    "find": "look.aim.marker(&mut tris, lake, at, clock_ms);",
+    "replace": "look.aim.marker(&mut tris, lake, P::new(at.x + 600, at.y), clock_ms);",
+    "test": "the_aim_marker_is_drawn_where_the_bobber_lands"
+  },
+  {
+    "name": "aim: fish from the boat are drawn at 45% of their depth again",
+    "file": "crates/core/src/app/fishing.rs",
+    "find": "place: lake.place(at, surface - depth, f.heading, scale),",
+    "replace": "place: lake.place(at, -pct(f.depth_mm, look.fish_depth_pct), f.heading, scale),",
+    "test": "a_fish_seen_from_the_boat_is_drawn_over_its_true_spot"
+  },
+  {
+    "name": "aim: fish from the boat are shifted off their spot",
+    "file": "crates/core/src/app/fishing.rs",
+    "find": "place: lake.place(at, surface - depth, f.heading, scale),",
+    "replace": "place: lake.place(P::new(at.x, at.y - 500), surface - depth, f.heading, scale),",
+    "test": "a_fish_seen_from_the_boat_is_drawn_over_its_true_spot"
+  },
+  {
+    "name": "aim: the water's surface is flat",
+    "file": "crates/core/src/scene/mod.rs",
+    "find": "        terrain::wave_at(self, p, clock_ms)",
+    "replace": "        let _ = (p, clock_ms);\n        0",
+    "test": "the_water_surface_is_the_drawn_waves"
+  },
+  {
+    "name": "aim: the marker ignores the waves",
+    "file": "crates/core/src/app/fishing/aim.rs",
+    "find": "lake.surface_at(lake.map_point(p), clock_ms) + lift",
+    "replace": "p.y + lift",
+    "test": "the_aim_marker_is_drawn_where_the_bobber_lands"
   }
 ]

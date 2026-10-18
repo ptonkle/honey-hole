@@ -51,14 +51,40 @@ fn rising(i: usize, j: usize) -> bool {
 /// The height (mm) on the drawn triangles at a map point.
 pub fn height_at(lake: &Lake, p: P) -> i32 {
     let n = lake.map.n;
+    on_cell(lake, p, |a, b| lake.heights[b * (n + 1) + a] as i64) as i32
+}
+
+/// The water's surface at a map point at `clock_ms`, in world units over
+/// the still water, as the page draws it: the two waves (`water.vert`) at
+/// the corners of its triangle of the water mesh, flat between them.
+pub fn wave_at(lake: &Lake, p: P, clock_ms: u64) -> i32 {
+    let waves = lake.air(clock_ms).waves;
+    let c = lake.map.cell_mm;
+    on_cell(lake, p, |a, b| {
+        let at = lake.world(P::new(a as i32 * c, b as i32 * c), 0);
+        waves
+            .iter()
+            .map(|[kx, kz, h, phase]| {
+                // radians (ONE a radian) to angle units
+                let rad = fx::mul(*kx, at.x) as i64 + fx::mul(*kz, at.z) as i64 + *phase as i64;
+                let angle = (rad * fx::TURN as i64 / fx::TWO_PI).rem_euclid(fx::TURN as i64) as i32;
+                fx::mul(*h, fx::sin(fx::wrap(angle))) as i64
+            })
+            .sum()
+    }) as i32
+}
+
+/// A value given at the grid's corners (`h(i, j)`), at a map point: on the
+/// cell's triangle under it, as the meshes are drawn.
+fn on_cell(lake: &Lake, p: P, h: impl Fn(usize, usize) -> i64) -> i64 {
+    let n = lake.map.n;
     let c = lake.map.cell_mm as i64;
     let max = n as i64 * c - 1;
     let (x, y) = ((p.x as i64).clamp(0, max), (p.y as i64).clamp(0, max));
     let (i, j) = ((x / c) as usize, (y / c) as usize);
     let (fx, fy) = (x % c, y % c);
-    let h = |a: usize, b: usize| lake.heights[b * (n + 1) + a] as i64;
     let (h00, h10, h01, h11) = (h(i, j), h(i + 1, j), h(i, j + 1), h(i + 1, j + 1));
-    let v = if rising(i, j) {
+    if rising(i, j) {
         if fx >= fy {
             h00 + (h10 - h00) * fx / c + (h11 - h10) * fy / c
         } else {
@@ -68,8 +94,7 @@ pub fn height_at(lake: &Lake, p: P) -> i32 {
         h00 + (h10 - h00) * fx / c + (h01 - h00) * fy / c
     } else {
         h11 + (h01 - h11) * (c - fx) / c + (h10 - h11) * (c - fy) / c
-    };
-    v as i32
+    }
 }
 
 /// The two triangles of a cell, as corner (i, j) offsets.

@@ -63,9 +63,6 @@ pub struct BiteLook {
     pub nibble_dip_ms: i32,
 }
 
-/// The ring's segments.
-const SEGMENTS: i32 = 32;
-
 impl BiteLook {
     /// How far a nibble has dipped the bobber, `ms` after it (none
     /// without one).
@@ -106,7 +103,6 @@ impl BiteLook {
     pub fn rings(&self, out: &mut Vec<i32>, centre: V3, ms: u32) {
         let colour = render::rgb(self.ring);
         let glow = self.ring_glow_pct * ONE / 100;
-        let up = v3(0, ONE, 0);
         let c = centre.add(v3(0, mm(self.ring_lift_mm), 0));
         for k in 0..self.rings {
             let age = ms as i32 - k * self.ring_gap_ms;
@@ -117,15 +113,7 @@ impl BiteLook {
             let r = self.ring_from_mm + (self.ring_to_mm - self.ring_from_mm) * age / span;
             let w = self.ring_width_mm * (span - age) / span;
             let (inner, outer) = (mm((r - w / 2).max(0)), mm(r + w / 2));
-            let at = |i: i32, rad: i32| {
-                let a = i * (fx::TURN / SEGMENTS);
-                c.add(v3(fx::mul(rad, fx::cos(a)), 0, fx::mul(rad, fx::sin(a))))
-            };
-            for i in 0..SEGMENTS {
-                let (a0, a1, b0, b1) = (at(i, inner), at(i + 1, inner), at(i, outer), at(i + 1, outer));
-                render::push_tri_glow(out, [a0, b0, b1], up, colour, glow);
-                render::push_tri_glow(out, [a0, b1, a1], up, colour, glow);
-            }
+            super::aim::ring(out, c, [inner, outer], colour, glow, |p| p.y);
         }
     }
 

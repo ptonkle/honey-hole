@@ -18,7 +18,8 @@ use crate::sim::{Match, TICK_MS};
 use super::lake::FishState;
 use super::reel::{BAR, FULL};
 use super::tuning::FishTuning;
-use super::{bow, charge_permille, Stage};
+use super::{bow, cast_landing, charge_permille, Stage};
+use crate::map::P;
 
 /// One fish in sight.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -90,6 +91,10 @@ pub struct FishingView {
     pub too_fast: bool,
     /// the fish on the line, or being held up
     pub on_line: Option<FishSeen>,
+    /// the aim marker's spot: while Space is held, where the cast lands if
+    /// Space is let go now (on the next tick, with that tick's charge); in
+    /// the flight, where the bobber will land
+    pub aim: Option<P>,
 }
 
 /// How far a fish this deep shows from a boat.
@@ -202,6 +207,16 @@ impl Match {
             tier: r.tier,
         });
         let on_line = own.and_then(|l| l.fish).map(seen);
+        let aim = match (own, me) {
+            (Some(l), Some(b)) if l.stage == Stage::Charging => {
+                let power = charge_permille(&fi.tuning, self.tick + 1 - l.since);
+                let rod = bow(b, r.half_length, r.half_beam);
+                Some(cast_landing(&self.map, &fi.tuning, rod, b.heading + b.cast_yaw, power).0)
+            }
+            // and through the flight, where the bobber will land
+            (Some(l), _) if l.stage == Stage::Flying => Some(l.to),
+            _ => None,
+        };
         FishingView {
             seat,
             fish,
@@ -212,6 +227,7 @@ impl Match {
             biting: own.is_some_and(|l| l.interest.is_some_and(|i| i.biting_until.is_some())),
             too_fast: me.is_some_and(|b| b.speed_mm_per_s() > fi.tuning.cast_max_speed_mm_per_s),
             on_line,
+            aim,
         }
     }
 }
