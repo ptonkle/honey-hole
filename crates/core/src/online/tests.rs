@@ -643,7 +643,11 @@ fn a_hook_popup_comes_at_the_hosts_delay_once_in_every_browser() {
                 })
                 .collect();
             let seats: Vec<usize> = said.iter().map(|(_, s)| *s).collect();
-            assert_eq!(seats, vec![1], "seed {seed}, delay {delay}: browser {k} announces the hook that held, once");
+            assert_eq!(
+                seats,
+                vec![1],
+                "seed {seed}, delay {delay}: browser {k} announces the hook that held, once"
+            );
         }
         // on the host, the popup comes the delay after its grant
         let host = &l.nodes[0].log;
@@ -657,6 +661,40 @@ fn a_hook_popup_comes_at_the_hosts_delay_once_in_every_browser() {
             .find(|(_, e)| matches!(e, MatchEvent::Announced { .. }))
             .map(|(t, _)| *t)
             .unwrap();
-        assert_eq!(said - granted, crate::sim::ticks(delay), "seed {seed}, delay {delay}");
+        assert_eq!(
+            said - granted,
+            crate::sim::ticks(delay),
+            "seed {seed}, delay {delay}"
+        );
+    }
+}
+
+#[test]
+fn another_players_line_and_the_fish_on_it_show_on_every_screen() {
+    use crate::sim::fishing::Stage;
+    let mut l = fishing_loop(6);
+    let t = l.nodes[1].game().tick;
+    bite(&mut l, 1, 0, t + 20);
+    l.run(1500);
+    let own = l.nodes[1].game().fishing.lines[1].clone();
+    assert_eq!(own.stage, Stage::Reeling, "joiner 1 is reeling");
+    for k in [0, 2] {
+        let g = l.nodes[k].game();
+        let seen = &g.fishing.lines[1];
+        assert_eq!(seen.stage, Stage::Reeling, "browser {k} draws joiner 1's line");
+        let d = seen.bobber.dist(own.bobber);
+        assert!(
+            d < 2000,
+            "browser {k}: the bobber {d} mm from where joiner 1 has it"
+        );
+        let f = g.fishing.fish[0].at.dist(seen.bobber);
+        assert!(f < 500, "browser {k}: the fish on it at its lure ({f} mm)");
+        let view = g.fishing_view(k);
+        assert!(
+            view.lines.iter().any(|v| v.seat == 1),
+            "browser {k}'s view has the line"
+        );
+        // and its own fish are left alone by it: no lure of joiner 1's here
+        assert!(seen.interest.is_none());
     }
 }

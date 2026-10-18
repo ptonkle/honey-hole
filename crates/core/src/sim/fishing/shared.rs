@@ -63,7 +63,12 @@ impl Match {
                     if v.granted && self.online.role == Role::Host {
                         // the popup, at the host's delay from now
                         let lf = &self.fishing.fish[f];
-                        let kind = self.fishing.roster.0.get(lf.kind).map_or(String::new(), |k| k.id.clone());
+                        let kind = self
+                            .fishing
+                            .roster
+                            .0
+                            .get(lf.kind)
+                            .map_or(String::new(), |k| k.id.clone());
                         let tier = lf.tier;
                         let tick = self.tick;
                         self.fishing.announcer.queue(tick, v.seat, fish, kind, tier);

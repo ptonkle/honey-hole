@@ -712,6 +712,7 @@ impl Match {
             half_length_mm: self.rules.half_length,
             half_beam_mm: self.rules.half_beam,
             tick: self.tick,
+            remote: &self.online.remote,
         };
         // a remote seat's line is its own browser's (`fishing/shared.rs`)
         let all: Vec<SeatInput> = (0..self.seats.len())

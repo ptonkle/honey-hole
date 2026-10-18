@@ -184,6 +184,31 @@ pub struct BoatState {
     /// **Hook for the items system** (Cloaking Tech): kept off the radar
     #[serde(rename = "x", default)]
     pub hidden: bool,
+    /// the seat's line, when it is out (drawn on the other browsers)
+    #[serde(rename = "i", default, skip_serializing_if = "Option::is_none")]
+    pub line: Option<LineState>,
+}
+
+/// A seat's line as the other browsers draw it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LineState {
+    /// `fishing::Stage`, by name
+    #[serde(rename = "s")]
+    pub stage: super::fishing::Stage,
+    /// the bobber, mm
+    #[serde(rename = "b")]
+    pub bobber: [i32; 2],
+    #[serde(rename = "d")]
+    pub lure_depth_mm: i32,
+    #[serde(rename = "n")]
+    pub length_mm: i32,
+    /// the fish on it, while reeling
+    #[serde(rename = "f", default)]
+    pub fish: Option<u32>,
+    /// the cast, while the bobber flies: from, to, the ticks flown and the
+    /// flight's whole length
+    #[serde(rename = "c", default)]
+    pub cast: Option<[i32; 6]>,
 }
 
 /// The online part of a match. Offline it stays at its default and
@@ -333,7 +358,64 @@ impl Match {
             stall: left(b.stall_until),
             nitrous: b.nitrous,
             hidden: self.online.hidden.get(seat).copied().unwrap_or(false),
+            line: self.fishing.lines.get(seat).and_then(|l| self.line_state(l)),
         })
+    }
+
+    fn line_state(&self, l: &super::fishing::Line) -> Option<LineState> {
+        use super::fishing::Stage;
+        if matches!(l.stage, Stage::Idle | Stage::Charging) {
+            return None;
+        }
+        let flown = self.tick.saturating_sub(l.flew) as i32;
+        Some(LineState {
+            stage: l.stage,
+            bobber: [l.bobber.x, l.bobber.y],
+            lure_depth_mm: l.lure_depth_mm,
+            length_mm: l.length_mm,
+            fish: l.fish.map(|f| f as u32),
+            cast: (l.stage == Stage::Flying).then_some([
+                l.from.x,
+                l.from.y,
+                l.to.x,
+                l.to.y,
+                flown,
+                l.lands.saturating_sub(l.flew) as i32,
+            ]),
+        })
+    }
+
+    /// A remote seat's line where its owner's state has it, and the fish
+    /// on it at its lure.
+    fn place_line(&mut self, seat: usize, s: Option<&LineState>) {
+        use super::fishing::{Line, Stage};
+        use crate::map::P;
+        let Some(line) = self.fishing.lines.get_mut(seat) else {
+            return;
+        };
+        let Some(s) = s else {
+            *line = Line::idle();
+            return;
+        };
+        line.stage = s.stage;
+        line.bobber = P::new(s.bobber[0], s.bobber[1]);
+        line.lure_depth_mm = s.lure_depth_mm;
+        line.length_mm = s.length_mm;
+        line.fish = s.fish.map(|f| f as usize);
+        line.interest = None;
+        if let Some([fx, fy, tx, ty, flown, span]) = s.cast {
+            line.from = P::new(fx, fy);
+            line.to = P::new(tx, ty);
+            line.flew = self.tick.saturating_sub(flown.max(0) as u32);
+            line.lands = line.flew + span.max(1) as u32;
+        }
+        if let (Some(f), Stage::Reeling) = (line.fish, s.stage) {
+            let (at, depth) = (line.bobber, line.lure_depth_mm);
+            if let Some(fish) = self.fishing.fish.get_mut(f) {
+                fish.at = at;
+                fish.depth_mm = depth;
+            }
+        }
     }
 
     /// Puts a remote seat's boat where its owner's state says, from where
@@ -350,6 +432,7 @@ impl Match {
         if changed {
             self.events.push(MatchEvent::ModeChanged { seat: s.seat, mode });
         }
+        self.place_line(s.seat, s.line.as_ref());
         if self.online.hidden.len() <= s.seat {
             self.online.hidden.resize(s.seat + 1, false);
         }
