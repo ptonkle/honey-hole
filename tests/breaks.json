@@ -425,5 +425,26 @@
     "find": "\"bob\": { \"ms\": 3200,",
     "replace": "\"sway\": { \"ms\": 3200,",
     "test": "the_item_buoy_bobs"
+  },
+  {
+    "name": "the Fish-Boy's screen is flat",
+    "file": "data/models/fishboy.json",
+    "find": "\"vertices\": [[-96, -54, 0], [96, -54, 0], [96, 54, 0], [-96, 54, 0]]",
+    "replace": "\"vertices\": [[-96, -54, 0], [96, -54, 4], [96, 54, 0], [-96, 54, 0]]",
+    "test": "the_screen_is_a_flat_16_by_9_rectangle_facing_forward_with_its_anchor_in_the_middle"
+  },
+  {
+    "name": "the Fish-Boy's screen anchor is in its middle",
+    "file": "data/models/fishboy.json",
+    "find": "\"anchors\": {\"screen\": {\"part\": \"screen\", \"at\": [0, 0, 0]}}",
+    "replace": "\"anchors\": {\"screen\": {\"part\": \"body\", \"at\": [0, 0, 0]}}",
+    "test": "the_screen_is_a_flat_16_by_9_rectangle_facing_forward_with_its_anchor_in_the_middle"
+  },
+  {
+    "name": "the Fish-Boy's bezel frames the screen at nine eighths",
+    "file": "data/models/fishboy.json",
+    "find": "[94, 61, 3]",
+    "replace": "[94, 66, 3]",
+    "test": "nothing_covers_the_screen_and_the_bezel_frames_it_at_nine_eighths"
   }
 ]

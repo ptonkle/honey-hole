@@ -44,6 +44,12 @@ The keys the game uses, listed on the Title.
 
 Not: keybindings, hotkeys, bindings
 
+### Fish-Boy
+
+The angler's computer, strapped to the left forearm. Raised to the face, its screen fills most of the view and shows the game's tabs, with the lake still in sight round its edge.
+
+Not: Pip-Boy, pipboy, fishboy, PDA
+
 ### Item buoy
 
 The floating yellow box marked with a question mark that holds a hidden item. A player who drives through it takes the item.
