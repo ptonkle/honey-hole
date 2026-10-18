@@ -14,6 +14,8 @@ pub const fn v3(x: i32, y: i32, z: i32) -> V3 {
     V3 { x, y, z }
 }
 
+// Plain methods, not operator traits: the vector maths reads as calls.
+#[allow(clippy::should_implement_trait, clippy::len_without_is_empty)]
 impl V3 {
     pub const ZERO: V3 = v3(0, 0, 0);
     pub const UP: V3 = v3(0, ONE, 0);

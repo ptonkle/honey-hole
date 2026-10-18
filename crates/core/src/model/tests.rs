@@ -64,8 +64,8 @@ fn a_model_file_becomes_flat_triangles_in_metres() {
     // 1000 mm is one metre
     assert_eq!(&out[0..3], &[ONE, 0, 0]);
     // the face (1,0,0) (0,1,0) (0,0,1) faces out along (1,1,1)/√3: 37837 each
-    for k in 3..6 {
-        assert!((out[k] - 37_837).abs() < 8, "{}", out[k]);
+    for n in &out[3..6] {
+        assert!((n - 37_837).abs() < 8, "{n}");
     }
     assert_eq!(&out[6..9], &[ONE, 0, 0]);
     assert_eq!((m.length_mm(), m.height_mm()), (1000, 1000));

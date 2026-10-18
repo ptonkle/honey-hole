@@ -20,11 +20,16 @@ copy = "reader-visible words: data/strings.json, GLOSSARY.md, TONE.md, README.md
 page = "the static page (web/) and the browser check's harness: every browser step runs"
 art = "the art pipeline (tools/art/) and the style packs (styles/): tests/art_check.py"
 notes = "the notebooks and other documents: the notebook form check only"
+gfx = "the 3D drawing's core: fixed-point maths, geometry, the renderer and the scene shaders (gfx/, data/shaders/, data/look.json). Hitting it hits models and gallery too ([implies])"
+models = "model files and their reader: data/models/, model.rs"
+gallery = "the Gallery screen that shows each model (app/gallery.rs)"
 tooling = "scripts outside the check (serve, publish, audits, watch window): nothing beyond the always-run tests"
 
 # Hitting a tag also hits these, for a tag whose change reaches another's
 # tests: `a = ["b"]`.
 [implies]
+gfx = ["models", "gallery"]
+models = ["gallery"]
 
 # Tags whose tests always run in a quick check.
 [always]
@@ -50,6 +55,15 @@ tags = ["boundary"]
 "crates/core/src/app/notes.rs" = ["whatsnew"]
 "crates/core/src/app/tests.rs" = ["menus"]
 "crates/core/src/view.rs" = ["menus"]
+"crates/core/src/gfx.rs" = ["gfx"]
+"crates/core/src/gfx/**" = ["gfx"]
+"crates/core/src/model.rs" = ["models"]
+"crates/core/src/model/**" = ["models"]
+"crates/core/src/app/gallery.rs" = ["gallery", "menus"]
+"crates/core/src/app/gallery/**" = ["gallery"]
+"data/models/**" = ["models"]
+"data/look.json" = ["gfx"]
+"data/shaders/**" = ["gfx"]
 "crates/core/src/patch_notes.rs" = ["whatsnew"]
 "crates/core/src/strings.rs" = ["copy"]
 "crates/core/src/glossary.rs" = ["copy"]
@@ -141,6 +155,9 @@ tags = ["boundary"]
 "lib:patch_notes::" = ["whatsnew"]
 "lib:strings::" = ["copy"]
 "lib:view::" = ["menus"]
+"lib:gfx::" = ["gfx"]
+"lib:model::" = ["models"]
+"lib:app::gallery::" = ["gallery", "menus", "copy"]
 "test:boundary" = ["boundary"]
 "test:copy" = ["copy"]
 "test:data_files" = ["copy", "whatsnew"]
