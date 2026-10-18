@@ -148,14 +148,21 @@ pub struct CameraLook {
     pub near_mm: i32,
     /// the far plane with the fog off
     pub far_mm: i32,
-    /// the boat camera: behind and above the boat, aimed this high over it
+    /// the boat camera orbits a pivot `pivot_mm` over the boat at
+    /// `back_mm`, `pitch_deg` down before the mouse moves it, and looks at
+    /// a point `ahead_mm` in front of the boat (along the camera's own
+    /// heading) and `aim_mm` over the water, so the bow and the water ahead
+    /// show and the horizon sits in the upper third
     pub back_mm: i32,
-    pub up_mm: i32,
+    pub pivot_mm: i32,
+    pub ahead_mm: i32,
     pub aim_mm: i32,
-    /// its pitch down, degrees, before the mouse moves it
     pub pitch_deg: i32,
-    /// the eye stays this far over the ground and the water
+    /// the eye stays this far over the ground and the water; land between
+    /// the pivot and the eye pulls the eye in, no nearer than `min_back_mm`
+    /// (then it rises instead)
     pub clear_mm: i32,
+    pub min_back_mm: i32,
     /// the tour's speed, as a boat's
     pub tour_mm_per_s: i32,
     /// the overview stands this high over the lake's middle
@@ -209,6 +216,8 @@ impl LakeLook {
             ("fresnel_pow_pct", w.fresnel_pow_pct),
             ("shine", w.shine),
             ("near_mm", self.camera.near_mm),
+            ("back_mm", self.camera.back_mm),
+            ("min_back_mm", self.camera.min_back_mm),
             ("tour_mm_per_s", self.camera.tour_mm_per_s),
         ];
         if let Some((name, _)) = lengths.iter().find(|(_, v)| *v <= 0) {

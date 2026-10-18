@@ -450,7 +450,6 @@ impl App {
         }
         let me = view.world.boats.iter().find(|b| b.seat == view.seat);
         let at = me.map_or(lake.map.spawn.at, |b| P::new(b.x_mm, b.y_mm));
-        // the match's pitch is the whole tilt; the look's is the camera's own
         let cam_look = &lake.look.camera;
         let cam = match self.fishboy_eye() {
             // the Fish-Boy up: first person from the angler's eye, along
@@ -471,7 +470,9 @@ impl App {
                 lake.world(at, 0),
                 yaw_of_heading(view.cam_yaw),
                 0,
-                view.cam_pitch - deg(cam_look.pitch_deg),
+                // the mouse's tilt from where it starts; the look's pitch
+                // is the camera's own (SECOND-ORDER R4.80)
+                view.cam_pitch - self.controls.as_ref().map_or(deg(cam_look.pitch_deg), |c| deg(c.mouse.pitch_start_deg)),
             ),
         };
         // the fish, bobbers and lines, and the underwater camera (not with
