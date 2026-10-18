@@ -69,11 +69,20 @@ fn the_fish_boy_straps_onto_the_left_forearm_and_follows_the_elbow() {
     assert_eq!(m.parts[a.part].name, "forearm_l");
     let rest = posed_mm(&m, None, a.part, a.at);
     assert!(rest[0] > 150, "the anchor is on the angler's left (+x): {rest:?}");
-    assert!((650..=900).contains(&rest[1]), "the anchor is at forearm height: {rest:?}");
+    assert!(
+        (650..=900).contains(&rest[1]),
+        "the anchor is at forearm height: {rest:?}"
+    );
     let fishing = posed_mm(&m, Some(Anim::Fish), a.part, a.at);
     // holding the rod's butt, the left hand comes forward and in
-    assert!(fishing[2] > rest[2] + 50, "fishing brings the forearm forward: {rest:?} to {fishing:?}");
-    assert!(fishing[0] < rest[0] - 100, "fishing brings the forearm in: {rest:?} to {fishing:?}");
+    assert!(
+        fishing[2] > rest[2] + 50,
+        "fishing brings the forearm forward: {rest:?} to {fishing:?}"
+    );
+    assert!(
+        fishing[0] < rest[0] - 100,
+        "fishing brings the forearm in: {rest:?} to {fishing:?}"
+    );
 }
 
 /// The figure's origin is at its feet, so in either pose its feet rest on

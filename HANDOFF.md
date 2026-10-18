@@ -47,6 +47,8 @@ The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the 
 
 2026-10-17, the model format, renderer, Gallery and the seven draft fish, merged with main (maps, boat, angler, buoy) (branch `worktree-agent-ae7232570ef10b3c9`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 129 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 82 of 82 breaks caught.
 
+2026-10-17, the angler remodelled without boxes (branch `worktree-agent-a6cc1aec971e299a0`, after f39df0b): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 138 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 90 of 90 breaks caught.
+
 ## The next action
 
 One action.
