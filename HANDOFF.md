@@ -26,6 +26,9 @@ What a new session gets wrong first.
 
 Every `SECOND-ORDER.md` row with status *person*, by number, with what the person has to decide or supply. `scripts/notebook_check.py` fails while one is missing.
 
+- R1.23: whether settings are kept between visits (browser storage, D17). Today they last for the visit.
+- R1.30: the game's name ("Fishing" is the working name), and a read of the menu strings and text size choices the agent wrote.
+
 ## Mistakes so far
 
 By system, from `SECOND-ORDER.md`, with the rule each one produced.
@@ -33,6 +36,8 @@ By system, from `SECOND-ORDER.md`, with the rule each one produced.
 ## What passed
 
 The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the date and commit.
+
+2026-10-17, the menu machinery port (branch `worktree-agent-aaf1b7a85a5536b76`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 58 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 25 of 25 breaks caught.
 
 ## The next action
 

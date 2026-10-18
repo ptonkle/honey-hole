@@ -1,71 +1,316 @@
 // The page draws what the core returns and decides nothing.
 //
-// The core describes the screen (its name, panels, actions and the
-// glossary's definitions), and this file builds the DOM from that
-// description without knowing what any panel means. Every button sends its
-// action name and value back through `act`, the core's one door for
-// settings, screens and flags. (After Peter's Mandible.)
-import init, { start, act } from "./pkg/tool_shim.js";
+// The core describes the screen (its name, panels and their items), and this
+// file builds the DOM from that description without knowing what any panel
+// means. Every control sends its action name and value back through `act`,
+// the core's one door for buttons, settings, keys and screens; the core
+// answers with the next view model. No state lives here: what is drawn is
+// what the core last returned.
+import init, { Game } from "./pkg/tool_shim.js";
 
 const el = (id) => document.getElementById(id);
-const make = (tag, text) => {
+const make = (tag, cls, text) => {
   const node = document.createElement(tag);
+  if (cls) node.className = cls;
   if (text !== undefined) node.textContent = text;
   return node;
 };
 
-let state = null;
-let glossary = "";
-let hints = [];
+let game = null;
+let ui = null;
+let panelsText = "";
 
-function call(fn, ...args) {
-  return JSON.parse(fn(...args));
+// ---- talking to the core ----
+
+// What each menu element does, by its id: { click, change, input, keydown }
+// handlers, made afresh with each build. The menus listen once, on their
+// box, and look the target up here, so an element kept across a rebuild
+// (drawMenus patches the old tree to match the new one) does the latest
+// thing.
+let handlers = {};
+
+function on(id, type, fn) {
+  if (!handlers[id]) handlers[id] = {};
+  handlers[id][type] = fn;
 }
 
-// A label whose text is a glossary term shows the definition on hover.
-function mark(node) {
-  const hint = hints.find((h) => h.term === node.textContent);
-  if (hint) {
-    node.dataset.term = hint.term;
-    node.title = hint.definition;
+function dispatch(e) {
+  for (let t = e.target; t && t.id !== "menus"; t = t.parentElement) {
+    const h = t.id && handlers[t.id] && handlers[t.id][e.type];
+    if (h) {
+      h(t, e);
+      return;
+    }
   }
 }
 
-function panel(p) {
-  const box = make("section");
-  box.id = p.id;
-  if (p.heading) box.append(make("h2", p.heading));
-  if (p.text) box.append(make("p", p.text));
-  (p.actions || []).forEach((a) => {
-    const button = make("button", a.label);
-    button.disabled = !a.enabled;
-    button.addEventListener("click", () => draw(call(act, JSON.stringify(state), glossary, a.name, a.value)));
-    box.append(button);
+function send(name, value) {
+  draw(JSON.parse(game.act(name, value)));
+}
+
+// ---- items, one builder per type ----
+
+function button(item) {
+  const b = make("button", item.quiet ? "button quiet" : "button", item.text);
+  b.type = "button";
+  b.id = item.id;
+  b.disabled = item.disabled === true;
+  if (item.badge) b.append(make("span", "badge", item.badge));
+  on(item.id, "click", () => send(item.id, ""));
+  return b;
+}
+
+function slider(item) {
+  const wrap = make("div", "field slider");
+  const label = make("label", "", item.label);
+  const input = make("input");
+  input.type = "range";
+  input.id = item.id;
+  input.setAttribute("min", item.min);
+  input.setAttribute("max", item.max);
+  input.setAttribute("step", item.step);
+  input.value = item.value;
+  label.htmlFor = item.id;
+  on(item.id, "change", (t) => send(item.id, t.value));
+  const shown = make("span", "slider-value", item.text);
+  shown.id = item.id + ".text";
+  wrap.append(label, input, shown);
+  return wrap;
+}
+
+function toggle(item) {
+  const wrap = make("label", "field toggle");
+  const input = make("input");
+  input.type = "checkbox";
+  input.id = item.id;
+  input.checked = item.value;
+  on(item.id, "change", (t) => send(item.id, t.checked ? "on" : "off"));
+  wrap.append(input, make("span", "", item.label));
+  return wrap;
+}
+
+function select(item) {
+  const wrap = make("div", "field");
+  const label = make("label", "", item.label);
+  const input = make("select");
+  item.options.forEach((o) => {
+    const opt = make("option", "", o.text);
+    opt.value = o.value;
+    opt.disabled = o.disabled === true;
+    input.append(opt);
+  });
+  input.value = item.value;
+  input.id = item.id;
+  label.htmlFor = item.id;
+  on(item.id, "change", (t) => send(item.id, t.value));
+  wrap.append(label, input);
+  return wrap;
+}
+
+function list(item) {
+  const table = make("table", "pairs");
+  item.rows.forEach((r) => {
+    const tr = make("tr");
+    tr.append(make("th", "", r[0]), make("td", "", r[1]));
+    table.append(tr);
+  });
+  return table;
+}
+
+function table(item) {
+  const box = make("table", "cells");
+  const head = make("tr");
+  item.head.forEach((h) => head.append(make("th", "", h)));
+  box.append(head);
+  item.rows.forEach((r) => {
+    const tr = make("tr", r.marked ? "marked" : "");
+    r.cells.forEach((c) => tr.append(make("td", "", c)));
+    box.append(tr);
   });
   return box;
 }
+
+// Each version, its date and its lines (a minor version drawn smaller).
+function notes(item) {
+  const box = make("div", "notes");
+  box.id = item.id;
+  item.entries.forEach((e) => {
+    const sec = make("section", e.minor ? "note minor" : "note");
+    const head = make("h3", "note-head");
+    head.append(make("span", "note-version", e.version), make("span", "note-date", e.date));
+    const ul = make("ul");
+    e.lines.forEach((l) => ul.append(make("li", "", l)));
+    sec.append(head, ul);
+    box.append(sec);
+  });
+  return box;
+}
+
+const builders = { button, slider, toggle, select, list, table, notes };
+
+// The panels as the core gives them, built as a fresh tree off the page.
+function buildMenus() {
+  handlers = {};
+  const box = make("div");
+  (ui.panels || []).forEach((p) => {
+    const panel = make("section", "panel " + p.kind);
+    if (p.heading) {
+      const h = make("h2", "", p.heading);
+      // a heading the core makes clickable
+      if (p.click) {
+        h.id = p.click;
+        on(p.click, "click", () => send(p.click, ""));
+      }
+      panel.append(h);
+    }
+    if (p.sub) panel.append(make("p", "sub", p.sub));
+    p.items.forEach((item) => panel.append(builders[item.type](item)));
+    box.append(panel);
+  });
+  return box;
+}
+
+// ---- patching: keep every element that is still there ----
+
+// Two nodes are the same element if they have the same tag and id.
+function same(a, b) {
+  return a.nodeType === b.nodeType && a.nodeName === b.nodeName && (a.nodeType !== Node.ELEMENT_NODE || a.id === b.id);
+}
+
+// Makes `old` (on the page) match `fresh` (just built), keeping each element
+// that is still there: a rebuilt element under the mouse between press and
+// release loses the click, a rebuilt select closes while open, and a rebuilt
+// control loses the focus.
+function patch(old, fresh) {
+  if (old.nodeType !== Node.ELEMENT_NODE) {
+    if (old.nodeValue !== fresh.nodeValue) old.nodeValue = fresh.nodeValue;
+    return;
+  }
+  [...old.attributes].forEach((a) => {
+    if (!fresh.hasAttribute(a.name)) old.removeAttribute(a.name);
+  });
+  [...fresh.attributes].forEach((a) => {
+    if (old.getAttribute(a.name) !== a.value) old.setAttribute(a.name, a.value);
+  });
+  patchChildren(old, fresh);
+  // the live state, after the children (a select's value needs its options)
+  if (old.tagName === "INPUT" || old.tagName === "SELECT" || old.tagName === "TEXTAREA") {
+    if (old.value !== fresh.value) old.value = fresh.value;
+    if (old.checked !== fresh.checked) old.checked = fresh.checked;
+  }
+  if (old.disabled !== undefined && old.disabled !== fresh.disabled) old.disabled = fresh.disabled;
+}
+
+function patchChildren(old, fresh) {
+  const want = [...fresh.childNodes];
+  want.forEach((f, i) => {
+    const o = old.childNodes[i];
+    if (!o) old.append(f);
+    else if (same(o, f)) patch(o, f);
+    else old.replaceChild(f, o);
+  });
+  while (old.childNodes.length > want.length) old.lastChild.remove();
+}
+
+// An open dropdown: the browser closes a select's list when the page around
+// it changes, so the menus wait while one is open, and catch up when it
+// closes (a choice, Escape, Enter or Tab, a click anywhere, or the focus
+// leaving it).
+let openSelect = null;
+
+function selectClosed() {
+  if (!openSelect) return;
+  openSelect = null;
+  drawMenus();
+}
+
+function watchSelects() {
+  document.addEventListener("pointerdown", (e) => {
+    const s = e.target.closest && e.target.closest("#menus select");
+    if (s && s !== openSelect) openSelect = s;
+    else selectClosed();
+  }, true);
+  // after the change is sent (a redraw first would put back the old value)
+  document.addEventListener("change", () => setTimeout(selectClosed, 0), true);
+  document.addEventListener("focusout", (e) => {
+    if (e.target === openSelect) selectClosed();
+  }, true);
+  document.addEventListener("keydown", (e) => {
+    if (!openSelect) {
+      if (e.target.matches && e.target.matches("#menus select") && (e.key === " " || e.key === "ArrowDown" && e.altKey)) openSelect = e.target;
+    } else if (e.key === "Escape" || e.key === "Enter" || e.key === "Tab") {
+      setTimeout(selectClosed, 0);
+    }
+  }, true);
+}
+
+function drawMenus() {
+  if (openSelect) {
+    if (openSelect.isConnected) return;
+    openSelect = null;
+  }
+  const text = JSON.stringify(ui.panels || []);
+  if (text === panelsText) return;
+  panelsText = text;
+  const menus = el("menus");
+  const kept = document.activeElement;
+  const focused = kept && menus.contains(kept) ? kept.id : "";
+  const caret = focused && kept.selectionStart !== undefined ? kept.selectionStart : null;
+  patchChildren(menus, buildMenus());
+  // an element that had to be replaced gets the focus back (and a text
+  // field its caret); when it is gone (a new screen), the screen's first
+  // control takes the focus, so the keyboard carries on from there
+  if (!focused || kept.isConnected) return;
+  const again = el(focused) || menus.querySelector("button, input, select");
+  if (!again) return;
+  again.focus();
+  if (caret !== null && again.setSelectionRange && again.type === "text") again.setSelectionRange(caret, caret);
+}
+
+// ---- drawing the view model ----
 
 function draw(result) {
   if (result.error) {
     el("message").textContent = result.error;
     return;
   }
-  const ui = result.ok;
-  state = ui.state;
-  hints = ui.hints;
+  ui = result.ok;
   document.title = ui.title;
-  el("title").textContent = ui.title;
-  el("panels").replaceChildren(...ui.panels.map(panel));
-  document.querySelectorAll("#panels h2, #panels button").forEach(mark);
-  el("message").textContent = "";
   document.body.dataset.screen = ui.screen;
+  document.documentElement.dataset.textSize = ui.text_size;
+  const version = el("version");
+  if (version.textContent !== ui.version) version.textContent = ui.version;
+  version.disabled = !ui.version_opens;
+  el("message").textContent = "";
+  drawMenus();
+}
+
+// ---- input ----
+
+// A key typed into a text control belongs to that control.
+function typing(e) {
+  const t = e.target;
+  return t.tagName === "SELECT" || t.tagName === "TEXTAREA" || (t.tagName === "INPUT" && t.type === "text");
+}
+
+function bindInput() {
+  ["click", "change", "input", "keydown"].forEach((type) => el("menus").addEventListener(type, dispatch));
+  el("version").addEventListener("click", () => send("version", ""));
+  // every key goes to the core, which decides what it does
+  window.addEventListener("keydown", (e) => {
+    if (e.repeat || typing(e)) return;
+    send("key", e.code);
+  });
+  watchSelects();
 }
 
 async function main() {
   await init();
   const strings = await (await fetch("data/strings.json")).text();
-  glossary = await (await fetch("data/glossary.md")).text();
-  draw(call(start, strings, glossary));
+  const notes = await (await fetch("data/patch-notes.json")).text();
+  game = new Game(strings, notes);
+  bindInput();
+  draw(JSON.parse(game.ui()));
   document.body.dataset.ready = "true";
 }
 

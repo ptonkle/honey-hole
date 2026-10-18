@@ -14,7 +14,8 @@
 [tags]
 all = "foundations (the crate root, the shim, the build, Cargo files, the check and tag scripts): run everything"
 boundary = "the Builder boundary tests: purity scanner, dependency allowlist, shim and page scans, CSP (always run: they scan every file)"
-ui = "the screens the core describes (`ui`) and the one door `act`: crates/core/src/api.rs"
+menus = "the screens the core describes (`ui`), their flow through `act`, Settings and the pause menu: api.rs, app.rs, app/menus.rs, view.rs"
+whatsnew = "What's New: the version, the patch notes and their screen (patch_notes.rs, app/notes.rs, data/patch-notes.json)"
 copy = "reader-visible words: data/strings.json, GLOSSARY.md, TONE.md, README.md, and the core's readers of them"
 page = "the static page (web/) and the browser check's harness: every browser step runs"
 art = "the art pipeline (tools/art/) and the style packs (styles/): tests/art_check.py"
@@ -43,15 +44,23 @@ tags = ["boundary"]
 ".gitignore" = ["tooling"]
 "crates/core/Cargo.toml" = ["all"]
 "crates/core/src/lib.rs" = ["all"]
-"crates/core/src/api.rs" = ["ui"]
-"crates/core/src/page.rs" = ["copy"]
+"crates/core/src/api.rs" = ["menus"]
+"crates/core/src/app.rs" = ["menus"]
+"crates/core/src/app/menus.rs" = ["menus"]
+"crates/core/src/app/notes.rs" = ["whatsnew"]
+"crates/core/src/app/tests.rs" = ["menus"]
+"crates/core/src/view.rs" = ["menus"]
+"crates/core/src/patch_notes.rs" = ["whatsnew"]
+"crates/core/src/strings.rs" = ["copy"]
 "crates/core/src/glossary.rs" = ["copy"]
 "crates/core/tests/boundary.rs" = ["boundary"]
 "crates/core/tests/copy.rs" = ["copy"]
+"crates/core/tests/data_files.rs" = ["copy", "whatsnew"]
 "crates/core/tests/no_storage.rs" = ["page"]
 "crates/shim/**" = ["all"]
 "web/**" = ["page"]
 "data/strings.json" = ["copy"]
+"data/patch-notes.json" = ["whatsnew"]
 "data/art.json" = ["art"]
 "styles/**" = ["art"]
 "tools/art/**" = ["art"]
@@ -88,9 +97,11 @@ tags = ["boundary"]
 # ---------------------------------------------------------------------------
 # Line rules: a file takes these tags instead of its [sources] ones when every
 # changed line of its diff matches one of the patterns (Python regular
-# expressions). For example, a release that only bumps a version constant:
-#   "crates/core/src/version.rs" = { patterns = ['^pub const VERSION: &str = "[^"]*";$'], tags = ["notes"] }
+# expressions). A release that only bumps VERSION in app.rs runs What's
+# New's tests (the newest notes are this version; the version is drawn), not
+# every menu test.
 [lines]
+"crates/core/src/app.rs" = { patterns = ['^pub const VERSION: &str = "[^"]*";$'], tags = ["whatsnew"] }
 
 # Function -> tags, for a big file whose functions belong to different
 # features: per file, Python regular expressions over the name of the
@@ -99,8 +110,8 @@ tags = ["boundary"]
 # changed line in no named function, or in one no regex names, takes the
 # file's [sources] tags. Outside any fn, a struct or enum holding the line,
 # or a one-line `const`/`static` it declares, is named the same way.
-#   [functions."crates/core/src/api.rs"]
-#   '^(settings|apply_setting)$' = ["settings"]
+#   [functions."crates/core/src/app.rs"]
+#   '^(escape|key)$' = ["keys"]
 [functions]
 
 # A changed line inside `def step_<name>` of this file runs that browser step
@@ -121,15 +132,24 @@ tags = ["boundary"]
 # `:<name prefix>`. The longest matching key wins, so a mixed module can be
 # split by test name.
 [tests]
-"lib:api::" = ["ui", "copy"]
+"lib:api::" = ["menus", "copy", "whatsnew"]
+"lib:app::tests::" = ["menus", "copy"]
+"lib:app::tests::whats_new_" = ["menus", "copy", "whatsnew"]
+"lib:app::tests::the_version_opens_" = ["menus", "copy", "whatsnew"]
 "lib:glossary::" = ["copy"]
-"lib:page::" = ["copy"]
+"lib:patch_notes::" = ["whatsnew"]
+"lib:strings::" = ["copy"]
+"lib:view::" = ["menus"]
 "test:boundary" = ["boundary"]
 "test:copy" = ["copy"]
+"test:data_files" = ["copy", "whatsnew"]
 "test:no_storage" = ["page"]
 
 # ---------------------------------------------------------------------------
 # Browser steps (tests/browser/interactions.py STEPS) -> tags. The load and
 # idle watch and the closing error and request checks run with every step.
 [browser]
-boot = ["ui", "copy", "page"]
+boot = ["menus", "copy", "whatsnew", "page"]
+settings = ["menus", "copy", "page"]
+notes = ["menus", "copy", "whatsnew", "page"]
+play = ["menus", "copy", "page"]
