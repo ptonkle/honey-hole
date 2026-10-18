@@ -97,6 +97,8 @@ Execution:
 Implement later:  Give fish habitats that they are more commonly found in e.g. this fish is often found in reeds.
 ```
 
+Later the same day: "Also point out any things that you think would not be well balanced or would encourage anti-fun player behaviors such as players spending all game just destorying each other rather than fishing" and "oh also develop AI players to play against and also to be used for playtesting".
+
 Earlier the same day the person also said: online play is part of the game, but its sync model must come from this game's own player interactions, not from Ape Race's (`DECISIONS.md`, "2026-10-17 (online)").
 
 ## The tool
@@ -204,6 +206,12 @@ Left hand on WASD, right hand on the mouse, always.
 | Tab | Fish-Boy | Fish-Boy |
 | Esc | cancel the current thing: quit a minigame (item wasted), close the Fish-Boy, drop the fish off the line | same |
 
+### AI players
+
+- AI players fill seats to play against, offline or online, and run whole matches headless in the core for playtesting.
+- Playtests measure balance: catches and value per player, time spent fishing against hunting, wrecks, and item use. This shows whether ramming pays better than fishing.
+- The AI is a core module, deterministic from the match seed, and drives a boat through the same inputs a person does.
+
 ### Later
 
 - Fish habitats: some fish found mostly in, say, reeds.
@@ -225,6 +233,7 @@ The person checks these before a first public release. Each is checkable by play
 - The Fish-Boy opens with Tab on its last tab and fills 80% / 10% of the view. The radar ping sweeps for about 3 s, with a 5 s cooldown. The Fishpedia shows counts left by tier.
 - The postgame screen reveals each player's catches one by one and totals them.
 - The sounds listed above play, including a rival's motor with a Doppler shift from about 5 s away.
+- AI players fill empty seats and play a full match; a headless batch of AI-only matches reports the balance numbers above.
 - `./scripts/check.sh` passes, and the online check passes.
 
 ## Decisions that stay with the person
