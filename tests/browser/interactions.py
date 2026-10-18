@@ -394,6 +394,7 @@ def step_ai(page, check):
     # A match with three AI players: at least one AI boat gets under way by
     # itself (the core counts them in data-ai-moving).
     page.click(by_id("menu.play"))
+    page.click(by_id("menu.offline"))
     check(screen(page, "lobby"), "Play opens the match setup")
     page.select_option(by_id("lobby.ai"), "3")
     page.wait_for_selector(by_id("lobby.ai.3"), state="attached", timeout=5000)
@@ -417,6 +418,7 @@ def step_match_flow(page, check):
     page.goto(base + "?debug=flow")
     page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
     page.click(by_id("menu.play"))
+    page.click(by_id("menu.offline"))
     screen(page, "lobby")
     page.select_option(by_id("lobby.ai"), "2")
     page.wait_for_selector(f"{by_id('lobby.ai')} option[value='2']:checked", state="attached", timeout=5000)
