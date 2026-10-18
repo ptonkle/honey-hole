@@ -70,6 +70,17 @@ impl App {
             rgb(l.card.light),
             rgb(l.card.outline),
         );
+        // the triple stripe running out from either side of the headline
+        let half = l.display().width(&self.t("postgame.heading"), 72) / 2 + 40;
+        let each = 8;
+        let band = each * 3;
+        for (x0, x1) in [(SIDE, W / 2 - half), (W / 2 + half, W - SIDE)] {
+            list.fill_rect(
+                rgb(l.card.outline),
+                Rect::new(x0 - 3, 80 - band / 2 - 3, x1 - x0 + 6, band + 6),
+            );
+            super::print::stripes(list, &l.card.stripes, x0, 80 - band / 2, x1 - x0, each);
+        }
         let cols = &pg.reveal.columns;
         let n = cols.len().max(1) as i32;
         let col_w = ((W - 2 * SIDE - GAP * (n - 1)) / n).min(440);
@@ -138,6 +149,17 @@ impl App {
             head_r,
             l.card.fill,
             if now { colour } else { l.card.outline },
+        );
+        // the player's colour as a band across the head's top
+        let inset = l.card.outline_w / 2 + l.card.radius / 3;
+        list.fill_rect(
+            rgb(colour),
+            Rect::new(
+                head_r.x + inset,
+                head_r.y + l.card.stripe_at,
+                head_r.w - 2 * inset,
+                l.card.stripe_h * 3,
+            ),
         );
         list.circle(
             rgb(colour),

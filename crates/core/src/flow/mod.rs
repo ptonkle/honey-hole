@@ -31,6 +31,7 @@ pub mod hud;
 pub mod look;
 pub mod popups;
 pub mod postgame;
+pub mod print;
 pub mod screens;
 #[cfg(test)]
 mod tests;

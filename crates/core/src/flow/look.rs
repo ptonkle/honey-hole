@@ -46,6 +46,21 @@ pub struct CardLook {
     pub soft: C,
     /// light text straight on the world (with an outline)
     pub light: C,
+    /// the shadow's colour: a solid offset, the print's second plate
+    pub shadow_colour: C,
+    /// the triple stripe across a card's top, top to bottom, each band
+    /// `stripe_h` tall and `stripe_at` below the card's top edge
+    pub stripes: Vec<C>,
+    pub stripe_h: i32,
+    pub stripe_at: i32,
+    /// the dot screen in a card's bottom-right corner: its colour and
+    /// opacity, grid step, and the corner's share of the card (percent of
+    /// its width and height)
+    pub dots: C,
+    pub dots_pct: i32,
+    pub dot_step: i32,
+    pub dots_w_pct: i32,
+    pub dots_h_pct: i32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
@@ -218,6 +233,8 @@ impl FlowLook {
             ("card.ink", k.ink),
             ("card.soft", k.soft),
             ("card.light", k.light),
+            ("card.shadow_colour", k.shadow_colour),
+            ("card.dots", k.dots),
             ("hud.driving", h.driving),
             ("hud.fishing", h.fishing),
             ("hud.gauge_face", h.gauge_face),
@@ -272,6 +289,16 @@ impl FlowLook {
             if self.popups.styles[&r.style].tier && r.tier.is_empty() {
                 return Err(format!("{at} has a tier style but names no tier field."));
             }
+        }
+        for c in &k.stripes {
+            colour_ok("card.stripes", *c)?;
+        }
+        if k.stripe_h < 0
+            || k.dot_step <= 0
+            || !(0..=100).contains(&k.dots_w_pct)
+            || !(0..=100).contains(&k.dots_h_pct)
+        {
+            return Err("The card's stripes and dots need a size.".into());
         }
         if self.popups.max_shown == 0 {
             return Err("The popups need room for at least one.".into());

@@ -23,6 +23,8 @@ pub struct Look {
     /// the Fish-Boy's case round a minigame shown on its screen outside a
     /// match (the Minigames screen)
     pub bezel: C,
+    /// the paper frame round a full-screen minigame (`minigame/frame.rs`)
+    pub frame: FrameLook,
     pub cloak: CloakLook,
     pub power_reel: ReelLook,
     pub nitrous: AtomsLook,
@@ -45,6 +47,26 @@ pub struct BannerLook {
     pub pop_ms: i32,
     /// the scene under the banner is dimmed by this much, percent
     pub dim_pct: i32,
+}
+
+/// The magazine frame: a paper border `width` wide with an ink keyline
+/// (`keyline` wide, `radius` round) inside it, the triple stripe in its top
+/// (`stripes` top to bottom, each `stripe_h`), and dots on a `dot_step`
+/// grid over `dots_w` of each bottom corner. The banner's band takes the
+/// same stripes for its edges.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct FrameLook {
+    pub paper: C,
+    pub ink: C,
+    pub width: i32,
+    pub keyline: i32,
+    pub radius: i32,
+    pub stripes: Vec<C>,
+    pub stripe_h: i32,
+    pub dots: C,
+    pub dot_step: i32,
+    pub dots_w: i32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
@@ -161,6 +183,9 @@ impl Look {
             ("bar", self.bar),
             ("bar_back", self.bar_back),
             ("bezel", self.bezel),
+            ("frame.paper", self.frame.paper),
+            ("frame.ink", self.frame.ink),
+            ("frame.dots", self.frame.dots),
             ("cloak.background", k.background),
             ("cloak.grid", k.grid),
             ("cloak.rim", k.rim),
@@ -218,6 +243,7 @@ impl Look {
             ("enhanced_radar.snap", f.snap),
         ];
         out.extend(m.fish.iter().map(|c| ("camera.fish", *c)));
+        out.extend(self.frame.stripes.iter().map(|c| ("frame.stripes", *c)));
         out.into_iter().map(|(k, c)| (k.to_string(), c)).collect()
     }
 
@@ -241,6 +267,8 @@ impl Look {
             self.camera.viewfinder_size[0],
             self.camera.viewfinder_size[1],
             self.camera.bracket,
+            self.frame.width,
+            self.frame.dot_step,
         ];
         if sizes.iter().any(|s| *s <= 0) || !(0..=100).contains(&self.banner.dim_pct) {
             return Err("The minigames' text, banner and viewfinder need a size.".into());
