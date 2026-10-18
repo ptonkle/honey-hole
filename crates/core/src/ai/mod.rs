@@ -350,6 +350,17 @@ impl Brain {
         if tug {
             return false;
         }
+        // the boat coasts with the Fish-Boy up: only with room to coast
+        if let Some(b) = s.me {
+            let v = b.speed_mm_per_s() as i64;
+            let coast = (s.rules.coast * crate::sim::TICKS_PER_S).max(1) as i64;
+            let room = (v * v / (2 * coast)) as i32 + 10_000;
+            let v2 = b.vel();
+            let way = if v > 500 { crate::map::trig::atan2(v2[1] as i64, v2[0] as i64) } else { b.heading };
+            if v > 500 && nav::land_ahead(s.map, b.at(), way, room) < room {
+                return false;
+            }
+        }
         let keep = ticks(s.tuning.ai.sighting_keep_ms);
         let need = self.hooks.iter().enumerate().any(|(seat, h)| {
             h.as_ref().is_some_and(|h| {
@@ -531,7 +542,7 @@ impl Brain {
         while self.path.len() > 1 && self.path[0].dist(at) < t.waypoint_mm as i64 {
             self.path.remove(0);
         }
-        if self.path.len() > 1 && s.tick % 10 == self.seat as u32 && nav::clear_line(s.map, at, self.path[1], t.path_clear_mm) {
+        if self.path.len() > 1 && s.tick % 10 == self.seat as u32 && nav::clear_line(s.map, at, self.path[1], t.path_roomy_mm) {
             self.path.remove(0);
         }
         let next = self.path[0];

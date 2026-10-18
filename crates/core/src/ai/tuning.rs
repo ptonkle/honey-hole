@@ -70,6 +70,8 @@ pub struct AiTuning {
     /// with land this near ahead the boat keeps to careful_speed_pct of top
     /// speed, under the grounding speed
     pub look_ahead_mm: i32,
+    /// and with land this near on any side
+    pub near_land_mm: i32,
     pub careful_speed_pct: i32,
     /// slowing for a stop or a bend, at this share of the boat's braking
     pub brake_use_pct: i32,
@@ -121,6 +123,7 @@ pub fn check(c: &mut Checker, a: &AiTuning, ram_wreck_pct: i32, land_wreck_pct: 
         .range("ai.path_roomy_mm", a.path_roomy_mm, a.path_clear_mm, 80_000)
         .range("ai.waypoint_mm", a.waypoint_mm, 500, 40_000)
         .range("ai.look_ahead_mm", a.look_ahead_mm, 1000, 200_000)
+        .range("ai.near_land_mm", a.near_land_mm, 0, 40_000)
         .range("ai.careful_speed_pct", a.careful_speed_pct, 5, land_wreck_pct - 1)
         .range("ai.brake_use_pct", a.brake_use_pct, 10, 100)
         .range("ai.ram_speed_pct", a.ram_speed_pct, ram_wreck_pct, 100)

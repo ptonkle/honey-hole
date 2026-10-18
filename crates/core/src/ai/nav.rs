@@ -7,12 +7,14 @@
 //! costs a path more, so paths keep to open water and squeeze through a
 //! channel only when they must. [`Nav::path`] is A* over the open cells
 //! (eight neighbours, no cut corners), then pulled straight wherever the
-//! water between two points is clear ([`clear_line`]).
+//! water between two points is `ai.path_roomy_mm` from land ([`clear_line`]).
 //!
 //! **Steering** ([`steer`]) turns toward the next waypoint and sets the
 //! throttle for a wanted speed: slower for a sharp turn, for a stop, and
 //! under `ai.careful_speed_pct` of top speed with land within
-//! `ai.look_ahead_mm` ahead, which is under the speed that grounds a boat.
+//! `ai.look_ahead_mm` ahead (along the bow and along its way through the
+//! water) or within `ai.near_land_mm` at all, which is under the speed that
+//! grounds a boat.
 
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
@@ -34,7 +36,7 @@ pub struct Nav {
     pub open: Vec<bool>,
     /// a step's cost into a cell, in percent of its length
     pub cost: Vec<i32>,
-    /// the map's own cell, and the clearance a straight line needs
+    /// the clearance a straight stretch of path needs
     clear_mm: i32,
 }
 
@@ -113,7 +115,7 @@ impl Nav {
             cell_mm: k as i32 * map.cell_mm,
             open,
             cost,
-            clear_mm: t.path_clear_mm,
+            clear_mm: t.path_roomy_mm,
         }
     }
 
@@ -294,6 +296,11 @@ pub fn steer(map: &Map, r: &Rules, t: &AiTuning, b: &Boat, to: P, want: i32, rec
         if b.speed_mm_per_s() > 2000 {
             let way = trig::atan2(v[1] as i64, v[0] as i64);
             ahead = ahead.min(land_ahead(map, at, way, t.look_ahead_mm));
+        }
+        // by the shore itself, the hull's side would scrape it
+        let near = map.index(at).is_none_or(|i| map.shore[i] < t.near_land_mm);
+        if near {
+            ahead = 0;
         }
         if ahead < t.look_ahead_mm {
             let careful = pct(r.top, t.careful_speed_pct);
