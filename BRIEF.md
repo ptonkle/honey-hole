@@ -283,7 +283,7 @@ Terms the person uses, to go into `GLOSSARY.md` before any string uses them:
 
 ## Autonomy
 
-The plan is not approved in advance. The agent writes `PLAN.md` and agrees with the person on design questions before building the game itself. The agent may start, before that, on the person's execution list:
+Since 2026-10-17 (overnight) the plan is approved in advance: the agent builds until the game is finished and playable, decides by its own judgement, and records decisions for the person to validate (`DECISIONS.md`). Before that grant: the plan was not approved in advance. The agent writes `PLAN.md` and agrees with the person on design questions before building the game itself. The agent may start, before that, on the person's execution list:
 
 - models of fish, boats, the world, the minigames, the radar view and the Fishpedia, shown in the design journal for an early OK;
 - map generation.

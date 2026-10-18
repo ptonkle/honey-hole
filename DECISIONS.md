@@ -94,3 +94,9 @@ The agent decided: the item buoy keeps the idea (a floating mystery item that re
 > 1
 
 The person chose the giant bobber for the item buoy.
+
+## 2026-10-17 (overnight autonomy)
+
+> Ok. I'm going to go to bed, continue to build the game until it is finished and playable. Use your best judgement for any decisions you come across, and write the code in such a way that for the things that you think might need to be changed, they are easily updated. Do not stop working for anything. seek alternatives when you are blocked. Record decisions that you made and want me to validate and bring them up when I am able to inform you again in the morning. Any questions?
+
+Grant: the plan is approved in advance; the agent builds until the game is finished and playable, decides by its own judgement, and records decisions to validate in `PLAN.md` ("For the person to validate") and `SECOND-ORDER.md`. Values likely to change go in `data/tuning.json`. Scope: this run, until the person is back. Publishing stays local only (no GitHub).
