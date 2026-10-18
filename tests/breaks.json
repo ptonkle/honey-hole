@@ -65,7 +65,7 @@
   {
     "name": "settings end with back",
     "file": "crates/core/src/app/menus.rs",
-    "find": "                self.button(\"menu.back\"),",
+    "find": "        items.push(self.button(\"menu.back\"));\n",
     "replace": "",
     "test": "every_sub_screen_ends_with_back"
   },
@@ -2277,8 +2277,8 @@
   {
     "name": "the Title has no Minigames button",
     "file": "crates/core/src/app/menus.rs",
-    "find": "                    self.button(\"menu.minigames\"),\n",
-    "replace": "",
+    "find": "\"menu.sounds\", \"menu.minigames\"]",
+    "replace": "\"menu.sounds\"]",
     "test": "the_app_opens_on_the_title_with_its_menu"
   },
   {
@@ -2508,8 +2508,8 @@
   {
     "name": "Easy and Hard swap skills",
     "file": "crates/core/src/ai/tuning.rs",
-    "find": "            Difficulty::Easy => &self.easy,\n            Difficulty::Normal => &self.normal,\n            Difficulty::Hard => &self.hard,",
-    "replace": "            Difficulty::Easy => &self.hard,\n            Difficulty::Normal => &self.normal,\n            Difficulty::Hard => &self.easy,",
+    "find": "pub fn get(&self, d: Difficulty) -> &Skill {\n        match d {\n            Difficulty::Easy => &self.easy,\n            Difficulty::Normal => &self.normal,\n            Difficulty::Hard => &self.hard,",
+    "replace": "pub fn get(&self, d: Difficulty) -> &Skill {\n        match d {\n            Difficulty::Easy => &self.hard,\n            Difficulty::Normal => &self.normal,\n            Difficulty::Hard => &self.easy,",
     "test": "hard_beats_easy_on_average"
   },
   {
