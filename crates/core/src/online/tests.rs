@@ -618,3 +618,45 @@ fn the_countdown_runs_out_together_and_the_clock_then_follows_the_host() {
         }
     }
 }
+
+#[test]
+fn a_hook_popup_comes_at_the_hosts_delay_once_in_every_browser() {
+    for (seed, delay) in [(1, 0), (2, 0), (1, 1000), (2, 1000)] {
+        let mut l = Loop::new(2, 0, LinkSpec::ROUGH, seed);
+        l.tuning.balance.announce_delay_ms.common = delay;
+        l.tuning.balance.announce_delay_ms.uncommon = delay;
+        l.roster = Some(crate::roster::Roster::parse(ROSTER).unwrap());
+        l.lobby_and_start();
+        l.run(500);
+        let t = l.nodes[1].game().tick;
+        // both lines on one fish: the first hook holds, the second lets go
+        bite(&mut l, 1, 0, t + 20);
+        bite(&mut l, 2, 0, t + 30);
+        l.run(6000);
+        for (k, node) in l.nodes.iter().enumerate() {
+            let said: Vec<(u32, usize)> = node
+                .log
+                .iter()
+                .filter_map(|(tick, e)| match e {
+                    MatchEvent::Announced { seat, .. } => Some((*tick, *seat)),
+                    _ => None,
+                })
+                .collect();
+            let seats: Vec<usize> = said.iter().map(|(_, s)| *s).collect();
+            assert_eq!(seats, vec![1], "seed {seed}, delay {delay}: browser {k} announces the hook that held, once");
+        }
+        // on the host, the popup comes the delay after its grant
+        let host = &l.nodes[0].log;
+        let granted = host
+            .iter()
+            .find(|(_, e)| matches!(e, MatchEvent::Hooked { seat: 1, .. }))
+            .map(|(t, _)| *t)
+            .unwrap();
+        let said = host
+            .iter()
+            .find(|(_, e)| matches!(e, MatchEvent::Announced { .. }))
+            .map(|(t, _)| *t)
+            .unwrap();
+        assert_eq!(said - granted, crate::sim::ticks(delay), "seed {seed}, delay {delay}");
+    }
+}
