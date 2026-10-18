@@ -719,9 +719,11 @@ impl App {
     /// The `debug` flags the page passes on from its address (`?debug=`):
     /// `fishing` puts a fish by this seat's bobber each time it lands, tames
     /// the reel and widens the hook window to 5 s, so a browser check can
-    /// hook and land one by script.
+    /// hook and land one by script. `watch` hands the person's seat to a
+    /// Hard AI player, for watching the AI play (`app/play.rs`).
     pub(super) fn debug_act(&mut self, value: &str) {
         self.debug_fishing = value.split(',').any(|f| f.trim() == "fishing");
+        self.debug_watch = value.split(',').any(|f| f.trim() == "watch");
         self.flow.debug = value.split(',').any(|f| f.trim() == "flow");
         self.debug_place = value
             .split(',')

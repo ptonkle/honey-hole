@@ -2084,5 +2084,75 @@
     "find": "                    self.button(\"menu.minigames\"),\n",
     "replace": "",
     "test": "the_app_opens_on_the_title_with_its_menu"
+  },
+  {
+    "name": "the AI drives straight at its goal",
+    "file": "crates/core/src/ai/nav.rs",
+    "find": "        if clear_line(map, from, to, self.clear_mm) {",
+    "replace": "        if true {",
+    "test": "the_ai_drives_from_the_spawn_to_the_far_end_without_grounding"
+  },
+  {
+    "name": "the AI goes for no fish",
+    "file": "crates/core/src/ai/fish.rs",
+    "find": "if f.panic || brain.tried(f.id) >= limit || taken(f) {",
+    "replace": "if true {",
+    "test": "the_ai_catches_a_fish_it_can_see"
+  },
+  {
+    "name": "the AI hooks at once",
+    "file": "crates/core/src/ai/fish.rs",
+    "find": "s.tick + (ms / TICK_MS as i32) as u32",
+    "replace": "s.tick",
+    "test": "the_ai_hooks_within_its_reaction_time"
+  },
+  {
+    "name": "Easy and Hard swap skills",
+    "file": "crates/core/src/ai/tuning.rs",
+    "find": "            Difficulty::Easy => &self.easy,\n            Difficulty::Normal => &self.normal,\n            Difficulty::Hard => &self.hard,",
+    "replace": "            Difficulty::Easy => &self.hard,\n            Difficulty::Normal => &self.normal,\n            Difficulty::Hard => &self.easy,",
+    "test": "hard_beats_easy_on_average"
+  },
+  {
+    "name": "a hunt ignores the reel's end",
+    "file": "crates/core/src/ai/hunt.rs",
+    "find": "    if eta >= left {",
+    "replace": "    if eta >= left + 1_000_000 {",
+    "test": "a_near_legendary_hook_is_hunted_and_a_far_common_one_is_not"
+  },
+  {
+    "name": "the AI never lifts the reel",
+    "file": "crates/core/src/ai/fish.rs",
+    "find": "    mid < seen + h.offset",
+    "replace": "    false",
+    "test": "a_full_match_of_four_ais_runs_the_same_twice_and_ends_with_catches"
+  },
+  {
+    "name": "the AI sees through the fog",
+    "file": "crates/core/src/ai/senses.rs",
+    "find": "let seen = d2 <= sight * sight && !super::nav::land_between(&m.map, b.at(), r.at());",
+    "replace": "let seen = true;",
+    "test": "the_ai_reads_only_what_its_seat_could_know"
+  },
+  {
+    "name": "AI seats get no inputs",
+    "file": "crates/core/src/app/play.rs",
+    "find": "            let mut inputs = p.ai.inputs(&p.game);",
+    "replace": "            let mut inputs = vec![sim::SeatInput::default(); p.game.seats.len()];",
+    "test": "ai_seats_drive_their_own_boats_in_an_offline_match"
+  },
+  {
+    "name": "the AI ignores land ahead",
+    "file": "crates/core/src/ai/nav.rs",
+    "find": "    if !reckless {",
+    "replace": "    if false {",
+    "test": "the_ai_slows_under_the_grounding_speed_near_land"
+  },
+  {
+    "name": "watch mode keeps the person's seat",
+    "file": "crates/core/src/app/play.rs",
+    "find": "            setup.seats[0].occupant = Occupant::Ai(Difficulty::Hard);",
+    "replace": "",
+    "test": "watch_mode_hands_the_persons_seat_to_an_ai"
   }
 ]

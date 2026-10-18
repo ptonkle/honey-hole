@@ -32,6 +32,8 @@ pub struct Tuning {
     pub fishing: crate::sim::fishing::tuning::FishingTuning,
     /// the Fish-Boy's radar: the ping (`fishboy/radar.rs`)
     pub radar: RadarTuning,
+    /// the AI players (`ai/tuning.rs`)
+    pub ai: crate::ai::tuning::AiTuning,
     /// the match's flow: the countdown, the popups, the end
     /// (`crates/core/src/flow/`)
     pub flow: FlowTuning,
@@ -263,6 +265,7 @@ impl Tuning {
                 r.ping_sweep_ms <= r.ping_cooldown_ms,
                 "radar.ping_sweep_ms must end before radar.ping_cooldown_ms.",
             );
+        crate::ai::tuning::check(&mut c, &self.ai);
         self.minigames.check(&mut c);
         c.done()
     }
@@ -333,8 +336,16 @@ pub mod tests {
             },
             "minigames": crate::minigame::tuning::tests::sample_json(),
             "fish": fish_sample(),
-            "fishing": fishing_sample()
+            "fishing": fishing_sample(),
+            "ai": ai_sample()
         })
+    }
+
+    /// The AI section, for tests: the shipped file's numbers.
+    pub fn ai_sample() -> serde_json::Value {
+        let file: serde_json::Value =
+            serde_json::from_str(include_str!("../../../data/tuning.json")).unwrap();
+        file["ai"].clone()
     }
 
     /// The fish section, round numbers for tests.

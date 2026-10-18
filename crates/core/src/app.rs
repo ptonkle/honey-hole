@@ -136,6 +136,9 @@ pub struct Ui {
     pub capture: bool,
     /// the page asks for the view model each frame (a match's clock moves)
     pub live: bool,
+    /// how many AI players' boats are under way now (the page marks it on
+    /// the body for the browser check)
+    pub ai_moving: u32,
     /// the page hides its cursor over the 2D layer, which draws its own
     /// (the camera minigame's viewfinder)
     pub hide_cursor: bool,
@@ -186,6 +189,9 @@ pub struct App {
     pub minigames: minigames::MinigamesScreen,
     /// the page's `?debug=fishing`: a fish by every bobber (`app/fishing.rs`)
     pub debug_fishing: bool,
+    /// the page's `?debug=watch`: an AI plays the person's seat too, and the
+    /// camera follows it (`app/play.rs`)
+    pub debug_watch: bool,
     /// the page's `?debug=reeds` or `?debug=island`: this seat's boat is
     /// moved by the biggest reed bed or island once its match starts, for
     /// the screenshots of the underwater and chase cameras there
@@ -223,6 +229,7 @@ impl App {
             flow: crate::flow::Flow::default(),
             minigames: minigames::MinigamesScreen::default(),
             debug_fishing: false,
+            debug_watch: false,
             debug_place: None,
         })
     }
@@ -424,6 +431,13 @@ impl App {
                     .play
                     .as_ref()
                     .is_some_and(|p| !p.menu_open() && !p.game.ended),
+            ai_moving: self.play.as_ref().map_or(0, |p| {
+                p.ai.brains
+                    .iter()
+                    .filter_map(|b| p.game.boat(b.seat))
+                    .filter(|b| b.speed_mm_per_s() > 1000)
+                    .count() as u32
+            }),
             live: (matches!(self.screen, Screen::Play | Screen::Postgame) && self.play.is_some())
                 || self.screen == Screen::Minigames,
             hide_cursor: self.minigames_hide_cursor(),

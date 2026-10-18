@@ -326,6 +326,7 @@ function draw(result) {
   document.title = ui.title;
   document.body.dataset.screen = ui.screen;
   document.body.dataset.fishboy = ui.fishboy;
+  document.body.dataset.aiMoving = ui.ai_moving;
   // the Fish-Boy up takes the pointer: the page lets it go so it can point
   document.body.dataset.pointer = ui.pointer ? "on" : "";
   // the 2D layer draws its own cursor (the camera's viewfinder)
