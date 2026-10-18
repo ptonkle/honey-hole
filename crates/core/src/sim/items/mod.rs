@@ -642,6 +642,12 @@ impl Match {
                     }
                 }
             }
+            // the cloak travels in this seat's boat state online
+            let cloaked = tick < s.cloak_until;
+            let remote = self.online.remote.get(seat).copied().unwrap_or(false);
+            if let Some(h) = self.online.hidden.get_mut(seat).filter(|_| !remote) {
+                *h = cloaked;
+            }
             let charged = s.charge.filter(|c| tick >= c.until);
             if let Some(b) = self.boats[seat].as_mut() {
                 if let Some(c) = charged {

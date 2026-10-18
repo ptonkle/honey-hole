@@ -131,6 +131,8 @@ impl App {
         match name {
             "data.flow" => self.flow.look = Some(FlowLook::parse(value)?),
             "postgame.skip" => self.skip_reveal(),
+            // online, the host's Rematch goes back to the Lobby (`app/online_play.rs`)
+            "postgame.rematch" if self.online_rematch().is_some() => {}
             "postgame.rematch" => self.rematch()?,
             "postgame.title" => self.leave_match(),
             // the browser check and screenshots: jump the match's clock

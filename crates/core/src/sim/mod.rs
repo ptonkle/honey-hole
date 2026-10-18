@@ -36,12 +36,13 @@ pub mod collide;
 pub mod fishing;
 pub mod input;
 pub mod items;
+pub mod remote;
 pub mod view;
 
 #[cfg(test)]
 mod tests;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::fishboy::radar::{self, Ping, RadarView};
 use crate::map::rng::Rng;
@@ -153,7 +154,7 @@ impl Setup {
 }
 
 /// Why a boat was wrecked.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum WreckCause {
     /// rammed by the boat in this seat
@@ -528,6 +529,8 @@ pub struct Match {
     pub fishing: fishing::Fishing,
     /// the item buoy and every seat's items
     pub items: items::Items,
+    /// online play's part (`remote`): offline, its default changes nothing
+    pub online: remote::Hooks,
 }
 
 impl Match {
@@ -554,6 +557,7 @@ impl Match {
             rng: Rng::new(setup.seed),
             fishing: fishing::Fishing::new(&tuning.fish, &tuning.fishing, n, setup.seed),
             items: items::Items::new(&tuning.items, setup.buoy_interval_ms, n, setup.seed),
+            online: remote::Hooks::default(),
             map,
             tuning: tuning.clone(),
             rules,
@@ -632,6 +636,7 @@ impl Match {
     /// missing one is no input. Returns this tick's events.
     pub fn step(&mut self, inputs: &[SeatInput]) -> &[MatchEvent] {
         self.events.clear();
+        self.take_arrivals();
         if self.ended {
             return &self.events;
         }
@@ -665,12 +670,17 @@ impl Match {
         collide::boats(self);
         for seat in 0..self.boats.len() {
             let i = input(seat);
+            if self.is_remote(seat) {
+                continue;
+            }
             if let Some(b) = self.boats[seat].as_mut() {
                 b.throttle(&self.rules, &i, self.tick);
             }
         }
         self.fishboy_and_radar(&inputs_or(inputs, self.seats.len()));
         self.items_step(&inputs_or(inputs, self.seats.len()));
+        self.fishing_shared_before();
+        let from = self.events.len();
         let world = fishing::World {
             map: &self.map,
             boats: &self.boats,
@@ -678,11 +688,15 @@ impl Match {
             half_beam_mm: self.rules.half_beam,
             tick: self.tick,
         };
-        let all: Vec<SeatInput> = (0..self.seats.len()).map(input).collect();
+        // a remote seat's line is its own browser's (`fishing/shared.rs`)
+        let all: Vec<SeatInput> = (0..self.seats.len())
+            .map(|s| if self.is_remote(s) { none } else { input(s) })
+            .collect();
         self.fishing
             .step(&world, &all, &mut self.scores, &mut self.events);
+        self.fishing_shared_after(from);
         self.items_after_fishing();
-        if self.tick >= self.rules.length_ticks {
+        if self.tick >= self.rules.length_ticks && !self.online.end_elsewhere {
             self.ended = true;
             self.events.push(MatchEvent::MatchEnded);
         }
@@ -801,7 +815,9 @@ impl Match {
                 heading: b.heading,
                 slot: b.seat,
                 name: self.setup.seats[b.seat].name.clone(),
-                cloaked: self.items.cloaked(b.seat, self.tick),
+                // this match's cloak, or a remote seat's (online play)
+                cloaked: self.items.cloaked(b.seat, self.tick)
+                    || self.online.hidden.get(b.seat).copied().unwrap_or(false),
             })
             .collect();
         RadarView {
@@ -823,6 +839,9 @@ impl Match {
 
     fn respawn_and_unghost(&mut self) {
         for seat in 0..self.boats.len() {
+            if self.is_remote(seat) {
+                continue;
+            }
             let slot = self.spawn_slot(seat);
             let (tick, rules) = (self.tick, &self.rules);
             let Some(b) = self.boats[seat].as_mut() else {
@@ -840,6 +859,9 @@ impl Match {
     /// Steering, the mode switch and the move with its land collision.
     fn drive(&mut self, seat: usize, i: &SeatInput) {
         let tick = self.tick;
+        if self.is_remote(seat) {
+            return;
+        }
         let Some(b) = self.boats[seat].as_mut() else {
             return;
         };

@@ -43,6 +43,8 @@ Every `SECOND-ORDER.md` row with status *person*, by number, with what the perso
 - R4.49: whether B4's "leggendaries ar not announced for 20 seconds" means a legendary's hook popup comes 20 s late.
 - R2.11: the twelve draft AI names in `data/names.json`.
 - R2.21: the match setup's length choices (4, 8, 12 min) and buoy intervals (30 s to 2 min).
+- R3.44: whether two players both behind strict NATs must be able to connect (a TURN server: a server or a paid service, and a new origin).
+- R3.57: a try of online play by room code between two machines (the relay path no automatic check runs).
 - R1.160: the fish's new shapes from above and their new base lengths (R1.153, R1.154), in `notes/shots/models/fish-v2/`.
 - R2.116: the six more roster fish's look from the side and from above, in `notes/shots/models/fish-more/` (swims in `notes/shots/models/swims/`).
 - R2.117: a read of their six names (listed at the foot of `SECOND-ORDER.md`).
@@ -65,6 +67,10 @@ By system, from `SECOND-ORDER.md`, with the rule each one produced.
 
 The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the date and commit.
 
+2026-10-18, online play, both halves (transport, lobby, boats, wrecks, timer; fishing shared by claims; branch `online`, worktree `.claude/worktrees/online-redo`, after d5a813b, merged with main at dad627e): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `./scripts/check-online.sh`: `ONLINE CHECK PASSED` (chromium, firefox, webkit); `count-tests.sh`: 369 passed, 0 failed, 0 ignored; `scripts/break_tests.py online boundary:`: every new break caught (24 + 5 for shared fishing).
+
+2026-10-18, online play merged with the match flow and the AI (main at 3895a04; branch `online`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `ONLINE CHECK PASSED` (chromium, firefox, webkit); `count-tests.sh`: 407 passed, 0 failed, 0 ignored; `scripts/break_tests.py "online flow"`: 3 of 3 caught.
+
 2026-10-17, the menu machinery port (branch `worktree-agent-aaf1b7a85a5536b76`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 58 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 25 of 25 breaks caught.
 
 2026-10-17, the model format, renderer, Gallery and the seven draft fish, merged with main (maps, boat, angler, buoy) (branch `worktree-agent-ae7232570ef10b3c9`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 129 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 82 of 82 breaks caught.
@@ -86,6 +92,8 @@ The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the 
 2026-10-18, the match flow (countdown, the 2D HUD with the fishing's meters, data-driven popups, wreck burst and shake, ghosting, the end, the postgame reveal and ranking, Rematch), merged with main (fishing, item minigames) (branch `worktree-agent-a9be3869944870630`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 357 checks, with the new `match_flow` step); `count-tests.sh`: 367 passed, 0 failed, 0 ignored; `scripts/break_tests.py` on the 23 new and changed breaks: 23 of 23 caught.
 
 2026-10-18, the AI players and headless playtests (`crates/core/src/ai/`, `examples/playtest.rs`, `notes/playtests.md`), merged with main (match flow, minigames, polish) (branch `ai`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 372 checks, with the new `ai` step); `count-tests.sh`: 380 passed, 0 failed, 0 ignored; `scripts/break_tests.py` on the 10 new breaks and the restored cue delay: 11 of 11 caught.
+
+2026-10-18, items (the buoy's clock, warning, beats and fair point; pickups; Shift and the six minigames; the six effects; claim functions; HUD, icons, popups, world effects; `?debug=items`), merged with main (branch `items`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, with the new `items` step); `count-tests.sh`: 404 passed before the online merge; `scripts/break_tests.py items:`: 29 of 29 caught.
 
 ## The next action
 
