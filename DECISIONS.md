@@ -64,4 +64,8 @@ The agent decided: boats pass through reeds with no slowdown or collision; reeds
 
 > fog distance should be very easy to tune quickly too
 
-The agent decided: the fog distance is a single value in one data file, which the game and the map checker both read. It can also be changed live in game from a debug control, for trying values without a rebuild. A changed value can make some pregenerated layouts too open or too cramped, so one command rescans the layout list; a test fails if the list was checked against a different fog distance than the file holds, so the two can't drift apart unnoticed.
+The agent decided: the fog distance is one constant, `sight_mm` in the Burt Lake parameters (`crates/core/src/map/mod.rs`), which the 3D fog and the map checker both read. It can also be changed live in game from a debug control, for trying values without a rebuild. A changed value can make some pregenerated layouts too open or too cramped, so one command rescans the layout list; a test fails if the list was checked against a different fog distance than the file holds, so the two can't drift apart unnoticed.
+
+> like surely it's just a single const right
+
+Yes: `sight_mm: 120_000` (mm) in `crates/core/src/map/mod.rs`.
