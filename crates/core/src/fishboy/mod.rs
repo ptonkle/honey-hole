@@ -232,7 +232,7 @@ fn screen_of(m: &Model) -> ([i32; 2], crate::gfx::geom::V3) {
 }
 
 /// Land the radar shows round the lake's water.
-const RADAR_MARGIN_MM: i32 = 24_000;
+pub const RADAR_MARGIN_MM: i32 = 24_000;
 
 /// The tabs' rectangles along the top of the screen.
 const TAB_Y: i32 = 22;

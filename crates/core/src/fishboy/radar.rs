@@ -297,6 +297,19 @@ pub fn region(map: &Map, margin_mm: i32) -> (P, i32) {
     (P::new(lo(x0, x1), lo(y0, y1)), side)
 }
 
+/// The map point under (x, y) screen units on the radar's map, for the
+/// square `region` shows (`region`); `None` off the map's rectangle. The
+/// Teleporter's destination is picked this way.
+pub fn map_point(region: (P, i32), x: i32, y: i32) -> Option<P> {
+    if !MAP_RECT.contains(x, y) {
+        return None;
+    }
+    let (lo, side) = (region.0, region.1 as i64);
+    let dx = (x - MAP_RECT.x) as i64 * side / MAP_RECT.w.max(1) as i64;
+    let dy = (y - MAP_RECT.y) as i64 * side / MAP_RECT.h.max(1) as i64;
+    Some(P::new(lo.x + dx as i32, (lo.y as i64 + side - dy) as i32))
+}
+
 /// What the radar screen needs besides the view.
 pub struct RadarScene<'a> {
     pub theme: &'a Theme,

@@ -12,6 +12,7 @@ use crate::map::trig::{self, HALF, QUARTER, TURN};
 use crate::ui2d::theme::c;
 use crate::ui2d::{Rect, Rgba};
 
+#[derive(Debug, Clone)]
 pub struct Reel {
     pub t: ReelTuning,
     pub centre: Pt,

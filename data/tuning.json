@@ -258,5 +258,28 @@
       "pixel_max": 64,
       "ghost_max": 90
     }
+  },
+  "items": {
+    "_note": "The item buoy and the items (crates/core/src/sim/items/). A buoy spawns every match.buoy_interval_ms (the setup's choice) at a fair point, a similar boat trip from every player (map/buoy.rs). warning_ms before it, everyone gets the warning popup, then the countdown's beats, beat_ms apart, the last as it spawns (BRIEF: a 5-beat countdown). A boat whose middle comes within pickup_radius_mm takes it and gets an item drawn by weights (each weight's share of their total). unclaimed_moves: when the next buoy is due and the last is still there, it moves to the new fair point (false: it stays, and no other comes until it is taken). The effects: Cloaking Tech hides the player from pings for cloak_ms (BRIEF: 1 min); the Power Reel reels at power_reel_pct for power_reel_ms (BRIEF: 2x for 20 s); nitrous runs nitrous_ms (BRIEF: 15 s; its multipliers are boat.nitrous); the Teleporter charges for teleport_charge_ms (BRIEF: 5 s) and lands at least teleport_clear_mm from land; the High-Quality Camera's offer after a catch stays up camera_prompt_ms, then the camera is kept for later (its 1.5x is fishing.camera_value_pct).",
+    "warning_ms": 5000,
+    "beats": 5,
+    "beat_ms": 1000,
+    "pickup_radius_mm": 3500,
+    "unclaimed_moves": true,
+    "weights": {
+      "cloak": 10,
+      "power_reel": 10,
+      "nitrous": 10,
+      "teleporter": 10,
+      "camera": 10,
+      "enhanced_radar": 10
+    },
+    "cloak_ms": 60000,
+    "power_reel_ms": 20000,
+    "power_reel_pct": 200,
+    "nitrous_ms": 15000,
+    "teleport_charge_ms": 5000,
+    "teleport_clear_mm": 6000,
+    "camera_prompt_ms": 10000
   }
 }

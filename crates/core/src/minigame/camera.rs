@@ -53,6 +53,7 @@ struct Photo {
     tick: u32,
 }
 
+#[derive(Debug, Clone)]
 pub struct Shoot {
     pub t: CameraTuning,
     rng: Rng,
