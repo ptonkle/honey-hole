@@ -453,9 +453,9 @@
       "label": "Your motor",
       "_about": "an outboard: a low sawtooth putter (its throb speeds with the pitch), a square an octave up, and water hiss",
       "layers": [
-        { "wave": "sawtooth", "freq": 55, "gain": 0.5, "filter": { "type": "lowpass", "freq": 600, "q": 2 }, "throb": { "rate": 16, "depth": 0.5 } },
-        { "wave": "square", "freq": 110, "gain": 0.14, "filter": { "type": "lowpass", "freq": 900 } },
-        { "wave": "noise", "gain": 0.07, "filter": { "type": "lowpass", "freq": 1000 } }
+        { "wave": "sawtooth", "freq": 55, "gain": 0.35, "filter": { "type": "lowpass", "freq": 600, "q": 2 }, "throb": { "rate": 16, "depth": 0.5 } },
+        { "wave": "square", "freq": 110, "gain": 0.1, "filter": { "type": "lowpass", "freq": 900 } },
+        { "wave": "noise", "gain": 0.05, "filter": { "type": "lowpass", "freq": 1000 } }
       ]
     },
     {
