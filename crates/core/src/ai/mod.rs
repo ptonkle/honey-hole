@@ -550,7 +550,14 @@ impl Brain {
             return;
         }
         let moved = self.path_goal.dist(to) > 10_000;
-        if moved || self.path.is_empty() || s.tick >= self.path_tick + ticks(4000) {
+        // a fresh path when the goal moves, or now and then when the next
+        // waypoint is no longer in clear water from here (a bounce, a dodge)
+        let stale = s.tick >= self.path_tick + ticks(3000)
+            && self
+                .path
+                .first()
+                .is_some_and(|&w| !nav::clear_line(s.map, at, w, 0));
+        if moved || self.path.is_empty() || stale {
             self.path = nav.path(s.map, at, to).unwrap_or_else(|| vec![to]);
             self.path_goal = to;
             self.path_tick = s.tick;

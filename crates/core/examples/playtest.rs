@@ -74,6 +74,8 @@ struct Totals {
     ai_ns: u128,
     ai_ticks: u64,
     ai_worst_ns: u128,
+    /// ticks whose four AI players took over 1 ms together
+    ai_slow: u64,
     step_ns: u128,
     ticks: u64,
     all: SeatStats,
@@ -153,6 +155,7 @@ fn main() {
             let spent = a.elapsed().as_nanos();
             tot.ai_ns += spent;
             tot.ai_worst_ns = tot.ai_worst_ns.max(spent);
+            tot.ai_slow += (spent > 1_000_000) as u64;
             tot.ai_ticks += 4;
             for b in &crew.brains {
                 st[b.seat].acts[act_ix(b.activity)] += 1;
@@ -367,7 +370,7 @@ fn report(tot: &Totals) {
     println!(
         "Points per minute spent fishing: {:.1}. Points knocked off a rival's line per minute spent hunting: {:.1}; the rammer then landed {} of those fish itself ({:.1} a match, {:.0} points a match).",
         pts as f64 / fish_min.max(0.001),
-        a.denied as f64 / hunt_min.max(0.001),
+        if hunt_min > 0.1 { a.denied as f64 / hunt_min } else { 0.0 },
         a.steals,
         a.steals as f64 / m,
         a.stolen as f64 / m
@@ -418,9 +421,11 @@ fn report(tot: &Totals) {
     );
     println!();
     println!(
-        "AI cost: {:.1} µs per AI per tick on average, the slowest tick of four AIs {:.0} µs; the match step {:.1} µs per tick ({} ticks).",
+        "AI cost: {:.1} µs per AI per tick on average; the slowest tick of four AIs {:.0} µs, and {} ticks in {} over 1 ms; the match step {:.1} µs per tick ({} ticks).",
         tot.ai_ns as f64 / tot.ai_ticks.max(1) as f64 / 1e3,
         tot.ai_worst_ns as f64 / 1e3,
+        tot.ai_slow,
+        tot.ticks,
         tot.step_ns as f64 / tot.ticks.max(1) as f64 / 1e3,
         tot.ticks
     );
