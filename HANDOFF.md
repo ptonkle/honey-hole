@@ -35,6 +35,8 @@ Every `SECOND-ORDER.md` row with status *person*, by number, with what the perso
 - R1.54: the four player colours and the Gallery's light in `data/look.json`.
 - R1.149: the remodelled angler's look (tapered limbs, round head, no boxes), in `notes/shots/models/angler-v2/`.
 - R1.160: the fish's new shapes from above and their new base lengths (R1.153, R1.154), in `notes/shots/models/fish-v2/`.
+- R2.116: the six more roster fish's look from the side and from above, in `notes/shots/models/fish-more/` (swims in `notes/shots/models/swims/`).
+- R2.117: a read of their six names (listed at the foot of `SECOND-ORDER.md`).
 
 ## Mistakes so far
 

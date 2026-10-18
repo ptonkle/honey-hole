@@ -36,6 +36,7 @@ Collected as the agent makes them; brought up in the morning. Each also has a ro
 - V2. 50 ticks per second (decision 2).
 - V3. Fish base lengths trimmed so a 1.5× catch is a trophy, not past a record (muskie 0.95 m, pike 0.65 m, walleye 0.43 m, smallmouth 0.35 m, perch 0.2 m, bluegill 0.17 m); the sturgeon stays 1.5 m rather than the 1.8 m first suggested (SECOND-ORDER R1.150–R1.154).
 - V4. Angler brows made level and slightly raised (the person said they looked sad).
+- V5. Six more roster fish modelled (pumpkinseed, rock bass, largemouth bass, black crappie, channel catfish, lake trout), bases 150 to 600 mm on the same 1.5× rule (SECOND-ORDER R2.110 to R2.117).
 
 ## Status
 
