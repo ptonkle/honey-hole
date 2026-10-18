@@ -27,7 +27,7 @@
       "ground": [82, 88, 80],
       "glow_fog_pct": 45
     },
-    "zenith": [128, 152, 176],
+    "zenith": [138, 162, 186],
     "sky_band": [-4, 60],
     "fog_start_pct": 22,
     "fog_end_pct": 100,
@@ -75,7 +75,7 @@
       "maple": ["birch", "pine-tall"],
       "reeds": "cattails",
       "lily_pads": "lily-pads",
-      "lily_pct": 35,
+      "lily_pct": 60,
       "lily_depth_mm": [300, 2200],
       "shore_rocks": "shore-rocks",
       "shore_rocks_permille": 60,

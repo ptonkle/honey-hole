@@ -109,7 +109,8 @@ pub struct UnderLook {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PropsLook {
-    /// the baked frames of a sway or bob, blended between
+    /// the poses a sway or bob is sampled at to find its motion (1: the
+    /// props stand still)
     pub frames: u32,
     /// the models for each kind of map tree; one is picked per tree
     pub pine: Vec<String>,

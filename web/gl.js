@@ -92,8 +92,9 @@ export function makeRenderer(canvas, N, shaders) {
   point(gl, water.attributes(N.vertex.attributes), stride, 0, 0);
   // the props: pointed afresh for each group
   const propsVao = gl.createVertexArray();
-  const propA = props.attributes(N.vertex.attributes);
-  const propB = props.attributes(N.frame_b);
+  const propPose = props.attributes(N.vertex.attributes);
+  const propCos = props.attributes(N.motion_cos);
+  const propSin = props.attributes(N.motion_sin);
   const propI = props.attributes(N.instance.attributes);
   // the sky's triangle
   const skyVao = gl.createVertexArray();
@@ -139,10 +140,11 @@ export function makeRenderer(canvas, N, shaders) {
       gl.bindBuffer(gl.ARRAY_BUFFER, perInstance);
       gl.bufferData(gl.ARRAY_BUFFER, instances, gl.STREAM_DRAW);
       for (let at = 0; at < groups.length; at += N.group) {
-        const [frameA, frameB, verts, first, many] = groups.subarray(at, at + N.group);
+        const [pose, cos, sin, verts, first, many] = groups.subarray(at, at + N.group);
         gl.bindBuffer(gl.ARRAY_BUFFER, fixed);
-        point(gl, propA, stride, frameA, 0);
-        point(gl, propB, stride, frameB, 0);
+        point(gl, propPose, stride, pose, 0);
+        point(gl, propCos, stride, cos, 0);
+        point(gl, propSin, stride, sin, 0);
         gl.bindBuffer(gl.ARRAY_BUFFER, perInstance);
         point(gl, propI, N.instance.stride, first, 1);
         gl.drawArraysInstanced(gl.TRIANGLES, 0, verts, many);

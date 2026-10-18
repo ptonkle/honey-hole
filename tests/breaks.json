@@ -679,13 +679,6 @@
     "test": "copies_of_one_model_sway_from_their_own_phases"
   },
   {
-    "name": "a group blends toward the next frame",
-    "file": "crates/core/src/scene/mod.rs",
-    "find": "let next = (f + 1) % m.frames as usize;",
-    "replace": "let next = f;",
-    "test": "groups_point_inside_the_static_buffer_at_a_frame_and_the_next"
-  },
-  {
     "name": "a map heading turns a model's front that way",
     "file": "crates/core/src/scene/mod.rs",
     "find": "fx::wrap(QUARTER + heading)",
@@ -754,5 +747,26 @@
     "find": "let glow = if self.glows[face.paint] { ONE } else { 0 };",
     "replace": "let glow = 0;",
     "test": "a_colour_marked_glow_is_drawn_unlit_and_a_plain_one_lit"
+  },
+  {
+    "name": "a moving mesh's motion follows its pose",
+    "file": "crates/core/src/scene/mod.rs",
+    "find": "if m.moving { k * m.verts } else { 0 }",
+    "replace": "0",
+    "test": "groups_point_inside_the_static_buffer_at_a_pose_and_its_motion"
+  },
+  {
+    "name": "a sway is baked as its pose and its motion",
+    "file": "crates/core/src/scene/props.rs",
+    "find": "out[2 * len + v] = (2 * s / (k * ONE as i64)) as i32;",
+    "replace": "out[2 * len + v] = 0;",
+    "test": "a_swaying_model_is_baked_as_its_pose_and_its_motion_and_a_still_one_once"
+  },
+  {
+    "name": "each copy's place in its loop comes from its phase",
+    "file": "crates/core/src/scene/mod.rs",
+    "find": "let t = (clock_ms + p.phase_ms as u64) % m.ms as u64;",
+    "replace": "let t = clock_ms % m.ms as u64;",
+    "test": "copies_of_one_model_sway_from_their_own_phases"
   }
 ]

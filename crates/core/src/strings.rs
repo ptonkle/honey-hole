@@ -64,6 +64,7 @@ pub const KEYS: &[&str] = &[
     "lake.view",
     "lake.view.tour",
     "lake.view.spawn",
+    "lake.view.dock",
     "lake.view.island",
     "lake.view.reeds",
     "lake.view.under",

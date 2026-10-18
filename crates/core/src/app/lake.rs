@@ -30,8 +30,10 @@ pub const FOG_STEP_M: u32 = 10;
 pub enum View {
     /// round the lake on the boat camera
     Tour,
-    /// the boat camera at the spawn point, facing across the lake
+    /// the driver's eye at the spawn point, facing across the lake
     Spawn,
+    /// the boat camera at the spawn point, turned back to the dock
+    Dock,
     /// the boat camera by the largest island
     Island,
     /// low over the largest reed bed
@@ -43,9 +45,10 @@ pub enum View {
 }
 
 impl View {
-    pub const ALL: [View; 6] = [
+    pub const ALL: [View; 7] = [
         View::Tour,
         View::Spawn,
+        View::Dock,
         View::Island,
         View::Reeds,
         View::Under,
@@ -56,6 +59,7 @@ impl View {
         match self {
             View::Tour => "tour",
             View::Spawn => "spawn",
+            View::Dock => "dock",
             View::Island => "island",
             View::Reeds => "reeds",
             View::Under => "under",
@@ -288,6 +292,7 @@ impl App {
                 (p, h, 0)
             }
             View::Spawn | View::Above => (spawn.at, spawn.heading, 0),
+            View::Dock => (spawn.at, spawn.heading, HALF),
             View::Island => {
                 let island = map
                     .islands
@@ -317,6 +322,14 @@ impl App {
         };
         let cam = match self.preview.view {
             View::Reeds => camera::boat(lake, cam_look, target, boat_yaw, turn, -deg(6)),
+            // the driver's eye: over the stern seat, looking ahead
+            View::Spawn => {
+                let pitch = deg(4);
+                let eye = ahead(-14, 0).add(v3(0, scene::mm(1900), 0));
+                let reach = fx::int(20);
+                let centre = eye.add(crate::gfx::geom::facing(boat_yaw, -pitch).scale(reach));
+                camera::fly_over(cam_look, centre, boat_yaw, pitch, reach)
+            }
             View::Under => camera::fly_over(cam_look, ahead(32, 0), boat_yaw, deg(56), fx::ratio(7, 2)),
             View::Above => {
                 let pitch = deg(cam_look.above_pitch_deg);

@@ -7,13 +7,16 @@
 //! boulders in the shallows and fallen logs in the woods. Each draws from
 //! hashes of the map's seed and the spot, so a map always looks the same.
 //!
-//! A swaying or bobbing model is baked at `frames` poses through its loop;
-//! the renderer blends each instance between two of them, at the instance's
-//! own phase (SECOND-ORDER R1.104).
+//! A swaying or bobbing model is sampled at `frames` poses through its loop
+//! and baked as its mean pose and the parts of its motion that follow the
+//! loop's cosine and sine (its first harmonic, which is the whole of a sway
+//! made of sines). The renderer adds them back at each instance's own
+//! phase (SECOND-ORDER R1.104), so every copy of a model is one instanced
+//! draw however its copies are phased.
 
 use super::look::LakeLook;
 use super::{Lake, Prop, PropMesh};
-use crate::gfx::fx::ONE;
+use crate::gfx::fx::{self, ONE};
 use crate::gfx::geom::Affine;
 use crate::gfx::render;
 use crate::map::rng::hash2;
@@ -327,8 +330,44 @@ fn idle(m: &Model) -> Option<Anim> {
         .find(|a| m.animation(*a).is_some())
 }
 
-/// Bakes each model the props use, appending its frames to `out`, and
-/// gives every prop its mesh, transform and phase.
+/// A swaying model's loop as three blocks of vertices: the mean pose, and
+/// the motion along the loop's cosine and along its sine, from `samples`
+/// equally spaced poses (each a whole triangle list). Positions and normals
+/// are decomposed; colours and glows are the first pose's.
+fn harmonics(samples: &[Vec<i32>]) -> Vec<i32> {
+    let k = samples.len() as i64;
+    let len = samples[0].len();
+    let mut out = vec![0i32; len * 3];
+    let turns: Vec<(i64, i64)> = (0..k)
+        .map(|i| {
+            let a = (TURN as i64 * i / k) as i32;
+            (fx::cos(a) as i64, fx::sin(a) as i64)
+        })
+        .collect();
+    for v in 0..len {
+        let moving = v % render::VERTEX_VALUES < 6;
+        if !moving {
+            for block in 0..3 {
+                out[block * len + v] = samples[0][v];
+            }
+            continue;
+        }
+        let (mut mean, mut c, mut s) = (0i64, 0i64, 0i64);
+        for (i, sample) in samples.iter().enumerate() {
+            let x = sample[v] as i64;
+            mean += x;
+            c += x * turns[i].0;
+            s += x * turns[i].1;
+        }
+        out[v] = (mean / k) as i32;
+        out[len + v] = (2 * c / (k * ONE as i64)) as i32;
+        out[2 * len + v] = (2 * s / (k * ONE as i64)) as i32;
+    }
+    out
+}
+
+/// Bakes each model the props use, appending it to `out`, and gives every
+/// prop its mesh, transform and phase.
 pub fn bake(
     lake: &Lake,
     models: &[Model],
@@ -346,23 +385,34 @@ pub fn bake(
                     .iter()
                     .find(|m| m.id == p.model)
                     .expect("Lake::build checked every model is loaded");
-                let anim = idle(m);
-                let (frames, ms) = match anim.and_then(|a| m.animation(a)) {
-                    Some(a) => (look.props.frames, a.ms),
-                    None => (1, 1),
-                };
+                let anim = idle(m).filter(|_| look.props.frames > 1);
+                let ms = anim.and_then(|a| m.animation(a)).map_or(1, |a| a.ms);
                 let first = render::vertex_count(out) as i32;
                 let colours = m.colours([0; 3]);
-                for k in 0..frames {
-                    let t = m.transforms(&m.poses(anim, ms * k / frames));
-                    m.draw(&t, &Affine::IDENTITY, &colours, out);
+                let pose = |t: u32| {
+                    let mut tris = Vec::new();
+                    m.draw(
+                        &m.transforms(&m.poses(anim, t)),
+                        &Affine::IDENTITY,
+                        &colours,
+                        &mut tris,
+                    );
+                    tris
+                };
+                let still = pose(0);
+                let verts = render::vertex_count(&still) as i32;
+                if anim.is_some() {
+                    let frames = look.props.frames;
+                    let samples: Vec<Vec<i32>> = (0..frames).map(|k| pose(ms * k / frames)).collect();
+                    out.extend(harmonics(&samples));
+                } else {
+                    out.extend(still);
                 }
-                let verts = (render::vertex_count(out) as i32 - first) / frames as i32;
                 meshes.push(PropMesh {
                     model: p.model.clone(),
                     first,
                     verts,
-                    frames,
+                    moving: anim.is_some(),
                     ms,
                     radius: m.ball().1,
                 });

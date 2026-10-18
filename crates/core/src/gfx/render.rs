@@ -10,7 +10,7 @@
 //!   water, uploaded once per world, `crate::scene`);
 //! - the instanced groups (`groups`) and their per-instance values
 //!   (`instances`): each group draws one prop mesh from the static buffer
-//!   once per instance, blending two baked frames of its sway.
+//!   once per instance, its sway added back at the instance's own phase.
 //!
 //! Every number the page needs to read these arrays (strides, offsets,
 //! where each uniform sits in the view values) is in [`numbers_json`], so
@@ -38,12 +38,13 @@ pub const BYTES_PER_VALUE: usize = 4;
 /// Bytes per vertex.
 pub const STRIDE: usize = VERTEX_VALUES * BYTES_PER_VALUE;
 /// Values per prop instance: the placing transform's three columns and its
-/// translation (12), and the blend from its frame to the next (1).
-pub const INSTANCE_VALUES: usize = 13;
-/// Values per instanced group: the byte offsets of its two frames in the
-/// static buffer, the vertices a frame holds, the byte offset of its first
-/// instance and how many instances it draws.
-pub const GROUP_VALUES: usize = 5;
+/// translation (12), and the cosine and sine of where it is in its loop (2).
+pub const INSTANCE_VALUES: usize = 14;
+/// Values per instanced group: the byte offsets in the static buffer of its
+/// mesh's pose and of the motion along its loop's cosine and sine, the
+/// vertices the mesh holds, the byte offset of its first instance and how
+/// many instances it draws.
+pub const GROUP_VALUES: usize = 6;
 
 /// How many vertices a triangle list holds.
 pub fn vertex_count(values: &[i32]) -> u32 {
@@ -277,7 +278,7 @@ impl Frame {
         let mut draws = 1;
         draws += (self.statics[1] > 0) as u32 + (self.statics[3] > 0) as u32 + (!self.tris.is_empty()) as u32;
         for g in self.groups.chunks(GROUP_VALUES) {
-            tris += (g[2] / 3) as u64 * g[4] as u64;
+            tris += (g[3] / 3) as u64 * g[5] as u64;
             draws += 1;
         }
         (tris, draws)
@@ -310,12 +311,14 @@ pub fn numbers_json() -> String {
             "stride": STRIDE,
             "attributes": [["aPos", 3, 0], ["aNormal", 3, 3 * b], ["aColour", 3, 6 * b], ["aGlow", 1, 9 * b]],
         },
-        // the frame a prop blends toward, at that frame's own offset
-        "frame_b": [["aPosB", 3, 0], ["aNormalB", 3, 3 * b]],
+        // a prop's motion along its loop's cosine and sine, each at its
+        // block's own offset
+        "motion_cos": [["aPosCos", 3, 0], ["aNormalCos", 3, 3 * b]],
+        "motion_sin": [["aPosSin", 3, 0], ["aNormalSin", 3, 3 * b]],
         "instance": {
             "values": INSTANCE_VALUES,
             "stride": INSTANCE_VALUES as u32 * b,
-            "attributes": [["aC0", 3, 0], ["aC1", 3, 3 * b], ["aC2", 3, 6 * b], ["aT", 3, 9 * b], ["aBlend", 1, 12 * b]],
+            "attributes": [["aC0", 3, 0], ["aC1", 3, 3 * b], ["aC2", 3, 6 * b], ["aT", 3, 9 * b], ["aLoop", 2, 12 * b]],
         },
         "group": GROUP_VALUES,
         // the sky's one triangle, which covers the screen, and its size
@@ -388,7 +391,7 @@ mod tests {
         // a plain sky has no tint under water
         assert_eq!(slice("uUnder"), vec![0, 0]);
         assert_eq!(n["vertex"]["stride"], 40);
-        assert_eq!(n["instance"]["stride"], 52);
+        assert_eq!(n["instance"]["stride"], 56);
         // the uniforms end where the values do
         let (at, len) = uniform_in(&n, "uGlow");
         assert_eq!(at + len, VIEW_VALUES);
@@ -445,7 +448,7 @@ mod tests {
             tris: vec![0; 2 * 3 * VERTEX_VALUES],
             statics: [0, 30, 30, 6],
             // two groups: 12 vertices (4 triangles) 5 times, and 3 once
-            groups: vec![0, 0, 12, 0, 5, 0, 0, 3, 0, 1],
+            groups: vec![0, 0, 0, 12, 0, 5, 0, 0, 0, 3, 0, 1],
             ..Frame::default()
         };
         // 2 posed + 10 terrain + 2 water + 20 + 1

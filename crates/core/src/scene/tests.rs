@@ -13,8 +13,9 @@ use crate::model;
 const CELL: i32 = 4000;
 const N: usize = 30;
 
-/// A tree: a trunk triangle and a crown triangle that swings 90° about y
-/// at 600 ms of a 1200 ms sway.
+/// A tree: a trunk triangle and a crown triangle that sways about y,
+/// 4° · sin of the loop, sampled every 100 ms of a 1200 ms sway in whole
+/// degrees.
 fn tree() -> Model {
     let v = json!({
         "name": "Tree", "kind": "prop", "unit": "mm",
@@ -26,7 +27,17 @@ fn tree() -> Model {
         "faces": [{ "colour": "bark", "v": [0, 1, 2] }, { "colour": "leaf", "v": [3, 4, 5] }],
         "animations": { "sway": { "ms": 1200, "ease": "linear", "keys": [
             { "at": 0 },
-            { "at": 600, "parts": { "crown": { "turn": [0, 90, 0] } } }
+            { "at": 100, "parts": { "crown": { "turn": [0, 2, 0] } } },
+            { "at": 200, "parts": { "crown": { "turn": [0, 3, 0] } } },
+            { "at": 300, "parts": { "crown": { "turn": [0, 4, 0] } } },
+            { "at": 400, "parts": { "crown": { "turn": [0, 3, 0] } } },
+            { "at": 500, "parts": { "crown": { "turn": [0, 2, 0] } } },
+            { "at": 600 },
+            { "at": 700, "parts": { "crown": { "turn": [0, -2, 0] } } },
+            { "at": 800, "parts": { "crown": { "turn": [0, -3, 0] } } },
+            { "at": 900, "parts": { "crown": { "turn": [0, -4, 0] } } },
+            { "at": 1000, "parts": { "crown": { "turn": [0, -3, 0] } } },
+            { "at": 1100, "parts": { "crown": { "turn": [0, -2, 0] } } }
         ] } }
     });
     model::parse("tree", &v.to_string()).unwrap()
@@ -70,6 +81,7 @@ fn look_json() -> Value {
         lake["props"][k] = json!(0);
     }
     lake["props"]["cabins"] = json!(0);
+    lake["props"]["frames"] = json!(12);
     lake
 }
 
@@ -232,23 +244,31 @@ fn each_tree_kind_takes_its_model_and_every_prop_stands_on_the_ground() {
 }
 
 #[test]
-fn a_swaying_model_is_baked_once_per_frame_and_a_still_one_once() {
+fn a_swaying_model_is_baked_as_its_pose_and_its_motion_and_a_still_one_once() {
     let l = lake();
-    let frames = l.look.props.frames;
     let t = l.meshes.iter().find(|m| m.model == "tree").unwrap();
-    // two triangles of three vertices, `frames` times, over 1200 ms
-    assert_eq!((t.verts, t.frames, t.ms), (6, frames, 1200));
+    // two triangles of three vertices, in three blocks, over 1200 ms
+    assert_eq!((t.verts, t.moving, t.ms), (6, true, 1200));
     let r = l.meshes.iter().find(|m| m.model == "rock").unwrap();
-    assert_eq!((r.verts, r.frames), (3, 1));
-    // frame k of the tree is k / frames of the way into its sway: the
-    // crown's corner at x 1 m turns about y by 90° per 600 ms
-    let k = frames / 4;
-    let corner = (t.first as usize + k as usize * 6 + 4) * render::VERTEX_VALUES;
-    let ms = 1200 * k / frames;
-    let a = deg(90) as i64 * ms as i64 / 600;
-    let want = v3(fx::cos(a as i32), int(3), -fx::sin(a as i32));
-    let got = v3(l.vertices[corner], l.vertices[corner + 1], l.vertices[corner + 2]);
-    assert!(near(got, want), "{got:?} {want:?}");
+    assert_eq!((r.verts, r.moving), (3, false));
+    // the crown's corner at x 1 m swings about y by 4° · sin(loop):
+    // a quarter of the way round (cos 0, sin 1) it has turned 4°, so it
+    // sits at x cos 4°, z −sin 4° (the sway as one harmonic, within 1 cm)
+    let at = |block: i32| {
+        let i = ((t.first + block * t.verts + 4) as usize) * render::VERTEX_VALUES;
+        v3(l.vertices[i], l.vertices[i + 1], l.vertices[i + 2])
+    };
+    let quarter = at(0).add(at(2));
+    let four = deg(4);
+    assert!(
+        near(quarter, v3(fx::cos(four), int(3), -fx::sin(four))),
+        "{quarter:?}"
+    );
+    // and half way round, back at rest (cos −1, sin 0)
+    let half = at(0).sub(at(1));
+    assert!(near(half, v3(ONE, int(3), 0)), "{half:?}");
+    // the trunk does not sway: no motion in its blocks
+    assert_eq!(at(1).y, 0);
 }
 
 #[test]
@@ -262,52 +282,57 @@ fn copies_of_one_model_sway_from_their_own_phases() {
     let phases: Vec<u32> = trees.iter().map(|p| p.phase_ms).collect();
     assert!(phases.iter().all(|&p| p < 1200));
     assert!(phases[0] != phases[1] || phases[1] != phases[2], "{phases:?}");
-    // no fog, from high above: all four drawn; each tree's frame and
-    // blend come from the clock plus its phase
+    // no fog, from high above: all four drawn; each tree's place in its
+    // loop is the clock plus its phase, as a cosine and a sine
     let cam = cam_at(v3(0, int(300), 0), v3(0, -ONE, 0));
     let clock = 5000;
     let f = frame(&l, cam, ONE, None, clock, &[]);
     assert_eq!(f.instances.len(), 4 * render::INSTANCE_VALUES);
-    let frames = l.look.props.frames as u64;
-    let mut blends: Vec<i32> = Vec::new();
+    assert_eq!(f.groups.len(), 2 * render::GROUP_VALUES, "one draw per model");
+    let mut got: Vec<(i32, i32)> = Vec::new();
     for g in f.groups.chunks(render::GROUP_VALUES) {
-        let m = l.meshes.iter().find(|m| m.verts == g[2]).unwrap();
-        if m.model != "tree" {
+        if g[3] != 6 {
             continue;
         }
-        let first = g[3] as usize / render::BYTES_PER_VALUE;
-        for k in 0..g[4] as usize {
-            blends.push(f.instances[first + k * render::INSTANCE_VALUES + 12]);
+        let first = g[4] as usize / render::BYTES_PER_VALUE;
+        for k in 0..g[5] as usize {
+            let at = first + k * render::INSTANCE_VALUES + 12;
+            got.push((f.instances[at], f.instances[at + 1]));
         }
     }
-    let mut want: Vec<i32> = phases
+    let mut want: Vec<(i32, i32)> = phases
         .iter()
         .map(|&p| {
-            let pos = (clock + p as u64) % 1200 * frames * ONE as u64 / 1200;
-            (pos % ONE as u64) as i32
+            let a = ((clock + p as u64) % 1200 * fx::TURN as u64 / 1200) as i32;
+            (fx::cos(a), fx::sin(a))
         })
         .collect();
     want.sort();
-    blends.sort();
-    assert_eq!(blends, want);
+    got.sort();
+    assert_eq!(got, want);
 }
 
 #[test]
-fn groups_point_inside_the_static_buffer_at_a_frame_and_the_next() {
+fn groups_point_inside_the_static_buffer_at_a_pose_and_its_motion() {
     let l = lake();
     let cam = cam_at(v3(0, int(300), 0), v3(0, -ONE, 0));
     let f = frame(&l, cam, ONE, None, 777, &[]);
     let bytes = l.vertices.len() * render::BYTES_PER_VALUE;
     let mut drawn = 0;
     for g in f.groups.chunks(render::GROUP_VALUES) {
-        let m = l.meshes.iter().find(|m| m.verts == g[2]).unwrap();
-        let frame_bytes = m.verts * render::STRIDE as i32;
+        let m = l.meshes.iter().find(|m| m.verts == g[3]).unwrap();
+        let block = m.verts * render::STRIDE as i32;
         let start = m.first * render::STRIDE as i32;
-        let a = (g[0] - start) / frame_bytes;
-        let b = (g[1] - start) / frame_bytes;
-        assert_eq!(b, (a + 1) % m.frames as i32, "frame b follows frame a");
-        assert!(g[0] as usize + frame_bytes as usize <= bytes);
-        drawn += g[4];
+        assert_eq!(g[0], start);
+        if m.moving {
+            // the cosine's block, then the sine's, after the pose
+            assert_eq!((g[1], g[2]), (start + block, start + 2 * block));
+            assert!((start + 3 * block) as usize <= bytes);
+        } else {
+            // a still model's motion is its pose times 0
+            assert_eq!((g[1], g[2]), (start, start));
+        }
+        drawn += g[5];
     }
     assert_eq!(drawn as usize, l.props.len());
     assert_eq!(f.statics, [l.terrain[0], l.terrain[1], l.water[0], l.water[1]]);

@@ -66,15 +66,16 @@ pub fn heading_of_yaw(yaw: i32) -> i32 {
     fx::wrap(yaw - QUARTER)
 }
 
-/// One prop mesh in the static buffer: `frames` baked poses of `verts`
-/// vertices each, one after another from vertex `first`. A swaying or
-/// bobbing model loops through its frames in `ms`.
+/// One prop mesh in the static buffer, from vertex `first`: its pose of
+/// `verts` vertices, and for a moving (swaying or bobbing) model two more
+/// blocks after it, the motion along its loop's cosine and sine, which
+/// loops in `ms` (see `props.rs`).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PropMesh {
     pub model: String,
     pub first: i32,
     pub verts: i32,
-    pub frames: u32,
+    pub moving: bool,
     pub ms: u32,
     /// the model's ball, for culling
     pub radius: i32,
@@ -279,16 +280,10 @@ pub fn frame(
     };
     let view = render::view_values(&cam, aspect, fog, &lake.look.light, &lake.air(clock_ms));
 
-    // the props near enough to see, bucketed by mesh and frame
+    // the props near enough to see, by mesh, and where each is in its loop
     let reach = sight_mm.map(|_| fog.1);
     let fwd = cam.fwd.norm();
-    let mut first_bucket = Vec::with_capacity(lake.meshes.len());
-    let mut buckets = 0usize;
-    for m in &lake.meshes {
-        first_bucket.push(buckets);
-        buckets += m.frames as usize;
-    }
-    let mut members: Vec<Vec<(usize, i32)>> = vec![Vec::new(); buckets];
+    let mut members: Vec<Vec<(usize, i32, i32)>> = vec![Vec::new(); lake.meshes.len()];
     for (i, p) in lake.props.iter().enumerate() {
         let off = p.at.sub(cam.eye);
         if let Some(r) = reach {
@@ -301,39 +296,37 @@ pub fn frame(
             continue;
         }
         let m = &lake.meshes[p.mesh];
-        let (frame, blend) = if m.frames > 1 {
+        let (c, s) = if m.moving {
             let t = (clock_ms + p.phase_ms as u64) % m.ms as u64;
-            let pos = t * m.frames as u64 * ONE as u64 / m.ms as u64;
-            ((pos / ONE as u64) as usize, (pos % ONE as u64) as i32)
+            let a = (t * fx::TURN as u64 / m.ms as u64) as i32;
+            (fx::cos(a), fx::sin(a))
         } else {
             (0, 0)
         };
-        members[first_bucket[p.mesh] + frame].push((i, blend));
+        members[p.mesh].push((i, c, s));
     }
     let mut groups = Vec::new();
     let mut inst = Vec::new();
-    for (mi, m) in lake.meshes.iter().enumerate() {
-        for f in 0..m.frames as usize {
-            let list = &members[first_bucket[mi] + f];
-            if list.is_empty() {
-                continue;
-            }
-            let next = (f + 1) % m.frames as usize;
-            let byte = |k: usize| (m.first + k as i32 * m.verts) * STRIDE as i32;
-            groups.extend_from_slice(&[
-                byte(f),
-                byte(next),
-                m.verts,
-                (inst.len() * render::BYTES_PER_VALUE) as i32,
-                list.len() as i32,
+    for (m, list) in lake.meshes.iter().zip(&members) {
+        if list.is_empty() {
+            continue;
+        }
+        // a still mesh has one block: its motion is that block times 0
+        let block = |k: i32| (m.first + if m.moving { k * m.verts } else { 0 }) * STRIDE as i32;
+        groups.extend_from_slice(&[
+            block(0),
+            block(1),
+            block(2),
+            m.verts,
+            (inst.len() * render::BYTES_PER_VALUE) as i32,
+            list.len() as i32,
+        ]);
+        for &(i, c, s) in list {
+            let a = &lake.props[i].place;
+            inst.extend_from_slice(&[
+                a.c0.x, a.c0.y, a.c0.z, a.c1.x, a.c1.y, a.c1.z, a.c2.x, a.c2.y, a.c2.z, a.t.x, a.t.y, a.t.z,
+                c, s,
             ]);
-            for &(i, blend) in list {
-                let a = &lake.props[i].place;
-                inst.extend_from_slice(&[
-                    a.c0.x, a.c0.y, a.c0.z, a.c1.x, a.c1.y, a.c1.z, a.c2.x, a.c2.y, a.c2.z, a.t.x, a.t.y,
-                    a.t.z, blend,
-                ]);
-            }
         }
     }
     debug_assert_eq!(groups.len() % GROUP_VALUES, 0);
