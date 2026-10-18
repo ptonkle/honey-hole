@@ -51,8 +51,14 @@ fn every_prop_stands_on_its_origin() {
     for id in PROPS {
         let m = load(id);
         let (lo, hi) = (m.min_mm, m.max_mm);
-        assert!(lo[0] <= 0 && 0 <= hi[0], "{id}: the origin is beside the prop in x");
-        assert!(lo[2] <= 0 && 0 <= hi[2], "{id}: the origin is beside the prop in z");
+        assert!(
+            lo[0] <= 0 && 0 <= hi[0],
+            "{id}: the origin is beside the prop in x"
+        );
+        assert!(
+            lo[2] <= 0 && 0 <= hi[2],
+            "{id}: the origin is beside the prop in z"
+        );
         assert!((-1000..=50).contains(&lo[1]), "{id}: the base is at {} mm", lo[1]);
         assert!(hi[1] > 0, "{id}: nothing stands above the ground");
     }
@@ -72,7 +78,10 @@ fn the_plants_sway_and_the_lily_pads_bob() {
     for id in ["pine", "pine-tall", "pine-small", "birch", "cattails"] {
         assert!(load(id).animation(Anim::Sway).is_some(), "{id} does not sway");
     }
-    assert!(load("lily-pads").animation(Anim::Bob).is_some(), "the lily pads do not bob");
+    assert!(
+        load("lily-pads").animation(Anim::Bob).is_some(),
+        "the lily pads do not bob"
+    );
     for id in ["boulder", "shore-rocks", "fallen-log", "dock", "cabin"] {
         assert!(load(id).animations.is_empty(), "{id} moves");
     }
