@@ -2931,5 +2931,12 @@
     "find": "let near = 100 - (dx * 100",
     "replace": "let near = 200 - (dx * 100",
     "test": "a_dot_corner_fills_only_the_corner_triangle_with_dots_shrinking_inward"
+  },
+  {
+    "name": "the reel catch zone is back to its old small size",
+    "file": "data/tuning.json",
+    "find": "\"zone_permille\": 420,",
+    "replace": "\"zone_permille\": 280,",
+    "test": "a_player_a_fifth_of_a_second_late_still_lands_every_tier"
   }
 ]
