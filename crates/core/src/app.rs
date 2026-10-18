@@ -15,6 +15,7 @@ use crate::patch_notes::{self, Entry};
 use crate::strings::{self, Strings};
 use crate::view::{Item, Panel};
 
+pub mod fishing;
 pub mod gallery;
 pub mod lake;
 mod menus;
@@ -173,6 +174,8 @@ pub struct App {
     pub world: Option<crate::scene::Lake>,
     /// the Minigames screen's minigame and results
     pub minigames: minigames::MinigamesScreen,
+    /// the page's `?debug=fishing`: a fish by every bobber (`app/fishing.rs`)
+    pub debug_fishing: bool,
 }
 
 impl App {
@@ -204,6 +207,7 @@ impl App {
             preview: lake::Preview::default(),
             world: None,
             minigames: minigames::MinigamesScreen::default(),
+            debug_fishing: false,
         })
     }
 
@@ -303,6 +307,7 @@ impl App {
             "menu.resume" => self.tap("menu", true),
             "notes.minor" => self.settings.notes_minor = value == "on",
             "settings.name" => self.set_name(value),
+            "debug.flags" => self.debug_act(value),
             "data.ui2d" | "data.fish" => self.fishboy_act(name, value)?,
             _ if name.starts_with("data.") => self.data_act(name, value)?,
             _ if name.starts_with("lobby.") => self.lobby_act(name, value)?,

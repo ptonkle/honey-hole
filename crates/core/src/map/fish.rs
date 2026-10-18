@@ -7,7 +7,9 @@
 //! can reach ([`Map::boatable`]) and not right by the spawn.
 //!
 //! The counts are an input of each match, so a playtest can vary them.
-//! [`ROSTER`] is a stand-in for the person to confirm (SECOND-ORDER.md).
+//! [`place_kinds`] takes any roster's kinds (a match passes the kinds of
+//! `data/fish.json`, `crate::roster`); [`place`] takes ids from the
+//! stand-in [`ROSTER`], which the map list's checks use.
 
 use serde::Serialize;
 
@@ -108,7 +110,7 @@ pub const EXAMPLE_COUNTS: [(&str, u32); 7] = [
 /// One fish at match start.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Fish {
-    pub kind: &'static str,
+    pub kind: String,
     pub tier: Tier,
     pub at: P,
     /// Below the surface, in mm.
@@ -147,13 +149,22 @@ pub fn place(map: &Map, counts: &[(&str, u32)], seed: u64) -> Result<Vec<Fish>, 
     let mut kinds = Vec::new();
     for &(id, count) in counts {
         let k = kind(id).ok_or_else(|| format!("There is no fish \"{id}\"."))?;
-        if k.tier.schools() && count == 1 {
+        kinds.push((k.id, k.tier, count));
+    }
+    place_kinds(map, &kinds, seed)
+}
+
+/// The fish for a match: each kind's id, tier and count.
+pub fn place_kinds(map: &Map, counts: &[(&str, Tier, u32)], seed: u64) -> Result<Vec<Fish>, String> {
+    let mut kinds = Vec::new();
+    for &(id, tier, count) in counts {
+        if tier.schools() && count == 1 {
             return Err(format!(
                 "One {id} cannot make a school of {}.",
                 RULES.school_size.0
             ));
         }
-        kinds.push((k, count));
+        kinds.push((Kind2 { id, tier }, count));
     }
     // a few fresh starts when the single fish cannot be spread far enough
     let mut last = String::new();
@@ -166,7 +177,7 @@ pub fn place(map: &Map, counts: &[(&str, u32)], seed: u64) -> Result<Vec<Fish>, 
     Err(last)
 }
 
-fn try_place(map: &Map, kinds: &[(Kind, u32)], seed: u64) -> Result<Vec<Fish>, String> {
+fn try_place(map: &Map, kinds: &[(Kind2, u32)], seed: u64) -> Result<Vec<Fish>, String> {
     let rules = &RULES;
     let boatable = map.boatable();
     let n = map.n;
@@ -190,7 +201,7 @@ fn try_place(map: &Map, kinds: &[(Kind, u32)], seed: u64) -> Result<Vec<Fish>, S
 
     // single fish, legendary first, each the farthest of a few tries from the rest
     let mut singles: Vec<P> = Vec::new();
-    let mut order: Vec<&(Kind, u32)> = kinds.iter().filter(|(k, _)| !k.tier.schools()).collect();
+    let mut order: Vec<&(Kind2, u32)> = kinds.iter().filter(|(k, _)| !k.tier.schools()).collect();
     order.sort_by_key(|(k, _)| std::cmp::Reverse(k.tier));
     for &&(k, count) in &order {
         let cells = room(k.tier, rules.spawn_gap_mm.1);
@@ -209,7 +220,7 @@ fn try_place(map: &Map, kinds: &[(Kind, u32)], seed: u64) -> Result<Vec<Fish>, S
             singles.push(at);
             school += 1;
             fish.push(Fish {
-                kind: k.id,
+                kind: k.id.to_string(),
                 tier: k.tier,
                 at,
                 depth_mm: depth(&mut r, k.tier, i),
@@ -261,7 +272,7 @@ fn try_place(map: &Map, kinds: &[(Kind, u32)], seed: u64) -> Result<Vec<Fish>, S
                     }
                 }
                 fish.push(Fish {
-                    kind: k.id,
+                    kind: k.id.to_string(),
                     tier: k.tier,
                     at,
                     depth_mm: depth(&mut r, k.tier, cell),
@@ -271,6 +282,13 @@ fn try_place(map: &Map, kinds: &[(Kind, u32)], seed: u64) -> Result<Vec<Fish>, S
         }
     }
     Ok(fish)
+}
+
+/// A kind as placement reads it, from any roster.
+#[derive(Debug, Clone, Copy)]
+struct Kind2<'a> {
+    id: &'a str,
+    tier: Tier,
 }
 
 /// Of `tries` random cells, the one farthest from every point in `from`.

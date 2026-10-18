@@ -38,17 +38,47 @@ The button at the foot of each screen opened from the Title. It goes back to the
 
 Not: return, exit
 
+### Bite
+
+The moment a fish takes the lure, after its nibbles. Space within {fishing.hook_window_ms} ms of it hooks the fish; later, the fish swims off.
+
+Not: strike, take
+
 ### Boat
 
 Each player's small aluminium fishing boat, painted in the player's colour, with an outboard motor at the stern and a raised casting deck at the bow.
 
 Not: ship, vessel
 
+### Bobber
+
+The small float on the line that shows where the lure is. It dips when a fish nibbles or bites.
+
+Not: indicator
+
 ### Burt Lake
 
 The first map: a northern lake with pine and birch shores, small wooded islands and reeds in the coves, in medium fog. Each match on it plays one of its checked layouts.
 
 Not: Michigan Lake, level, course
+
+### Cast
+
+Sending the line out in fishing mode: hold Space to charge and let go to cast, further the longer it was held. A boat moving too fast cannot cast.
+
+Not: chuck, lob
+
+### Catch meter
+
+The bar beside the reel bar that fills while the fish is in the catch zone and drains while it is out. Full, the fish is landed; empty, the line breaks.
+
+Not: progress bar, tension bar
+
+### Catch zone
+
+The part of the reel bar that Space lifts and gravity pulls down. Keeping the fish inside it fills the catch meter.
+
+Not: green bar, box
 
 ### Controls
 
@@ -91,6 +121,12 @@ The screen, opened from the Title, that shows each model turning on a plain floo
 
 Not: showcase, viewer, model viewer
 
+### Hook
+
+To catch a biting fish on the line by pressing Space in time. Every player sees a popup naming who hooked which fish.
+
+Not: snag
+
 ### Item buoy
 
 The giant floating fishing bobber, glowing at its seam and topped by a beacon, that holds a hidden item. A player who drives through it takes the item.
@@ -102,6 +138,12 @@ Not: crate, loot box
 A debug screen, opened from the Title, that draws one checked map of the lake with a camera tour or a fixed view. Its fog distance can be changed live.
 
 Not: level editor, map viewer, flyover
+
+### Lure
+
+The bait at the end of the line, under the bobber. It sinks until Space stops it or it reaches the lake bed, and fish swimming near its depth come to it more readily.
+
+Not: bait, jig
 
 ### Map seed
 
@@ -157,6 +199,12 @@ The screen Play opens, where an offline match is set up: how many AI players and
 
 Not: lobby screen, setup wizard
 
+### Nibble
+
+A fish tasting the lure before it bites. Space during a nibble scares the fish away.
+
+Not: tug, peck
+
 ### Ping
 
 A sweep of the radar outward from your boat that shows each other player where it passes them. Each player waits out a cooldown between pings.
@@ -180,6 +228,12 @@ Not: team colour
 The Fish-Boy's green overhead map of the lake. It always shows your boat and its heading and the item buoy, and shows other players only where the last ping found them.
 
 Not: minimap, sonar
+
+### Reel
+
+The minigame after a hook: keep the fish inside the catch zone until the catch meter is full. A perfect reel takes {fishing.reel.perfect_ms} by tier.
+
+Not: fight, tug of war
 
 ### Settings
 
@@ -216,6 +270,12 @@ Not: rarity class, grade
 The first screen: the game's name, its menu and its controls.
 
 Not: home screen, main menu, start screen
+
+### Underwater camera
+
+The view while the line is in the water: it looks at the lure under the surface and the mouse turns it. A small picture of the boat sits in the top-left corner.
+
+Not: fish cam, hook cam
 
 ### Version
 

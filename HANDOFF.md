@@ -46,6 +46,7 @@ Every `SECOND-ORDER.md` row with status *person*, by number, with what the perso
 - R2.136: all thirteen fish reshaped to their species from above, the side and 3/4, in `notes/shots/models/fish-v3/` (`before/` holds the same views before; side changes listed in R2.132).
 - R3.93: the six item minigames' numbers and looks: play each from the Title, Minigames (shots in `notes/shots/minigames/`); numbers in `data/tuning.json` `minigames`, colours in `data/ui2d.json` `minigames`.
 - R2.34: maples have no model; they draw as birches or tall spruces (`lake.props.maple` in `data/look.json`). A maple model, or keep it so.
+- R3.20: the fishing's look (bobber, lure, line, underwater murk, picture-in-picture, HUD meters and popups), in `notes/shots/fishing/`.
 - R2.43: the boat camera's distance, height, pitch and field of view (`lake.camera` in `data/look.json`), and the lake's look in `notes/shots/world/`; the fog distance can be tried live in the Lake preview.
 
 ## Mistakes so far
@@ -71,6 +72,8 @@ The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the 
 2026-10-17, the 3D world of Burt Lake (terrain, water, fog, props, instancing, cameras, the Lake preview, a match drawn on the lake, glowing colours), merged with main (branch `worktree-agent-a2ff84d9ac75f0c6e`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 231 passed, 0 failed, 0 ignored; `scripts/break_tests.py` on the world's 18 breaks: all caught.
 
 2026-10-18, the Fish-Boy integrated with the match core and the lake world, merged with main (branch `worktree-agent-a0af07e03570f7fa8`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 265 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 218 of 218 breaks caught.
+
+2026-10-18, fishing (fish in the lake, the cast, nibbles, the hook window, the reel, catches, the underwater camera and picture-in-picture, the fishing HUD), merged with main (branch `worktree-agent-a619c0b6bfe7ceb22`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 291 checks, with the new `fishing` step); `count-tests.sh`: 300 passed, 0 failed, 0 ignored; `scripts/break_tests.py` on the 34 new breaks: 34 of 34 caught (and the map row "one schooling fish is refused" repaired).
 
 ## The next action
 
