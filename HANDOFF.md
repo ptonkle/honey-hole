@@ -38,6 +38,9 @@ Every `SECOND-ORDER.md` row with status *person*, by number, with what the perso
 - R2.75: the radar's brighter player colours in `data/ui2d.json` (`radar.players`).
 - R1.149: the remodelled angler's look (tapered limbs, round head, no boxes), in `notes/shots/models/angler-v2/`.
 - R2.7: the boat's handling numbers the brief does not name (reverse, braking, coasting, slip, turning, swivel, nitrous), in `data/tuning.json`; try them by driving.
+- R4.45: the eased rare and legendary reel fights (`fishing.reel` in `data/tuning.json`), PLAN.md V34.
+- R4.47: ramming pays several times better than fishing in AI playtests (`notes/playtests.md`); which rule to change, if any (PLAN.md V35).
+- R4.49: whether B4's "leggendaries ar not announced for 20 seconds" means a legendary's hook popup comes 20 s late.
 - R2.11: the twelve draft AI names in `data/names.json`.
 - R2.21: the match setup's length choices (4, 8, 12 min) and buoy intervals (30 s to 2 min).
 - R1.160: the fish's new shapes from above and their new base lengths (R1.153, R1.154), in `notes/shots/models/fish-v2/`.

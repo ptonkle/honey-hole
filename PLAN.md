@@ -64,6 +64,11 @@ Collected as the agent makes them; brought up in the morning. Each also has a ro
 - V30. Fish seen from the boat camera are drawn twice their size and at 45% of their depth so they read from 9 m back; under the water they are life size (R3.6).
 - V31. The underwater camera's murk (green-blue, 16 m), the picture-in-picture (26% of the screen's width, top left, white border), the HUD moved to the top right, and the fishing HUD as panels until the 2D layer draws it (R3.7, R3.9, R3.10, R3.11).
 - V32. The hook popup ends with a full stop, not "!", for the tone lint (R3.15).
+- V33. The AI players' numbers (`data/tuning.json` `ai`), Easy / Normal / Hard: bite reaction 350-800 / 220-480 / 150-300 ms; reel noise 90 / 50 / 30 thousandths of the bar and lag 40 / 20 / 0 ms; cast aim off by up to 12 / 6 / 2 degrees and charge by 15 / 8 / 3%; aggression 15 / 45 / 75%; dodging a ram 30 / 60 / 90% of the time; a ping every 45 / 25 / 15 s. Each AI keeps 40% of top speed near land and rams at 90% (SECOND-ORDER R4.42, R4.44, R4.50).
+- V34. Rare and legendary fights eased so AI players can land them (`fishing.reel`): marker speed rare 580 to 540, legendary 640 to 560; darts rare 15% to 12%, legendary 25% to 18%; the legendary's course 800 to 900 ms. Before: a Normal AI reeled a legendary in 80 s and a rare in 19 s, and 0 of 158 legendary hooks were landed in 24 matches. After: 33 s and 14 s (32 s and 15 s in play), and 37 of 337 legendary hooks landed in 48 matches with hunting, 150 of 155 without. A steady scripted player: 47 s to 22.9 s for a legendary. Perfect reel times unchanged (R4.45).
+- V35. Ramming pays far better than fishing in AI playtests (855 points knocked off rivals a minute of hunting, 92 landed a minute of fishing; 284 of 337 legendary hooks rammed off; `notes/playtests.md`). No rule was changed; the options are a late popup for legendaries (if that is what B4's "not announced for 20 seconds" meant, R4.49), a rammed-off fish that dives far from the rammer, or gentler AI (`ai.skill.*.aggression_pct`). A 10 s ram stall was tried and did nothing (R4.47, R4.48).
+- V36. An AI keeps reeling a fish worth more than 30 s of its fishing when a rammer comes, and dodges across the ram otherwise (R4.46).
+- V37. `?debug=watch` hands the person's seat to a Hard AI player to watch it play (R4.52).
 
 ## Status
 

@@ -831,7 +831,8 @@ fn the_same_inputs_give_the_same_catches() {
 /// on the shipped tuning, in at most three times the tier's perfect time.
 /// Measured on 2026-10-18: every one of 200 landed per tier, in 3.0, 5.3,
 /// 12.8 and 47 s on average (perfect 3, 5, 10, 20 s); a person reacting
-/// later will do worse (SECOND-ORDER R3.12).
+/// later will do worse (SECOND-ORDER R3.12). After the playtests eased the
+/// rare and legendary fights (R4.45): 3.0, 5.3, 10.4 and 22.9 s.
 #[test]
 fn a_steady_player_lands_every_tier_in_fair_time() {
     let t = crate::tuning::parse(include_str!("../../../../../data/tuning.json")).unwrap();
