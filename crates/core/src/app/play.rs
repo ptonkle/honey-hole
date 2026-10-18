@@ -97,6 +97,21 @@ pub struct Play {
 }
 
 impl Play {
+    /// A match to play from seat `seat`, its clock started at `start_us`
+    /// (page time), the camera tilted `pitch_deg` down.
+    pub fn begin(game: Match, seat: usize, pitch_deg: i32, start_us: i64) -> Play {
+        Play {
+            game,
+            seat,
+            gather: Gather::default(),
+            pending_us: 0,
+            last_now: Some(start_us),
+            cam_yaw: 0,
+            cam_pitch: deg(pitch_deg),
+            log: Vec::new(),
+        }
+    }
+
     /// How far between the last tick and the next the drawing is (Q16).
     pub fn alpha(&self) -> i32 {
         (self.pending_us * ONE as i64 / (TICK_MS as i64 * 1000)) as i32
@@ -249,12 +264,13 @@ impl App {
                     .ok_or_else(|| format!("There is no difficulty \"{value}\"."))?;
             }
         }
+        self.online_setup_changed();
         Ok(())
     }
 
     /// The map seed for this match: the typed one, if it is a checked
     /// layout, or one picked by the match seed.
-    fn map_seed(&self, list: &MapList, match_seed: u64) -> Result<u32, String> {
+    pub(super) fn map_seed(&self, list: &MapList, match_seed: u64) -> Result<u32, String> {
         let lobby = self.lobby.as_ref().ok_or("The tuning file is not loaded yet.")?;
         if lobby.seed.is_empty() {
             return Ok(list::pick(list, match_seed));
@@ -405,11 +421,16 @@ impl App {
         p.pending_us += dt;
         let mut ran = 0;
         let mut heard = Vec::new();
+        let mut online = self.online.session.as_mut();
         while p.pending_us >= step_us && ran < MAX_CATCH_UP {
             let mut inputs = vec![sim::SeatInput::default(); p.game.seats.len()];
             inputs[p.seat] = p.gather.take();
             let tick = p.game.tick;
-            for e in p.game.step(&inputs) {
+            p.game.step(&inputs);
+            if let Some(s) = online.as_mut() {
+                s.after_step(&mut p.game, now / 1000);
+            }
+            for e in &p.game.events {
                 p.log.push((tick + 1, e.clone()));
                 heard.push(serde_json::to_value(e).unwrap_or_default());
             }
@@ -452,7 +473,7 @@ impl App {
 
     // ---- panels ----
 
-    fn time_choices(&self, id: &str, label: &str, value: i32, choices: &[i32]) -> Item {
+    pub(super) fn time_choices(&self, id: &str, label: &str, value: i32, choices: &[i32]) -> Item {
         let options = choices
             .iter()
             .map(|&ms| Choice {
@@ -574,6 +595,7 @@ impl App {
                 lines.push(self.t("hud.wrecked"));
             }
         }
+        lines.extend(self.online_notice());
         let mut hud = Panel::new(
             "hud",
             self.t("hud.time").replace("{time}", &clock_text(w.remaining_ms)),

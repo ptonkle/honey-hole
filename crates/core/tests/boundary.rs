@@ -1096,10 +1096,7 @@ fn only_online_js_may_name_webrtc() {
 
 #[test]
 fn connect_src_allows_self_first_and_only_pinned_relays() {
-    let relays = vec![
-        "wss://nos.lol".to_string(),
-        "wss://purplerelay.com".to_string(),
-    ];
+    let relays = vec!["wss://nos.lol".to_string(), "wss://purplerelay.com".to_string()];
     for csp in [
         "default-src 'self'; connect-src 'self'; form-action 'none'",
         "connect-src 'self' wss://nos.lol wss://purplerelay.com",

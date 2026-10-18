@@ -74,7 +74,7 @@ fn the_app_opens_on_the_title_with_its_menu() {
 #[test]
 fn each_title_button_opens_its_screen() {
     for (id, screen) in [
-        ("menu.play", Screen::Lobby),
+        ("menu.play", Screen::PlayMenu),
         ("menu.settings", Screen::Settings),
         ("menu.notes", Screen::Notes),
     ] {
