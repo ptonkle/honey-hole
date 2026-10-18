@@ -113,7 +113,7 @@ struct Paint<'a> {
 }
 
 impl Paint<'_> {
-    fn face(&self, heights: [i32; 3], normal: V3, forest: bool, at: P, id: u64) -> Rgb {
+    fn face(&self, heights: [i32; 3], normal: V3, forest: i32, at: P, id: u64) -> Rgb {
         let g = &self.look.ground;
         let rgb = render::rgb;
         let mean = (heights[0] + heights[1] + heights[2]) / 3;
@@ -125,20 +125,31 @@ impl Paint<'_> {
             rgb(g.sand)
         } else if normal.y < g.rock_slope_pct * ONE / 100 {
             rgb(g.rock)
-        } else if forest {
-            rgb(g.forest)
         } else {
             let bump = noise::fractal(self.seed ^ 0x6d65_6164, at.x, at.y, g.meadow_mm, 2);
-            mix(rgb(g.grass), rgb(g.meadow), smooth((bump + 1024) * ONE / 2048))
+            let open = mix(rgb(g.grass), rgb(g.meadow), smooth((bump + 1024) * ONE / 2048));
+            mix(open, rgb(g.forest), forest)
         };
         jitter(base, g.jitter_pct, hash2(self.seed ^ 0x6a69_7474, id as i32, (id >> 32) as i32))
     }
 }
 
+/// A per-cell value read at a point, blended between the four nearest cell
+/// middles, so a share that changes cell by cell shows no squares.
+fn between(values: &[i32], n: usize, c: i32, p: P) -> i32 {
+    let fx = (p.x - c / 2).clamp(0, (n as i32 - 1) * c);
+    let fy = (p.y - c / 2).clamp(0, (n as i32 - 1) * c);
+    let (i, j) = ((fx / c) as usize, (fy / c) as usize);
+    let (i1, j1) = ((i + 1).min(n - 1), (j + 1).min(n - 1));
+    let (tx, ty) = (fx % c * ONE / c, fy % c * ONE / c);
+    let row = |j: usize| fx::lerp(values[j * n + i], values[j * n + i1], tx);
+    fx::lerp(row(j), row(j1), ty)
+}
+
 /// The terrain, the lake bed and the skirt round the map's edge, appended
-/// to `out`. Returns its first vertex and count. `forest` marks the cells
-/// with trees in or next to them.
-pub fn ground(lake: &Lake, forest: &[bool], out: &mut Vec<i32>) -> [i32; 2] {
+/// to `out`. Returns its first vertex and count. `forest` is how much each
+/// cell is forest floor (0..=ONE).
+pub fn ground(lake: &Lake, forest: &[i32], out: &mut Vec<i32>) -> [i32; 2] {
     let map = &lake.map;
     let n = map.n;
     let c = map.cell_mm;
@@ -156,9 +167,13 @@ pub fn ground(lake: &Lake, forest: &[bool], out: &mut Vec<i32>) -> [i32; 2] {
             for (k, tri) in cell_tris(i, j).iter().enumerate() {
                 let pts = tri.map(corner);
                 let (p, normal) = upward(pts.map(|q| q.0));
-                let at = P::new(i as i32 * c + c / 2, j as i32 * c + c / 2);
+                // the face's middle, where the forest's share is read
+                let at = P::new(
+                    (tri[0].0 + tri[1].0 + tri[2].0) as i32 * c / 3,
+                    (tri[0].1 + tri[1].1 + tri[2].1) as i32 * c / 3,
+                );
                 let id = ((j * n + i) * 2 + k) as u64;
-                let colour = paint.face(pts.map(|q| q.1), normal, forest[j * n + i], at, id);
+                let colour = paint.face(pts.map(|q| q.1), normal, between(forest, n, c, at), at, id);
                 render::push_tri(out, p, normal, colour);
             }
         }

@@ -13,6 +13,7 @@
 
 use super::look::LakeLook;
 use super::{Lake, Prop, PropMesh};
+use crate::gfx::fx::ONE;
 use crate::gfx::geom::Affine;
 use crate::gfx::render;
 use crate::map::rng::hash2;
@@ -240,9 +241,11 @@ pub fn place(lake: &Lake, look: &LakeLook) -> Vec<Placed> {
     out
 }
 
-/// The cells with at least the look's count of trees in them or next to
-/// them: their ground is forest floor.
-pub fn forest_cells(map: &Map, placed: &[Placed], look: &LakeLook) -> Vec<bool> {
+/// How much each cell's ground is forest floor (0..=ONE): the trees within
+/// two cells of it, against the look's count for a whole forest; and the
+/// land past the trees' reach, which only the overview sees, as forest
+/// seen from above.
+pub fn forest_cells(map: &Map, placed: &[Placed], look: &LakeLook) -> Vec<i32> {
     let n = map.n;
     let mut count = vec![0i32; n * n];
     let trees: Vec<&String> = look.props.pine.iter().chain(&look.props.birch).chain(&look.props.maple).collect();
@@ -255,15 +258,21 @@ pub fn forest_cells(map: &Map, placed: &[Placed], look: &LakeLook) -> Vec<bool> 
         .map(|i| {
             let (x, y) = ((i % n) as i32, (i / n) as i32);
             let mut sum = 0;
-            for dy in -1..=1 {
-                for dx in -1..=1 {
+            for dy in -2..=2 {
+                for dx in -2..=2 {
                     let (a, b) = (x + dx, y + dy);
                     if a >= 0 && b >= 0 && a < n as i32 && b < n as i32 {
                         sum += count[(b * n as i32 + a) as usize];
                     }
                 }
             }
-            !map.cells[i].water() && sum >= look.ground.forest_trees
+            if map.cells[i].water() {
+                return 0;
+            }
+            let trees = sum * ONE / look.ground.forest_trees.max(1);
+            let reach = map.setting.params().tree_reach_mm;
+            let far = (map.shore[i] - reach * 3 / 4) as i64 * ONE as i64 / (reach / 4).max(1) as i64;
+            super::terrain::smooth(trees.max(far as i32))
         })
         .collect()
 }

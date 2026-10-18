@@ -318,13 +318,22 @@ function resize() {
   if (canvas.width !== w || canvas.height !== h) renderer.resize(w, h);
 }
 
+// The static world the renderer holds, by the core's stamp.
+let worldStamp = 0;
+
 // Each frame: the clock to the core, and, when the core says the screen
-// has a scene, its view and triangles to the renderer.
+// has a scene, its draw data to the renderer; the static world goes up
+// again only when the core's stamp for it changes.
 function frame(now) {
   if (renderer && ui && ui.scene) {
     game.advance(now);
     game.build_frame();
-    renderer.frame(game.view(), game.vertices(), game.vertex_count());
+    const stamp = game.world_stamp();
+    if (stamp !== worldStamp) {
+      renderer.world(game.world_vertices());
+      worldStamp = stamp;
+    }
+    renderer.frame(game.view(), game.vertices(), game.vertex_count(), game.statics(), game.groups(), game.instances());
     document.body.dataset.drawn = ui.panels[0].heading;
   }
   requestAnimationFrame(frame);
@@ -336,12 +345,21 @@ async function main() {
   const notes = await (await fetch("data/patch-notes.json")).text();
   const models = await (await fetch("data/models.json")).text();
   const look = await (await fetch("data/look.json")).text();
-  const vertex = await (await fetch("data/shaders/scene.vert")).text();
-  const fragment = await (await fetch("data/shaders/scene.frag")).text();
+  const maps = await (await fetch("data/maps/michigan-lake.json")).text();
+  const shaders = {
+    vertex: await (await fetch("data/shaders/scene.vert")).text(),
+    fragment: await (await fetch("data/shaders/scene.frag")).text(),
+    props: await (await fetch("data/shaders/props.vert")).text(),
+    waterVertex: await (await fetch("data/shaders/water.vert")).text(),
+    waterFragment: await (await fetch("data/shaders/water.frag")).text(),
+    skyVertex: await (await fetch("data/shaders/sky.vert")).text(),
+    skyFragment: await (await fetch("data/shaders/sky.frag")).text(),
+  };
   game = new Game(strings, notes);
   bindInput();
   draw(JSON.parse(game.load_models(models, look)));
-  renderer = makeRenderer(el("scene"), JSON.parse(game.numbers()), { vertex, fragment });
+  draw(JSON.parse(game.load_maps(maps)));
+  renderer = makeRenderer(el("scene"), JSON.parse(game.numbers()), shaders);
   if (!renderer) send("scene.unavailable", "");
   window.addEventListener("resize", () => renderer && resize());
   requestAnimationFrame(frame);

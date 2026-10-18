@@ -11,7 +11,7 @@
 //! through the same [`scene::Instance`] list a match's boats will use.
 
 use super::*;
-use crate::gfx::fx::{self, deg, HALF};
+use crate::gfx::fx::{self, deg, HALF, ONE};
 use crate::gfx::geom::{v3, Affine, V3};
 use crate::gfx::render::{self, Frame};
 use crate::map::list::{self, MapList};
@@ -86,15 +86,15 @@ impl Default for Preview {
     }
 }
 
-/// Fish under the surface for the Under view: (model, metres ahead of the
-/// boat, metres to its left, depth in mm, heading turn), a pike over a
-/// school of perch and a bass.
+/// Fish under the surface for the Under view: (model, decimetres ahead of
+/// the boat, decimetres to its left, depth in mm, heading turn in
+/// degrees), a pike over a school of perch, and a bass.
 const UNDER_FISH: &[(&str, i32, i32, i32, i32)] = &[
-    ("northern-pike", 7, 0, 450, 20),
-    ("yellow-perch", 6, -2, 900, -40),
-    ("yellow-perch", 6, -3, 1000, -35),
-    ("yellow-perch", 5, -2, 1100, -45),
-    ("smallmouth-bass", 9, 2, 1400, 120),
+    ("northern-pike", 36, 3, 350, 20),
+    ("yellow-perch", 30, -8, 600, -40),
+    ("yellow-perch", 34, -11, 650, -35),
+    ("yellow-perch", 27, -12, 700, -45),
+    ("smallmouth-bass", 44, 10, 900, 120),
 ];
 
 impl App {
@@ -272,13 +272,13 @@ impl App {
                 let (p, h) = tour::pose(lake, ms);
                 (p, h, 0)
             }
-            View::Spawn | View::Under | View::Above => (spawn.at, spawn.heading, 0),
+            View::Spawn | View::Above => (spawn.at, spawn.heading, 0),
             View::Island => {
                 let island = map.islands.iter().max_by_key(|i| i.area_m2).map_or(spawn.at, |i| i.at);
                 let at = near_tour(island);
                 (at, heading_to(at, island) - deg(35), deg(20))
             }
-            View::Reeds => {
+            View::Reeds | View::Under => {
                 let reeds = map.reeds.iter().max_by_key(|r| r.clumps.len()).map_or(spawn.at, |r| r.at);
                 let at = near_tour(reeds);
                 (at, heading_to(at, reeds), 0)
@@ -286,14 +286,15 @@ impl App {
         };
         let boat_yaw = yaw_of_heading(heading);
         let target = lake.world(boat_at, 0);
-        let ahead = |m: i32, left: i32| {
+        // a point decimetres ahead of the boat and to its left
+        let ahead = |dm: i32, left: i32| {
             let f = crate::gfx::geom::facing(boat_yaw, 0);
             let l = v3(f.z, 0, -f.x);
-            target.add(f.scale(fx::int(m))).add(l.scale(fx::int(left)))
+            target.add(f.scale(dm * ONE / 10)).add(l.scale(left * ONE / 10))
         };
         let cam = match self.preview.view {
             View::Reeds => camera::boat(lake, cam_look, target, boat_yaw, turn, -deg(6)),
-            View::Under => camera::fly_over(cam_look, ahead(6, 0), boat_yaw, deg(48), fx::int(7)),
+            View::Under => camera::fly_over(cam_look, ahead(32, 0), boat_yaw, deg(56), fx::ratio(7, 2)),
             View::Above => {
                 let pitch = deg(cam_look.above_pitch_deg);
                 let dist = fx::div(scene::mm(cam_look.above_mm), fx::sin(pitch));

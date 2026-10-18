@@ -58,6 +58,20 @@ pub const KEYS: &[&str] = &[
     "colour.red",
     "colour.green",
     "colour.yellow",
+    "menu.lake",
+    "lake.heading",
+    "lake.seed",
+    "lake.view",
+    "lake.view.tour",
+    "lake.view.spawn",
+    "lake.view.island",
+    "lake.view.reeds",
+    "lake.view.under",
+    "lake.view.above",
+    "lake.fog_on",
+    "lake.fog",
+    "lake.metres",
+    "lake.none",
 ];
 
 /// The strings file, checked.

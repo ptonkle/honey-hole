@@ -50,5 +50,19 @@
   "colour.blue": "Blue",
   "colour.red": "Red",
   "colour.green": "Green",
-  "colour.yellow": "Yellow"
+  "colour.yellow": "Yellow",
+  "menu.lake": "Lake preview",
+  "lake.heading": "Lake preview",
+  "lake.seed": "Map seed",
+  "lake.view": "Camera",
+  "lake.view.tour": "Tour of the lake",
+  "lake.view.spawn": "At the spawn point",
+  "lake.view.island": "By an island",
+  "lake.view.reeds": "Across the reeds",
+  "lake.view.under": "Under the surface",
+  "lake.view.above": "Over the whole lake",
+  "lake.fog_on": "Fog",
+  "lake.fog": "Fog distance",
+  "lake.metres": "{m} m",
+  "lake.none": "The lake cannot be drawn: the map list or the lake's look is missing."
 }

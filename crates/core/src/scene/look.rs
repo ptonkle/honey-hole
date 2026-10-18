@@ -10,6 +10,8 @@ use crate::gfx::render::Light;
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct LakeLook {
+    #[serde(rename = "_note", default)]
+    pub note: String,
     /// the sun and fill; `fog` is the horizon's colour
     pub light: Light,
     /// the sky overhead
@@ -48,7 +50,8 @@ pub struct GroundLook {
     pub rock_slope_pct: i32,
     /// each face's colour is brightened or darkened by up to this
     pub jitter_pct: i32,
-    /// a cell with at least this many trees in it or next to it is forest
+    /// a cell with this many trees within two cells of it is all forest
+    /// floor; fewer blend it toward grass
     pub forest_trees: i32,
     /// the bumps between grass and meadow are about this far apart
     pub meadow_mm: i32,

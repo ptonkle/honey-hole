@@ -486,7 +486,7 @@ impl App {
     /// end with a gap between, playing the chosen animation where it has
     /// one; a boat carries the angler standing at the bow. The camera fits
     /// the whole row, so a longer model is drawn longer.
-    fn lineup_frame(&self, look: &Look, kind: Kind, ms: u32) -> (Vec<i32>, Vec<i32>) {
+    fn lineup_frame(&self, look: &Look, kind: Kind, ms: u32) -> Frame {
         let g = &self.gallery;
         let anim = match g.show {
             Show::Anim(a) => Some(a),
@@ -511,7 +511,7 @@ impl App {
             cursor += length + gap;
         }
         if tris.is_empty() {
-            return (Vec::new(), Vec::new());
+            return Frame::default();
         }
 
         // the row's bounds, from the triangles drawn
@@ -546,7 +546,12 @@ impl App {
             render::rgb(look.gallery.floor),
         );
         let fog = (dist + fit, dist * 4);
-        (render::view_values(&cam, aspect, fog, &look.gallery.light), tris)
+        let light = &look.gallery.light;
+        Frame {
+            view: render::view_values(&cam, aspect, fog, light, &render::Air::plain(light)),
+            tris,
+            ..Frame::default()
+        }
     }
 }
 

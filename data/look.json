@@ -16,5 +16,92 @@
     },
     "floor": [150, 164, 168],
     "turn_seconds": 24
+  },
+  "lake": {
+    "_note": "The lake's look (crates/core/src/scene/look.rs): an overcast northern lake. light.fog is the horizon and the fog; zenith the sky overhead; sky_band where the sky turns between them (hundredths of the view's height). The fog thickens from fog_start_pct of the map's sight distance (sight_mm) and is whole at fog_end_pct. Colours 0-255, lengths mm, shares percent. under: what lies under the surface takes on its colour with depth, so a fish just under shows through the water tinted. water.alpha_*: the surface's opacity looking straight down and at a grazing angle. props name the model for each thing the map places.",
+    "light": {
+      "fog": [188, 202, 206],
+      "sun_dir": [-40, 70, 30],
+      "sun": [118, 112, 98],
+      "sky": [150, 160, 170],
+      "ground": [82, 88, 80],
+      "glow_fog_pct": 45
+    },
+    "zenith": [128, 152, 176],
+    "sky_band": [-4, 60],
+    "fog_start_pct": 22,
+    "fog_end_pct": 100,
+    "ground": {
+      "grass": [98, 130, 68],
+      "meadow": [114, 138, 72],
+      "forest": [56, 82, 52],
+      "sand": [206, 190, 146],
+      "rock": [126, 126, 120],
+      "bed_shallow": [168, 150, 104],
+      "bed_deep": [62, 72, 60],
+      "bed_deep_mm": 4000,
+      "sand_top_mm": 450,
+      "rock_slope_pct": 72,
+      "jitter_pct": 5,
+      "forest_trees": 5,
+      "meadow_mm": 50000,
+      "skirt_mm": 20000,
+      "skirt": [92, 74, 58]
+    },
+    "water": {
+      "shallow": [96, 156, 150],
+      "deep": [34, 76, 96],
+      "deep_mm": 6000,
+      "alpha_down_pct": 30,
+      "alpha_grazing_pct": 94,
+      "fresnel_pow_pct": 250,
+      "glint": [120, 118, 104],
+      "shine": 40,
+      "shore_overlap_mm": 400,
+      "waves": [
+        { "length_mm": 13000, "toward_deg": 30, "height_mm": 140, "period_ms": 3700 },
+        { "length_mm": 7000, "toward_deg": 115, "height_mm": 70, "period_ms": 2600 }
+      ]
+    },
+    "under": {
+      "colour": [40, 86, 100],
+      "clear_mm": 5000,
+      "strength_pct": 90
+    },
+    "props": {
+      "frames": 12,
+      "pine": ["pine", "pine", "pine-tall", "pine-small"],
+      "birch": ["birch"],
+      "maple": ["birch", "pine-tall"],
+      "reeds": "cattails",
+      "lily_pads": "lily-pads",
+      "lily_pct": 35,
+      "lily_depth_mm": [300, 2200],
+      "shore_rocks": "shore-rocks",
+      "shore_rocks_permille": 60,
+      "boulder": "boulder",
+      "boulder_permille": 25,
+      "log": "fallen-log",
+      "log_permille": 12,
+      "dock": "dock",
+      "cabin": "cabin",
+      "cabins": 2,
+      "cabin_back_mm": 12000,
+      "cabin_clear_mm": 7000,
+      "dock_clear_mm": 4000
+    },
+    "camera": {
+      "fov_deg": 55,
+      "near_mm": 250,
+      "far_mm": 2500000,
+      "back_mm": 9000,
+      "up_mm": 3800,
+      "aim_mm": 1400,
+      "pitch_deg": 10,
+      "clear_mm": 1200,
+      "tour_mm_per_s": 11000,
+      "above_mm": 620000,
+      "above_pitch_deg": 62
+    }
   }
 }

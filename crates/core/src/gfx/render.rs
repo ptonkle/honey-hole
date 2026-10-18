@@ -372,8 +372,8 @@ mod tests {
         assert_eq!(slice("uFog"), vec![int(4), int(9)]);
         // the fog is pure red: 255 of 255 is ONE
         assert_eq!(slice("uFogColour"), vec![ONE, 0, 0]);
-        assert_eq!(&v[19..22], &[ONE, 0, 0], "the fog colour follows the eye and the fog");
-        assert_eq!(n["fog_colour"], json!([19, 22]), "the clear colour is the fog's");
+        assert_eq!(&v[21..24], &[ONE, 0, 0], "the fog colour follows the eye and the fog");
+        assert_eq!(n["fog_colour"], json!([21, 24]), "the clear colour is the fog's");
         // straight up, already one long
         assert_eq!(slice("uSunDir"), vec![0, ONE, 0]);
         assert_eq!(slice("uHemi"), vec![ONE / 2, ONE / 2]);
