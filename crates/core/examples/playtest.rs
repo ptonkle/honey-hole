@@ -4,6 +4,14 @@
 //!     cargo run --release --example playtest              8 matches from seed 1
 //!     cargo run --release --example playtest -- 20 7     20 matches from seed 7
 //!
+//!     cargo run --release --example playtest -- 48 1 balance.rammed_swim_mm.legendary=40000
+//!                                                    the same with a tuning value changed
+//!
+//! An argument with `=` sets a value of `data/tuning.json` by its dotted
+//! path for this run (the value is JSON: `20000`, `true`); any number of
+//! them. The last line of the report, `SUMMARY`, holds the balance numbers
+//! of `notes/balance-options.md` in one row.
+//!
 //! Half the matches are four Normal players, half a mix of difficulties.
 //! Run from the repository root (it reads data/). It prints Markdown tables
 //! for notes/playtests.md: catches and points by player and tier, how the
@@ -109,12 +117,25 @@ fn lineup(k: u32) -> [Difficulty; 4] {
 
 fn main() {
     let read = |p: &str| fs::read_to_string(p).unwrap_or_else(|e| panic!("{p}: {e}"));
-    let args: Vec<String> = std::env::args().skip(1).collect();
+    let all: Vec<String> = std::env::args().skip(1).collect();
+    let (sets, args): (Vec<String>, Vec<String>) = all.into_iter().partition(|a| a.contains('='));
     let matches: u32 = args.first().and_then(|a| a.parse().ok()).unwrap_or(8);
     let base: u64 = args.get(1).and_then(|a| a.parse().ok()).unwrap_or(1);
     // a third argument traces that seat's events and goals in each match
     let trace: Option<usize> = args.get(2).and_then(|a| a.parse().ok());
-    let t = tuning::parse(&read("data/tuning.json")).unwrap();
+    let mut tv: serde_json::Value = serde_json::from_str(&read("data/tuning.json")).unwrap();
+    for set in &sets {
+        let (path, value) = set.split_once('=').unwrap();
+        let mut at = &mut tv;
+        for key in path.split('.') {
+            at = at
+                .get_mut(key)
+                .unwrap_or_else(|| panic!("{path}: no key {key} in data/tuning.json"));
+        }
+        *at = serde_json::from_str(value).unwrap_or_else(|e| panic!("{set}: {e}"));
+        eprintln!("set {path} = {value}");
+    }
+    let t = tuning::parse(&tv.to_string()).unwrap();
     let roster = Roster::parse(&read("data/fish.json")).unwrap();
     let maps = list::parse(&read("data/maps/michigan-lake.json")).unwrap();
     let names: serde_json::Value = serde_json::from_str(&read("data/names.json")).unwrap();
@@ -428,5 +449,28 @@ fn report(tot: &Totals) {
         tot.ticks,
         tot.step_ns as f64 / tot.ticks.max(1) as f64 / 1e3,
         tot.ticks
+    );
+    // one row for notes/balance-options.md
+    let acts = a.acts.iter().sum::<u64>().max(1) as f64;
+    let (left, stocked) = tot.left.iter().fold((0, 0), |(l, s), x| (l + x.0, s + x.1));
+    let leg = tot.outcomes[3];
+    println!();
+    println!(
+        "SUMMARY | {} | {:.0} | {:.0} | {:.0} | {} of {} ({:.0}%) | {:.0}% / {}% | {:.0}% | {:.0}% (legendary {:.0}%) | {:.1} | {:.0} | {:.0} |",
+        tot.matches,
+        pts as f64 / fish_min.max(0.001),
+        if hunt_min > 0.1 { a.denied as f64 / hunt_min } else { 0.0 },
+        if hunt_min > 0.1 { a.stolen as f64 / hunt_min } else { 0.0 },
+        leg[1],
+        leg[0],
+        leg[1] as f64 * 100.0 / leg[0].max(1) as f64,
+        mean,
+        margins.get(margins.len() / 2).copied().unwrap_or(0),
+        a.acts[1] as f64 * 100.0 / acts,
+        left as f64 * 100.0 / stocked.max(1) as f64,
+        tot.left[3].0 as f64 * 100.0 / tot.left[3].1.max(1) as f64,
+        a.rammed_others as f64 / m,
+        pts as f64 / m / 4.0,
+        a.denied as f64 / m / 4.0
     );
 }

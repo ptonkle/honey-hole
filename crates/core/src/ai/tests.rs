@@ -309,11 +309,12 @@ fn a_near_legendary_hook_is_hunted_and_a_far_common_one_is_not() {
     let mut crew = Crew::new(&m);
     m.boats[0].as_mut().unwrap().set_at(P::new(60_000, 80_000));
     crew.inputs(&m);
-    m.events.push(MatchEvent::Hooked {
+    m.events.push(MatchEvent::Announced {
         seat: 1,
         fish: 0,
         kind: "muskellunge".into(),
         tier: Tier::Legendary,
+        delay_ms: 0,
     });
     crew.inputs(&m);
     assert!(
@@ -435,4 +436,56 @@ fn the_ai_slows_under_the_grounding_speed_near_land() {
     // the throttle's 0.3 m/s of slack: under half of top speed (8 m/s)
     assert!(fastest_near > 0, "it never got near the shore");
     assert!(fastest_near < 8000, "{fastest_near} mm/s by the shore");
+}
+
+#[test]
+fn the_ai_hunts_on_the_hook_popup_not_the_hook_and_knows_its_delay() {
+    let t = sample();
+    let new = || {
+        let mut m = Match::new(
+            small_lake(),
+            &t,
+            setup(&t, &[Occupant::Ai(Difficulty::Normal), Occupant::Human]),
+        )
+        .unwrap();
+        m.fishing.roster = roster();
+        // a minute in, seat 1 60 m east in sight
+        m.tick = 3000;
+        let b = m.boats[1].as_mut().unwrap();
+        b.set_at(P::new(120_000, 80_000));
+        b.prev_um = b.pos_um;
+        m.boats[0].as_mut().unwrap().set_at(P::new(60_000, 80_000));
+        let mut crew = Crew::new(&m);
+        crew.inputs(&m);
+        (m, crew)
+    };
+    let hunting = |crew: &Crew| matches!(crew.brains[0].goal, Goal::Hunt { seat: 1, .. });
+    let announced = |delay_ms: i32| MatchEvent::Announced {
+        seat: 1,
+        fish: 0,
+        kind: "muskellunge".into(),
+        tier: Tier::Legendary,
+        delay_ms,
+    };
+    // the hook alone is not heard
+    let (mut m, mut crew) = new();
+    m.events.push(MatchEvent::Hooked {
+        seat: 1,
+        fish: 0,
+        kind: "muskellunge".into(),
+        tier: Tier::Legendary,
+    });
+    crew.inputs(&m);
+    assert!(!hunting(&crew), "{:?}", crew.brains[0].goal);
+    // a popup 30 s late: 3 s of a legendary's 33 s reel are left, and it is
+    // 60 x 1.3 / 14.4 + 2.5 = 7.9 s away
+    let (mut m, mut crew) = new();
+    m.events.push(announced(30_000));
+    crew.inputs(&m);
+    assert!(!hunting(&crew), "{:?}", crew.brains[0].goal);
+    // the same popup at once is hunted
+    let (mut m, mut crew) = new();
+    m.events.push(announced(0));
+    crew.inputs(&m);
+    assert!(hunting(&crew), "{:?}", crew.brains[0].goal);
 }

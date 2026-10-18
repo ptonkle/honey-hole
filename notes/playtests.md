@@ -4,6 +4,8 @@ Headless AI-only matches, measured by `cargo run --release --example playtest --
 
 The AI plays by a seat's own senses (`crates/core/src/ai/senses.rs`): the fish in sight, rivals in sight or earshot, its own pings, and the hook popups. It hunts a rival's hook when it can get there before the reel ends and the fish is worth more than the fishing it gives up, and it keeps reeling a fish worth more than a wreck costs (SECOND-ORDER R4.48 to R4.52).
 
+**Since these results**, a legendary's hook popup comes 20 s late and a rammed-off rare or legendary swims 80 m (`data/tuning.json` `balance`); the numbers with those, and every other option measured, are in `notes/balance-options.md`. Setting `balance.announce_delay_ms.legendary` to 0 and `balance.rammed_swim_mm` back to 12000 gives the game these results describe, number for number. A tuning value can be changed for one run: `-- 48 1 balance.announce_delay_ms.legendary=0`.
+
 ## Results, 2026-10-18
 
 48 matches from seed 1 (`-- 48 1`), after the tuning below. Branch `ai`.

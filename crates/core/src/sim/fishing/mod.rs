@@ -40,6 +40,7 @@
 //! Camera's prompt after a catch), [`Fishing::tame`] (a test hook: the next
 //! reel's fish holds still near the top of the bar).
 
+pub mod announce;
 pub mod lake;
 pub mod reel;
 pub mod tuning;
@@ -161,6 +162,12 @@ pub struct Fishing {
     /// catches the High-Quality Camera has already raised, by seat and
     /// catch number
     pub photographed: Vec<(usize, usize)>,
+    /// the hook popups still to come (`balance.announce_delay_ms`)
+    pub announcer: announce::Announcer,
+    /// how far a fish knocked off by a ram swims, by tier
+    /// (`balance.rammed_swim_mm`; [`Fishing::new`] makes it
+    /// `fish.freed_swim_mm`, and the match sets it)
+    pub rammed_swim_mm: tuning::PerTier,
     rng: Rng,
 }
 
@@ -200,6 +207,18 @@ impl Fishing {
             reel_power_pct: vec![100; seats],
             tame: false,
             photographed: Vec::new(),
+            announcer: announce::Announcer::new(tuning::PerTier {
+                common: 0,
+                uncommon: 0,
+                rare: 0,
+                legendary: 0,
+            }),
+            rammed_swim_mm: tuning::PerTier {
+                common: fish.freed_swim_mm,
+                uncommon: fish.freed_swim_mm,
+                rare: fish.freed_swim_mm,
+                legendary: fish.freed_swim_mm,
+            },
             rng: Rng::stream(seed, 32),
         }
     }
@@ -220,10 +239,16 @@ impl Fishing {
 
     /// Sets a fish free: it swims off from `from` and stays in the lake.
     fn free(&mut self, map: &Map, fish: usize, from: P) {
+        let d = self.fish_tuning.freed_swim_mm;
+        self.free_by(map, fish, from, d);
+    }
+
+    /// Sets a fish free to swim `swim_mm` off from `from`.
+    fn free_by(&mut self, map: &Map, fish: usize, from: P, swim_mm: i32) {
         let f = &mut self.fish[fish];
         if f.in_lake() {
             f.state = FishState::Fleeing {
-                to: lake::flee_point(map, &self.fish_tuning, f.at, from),
+                to: lake::flee_point_by(map, f.at, from, swim_mm),
             };
         }
     }
@@ -274,6 +299,25 @@ impl Fishing {
     pub fn wrecked(&mut self, map: &Map, seat: usize, rod: P, events: &mut Vec<MatchEvent>) {
         if self.lines.get(seat).is_some_and(|l| l.stage != Stage::Landed) {
             events.extend(self.end_line(map, seat, rod, false));
+        }
+    }
+
+    /// A ram's wreck: as [`Fishing::wrecked`], but the fish on the line
+    /// swims `rammed_swim_mm` (by its tier) off, so the rammer cannot land
+    /// it at once (`balance.rammed_swim_mm`).
+    pub fn rammed(&mut self, map: &Map, seat: usize, rod: P, events: &mut Vec<MatchEvent>) {
+        let hooked = self
+            .lines
+            .get(seat)
+            .filter(|l| l.stage == Stage::Reeling)
+            .and_then(|l| l.fish);
+        self.wrecked(map, seat, rod, events);
+        if let Some(fish) = hooked {
+            let swim = self.rammed_swim_mm.get(self.fish[fish].tier);
+            if let FishState::Fleeing { .. } = self.fish[fish].state {
+                self.fish[fish].state = FishState::Roaming;
+                self.free_by(map, fish, rod, swim);
+            }
         }
     }
 
@@ -334,6 +378,7 @@ impl Fishing {
             self.seat_step(w, seat, b, rod, &i, scores, events);
         }
         self.move_engaged(w);
+        self.announcer.step(tick, events);
     }
 
     #[allow(clippy::too_many_arguments)]

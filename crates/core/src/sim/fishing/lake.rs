@@ -302,6 +302,11 @@ fn settle_depth(map: &Map, f: &mut LakeFish, step: i32) {
 /// Where a freed fish swims: `freed_swim_mm` straight away from `from`, or
 /// turned as little as it must be to stay in the water.
 pub fn flee_point(map: &Map, t: &FishTuning, at: P, from: P) -> P {
+    flee_point_by(map, at, from, t.freed_swim_mm)
+}
+
+/// The same, `swim_mm` off.
+pub fn flee_point_by(map: &Map, at: P, from: P, swim_mm: i32) -> P {
     let away = if at == from {
         0
     } else {
@@ -309,7 +314,7 @@ pub fn flee_point(map: &Map, t: &FishTuning, at: P, from: P) -> P {
     };
     let eighth = trig::TURN / 8;
     for turn in [0, 1, -1, 2, -2, 3, -3, 4] {
-        let q = ahead(at, away + turn * eighth, t.freed_swim_mm);
+        let q = ahead(at, away + turn * eighth, swim_mm);
         if map.wet(q) && bed_mm(map, q) > 0 {
             return q;
         }

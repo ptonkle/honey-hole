@@ -27,6 +27,8 @@ pub struct Tuning {
     pub game: MatchTuning,
     pub boat: BoatTuning,
     pub wreck: WreckTuning,
+    /// the ramming knobs, each off as shipped (`sim/balance.rs`)
+    pub balance: crate::sim::balance::BalanceTuning,
     /// the fish in the lake and the fishing (`sim::fishing::tuning`)
     pub fish: crate::sim::fishing::tuning::FishTuning,
     pub fishing: crate::sim::fishing::tuning::FishingTuning,
@@ -258,6 +260,7 @@ impl Tuning {
             .range("flow.end_hold_ms", f.end_hold_ms, 0, 60_000)
             .range("flow.hints_ms", f.hints_ms, 0, HOUR_MS);
         crate::sim::fishing::tuning::check(&mut c, &self.fish, &self.fishing);
+        crate::sim::balance::check(&mut c, &self.balance, w.ram_wreck_pct);
         let r = &self.radar;
         c.range("radar.ping_sweep_ms", r.ping_sweep_ms, 20, 60_000)
             .range("radar.ping_cooldown_ms", r.ping_cooldown_ms, 20, 600_000)
@@ -322,6 +325,7 @@ pub mod tests {
                 "scrape_keep_pct": 70,
                 "bump_pct": 50
             },
+            "balance": crate::sim::balance::tests::sample_json(),
             "radar": {
                 "ping_cooldown_ms": 5000,
                 "ping_sweep_ms": 3000

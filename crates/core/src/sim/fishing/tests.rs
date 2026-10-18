@@ -52,7 +52,12 @@ fn lake_map() -> Map {
 /// A match with `humans` seats, no fish stocked, every boat in fishing
 /// mode at rest. Seat 0 sits at `AT` facing east; seat 1 30 m north of it.
 fn fresh(humans: usize) -> Match {
-    let t = sample();
+    fresh_with(humans, &sample())
+}
+
+/// The same, with this tuning.
+fn fresh_with(humans: usize, t: &Tuning) -> Match {
+    let t = t.clone();
     let mut s = Setup::new(&t);
     for k in 0..humans {
         s = s.with(k, Occupant::Human, &format!("P{k}"));
@@ -862,4 +867,160 @@ fn a_steady_player_lands_every_tier_in_fair_time() {
         assert!(landed >= 180, "{tier:?}: landed {landed} of 200");
         assert!(mean_ms <= 3 * perfect, "{tier:?}: {mean_ms} ms on average");
     }
+}
+
+// ---- the balance knobs (sim/balance.rs) ----
+
+/// The sample tuning with one `balance` value changed.
+fn balanced(key: &str, tier: Option<&str>, v: serde_json::Value) -> Tuning {
+    let mut j = tuning::tests::sample_json();
+    match tier {
+        Some(t) => j["balance"][key][t] = v,
+        None => j["balance"][key] = v,
+    }
+    tuning::parse(&j.to_string()).unwrap()
+}
+
+/// Seat 0 hooks a fish of `kind`; the hooking tick's events.
+fn hook_events(m: &mut Match, kind: usize) -> Vec<MatchEvent> {
+    lure_set_by_fish(m, kind);
+    until(m, 1000, is_bite);
+    m.fishing.tame = true;
+    step0(m, tap("cast"))
+}
+
+fn is_announced(e: &MatchEvent) -> bool {
+    matches!(e, MatchEvent::Announced { seat: 0, .. })
+}
+
+fn run_idle(m: &mut Match, ticks: u32) -> Vec<MatchEvent> {
+    (0..ticks).flat_map(|_| step0(m, SeatInput::default())).collect()
+}
+
+#[test]
+fn with_no_delay_a_hook_is_announced_straight_after_it() {
+    let mut m = fresh(1);
+    let e = hook_events(&mut m, 0);
+    let at = e.iter().position(is_hooked).expect("hooked");
+    assert_eq!(
+        e.get(at + 1),
+        Some(&MatchEvent::Announced {
+            seat: 0,
+            fish: 0,
+            kind: "bluegill".into(),
+            tier: Tier::Common,
+            delay_ms: 0
+        })
+    );
+}
+
+#[test]
+fn a_delayed_hook_is_announced_late_and_a_lost_one_never() {
+    // commons announced 1 s (50 ticks) after the hook; the tamed fish stays
+    // on 1.5 s with Space up (a 5 s drain from 30%)
+    let t = balanced("announce_delay_ms", Some("common"), 1000.into());
+    let mut m = fresh_with(1, &t);
+    let e = hook_events(&mut m, 0);
+    assert!(e.iter().any(is_hooked) && !e.iter().any(is_announced), "{e:?}");
+    let quiet = run_idle(&mut m, 49);
+    assert!(!quiet.iter().any(is_announced), "not before 1 s");
+    let e = step0(&mut m, SeatInput::default());
+    assert!(
+        e.contains(&MatchEvent::Announced {
+            seat: 0,
+            fish: 0,
+            kind: "bluegill".into(),
+            tier: Tier::Common,
+            delay_ms: 1000
+        }),
+        "{e:?}"
+    );
+    // dropped before its time: never announced
+    let mut m = fresh_with(1, &t);
+    hook_events(&mut m, 0);
+    step0(&mut m, tap("cancel"));
+    assert!(!run_idle(&mut m, 100).iter().any(is_announced));
+}
+
+/// How far a fish knocked off seat 0's line by this wreck swims.
+fn swim_after(t: &Tuning, cause: WreckCause) -> i64 {
+    let mut m = fresh_with(2, t);
+    let f = hooked(&mut m, 0);
+    let tick = m.tick;
+    m.wreck(0, cause, tick);
+    let FishState::Fleeing { to } = m.fishing.fish[f].state else {
+        panic!("{:?}", m.fishing.fish[f].state);
+    };
+    m.fishing.fish[f].at.dist(to)
+}
+
+#[test]
+fn a_rammed_off_fish_swims_the_rammed_distance_and_others_the_freed_one() {
+    let rammed = WreckCause::Rammed { by: 1 };
+    // as shipped: 12 m either way (fish.freed_swim_mm)
+    // (the map's fixed-point trigonometry leaves a few mm either way)
+    let near = |d: i64| (d - 12_000).abs() <= 10;
+    let d = swim_after(&sample(), rammed);
+    assert!(near(d), "{d}");
+    let t = balanced("rammed_swim_mm", Some("common"), 40_000.into());
+    let d = swim_after(&t, rammed);
+    assert!((d - 40_000).abs() <= 10, "{d}");
+    // a grounding is not a ram
+    let d = swim_after(&t, WreckCause::Grounded);
+    assert!(near(d), "{d}");
+}
+
+/// Seat 0 reeling at rest facing east; seat 1 just behind it, coming on
+/// east at `speed`.
+fn rammed_from_behind(t: &Tuning, speed: i32) -> Match {
+    let mut m = fresh_with(2, t);
+    hooked(&mut m, 0);
+    let b = m.boats[1].as_mut().unwrap();
+    b.set_at(P::new(AT.x - 2800, AT.y));
+    b.prev_um = b.pos_um;
+    b.heading = 0;
+    b.set_vel([speed, 0]);
+    m
+}
+
+#[test]
+fn a_reeling_boat_is_wrecked_only_at_the_reeling_ram_speed() {
+    // 14 000 mm/s less a tick's coast (53) is over 80% (12 800) but under
+    // 90% (14 400)
+    let mut m = rammed_from_behind(&sample(), 14_000);
+    step0(&mut m, SeatInput::default());
+    assert!(m.boat(0).unwrap().wrecked(), "as shipped, 80% wrecks it");
+    let t = balanced("reeling_ram_wreck_pct", None, 90.into());
+    let mut m = rammed_from_behind(&t, 14_000);
+    step0(&mut m, SeatInput::default());
+    assert!(!m.boat(0).unwrap().wrecked(), "90% is needed while it reels");
+    // (the bump still shoves it past the line's snapping speed, 5 m/s:
+    // 14 000 x 1.5 / 2 = 10 500 mm/s, so the fish is lost all the same
+    // unless the boat is anchored too)
+    assert_eq!(m.fishing.lines[0].stage, Stage::Idle);
+    let mut j = tuning::tests::sample_json();
+    j["balance"]["reeling_ram_wreck_pct"] = 90.into();
+    j["balance"]["reeling_anchored"] = true.into();
+    let t = tuning::parse(&j.to_string()).unwrap();
+    let mut m = rammed_from_behind(&t, 14_000);
+    step0(&mut m, SeatInput::default());
+    assert_eq!(
+        m.fishing.lines[0].stage,
+        Stage::Reeling,
+        "anchored, it keeps the fish"
+    );
+}
+
+#[test]
+fn an_anchored_reeling_boat_is_not_pushed_by_a_bump() {
+    let mut m = rammed_from_behind(&sample(), 5000);
+    step0(&mut m, SeatInput::default());
+    assert!(m.boat(0).unwrap().vel()[0] > 0, "as shipped, the bump pushes it");
+    let t = balanced("reeling_anchored", None, true.into());
+    let mut m = rammed_from_behind(&t, 5000);
+    let at = m.boat(0).unwrap().pos_um;
+    step0(&mut m, SeatInput::default());
+    let b = m.boat(0).unwrap();
+    assert_eq!((b.vel(), b.pos_um), ([0, 0], at), "anchored");
+    assert!(m.boat(1).unwrap().vel()[0] < 0, "the bumper takes the whole bump");
 }

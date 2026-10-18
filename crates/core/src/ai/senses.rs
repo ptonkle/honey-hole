@@ -44,8 +44,14 @@ pub struct Pinged {
 /// What happened this tick that the seat knows of.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum News {
-    /// a hook popup: `seat` hooked a fish of this kind and tier
-    Hooked { seat: usize, kind: String, tier: Tier },
+    /// a hook popup: `seat` hooked a fish of this kind and tier, `ago_ms`
+    /// ago (the popup's delay, `balance.announce_delay_ms`, a public rule)
+    Hooked {
+        seat: usize,
+        kind: String,
+        tier: Tier,
+        ago_ms: i32,
+    },
     /// a wreck popup
     Wrecked { seat: usize, rammed_by: Option<usize> },
     /// its own line: the fish got away (missed, scared, broke or dropped)
@@ -121,12 +127,18 @@ pub fn sense<'a>(m: &'a Match, seat: usize) -> Senses<'a> {
     let mut news = Vec::new();
     for e in &m.events {
         match e {
-            MatchEvent::Hooked {
-                seat: s, kind, tier, ..
+            // the popup, not the hook: a delayed popup is heard late
+            MatchEvent::Announced {
+                seat: s,
+                kind,
+                tier,
+                delay_ms,
+                ..
             } if *s != seat => news.push(News::Hooked {
                 seat: *s,
                 kind: kind.clone(),
                 tier: *tier,
+                ago_ms: *delay_ms,
             }),
             MatchEvent::Wrecked { seat: s, cause } => news.push(News::Wrecked {
                 seat: *s,

@@ -31,6 +31,7 @@
 //! **Fishing** ([`fishing`]): the fish in the lake and each seat's line,
 //! stocked by [`Match::stock`] and stepped after the boats each tick.
 
+pub mod balance;
 pub mod boat;
 pub mod collide;
 pub mod fishing;
@@ -257,6 +258,17 @@ pub enum MatchEvent {
         kind: String,
         tier: crate::map::fish::Tier,
     },
+    /// the hook's popup, `delay_ms` after its `Hooked` (by tier,
+    /// `balance.announce_delay_ms`; as shipped, the same tick): the popup,
+    /// the others' hook sound and the AI read this
+    /// (`fishing::announce`). A fish landed or lost first is not announced.
+    Announced {
+        seat: usize,
+        fish: u32,
+        kind: String,
+        tier: crate::map::fish::Tier,
+        delay_ms: i32,
+    },
     /// the reel's ratchet, while Space lifts the catch zone
     ReelTick {
         seat: usize,
@@ -350,6 +362,14 @@ pub struct Rules {
     pub nitrous_turn_pct: i32,
     /// speed toward another boat that wrecks it, mm/s
     pub ram_wreck: i32,
+    /// speed toward a boat reeling a fish in that wrecks it, mm/s
+    /// (`balance.reeling_ram_wreck_pct`)
+    pub ram_wreck_reeling: i32,
+    /// a reeling boat is not pushed by a bump (`balance.reeling_anchored`)
+    pub reeling_anchored: bool,
+    /// a rammer this fast toward its victim is wrecked too, mm/s; 0 is off
+    /// (`balance.rammer_wreck_pct`)
+    pub rammer_wreck: i32,
     /// speed toward land that wrecks the boat, mm/s
     pub land_wreck: i32,
     pub stall_ticks: u32,
@@ -413,6 +433,9 @@ impl Rules {
             nitrous_top_pct: b.nitrous.top_speed_pct,
             nitrous_turn_pct: b.nitrous.turn_pct,
             ram_wreck: (top as i64 * w.ram_wreck_pct as i64 / 100) as i32,
+            ram_wreck_reeling: (top as i64 * t.balance.reeling_ram_wreck_pct as i64 / 100) as i32,
+            reeling_anchored: t.balance.reeling_anchored,
+            rammer_wreck: (top as i64 * t.balance.rammer_wreck_pct as i64 / 100) as i32,
             land_wreck: (top as i64 * w.land_wreck_pct as i64 / 100) as i32,
             stall_ticks: ticks(w.stall_ms),
             respawn_ticks: ticks(w.respawn_ms),
@@ -484,6 +507,8 @@ impl Match {
             countdown: 0,
         };
         m.countdown = ticks(m.setup.countdown_ms);
+        m.fishing.announcer = fishing::announce::Announcer::new(tuning.balance.announce_delay_ms);
+        m.fishing.rammed_swim_mm = tuning.balance.rammed_swim_mm;
         for seat in 0..n {
             let boat = match m.setup.seats[seat].occupant {
                 Occupant::Empty => None,
@@ -782,7 +807,13 @@ impl Match {
         if let Some(b) = self.boats[seat].as_mut() {
             b.wreck(respawn);
         }
-        self.wreck_drops_fish(seat);
+        if let WreckCause::Rammed { .. } = cause {
+            // a rammed-off fish swims `balance.rammed_swim_mm` off
+            let rod = self.rod(seat);
+            self.fishing.rammed(&self.map, seat, rod, &mut self.events);
+        } else {
+            self.wreck_drops_fish(seat);
+        }
         self.events.push(MatchEvent::Wrecked { seat, cause });
     }
 

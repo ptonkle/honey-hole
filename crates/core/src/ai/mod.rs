@@ -305,9 +305,15 @@ impl Brain {
         }
         for n in &s.news {
             match n {
-                News::Hooked { seat, kind, tier } => {
+                News::Hooked {
+                    seat,
+                    kind,
+                    tier,
+                    ago_ms,
+                } => {
                     self.hooks[*seat] = Some(HookNews {
-                        tick: s.tick,
+                        // when the hook was, by the popup's known delay
+                        tick: s.tick.saturating_sub(ticks(*ago_ms)),
                         kind: kind.clone(),
                         tier: *tier,
                         decided: false,

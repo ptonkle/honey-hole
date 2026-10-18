@@ -50,9 +50,15 @@ pub fn kind_worth(s: &Senses, kind: &str, tier: Tier) -> i32 {
 }
 
 /// The speed a ram is driven at: the tuning's, and always over the speed
-/// that wrecks a boat.
+/// that wrecks a boat reeling a fish in (`balance.reeling_ram_wreck_pct`,
+/// the plain wrecking speed as shipped).
 pub fn ram_speed(s: &Senses) -> i32 {
-    pct(s.rules.top, s.tuning.ai.ram_speed_pct).max(s.rules.ram_wreck + 500)
+    pct(s.rules.top, s.tuning.ai.ram_speed_pct).max(wreck_speed(s) + 500)
+}
+
+/// The speed toward a hunted angler that wrecks it.
+pub fn wreck_speed(s: &Senses) -> i32 {
+    s.rules.ram_wreck.max(s.rules.ram_wreck_reeling)
 }
 
 /// The time to drive `d` mm from rest at a ram's speed, ms, allowing for
@@ -191,7 +197,7 @@ pub fn chase(brain: &mut Brain, s: &Senses, nav: &Nav, b: &Boat, seat: usize, ou
     let ram = ram_speed(s);
     let speed = b.forward_speed();
     let off = crate::gfx::fx::wrap(bearing(at, aim) - b.heading).abs();
-    if d < 20_000 && (speed < s.rules.ram_wreck || off > trig::TURN / 12) {
+    if d < 20_000 && (speed < wreck_speed(s) || off > trig::TURN / 12) {
         // too slow or off line this close: round again
         let back = ahead(where_, bearing(where_, at), t.ram_runup_mm * 4 / 5);
         brain.runup = Some(if nav.open_at(back) {

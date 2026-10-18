@@ -53,7 +53,7 @@
       "plain": { "fill": [255, 246, 222], "outline": [34, 38, 52], "ink": [34, 38, 52], "icon": "none" }
     },
     "rows": [
-      { "event": "Hooked", "text": "popup.hooked", "style": "tier", "tier": "tier", "fill": { "player": "name:seat", "fish": "fish:kind" } },
+      { "event": "Announced", "text": "popup.hooked", "style": "tier", "tier": "tier", "fill": { "player": "name:seat", "fish": "fish:kind" } },
       { "event": "Caught", "text": "popup.landed", "style": "tier", "tier": "tier", "fill": { "player": "name:seat", "fish": "fish:kind" } },
       { "event": "CastRefused", "text": "popup.refused", "style": "plain", "who": "mine" },
       { "event": "Scared", "text": "popup.scared", "style": "plain", "who": "mine" },

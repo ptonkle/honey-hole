@@ -41,6 +41,9 @@ Every `SECOND-ORDER.md` row with status *person*, by number, with what the perso
 - R4.45: the eased rare and legendary reel fights (`fishing.reel` in `data/tuning.json`), PLAN.md V38.
 - R4.47: ramming pays several times better than fishing in AI playtests (`notes/playtests.md`); which rule to change, if any (PLAN.md V39).
 - R4.49: whether B4's "leggendaries ar not announced for 20 seconds" means a legendary's hook popup comes 20 s late.
+- R5.9: the ramming fix applied overnight (a legendary's popup 20 s late, a rammed-off rare or legendary swims 80 m); keep it, pick another option, or undo it with `balance.announce_delay_ms.legendary` 0 (`notes/balance-options.md`, PLAN.md V-balance).
+- R5.5: whether a reeling boat should be harder to wreck and not pushed by bumps (a change to the 80% rule; measured only).
+- R5.6: whether a ram should cost the rammer its held item (needs the items work; not built).
 - R2.11: the twelve draft AI names in `data/names.json`.
 - R2.21: the match setup's length choices (4, 8, 12 min) and buoy intervals (30 s to 2 min).
 - R1.160: the fish's new shapes from above and their new base lengths (R1.153, R1.154), in `notes/shots/models/fish-v2/`.
