@@ -43,6 +43,7 @@ Every `SECOND-ORDER.md` row with status *person*, by number, with what the perso
 - R1.160: the fish's new shapes from above and their new base lengths (R1.153, R1.154), in `notes/shots/models/fish-v2/`.
 - R2.116: the six more roster fish's look from the side and from above, in `notes/shots/models/fish-more/` (swims in `notes/shots/models/swims/`).
 - R2.117: a read of their six names (listed at the foot of `SECOND-ORDER.md`).
+- R2.136: all thirteen fish reshaped to their species from above, the side and 3/4, in `notes/shots/models/fish-v3/` (`before/` holds the same views before; side changes listed in R2.132).
 - R2.34: maples have no model; they draw as birches or tall spruces (`lake.props.maple` in `data/look.json`). A maple model, or keep it so.
 - R2.43: the boat camera's distance, height, pitch and field of view (`lake.camera` in `data/look.json`), and the lake's look in `notes/shots/world/`; the fog distance can be tried live in the Lake preview.
 
@@ -62,6 +63,7 @@ The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the 
 2026-10-17, the item buoy as a giant bobber (branch `worktree-agent-aedf5b313381339fe`, after f08c629): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 136 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 88 of 88 breaks caught.
 2026-10-17, the true-size line-up and the fish shapes from above (branch `worktree-agent-a28fb9a4d934aae73`, after 8a848c5): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 144 checks); `count-tests.sh`: 138 passed, 0 failed, 0 ignored; `scripts/break_tests.py line-up`: 4 of 4 new breaks caught.
 2026-10-17, six more roster fish (branch `worktree-agent-ad8a32d5f83ca73c9`, after 443a6fd): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 173 passed, 0 failed, 0 ignored; `scripts/break_tests.py roster panic sampled`: 3 of 3 new breaks caught.
+2026-10-18, all thirteen fish reshaped to their species (branch `worktree-agent-a224ab628fd9e4a46`, after 87c3d87, merged with main): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 222 checks); `count-tests.sh`: 231 passed, 0 failed, 0 ignored; no new behaviour tests (model data only).
 2026-10-17, the match core (Match, boats, collisions, wrecks, respawn, timer, tuning.json, controls.json, New match, Play with a stand-in lake) (branch `worktree-agent-a0098b4853bad3d19`, after 650e51e): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 208 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 124 of 124 breaks caught before the merge with the sound engine.
 
 2026-10-17, the screen 2D layer and the live Fish-Boy (radar, Fishpedia, My catch), merged with main (branch `worktree-agent-a0af07e03570f7fa8`, after 843a370): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 207 checks); `count-tests.sh`: 203 passed, 0 failed, 0 ignored; `scripts/break_tests.py` on the 38 new breaks: 38 of 38 caught.
