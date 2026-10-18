@@ -266,6 +266,14 @@
       ]
     },
     {
+      "id": "minigame_miss",
+      "label": "Minigame miss",
+      "_about": "a short falling buzz for a wrong bin or a missed circle",
+      "layers": [
+        { "wave": "square", "freq": 220, "to_freq": 150, "attack_ms": 2, "hold_ms": 90, "release_ms": 70, "gain": 0.12, "filter": { "type": "lowpass", "freq": 1400 } }
+      ]
+    },
+    {
       "id": "minigame_success",
       "label": "Minigame success",
       "_about": "a G major run up and a held chord",
@@ -479,6 +487,7 @@
     "ItemPicked": [{ "cue": "item_pickup", "who": "mine" }],
     "MinigameStarted": [{ "cue": "minigame_start", "who": "mine" }],
     "MinigameTick": [{ "cue": "minigame_tick", "who": "mine" }],
+    "MinigameMiss": [{ "cue": "minigame_miss", "who": "mine" }],
     "MinigameDone": [{ "cue": "minigame_success", "who": "mine" }],
     "ItemUsed": [{ "cue": "use_{item}", "who": "mine", "each": { "item": ["cloak", "power_reel", "nitrous", "teleporter", "camera", "enhanced_radar"] } }],
     "CloakEnded": [{ "cue": "cloak_off", "who": "mine" }],
