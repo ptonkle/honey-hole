@@ -150,9 +150,9 @@ While the line is in the water, the whole screen is an underwater camera on the 
 
 | Tier | Colour | Value multiplier | Perfect reel time | Schools |
 | --- | --- | --- | --- | --- |
-| Legendary | orange | 3× | 20 s (see question) | single, far apart |
-| Rare | purple | 2× | 10 s | single, far apart |
-| Uncommon | blue | 1.5× | 5 s | 2–4 |
+| Legendary | orange | 5× | 20 s | single, far apart |
+| Rare | purple | 3× | 10 s | single, far apart |
+| Uncommon | blue | 2× | 5 s | 2–4 |
 | Common | green | 1× | 3 s | 2–4 |
 
 - A fish's value comes from its kind (tier) and its length. Lengths vary about 1.5× within a kind and are shown in feet to two decimals.
@@ -212,9 +212,14 @@ Left hand on WASD, right hand on the mouse, always.
 - Playtests measure balance: catches and value per player, time spent fishing against hunting, wrecks, and item use. This shows whether ramming pays better than fishing.
 - The AI is a core module, deterministic from the match seed, and drives a boat through the same inputs a person does.
 
+### Answers to round 1
+
+The person's answers to `brief/questions.md` are recorded in `DECISIONS.md` (2026-10-17, round 1) and override the description where they differ. Every fish could live in a Midwest lake. Fish are visible below the surface. Rarer fish swim deeper, and bobber depth matters. Every hook is announced in a popup of about 2 s. Ramming stalls the rammer, and a respawn ghosts the player for a few seconds.
+
 ### Later
 
 - Fish habitats: some fish found mostly in, say, reeds.
+- Player interactions beyond ramming, which the online design leaves room for.
 - More map settings.
 
 ## Done means
@@ -283,7 +288,7 @@ The plan is not approved in advance. The agent writes `PLAN.md` and agrees with 
 - models of fish, boats, the world, the minigames, the radar view and the Fishpedia, shown in the design journal for an early OK;
 - map generation.
 
-Where this brief is silent, the agent asks if the answer changes the design; otherwise it decides, records the decision in `SECOND-ORDER.md`, and continues. The agent may not loosen a Builder requirement or a boundary test. It may not add a server, an account or analytics, and may make no off-origin request except the pinned relays the online design will need, once agreed. The agent does not publish until the person grants it.
+Where this brief is silent, the agent asks if the answer changes the design; otherwise it decides, records the decision in `SECOND-ORDER.md`, and continues. The agent may not loosen a Builder requirement or a boundary test. It may not add a server, an account or analytics, and may make no off-origin request except the pinned relays the online design will need, once agreed. The agent may deploy locally (served from this machine) but does not publish to GitHub until the person grants it.
 
 ## Allowed core dependencies
 
