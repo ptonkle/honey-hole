@@ -11,9 +11,9 @@
 //! `sim` is the match (boats, the timer, events), `tuning.rs` its numbers
 //! from `data/tuning.json`, `controls.rs` the keys from `data/controls.json`.
 
+pub mod ai;
 pub mod api;
 pub mod app;
-pub mod ai;
 pub mod controls;
 pub mod fishboy;
 pub mod gfx;

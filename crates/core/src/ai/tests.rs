@@ -80,7 +80,12 @@ fn put_fish(m: &mut Match, id: &str, at: P, depth_mm: i32) -> u32 {
 
 /// Steps the match with the crew's inputs (and none for people) for up to
 /// `ticks`, until `stop` holds of an event; the events seen.
-fn run(m: &mut Match, crew: &mut Crew, ticks: u32, stop: impl Fn(&MatchEvent) -> bool) -> Vec<(u32, MatchEvent)> {
+fn run(
+    m: &mut Match,
+    crew: &mut Crew,
+    ticks: u32,
+    stop: impl Fn(&MatchEvent) -> bool,
+) -> Vec<(u32, MatchEvent)> {
     let mut seen = Vec::new();
     for _ in 0..ticks {
         let i = crew.inputs(m);
@@ -110,7 +115,11 @@ fn the_ai_drives_from_the_spawn_to_the_far_end_without_grounding() {
         .filter(|&p| super::nav::land_between(&m.map, spawn, p))
         .max_by_key(|p| p.dist2(spawn))
         .unwrap();
-    assert!(far.dist(spawn) > 300_000, "the far point is {} m off", far.dist(spawn) / 1000);
+    assert!(
+        far.dist(spawn) > 300_000,
+        "the far point is {} m off",
+        far.dist(spawn) / 1000
+    );
     crew.brains[0].goal = Goal::Explore { to: far };
     let mut arrived = false;
     for _ in 0..crate::sim::TICKS_PER_S as u32 * 90 {
@@ -130,7 +139,11 @@ fn the_ai_drives_from_the_spawn_to_the_far_end_without_grounding() {
             crew.brains[0].goal = Goal::Explore { to: far };
         }
     }
-    assert!(arrived, "it did not get there in 90 s; it is at {:?}", m.boat(0).unwrap().at());
+    assert!(
+        arrived,
+        "it did not get there in 90 s; it is at {:?}",
+        m.boat(0).unwrap().at()
+    );
 }
 
 /// One AI in the small lake with one bluegill 20 m ahead, 1 m down.
@@ -149,9 +162,12 @@ fn the_ai_catches_a_fish_it_can_see() {
     // the drive (about 2 s), the cast (2 s), the fish's swim to the lure,
     // the wait (up to 6 s), up to 3 nibbles (up to 4.2 s) and a 3 s reel:
     // well inside 40 s
-    let seen = run(&mut m, &mut crew, 40 * 50, |e| matches!(e, MatchEvent::Caught { .. }));
+    let seen = run(&mut m, &mut crew, 40 * 50, |e| {
+        matches!(e, MatchEvent::Caught { .. })
+    });
     assert!(
-        seen.iter().any(|(_, e)| matches!(e, MatchEvent::Caught { seat: 0, fish, .. } if *fish == f)),
+        seen.iter()
+            .any(|(_, e)| matches!(e, MatchEvent::Caught { seat: 0, fish, .. } if *fish == f)),
         "no catch in 40 s: {:?}",
         seen.iter().map(|(t, e)| format!("{t} {e:?}")).collect::<Vec<_>>()
     );
@@ -165,9 +181,17 @@ fn the_ai_hooks_within_its_reaction_time() {
     for d in Difficulty::ALL {
         let (mut m, mut crew, _) = bluegill_ahead(d);
         let skill = m.tuning.ai.skill.get(d).clone();
-        let seen = run(&mut m, &mut crew, 40 * 50, |e| matches!(e, MatchEvent::Hooked { .. } | MatchEvent::Missed { .. }));
-        let bite = seen.iter().find(|(_, e)| matches!(e, MatchEvent::Bite { .. })).map(|x| x.0);
-        let hook = seen.iter().find(|(_, e)| matches!(e, MatchEvent::Hooked { .. })).map(|x| x.0);
+        let seen = run(&mut m, &mut crew, 40 * 50, |e| {
+            matches!(e, MatchEvent::Hooked { .. } | MatchEvent::Missed { .. })
+        });
+        let bite = seen
+            .iter()
+            .find(|(_, e)| matches!(e, MatchEvent::Bite { .. }))
+            .map(|x| x.0);
+        let hook = seen
+            .iter()
+            .find(|(_, e)| matches!(e, MatchEvent::Hooked { .. }))
+            .map(|x| x.0);
         let (Some(bite), Some(hook)) = (bite, hook) else {
             panic!("{d:?}: no bite and hook: {seen:?}");
         };
@@ -176,7 +200,10 @@ fn the_ai_hooks_within_its_reaction_time() {
         let gap = hook - bite;
         let lo = skill.reaction_min_ms as u32 / 20 + 1;
         let hi = skill.reaction_max_ms as u32 / 20 + 1;
-        assert!((lo..=hi).contains(&gap), "{d:?}: hooked {gap} ticks after the bite, not {lo} to {hi}");
+        assert!(
+            (lo..=hi).contains(&gap),
+            "{d:?}: hooked {gap} ticks after the bite, not {lo} to {hi}"
+        );
     }
 }
 
@@ -199,7 +226,10 @@ fn match_points(seed: u64, seats: [Difficulty; 4]) -> Vec<i32> {
         let i = crew.inputs(&m);
         m.step(&i);
     }
-    m.scores.iter().map(|s| s.catches.iter().map(|c| c.value).sum()).collect()
+    m.scores
+        .iter()
+        .map(|s| s.catches.iter().map(|c| c.value).sum())
+        .collect()
 }
 
 #[test]
@@ -208,7 +238,11 @@ fn hard_beats_easy_on_average() {
     let (mut hard, mut easy) = (0, 0);
     for seed in 1..=4 {
         // the seats change round so neither sits nearer the fish
-        let seats = if seed % 2 == 0 { [Hard, Easy, Hard, Easy] } else { [Easy, Hard, Easy, Hard] };
+        let seats = if seed % 2 == 0 {
+            [Hard, Easy, Hard, Easy]
+        } else {
+            [Easy, Hard, Easy, Hard]
+        };
         let p = match_points(seed, seats);
         for (k, d) in seats.iter().enumerate() {
             if *d == Hard {
@@ -238,11 +272,35 @@ fn a_near_legendary_hook_is_hunted_and_a_far_common_one_is_not() {
     // = 11.5 s, inside a legendary's 33 s reel; worth 55 x 5 x 1.25 = 344,
     // times 45% aggression and 1.5 = 232, against 40 points a minute for
     // 23 s = 15
-    assert!(super::hunt::worth_hunting(&s, skill, at, P::new(100_000, 0), "muskellunge", Tier::Legendary, 0));
+    assert!(super::hunt::worth_hunting(
+        &s,
+        skill,
+        at,
+        P::new(100_000, 0),
+        "muskellunge",
+        Tier::Legendary,
+        0
+    ));
     // a bluegill 300 m off: 29.6 s away, and its reel is 3 s
-    assert!(!super::hunt::worth_hunting(&s, skill, at, P::new(300_000, 0), "bluegill", Tier::Common, 0));
+    assert!(!super::hunt::worth_hunting(
+        &s,
+        skill,
+        at,
+        P::new(300_000, 0),
+        "bluegill",
+        Tier::Common,
+        0
+    ));
     // the same muskellunge 40 s after its hook: the reel will be over
-    assert!(!super::hunt::worth_hunting(&s, skill, at, P::new(100_000, 0), "muskellunge", Tier::Legendary, 40_000));
+    assert!(!super::hunt::worth_hunting(
+        &s,
+        skill,
+        at,
+        P::new(100_000, 0),
+        "muskellunge",
+        Tier::Legendary,
+        40_000
+    ));
 
     // and in the match: seat 1, 60 m east in sight, hooks a muskellunge
     let b = m.boats[1].as_mut().unwrap();
@@ -258,7 +316,11 @@ fn a_near_legendary_hook_is_hunted_and_a_far_common_one_is_not() {
         tier: Tier::Legendary,
     });
     crew.inputs(&m);
-    assert!(matches!(crew.brains[0].goal, Goal::Hunt { seat: 1, .. }), "{:?}", crew.brains[0].goal);
+    assert!(
+        matches!(crew.brains[0].goal, Goal::Hunt { seat: 1, .. }),
+        "{:?}",
+        crew.brains[0].goal
+    );
 }
 
 #[test]
@@ -269,9 +331,14 @@ fn a_full_match_of_four_ais_runs_the_same_twice_and_ends_with_catches() {
         let mut s = Setup::new(&t);
         s.seed = 11;
         s.fish = r.0.iter().map(|k| (k.id.clone(), k.count)).collect();
-        for (k, d) in [Difficulty::Normal, Difficulty::Hard, Difficulty::Easy, Difficulty::Normal]
-            .iter()
-            .enumerate()
+        for (k, d) in [
+            Difficulty::Normal,
+            Difficulty::Hard,
+            Difficulty::Easy,
+            Difficulty::Normal,
+        ]
+        .iter()
+        .enumerate()
         {
             s = s.with(k, Occupant::Ai(*d), &format!("P{k}"));
         }
@@ -284,7 +351,13 @@ fn a_full_match_of_four_ais_runs_the_same_twice_and_ends_with_catches() {
             let i = crew.inputs(&m);
             let tick = m.tick + 1;
             for e in m.step(&i) {
-                if matches!(e, MatchEvent::Wrecked { cause: WreckCause::Grounded, .. }) {
+                if matches!(
+                    e,
+                    MatchEvent::Wrecked {
+                        cause: WreckCause::Grounded,
+                        ..
+                    }
+                ) {
                     grounded += 1;
                 }
                 log.push(format!("{tick} {e:?}"));
@@ -326,7 +399,10 @@ fn the_ai_reads_only_what_its_seat_could_know() {
     let s = sense(&m, 0);
     assert!(s.fishing.fish.is_empty());
     assert!(s.rivals.is_empty());
-    m.boats[1].as_mut().unwrap().set_at(P::new(60_000, 80_000 - 130_000 / 2 + 50_000));
+    m.boats[1]
+        .as_mut()
+        .unwrap()
+        .set_at(P::new(60_000, 80_000 - 130_000 / 2 + 50_000));
     let s = sense(&m, 0);
     assert_eq!(s.rivals.len(), 1);
     assert_eq!(s.rivals[0].seat, 1);
@@ -345,7 +421,11 @@ fn the_ai_slows_under_the_grounding_speed_near_land() {
         crew.brains[0].goal = Goal::Explore { to };
         let i = crew.inputs(&m);
         let e = m.step(&i).to_vec();
-        assert!(!e.iter().any(|e| matches!(e, MatchEvent::Wrecked { .. })), "wrecked at tick {}", m.tick);
+        assert!(
+            !e.iter().any(|e| matches!(e, MatchEvent::Wrecked { .. })),
+            "wrecked at tick {}",
+            m.tick
+        );
         let b = m.boat(0).unwrap();
         if b.at().x > 148_000 {
             fastest_near = fastest_near.max(b.speed_mm_per_s());

@@ -198,7 +198,16 @@ impl Nav {
                 break;
             }
             let (x, y) = ((c % n) as i32, (c / n) as i32);
-            for (dx, dy) in [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)] {
+            for (dx, dy) in [
+                (1, 0),
+                (-1, 0),
+                (0, 1),
+                (0, -1),
+                (1, 1),
+                (1, -1),
+                (-1, 1),
+                (-1, -1),
+            ] {
                 let (tx, ty) = (x + dx, y + dy);
                 if tx < 0 || ty < 0 || tx >= n as i32 || ty >= n as i32 {
                     continue;
@@ -281,7 +290,17 @@ pub fn decel(r: &Rules, t: &AiTuning) -> i32 {
 /// Turns toward `to` and holds the throttle for `want` mm/s, slower for a
 /// sharp turn and near land ahead (unless `reckless`, for a ram's run-in).
 /// Writes A, D, W and S into `out`.
-pub fn steer(map: &Map, r: &Rules, t: &AiTuning, b: &Boat, to: P, want: i32, reckless: bool, out: &mut SeatInput) {
+#[allow(clippy::too_many_arguments)]
+pub fn steer(
+    map: &Map,
+    r: &Rules,
+    t: &AiTuning,
+    b: &Boat,
+    to: P,
+    want: i32,
+    reckless: bool,
+    out: &mut SeatInput,
+) {
     let at = b.at();
     let err = fx::wrap(bearing(at, to) - b.heading);
     let dead = r.turn.max(1);

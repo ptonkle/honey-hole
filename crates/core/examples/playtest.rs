@@ -10,6 +10,9 @@
 //! time is spent, wrecks, hooks lost to rams, the fish left by tier, reel
 //! times by tier, the winner's margin, and the AI's cost per tick.
 
+// tables by tier index read most plainly as index loops
+#![allow(clippy::needless_range_loop)]
+
 use std::fs;
 use std::time::Instant;
 
@@ -21,7 +24,12 @@ use tool_core::sim::{Difficulty, Match, MatchEvent, Occupant, Setup, WreckCause}
 use tool_core::tuning;
 
 const TIERS: [Tier; 4] = [Tier::Common, Tier::Uncommon, Tier::Rare, Tier::Legendary];
-const ACTS: [Activity; 4] = [Activity::Fishing, Activity::Hunting, Activity::Driving, Activity::Idle];
+const ACTS: [Activity; 4] = [
+    Activity::Fishing,
+    Activity::Hunting,
+    Activity::Driving,
+    Activity::Idle,
+];
 
 fn tier_ix(t: Tier) -> usize {
     TIERS.iter().position(|&x| x == t).unwrap_or(0)
@@ -65,6 +73,7 @@ struct Totals {
     winners_by_diff: [u32; 3],
     ai_ns: u128,
     ai_ticks: u64,
+    ai_worst_ns: u128,
     step_ns: u128,
     ticks: u64,
     all: SeatStats,
@@ -129,7 +138,11 @@ fn main() {
         }
         let mut m = Match::new(map, &t, setup).unwrap();
         m.stock(&roster).unwrap();
-        let start: Vec<(Tier, u32)> = m.fish_left().iter().map(|(id, n)| (roster.get(id).unwrap().tier, *n)).collect();
+        let start: Vec<(Tier, u32)> = m
+            .fish_left()
+            .iter()
+            .map(|(id, n)| (roster.get(id).unwrap().tier, *n))
+            .collect();
         let mut crew = Crew::new(&m);
         let mut st = vec![SeatStats::default(); 4];
         let mut hooked_at = [None::<(u32, Tier)>; 4];
@@ -137,7 +150,9 @@ fn main() {
         while !m.ended {
             let a = Instant::now();
             let inputs = crew.inputs(&m);
-            tot.ai_ns += a.elapsed().as_nanos();
+            let spent = a.elapsed().as_nanos();
+            tot.ai_ns += spent;
+            tot.ai_worst_ns = tot.ai_worst_ns.max(spent);
             tot.ai_ticks += 4;
             for b in &crew.brains {
                 st[b.seat].acts[act_ix(b.activity)] += 1;
@@ -147,15 +162,33 @@ fn main() {
             if let Some(ts) = trace {
                 for e in &events {
                     let txt = format!("{e:?}");
-                    if !txt.starts_with("ReelTick") && (txt.contains(&format!("seat: {ts}")) || txt.starts_with("Hooked") || txt.starts_with("Wrecked")) {
+                    if !txt.starts_with("ReelTick")
+                        && (txt.contains(&format!("seat: {ts}"))
+                            || txt.starts_with("Hooked")
+                            || txt.starts_with("Wrecked"))
+                    {
                         let b = m.boat(ts).unwrap();
-                        println!("{:6} {txt}  [at {:?} speed {}]", m.tick, b.at(), b.speed_mm_per_s());
+                        println!(
+                            "{:6} {txt}  [at {:?} speed {}]",
+                            m.tick,
+                            b.at(),
+                            b.speed_mm_per_s()
+                        );
                     }
                 }
-                if m.tick % 100 == 0 {
+                if m.tick.is_multiple_of(100) {
                     if let Some(br) = crew.brain(ts) {
                         let b = m.boat(ts).unwrap();
-                        println!("{:6} goal {:?} {:?} stage {:?} at {:?} speed {} seen {}", m.tick, br.goal, br.activity, m.fishing.lines[ts].stage, b.at(), b.speed_mm_per_s(), m.fishing_view(ts).fish.len());
+                        println!(
+                            "{:6} goal {:?} {:?} stage {:?} at {:?} speed {} seen {}",
+                            m.tick,
+                            br.goal,
+                            br.activity,
+                            m.fishing.lines[ts].stage,
+                            b.at(),
+                            b.speed_mm_per_s(),
+                            m.fishing_view(ts).fish.len()
+                        );
                     }
                 }
             }
@@ -240,7 +273,11 @@ fn main() {
         let pts: Vec<i64> = st.iter().map(|s| s.value.iter().sum()).collect();
         let mut sorted = pts.clone();
         sorted.sort_unstable_by(|a, b| b.cmp(a));
-        let margin = if sorted[0] > 0 { (sorted[0] - sorted[1]) * 100 / sorted[0] } else { 0 };
+        let margin = if sorted[0] > 0 {
+            (sorted[0] - sorted[1]) * 100 / sorted[0]
+        } else {
+            0
+        };
         tot.margins.push(margin);
         let win = pts.iter().position(|&p| p == sorted[0]).unwrap_or(0);
         tot.winners_by_diff[diff_ix(ups[win])] += 1;
@@ -269,7 +306,13 @@ fn report(tot: &Totals) {
         if tot.seats_by_diff[d] == 0 {
             continue;
         }
-        let cell = |k: usize| format!("{:.1} ({:.0} pts)", s.catches[k] as f64 / n, s.value[k] as f64 / n);
+        let cell = |k: usize| {
+            format!(
+                "{:.1} ({:.0} pts)",
+                s.catches[k] as f64 / n,
+                s.value[k] as f64 / n
+            )
+        };
         println!(
             "| {} | {} | {} | {} | {} | {} | {:.0} | {} |",
             diff.key(),
@@ -343,7 +386,11 @@ fn report(tot: &Totals) {
             l as f64 / m,
             s as f64 / m,
             l as f64 * 100.0 / s.max(1) as f64,
-            if n == 0 { "none".to_string() } else { format!("{:.1} s ({} reels)", ms as f64 / n as f64 / 1000.0, n) }
+            if n == 0 {
+                "none".to_string()
+            } else {
+                format!("{:.1} s ({} reels)", ms as f64 / n as f64 / 1000.0, n)
+            }
         );
     }
     println!();
@@ -353,7 +400,10 @@ fn report(tot: &Totals) {
     println!("| --- | --- | --- | --- | --- | --- |");
     for k in 0..4 {
         let o = tot.outcomes[k];
-        println!("| {} | {} | {} | {} | {} | {} |", names[k], o[0], o[1], o[2], o[3], o[4]);
+        println!(
+            "| {} | {} | {} | {} | {} | {} |",
+            names[k], o[0], o[1], o[2], o[3], o[4]
+        );
     }
     let mut margins = tot.margins.clone();
     margins.sort_unstable();
@@ -368,9 +418,10 @@ fn report(tot: &Totals) {
     );
     println!();
     println!(
-        "AI cost: {:.3} ms per AI per tick on average; the match step {:.3} ms per tick ({} ticks).",
-        tot.ai_ns as f64 / tot.ai_ticks.max(1) as f64 / 1e6,
-        tot.step_ns as f64 / tot.ticks.max(1) as f64 / 1e6,
+        "AI cost: {:.1} µs per AI per tick on average, the slowest tick of four AIs {:.0} µs; the match step {:.1} µs per tick ({} ticks).",
+        tot.ai_ns as f64 / tot.ai_ticks.max(1) as f64 / 1e3,
+        tot.ai_worst_ns as f64 / 1e3,
+        tot.step_ns as f64 / tot.ticks.max(1) as f64 / 1e3,
         tot.ticks
     );
 }

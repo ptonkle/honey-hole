@@ -41,7 +41,12 @@ pub fn kind_worth(s: &Senses, kind: &str, tier: Tier) -> i32 {
     };
     let t = &s.tuning.fish;
     let mid = k.base_length_mm as i64 * (t.length_min_pct + t.length_max_pct) as i64 / 200;
-    crate::sim::fishing::value(k.value, k.base_length_mm, mid as i32, s.tuning.fishing.tier_value_pct.get(tier))
+    crate::sim::fishing::value(
+        k.value,
+        k.base_length_mm,
+        mid as i32,
+        s.tuning.fishing.tier_value_pct.get(tier),
+    )
 }
 
 /// The speed a ram is driven at: the tuning's, and always over the speed
@@ -113,8 +118,14 @@ pub fn should_flee(s: &Senses, b: &Boat, r: &RivalSeen) -> Option<i32> {
     }
     // a fish worth more than the trip back from the spawn is kept on: a
     // ram might miss, and fleeing loses the fish for sure
-    if let Some(f) = s.fishing.on_line.as_ref().filter(|_| s.fishing.stage == Stage::Reeling) {
-        if super::fish::worth(s, f) as i64 > t.fishing_rate_per_min as i64 * t.respawn_cost_ms as i64 / 60_000 {
+    if let Some(f) = s
+        .fishing
+        .on_line
+        .as_ref()
+        .filter(|_| s.fishing.stage == Stage::Reeling)
+    {
+        if super::fish::worth(s, f) as i64 > t.fishing_rate_per_min as i64 * t.respawn_cost_ms as i64 / 60_000
+        {
             return None;
         }
     }

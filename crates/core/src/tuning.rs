@@ -306,7 +306,8 @@ pub mod tests {
 
     /// The AI section, for tests: the shipped file's numbers.
     pub fn ai_sample() -> serde_json::Value {
-        let file: serde_json::Value = serde_json::from_str(include_str!("../../../data/tuning.json")).unwrap();
+        let file: serde_json::Value =
+            serde_json::from_str(include_str!("../../../data/tuning.json")).unwrap();
         file["ai"].clone()
     }
 

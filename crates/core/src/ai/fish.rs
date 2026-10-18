@@ -59,7 +59,10 @@ pub fn fish_near_lure(s: &Senses, mm: i64) -> bool {
         return false;
     };
     let bob = P::new(l.bobber_x_mm, l.bobber_y_mm);
-    s.fishing.fish.iter().any(|f| P::new(f.x_mm, f.y_mm).dist2(bob) <= mm * mm)
+    s.fishing
+        .fish
+        .iter()
+        .any(|f| P::new(f.x_mm, f.y_mm).dist2(bob) <= mm * mm)
 }
 
 /// The best fish in sight to go for, if any.
@@ -160,7 +163,11 @@ pub fn act(brain: &mut Brain, s: &Senses, nav: &nav::Nav, b: &Boat, fish: u32, o
         out.pressed.mode = true;
         return;
     }
-    let away = if at == fp { b.heading + crate::map::trig::HALF } else { bearing(fp, at) };
+    let away = if at == fp {
+        b.heading + crate::map::trig::HALF
+    } else {
+        bearing(fp, at)
+    };
     let mut stop_at = crate::sim::fishing::lake::ahead(fp, away, stop_mm);
     if !nav.open_at(stop_at) || nav::land_between(s.map, stop_at, fp) {
         stop_at = nav.nearest_open(stop_at).map_or(fp, |c| nav.centre(c));
@@ -196,7 +203,8 @@ fn start_cast(brain: &mut Brain, s: &Senses, d: i32, depth: i32, out: &mut SeatI
     let noise = brain.skill.charge_noise_pct;
     let d = d + (d as i64 * brain.rng.range(-noise, noise) as i64 / 100) as i32;
     let full = ticks(t.charge_full_ms).max(1) as i64;
-    let power = ((d - t.cast_min_mm).max(0) as i64 * 1000 / (t.cast_max_mm - t.cast_min_mm).max(1) as i64).min(1000);
+    let power =
+        ((d - t.cast_min_mm).max(0) as i64 * 1000 / (t.cast_max_mm - t.cast_min_mm).max(1) as i64).min(1000);
     let hold = ((power * full + 999) / 1000).max(1) as u32;
     out.pressed.cast = true;
     out.held.cast = true;
@@ -234,7 +242,9 @@ pub fn tend_line(brain: &mut Brain, s: &Senses, b: &Boat, out: &mut SeatInput) {
             let set = *brain.lure_set.get_or_insert(s.tick);
             if v.biting {
                 let at = *brain.hook_at.get_or_insert_with(|| {
-                    let ms = brain.rng.range(brain.skill.reaction_min_ms, brain.skill.reaction_max_ms);
+                    let ms = brain
+                        .rng
+                        .range(brain.skill.reaction_min_ms, brain.skill.reaction_max_ms);
                     s.tick + (ms / TICK_MS as i32) as u32
                 });
                 if s.tick >= at {
@@ -253,7 +263,7 @@ pub fn tend_line(brain: &mut Brain, s: &Senses, b: &Boat, out: &mut SeatInput) {
                     }
                 }
                 brain.reeling_in = true;
-                if s.tick % 5 == 0 {
+                if s.tick.is_multiple_of(5) {
                     out.pressed.cast = true;
                     out.released.cast = true;
                 }
@@ -283,7 +293,13 @@ pub fn reel_hold(brain: &mut Brain, r: &ReelView, tick: u32) -> bool {
     h.marks[k] = r.fish;
     h.seen += 1;
     let n = h.seen as usize;
-    let mark = |back: usize| if n > back { h.marks[(n - 1 - back) % 64] } else { r.fish };
+    let mark = |back: usize| {
+        if n > back {
+            h.marks[(n - 1 - back) % 64]
+        } else {
+            r.fish
+        }
+    };
     // what it saw, carried on by the drift it saw then (over 3 ticks)
     let drift = (mark(lag) - mark(lag + 3)) / 3;
     let seen = mark(lag) + drift * lag as i32;
@@ -293,7 +309,11 @@ pub fn reel_hold(brain: &mut Brain, r: &ReelView, tick: u32) -> bool {
         h.offset_until = tick + ticks(500);
     }
     let h = &mut brain.reel;
-    let v = if h.zone_prev < 0 { 0 } else { (r.zone - h.zone_prev) * crate::sim::TICKS_PER_S };
+    let v = if h.zone_prev < 0 {
+        0
+    } else {
+        (r.zone - h.zone_prev) * crate::sim::TICKS_PER_S
+    };
     h.zone_prev = r.zone;
     let mid = r.zone + r.zone_h / 2 + v / 5;
     mid < seen + h.offset

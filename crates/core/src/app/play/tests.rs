@@ -213,8 +213,14 @@ fn ai_seats_drive_their_own_boats_in_an_offline_match() {
         tick(&mut a);
     }
     let g = game(&a);
-    assert_eq!(g.boat(0).unwrap().at(), start[0], "the person's boat moved by itself");
-    let moved = (1..4).filter(|&s| g.boat(s).unwrap().at().dist(start[s]) > 20_000).count();
+    assert_eq!(
+        g.boat(0).unwrap().at(),
+        start[0],
+        "the person's boat moved by itself"
+    );
+    let moved = (1..4)
+        .filter(|&s| g.boat(s).unwrap().at().dist(start[s]) > 20_000)
+        .count();
     assert!(moved >= 1, "no AI boat went 20 m in 10 s");
     // the page is told how many are under way (the browser check reads it)
     assert!(a.ui().ai_moving >= 1);
@@ -231,7 +237,10 @@ fn watch_mode_hands_the_persons_seat_to_an_ai() {
     for _ in 0..500 {
         tick(&mut a);
     }
-    assert!(game(&a).boat(0).unwrap().at().dist(start) > 20_000, "the watched boat stayed put");
+    assert!(
+        game(&a).boat(0).unwrap().at().dist(start) > 20_000,
+        "the watched boat stayed put"
+    );
     // Esc still opens the match menu
     key(&mut a, "Escape");
     assert!(a.play.as_ref().unwrap().menu_open());

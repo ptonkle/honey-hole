@@ -295,7 +295,10 @@ impl Brain {
         if let Some(b) = s.me {
             let side = (s.map.size_mm() / EXPLORE_CELL_MM + 1) as usize;
             let at = b.at();
-            let (x, y) = ((at.x.max(0) / EXPLORE_CELL_MM) as usize, (at.y.max(0) / EXPLORE_CELL_MM) as usize);
+            let (x, y) = (
+                (at.x.max(0) / EXPLORE_CELL_MM) as usize,
+                (at.y.max(0) / EXPLORE_CELL_MM) as usize,
+            );
             if x < side && y < side {
                 self.explored[y * side + x] = s.tick.max(1);
             }
@@ -343,7 +346,10 @@ impl Brain {
             return false;
         }
         let stage = s.fishing.stage;
-        if matches!(stage, Stage::Charging | Stage::Flying | Stage::Reeling | Stage::Sinking) {
+        if matches!(
+            stage,
+            Stage::Charging | Stage::Flying | Stage::Reeling | Stage::Sinking
+        ) {
             return false;
         }
         let tug = s.fishing.biting || s.fishing.lines.iter().any(|l| l.seat == s.seat && l.tug);
@@ -356,7 +362,11 @@ impl Brain {
             let coast = (s.rules.coast * crate::sim::TICKS_PER_S).max(1) as i64;
             let room = (v * v / (2 * coast)) as i32 + 10_000;
             let v2 = b.vel();
-            let way = if v > 500 { crate::map::trig::atan2(v2[1] as i64, v2[0] as i64) } else { b.heading };
+            let way = if v > 500 {
+                crate::map::trig::atan2(v2[1] as i64, v2[0] as i64)
+            } else {
+                b.heading
+            };
             if v > 500 && nav::land_ahead(s.map, b.at(), way, room) < room {
                 return false;
             }
@@ -421,8 +431,10 @@ impl Brain {
                 }
             }
         }
-        // a rival's hook worth the trip
-        if !matches!(self.goal, Goal::Hunt { .. } | Goal::Flee { .. }) && stage != Stage::Reeling {
+        // a rival's hook worth the trip (not with a fish at its own lure)
+        let busy = stage == Stage::Reeling
+            || (stage == Stage::Set && (s.fishing.biting || fish::fish_near_lure(s, 2500)));
+        if !matches!(self.goal, Goal::Hunt { .. } | Goal::Flee { .. }) && !busy {
             for seat in 0..self.hooks.len() {
                 let Some(h) = self.hooks[seat].clone() else {
                     continue;
@@ -439,7 +451,9 @@ impl Brain {
                 let Some((where_, _, seen)) = self.known[seat].filter(|k| k.2 + keep >= s.tick) else {
                     // unknown: wait for a ping, unless one cannot come
                     if s.ping != crate::fishboy::radar::PingState::Ready && s.tick > h.tick + ticks(6000) {
-                        self.hooks[seat].as_mut().map(|h| h.decided = true);
+                        if let Some(h) = self.hooks[seat].as_mut() {
+                            h.decided = true;
+                        }
                     }
                     continue;
                 };
@@ -475,7 +489,8 @@ impl Brain {
                     self.goal = Goal::Fish { fish: f };
                 }
                 None => {
-                    if current.is_some() || matches!(self.goal, Goal::Explore { to } if to.dist(at) < t.waypoint_mm as i64 * 2)
+                    if current.is_some()
+                        || matches!(self.goal, Goal::Explore { to } if to.dist(at) < t.waypoint_mm as i64 * 2)
                     {
                         let to = self.explore_point(s, nav, at);
                         self.goal = Goal::Explore { to };
@@ -515,6 +530,7 @@ impl Brain {
 
     /// Drives toward `to` along a path, at up to `want` mm/s; with `stop`,
     /// slowing to stop there.
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn drive_to(
         &mut self,
         s: &Senses,
@@ -542,7 +558,10 @@ impl Brain {
         while self.path.len() > 1 && self.path[0].dist(at) < t.waypoint_mm as i64 {
             self.path.remove(0);
         }
-        if self.path.len() > 1 && s.tick % 10 == self.seat as u32 && nav::clear_line(s.map, at, self.path[1], t.path_roomy_mm) {
+        if self.path.len() > 1
+            && s.tick % 10 == self.seat as u32
+            && nav::clear_line(s.map, at, self.path[1], t.path_roomy_mm)
+        {
             self.path.remove(0);
         }
         let next = self.path[0];

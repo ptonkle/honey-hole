@@ -121,7 +121,9 @@ pub fn sense<'a>(m: &'a Match, seat: usize) -> Senses<'a> {
     let mut news = Vec::new();
     for e in &m.events {
         match e {
-            MatchEvent::Hooked { seat: s, kind, tier, .. } if *s != seat => news.push(News::Hooked {
+            MatchEvent::Hooked {
+                seat: s, kind, tier, ..
+            } if *s != seat => news.push(News::Hooked {
                 seat: *s,
                 kind: kind.clone(),
                 tier: *tier,
