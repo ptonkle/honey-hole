@@ -69,3 +69,10 @@ The agent decided: the fog distance is one constant, `sight_mm` in the Burt Lake
 > like surely it's just a single const right
 
 Yes: `sight_mm: 120_000` (mm) in `crates/core/src/map/mod.rs`.
+
+## 2026-10-17 (first model feedback)
+
+> the fisherman is a bit too blocky is there any advantage to it being made out of cubes like this vs like triangles or trapezoids?
+> boat looks good though
+
+The agent decided: the boat is approved as is. The angler is remodelled with tapered, many-sided shapes (no plain boxes), keeping its poses, anchors and colours.
