@@ -58,6 +58,8 @@ The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the 
 2026-10-17, the true-size line-up and the fish shapes from above (branch `worktree-agent-a28fb9a4d934aae73`, after 8a848c5): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 144 checks); `count-tests.sh`: 138 passed, 0 failed, 0 ignored; `scripts/break_tests.py line-up`: 4 of 4 new breaks caught.
 2026-10-17, six more roster fish (branch `worktree-agent-ad8a32d5f83ca73c9`, after 443a6fd): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 173 passed, 0 failed, 0 ignored; `scripts/break_tests.py roster panic sampled`: 3 of 3 new breaks caught.
 
+2026-10-17, the screen 2D layer and the live Fish-Boy (radar, Fishpedia, My catch), merged with main (branch `worktree-agent-a0af07e03570f7fa8`, after 843a370): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 207 checks); `count-tests.sh`: 203 passed, 0 failed, 0 ignored; `scripts/break_tests.py` on the 38 new breaks: 38 of 38 caught.
+
 ## The next action
 
 One action.
