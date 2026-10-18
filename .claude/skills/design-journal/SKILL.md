@@ -37,6 +37,6 @@ Keep it in one lasting folder, called JOURNAL here (ask the person where it live
 - Say honestly what still looks wrong; the person uses the journal to give feedback.
 - Lay pages out for a 1920-wide window with big shots.
 
-## In this project (fishing)
+## In this project (Honey Hole)
 
 - **The journal:** the journal is `../honey-hole-journal/` beside this repo (its own git repo, never pushed), published at https://claude.ai/artifact/TeFhUVC6nLvhasHW726N6U. Pages: one per area of the game (models, maps, Fish-Boy and minigames).

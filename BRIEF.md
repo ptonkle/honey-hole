@@ -105,7 +105,7 @@ Earlier the same day the person also said: online play is part of the game, but 
 
 **Honey Hole** is a 3D online fishing game in the browser for up to 4 players, played with mouse and keyboard. A match lasts 8 minutes, and the player whose catch is worth the most at the end wins. Most of the play is in the gaps between catches: a hooked fish is announced to everyone, and rivals race over to ram the angler before it's landed. Powerup items keep the fight going.
 
-The working folder is `fishing/` until the person renames it.
+The game lives in `slop/honey-hole/` (renamed from the working name `fishing/` on 2026-10-18).
 
 ### Look
 
