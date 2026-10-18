@@ -58,6 +58,7 @@ Collected as the agent makes them; brought up in the morning. Each also has a ro
 - V24. Each fish's starting count is in `data/fish.json` (`count`: 30 common, 20 uncommon, 10 rare, 5 legendary over the 13 fish) until the fishing system adds its variance (R2.84).
 - V25. With the Fish-Boy up, the world is seen first person from 1.5 m over the water, along the camera's heading (R2.85).
 - V26. All thirteen fish checked against the real species from above, the side and 3/4 and reshaped: torpedo smallmouth, conical-snouted sturgeon, thin sunfish, smooth duck-bill pike and muskie, thin tails and fins, a flat-headed catfish with a short dorsal, a painted largemouth stripe, markings kept inside the outline from above; a few side views changed (SECOND-ORDER R2.130 to R2.136; shots in `notes/shots/models/fish-v3/`).
+- V27. The six item minigames as built (SECOND-ORDER R3.80 to R3.94): one 1600 x 900 canvas for all; the camera's fish drawn flat, not as models (R3.84); each radar slider clearing its own fault (R3.86); anticlockwise winding back the turn in progress (R3.83); every number in `data/tuning.json` `minigames`. Try them from the Title, Minigames.
 
 ## Status
 
