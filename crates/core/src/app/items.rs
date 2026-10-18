@@ -222,6 +222,16 @@ fn flat(out: &mut Vec<i32>, p: [V3; 3], colour: Rgb) {
     render::push_tri_glow(out, [p[0], p[2], p[1]], up, colour, ONE);
 }
 
+/// The largest text size up to `size` at which `text` fits in `width`.
+fn fit(font: &crate::ui2d::Font, text: &str, size: i32, width: i32) -> i32 {
+    let w = font.width(text, size).max(1);
+    if w <= width {
+        size
+    } else {
+        (size * width / w).max(8)
+    }
+}
+
 fn mix(a: [i32; 3], b: [i32; 3], pct: i32) -> [i32; 3] {
     [0, 1, 2].map(|k| a[k] + (b[k] - a[k]) * pct / 100)
 }
@@ -374,28 +384,27 @@ impl App {
     /// Two flickering tongues of foam and flame on the water behind the
     /// stern, widening as they go.
     fn trail(&self, out: &mut Vec<i32>, lake: &Lake, l: &ItemsLook, at: P, heading: i32, ms: i64) {
+        // a plume on the water from the motor back: shock diamonds that
+        // flicker with the clock, a pale core inside a coloured flame
+        const PROFILE: [i32; 10] = [30, 60, 85, 60, 80, 55, 65, 40, 25, 0];
         let back = heading + HALF;
-        let segs = 6;
-        let seg = l.trail_mm / segs;
-        let stern = 1200;
-        let core = render::rgb([255, 255, 255]);
+        let stern = 1900;
+        let step = l.trail_mm / (PROFILE.len() as i32 - 1);
+        let core = render::rgb([235, 250, 255]);
         let glow = render::rgb(l.trail);
-        for side in [-1, 1] {
-            for k in 0..segs {
-                // flicker: each segment's length breathes with the clock
-                let flick = ((ms / 70 + k as i64 * 3) % 4) as i32;
-                let d0 = stern + k * seg;
-                let d1 = d0 + seg * (8 + flick) / 10;
-                let w0 = l.trail_width_mm * (2 + k) / 8;
-                let w1 = l.trail_width_mm * (3 + k) / 8;
-                let off = side * l.trail_width_mm / 3;
-                let c0 = ahead(ahead(at, back, d0), heading + QUARTER, off);
-                let c1 = ahead(ahead(at, back, d1), heading + QUARTER, off + side * w1 / 4);
-                let left = |p: P, w: i32| lake.world(ahead(p, heading + QUARTER, w / 2), 60);
-                let right = |p: P, w: i32| lake.world(ahead(p, heading - QUARTER, w / 2), 60);
-                let colour = mix(core, glow, (k * 100 / segs).min(100));
-                flat(out, [left(c0, w0), right(c0, w0), right(c1, w1)], colour);
-                flat(out, [left(c0, w0), right(c1, w1), left(c1, w1)], colour);
+        let station = |k: usize, scale: i32| -> (P, i32) {
+            let flick = ((ms / 60 + k as i64 * 7) % 5) as i32 - 2;
+            let w = l.trail_width_mm * PROFILE[k] * (100 + flick * 8) / 100 / 100 * scale / 100;
+            (ahead(at, back, stern + k as i32 * step), w / 2)
+        };
+        for (scale, up, from, to) in [(100, 60, glow, glow), (45, 90, core, glow)] {
+            for k in 0..PROFILE.len() - 1 {
+                let (p0, h0) = station(k, scale);
+                let (p1, h1) = station(k + 1, scale);
+                let side = |p: P, h: i32, s: i32| lake.world(ahead(p, heading + QUARTER, s * h), up);
+                let colour = mix(from, to, k as i32 * 100 / (PROFILE.len() as i32 - 1));
+                flat(out, [side(p0, h0, 1), side(p0, h0, -1), side(p1, h1, -1)], colour);
+                flat(out, [side(p0, h0, 1), side(p1, h1, -1), side(p1, h1, 1)], colour);
             }
         }
     }
@@ -425,11 +434,11 @@ impl App {
             let top = height * (6 + wave) / 13;
             let lo = lake.world(base, 0);
             let hi = lake.world(base, top);
-            facing_quad(out, lo, hi, eye, mm(90 + permille / 20), colour);
+            facing_quad(out, lo, hi, eye, mm(40 + permille / 25), colour);
         }
         // the ring on the water
         let n = 24;
-        let (r0, r1) = (l.shimmer_mm - 250, l.shimmer_mm + 250);
+        let (r0, r1) = (l.shimmer_mm - 120, l.shimmer_mm + 120);
         for k in 0..n {
             let (a0, a1) = (spin + k * fx::TURN / n, spin + (k + 1) * fx::TURN / n);
             let p = |a: i32, r: i32| lake.world(ahead(at, a, r), 50);
@@ -461,26 +470,28 @@ impl App {
         match s.held {
             Some(item) => {
                 draw_icon(list, item, icon, c(l.icons.get(item)), ink);
+                let name = self.item_name(item);
                 list.text(
                     ink,
                     font,
-                    22,
+                    fit(font, &name, 22, sw - 16),
                     Align::Centre,
                     (sx + sw / 2, sy + sh - 52),
-                    &self.item_name(item),
+                    &name,
                 );
                 let key = if item == Item::Camera {
                     self.t("items.after_catch")
                 } else {
                     self.t("items.use_key")
                 };
-                let w = font.width(&key, 22) + 24;
+                let size = fit(font, &key, 22, sw - 40);
+                let w = font.width(&key, size) + 24;
                 let cap = Rect::new(sx + (sw - w) / 2, sy + sh - 36, w, 30);
                 list.round_rect(c(l.key_cap), Rgba::NONE, 0, cap, 6);
                 list.text(
                     c(l.panel),
                     font,
-                    22,
+                    size,
                     Align::Centre,
                     (sx + sw / 2, cap.y + 15),
                     &key,
@@ -657,6 +668,9 @@ impl App {
                 &self.t("teleport.keys"),
             );
             status.push("choosing=1".into());
+            if let Some((x, y)) = self.fishboy.pointer {
+                status.push(format!("aim={x},{y}"));
+            }
         }
         status.push(format!("marks={}", s.marks.len()));
     }

@@ -90,3 +90,28 @@ fn your_own_cloaked_boat_is_tinted_and_others_are_not() {
         "another player sees it as ever"
     );
 }
+
+#[test]
+fn a_click_on_the_radar_picks_the_teleports_destination() {
+    let mut a = started("items,item.teleporter,quick");
+    let b = a.play.as_ref().unwrap().game.items.buoy.unwrap();
+    a.play.as_mut().unwrap().game.boats[0].as_mut().unwrap().set_at(b);
+    tick(&mut a);
+    a.act("key", "ShiftLeft").unwrap();
+    tick(&mut a);
+    a.act("key.up", "ShiftLeft").unwrap();
+    for _ in 0..30 {
+        tick(&mut a);
+    }
+    assert!(has(&a, "choosing=1"), "{:?}", status(&a));
+    let r = a.fishboy_raised().unwrap().px;
+    // the middle of the radar's map square, in CSS pixels
+    let (x, y) = (r.x + r.w * 436 / 1600, r.y + r.h * 490 / 900);
+    a.act("pointer.move", &format!("{x} {y}")).unwrap();
+    assert!(a.fishboy.pointer.is_some());
+    a.act("pointer.down", &format!("{x} {y}")).unwrap();
+    tick(&mut a);
+    a.act("pointer.up", &format!("{x} {y}")).unwrap();
+    let g = &a.play.as_ref().unwrap().game;
+    assert!(g.items.seats[0].charge.is_some(), "the charge begins");
+}
