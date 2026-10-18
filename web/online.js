@@ -236,6 +236,9 @@ function hangUp(s, link) {
 
 async function room(isHost, roomCode, onEvent) {
   const s = open("room", isHost, onEvent, null);
+  // `?relay=none`: no relay is contacted, so the room waits with no one in
+  // it. The online check opens room links with it; a player never needs it.
+  if (new URLSearchParams(location.search).get("relay") === "none") return null;
   let lib;
   try {
     lib = await import(ONLINE.bundle);

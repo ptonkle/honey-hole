@@ -194,7 +194,53 @@ function meter(item) {
   return wrap;
 }
 
-const builders = { button, slider, toggle, select, text, list, table, notes, meter };
+// Puts `text` on the clipboard. Without the clipboard (an insecure page, a
+// refusal), the text is copied through a scratch field; if that fails too,
+// the shown code, if any, is left selected for the reader to copy.
+function clip(text, shown) {
+  const fallback = () => {
+    const box = make("textarea", "copy-scratch");
+    box.value = text;
+    box.readOnly = true;
+    document.body.append(box);
+    box.select();
+    let done = false;
+    try {
+      done = document.execCommand("copy");
+    } catch (e) {
+      // the selection below is the last resort
+    }
+    box.remove();
+    const again = shown && el(shown.id);
+    if (!done && again) window.getSelection().selectAllChildren(again);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(fallback);
+  else fallback();
+}
+
+// A Copy button, and the text it copies shown big beside it when the core
+// gives one (the room code). The core says what to copy; the clipboard is
+// the page's job. `body[data-copied]` holds what was copied, for the online
+// check (a headless clipboard may refuse to be read).
+function copy(item) {
+  const b = make("button", "button quiet", item.text);
+  b.type = "button";
+  b.id = item.id;
+  b.disabled = item.disabled === true;
+  const wrap = make("div", "field copy-field");
+  const code = item.value ? make("span", "copy-code", item.value) : null;
+  on(item.id, "click", () => {
+    document.body.dataset.copied = item.copy;
+    clip(item.copy, code);
+    send(item.id, "");
+  });
+  if (!code) return b;
+  code.id = item.id + ".code";
+  wrap.append(make("label", "", item.label), code, b);
+  return wrap;
+}
+
+const builders = { button, slider, toggle, select, text, list, table, notes, meter, copy };
 
 // The panels as the core gives them, built as a fresh tree off the page.
 function buildMenus() {
@@ -576,6 +622,14 @@ async function main() {
   // online check (scripts/check-online.sh); players use room codes
   if (new URLSearchParams(location.search).has("codes")) send("flag.codes", "on");
   startNet(game, draw);
+  // room links: the page's own address, and the room to join when opened
+  // from one (`#room=CODE`, cleared from the address bar once read)
+  send("flag.page_url", location.origin + location.pathname);
+  const linked = new URLSearchParams(location.hash.slice(1)).get("room");
+  if (linked) {
+    history.replaceState(null, "", location.pathname + location.search);
+    send("flag.room_link", linked);
+  }
   renderer = makeRenderer(el("scene"), JSON.parse(game.numbers()), shaders);
   if (!renderer) send("scene.unavailable", "");
   // the Title's backdrop draws before any action: its canvas's size now

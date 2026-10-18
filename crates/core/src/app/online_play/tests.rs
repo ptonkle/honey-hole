@@ -245,3 +245,62 @@ fn the_hosts_rematch_takes_everyone_back_to_the_lobby_for_the_next_match() {
         "the next match starts"
     );
 }
+
+/// The item `id` in the screen's panels, as the page reads it.
+fn item(a: &App, id: &str) -> Value {
+    let v = serde_json::to_value(a.ui()).unwrap();
+    v["panels"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .flat_map(|p| p["items"].as_array().unwrap().iter())
+        .find(|i| i["id"] == id)
+        .cloned()
+        .unwrap_or(Value::Null)
+}
+
+#[test]
+fn the_lobby_offers_the_room_code_and_its_link_to_copy() {
+    let (mut a, mut b, mut now) = meet();
+    a.act("flag.page_url", "https://ptonkle.github.io/honey-hole/")
+        .unwrap();
+    let code = a.online.room.clone();
+    let copy = item(&a, "online.copy");
+    assert_eq!(copy["type"], "copy");
+    assert_eq!(copy["value"], code.as_str(), "the code is shown");
+    assert_eq!(copy["copy"], code.as_str(), "and copied");
+    let link = item(&a, "online.copy_link");
+    assert_eq!(
+        link["copy"],
+        format!("https://ptonkle.github.io/honey-hole/#room={code}").as_str(),
+        "the link is the page's own address with the room code"
+    );
+    a.act("online.copy", "").unwrap();
+    assert_eq!(item(&a, "online.copy")["text"], "ONLINE.COPIED");
+    assert_eq!(item(&a, "online.copy_link")["text"], "ONLINE.COPY_LINK");
+    run(&mut a, &mut b, &mut now, 2000);
+    assert_eq!(
+        item(&a, "online.copy")["text"],
+        "ONLINE.COPY",
+        "Copied reads for a moment only"
+    );
+    assert_eq!(
+        item(&b, "online.copy")["value"],
+        code.as_str(),
+        "a joiner can pass the code on too"
+    );
+}
+
+#[test]
+fn opening_a_room_link_joins_that_room() {
+    let mut a = lobby();
+    a.advance(1_000_000);
+    a.act("flag.room_link", "abc").unwrap();
+    assert_ne!(a.screen, Screen::OnlineLobby, "a code too short is ignored");
+    let code = online::room_code(7);
+    a.act("flag.room_link", &code).unwrap();
+    assert_eq!(a.screen, Screen::OnlineLobby);
+    let req = a.net_pump(1_000_000).requests;
+    assert_eq!(req[0]["op"], "join_room");
+    assert_eq!(req[0]["room"], online::room_name(&code));
+}
