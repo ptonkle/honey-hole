@@ -257,6 +257,8 @@ impl App {
             .tuning
             .as_ref()
             .map_or((2000, 0), |t| (t.flow.popup_ms, t.flow.end_hold_ms));
+        // `?fast`: no "Lines up" hold (`app/fast.rs`)
+        let hold_ms = if self.fast { 0 } else { hold_ms };
         if let Some(l) = self.flow.look.as_ref() {
             self.flow.popups.advance(now, popup_ms, l.popups.max_shown);
             let keep_us = l.burst.ms.max(l.burst.shake_ms).max(l.hud.wreck_flash_ms) as i64 * 1000;
@@ -294,6 +296,10 @@ impl App {
         });
         self.flow.popups = Popups::default();
         self.go(Screen::Postgame);
+        if self.fast {
+            // `?fast`: every card at once, and the ranking (`app/fast.rs`)
+            self.skip_reveal();
+        }
     }
 
     /// The reveal's sounds since the last frame: a tally tick for each

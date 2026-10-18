@@ -138,7 +138,11 @@ with sync_playwright() as p:
                     route.fulfill(response=resp, body=body)
                 return route_app
             page.route(f"**/{fname}*", make(mine))
-    q = "?debug=watch" if scenario == "watch" else ""
+    # `?mute` (crates/core/src/app/fast.rs): no sound out while it runs
+    # (BUILDER_MUTE=0 to hear it); not `?fast`, which would change the timing measured
+    flags = [] if os.environ.get("BUILDER_MUTE") == "0" else ["mute"]
+    q = "&".join(flags + (["debug=watch"] if scenario == "watch" else []))
+    q = "?" + q if q else ""
     page.goto(base + q)
     page.wait_for_selector("body[data-ready='true']", state="attached", timeout=30000)
     renderer = engines.renderer(page)

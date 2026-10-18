@@ -43,6 +43,11 @@ import online as transport  # noqa: E402  (the helpers of the transport check)
 WAIT_MS = transport.WAIT_MS
 STRINGS = json.loads((pathlib.Path(__file__).resolve().parents[2] / "data" / "strings.json").read_text())
 check = transport.check
+# the page's test flags (crates/core/src/app/fast.rs), as in check.py:
+# BUILDER_FAST=0 for the players' timing, BUILDER_MUTE=0 to hear the sounds
+FLAGS = "".join(
+    "&" + f for f, env in (("fast", "BUILDER_FAST"), ("mute", "BUILDER_MUTE")) if os.environ.get(env) != "0"
+)
 
 
 def by_id(id_):
@@ -59,7 +64,7 @@ class Tab:
         self.page.on("console", lambda m: seen["console"].append(tag + m.text) if m.type == "error" else None)
         self.page.on("pageerror", lambda e: seen["errors"].append(tag + str(e)))
         self.page.on("websocket", lambda ws: seen["sockets"].append(ws.url))
-        self.page.goto(origin + "/index.html?codes&ice=none")
+        self.page.goto(origin + "/index.html?codes&ice=none" + FLAGS)
         self.page.wait_for_selector("body[data-ready='true']", timeout=WAIT_MS)
 
     def click(self, id_):
@@ -217,7 +222,15 @@ def run_engine(p, engine, origin):
     b.page.keyboard.press("Escape")
     b.page.wait_for_selector(".panel.pause", timeout=WAIT_MS)
     before = b.ui2d("time")
-    b.page.wait_for_timeout(1500)
+    # waits on the HUD's clock (the core's `time=`), not a fixed time
+    try:
+        b.page.wait_for_function(
+            "t => !(document.body.dataset.ui2d || '').split(' ').includes('time=' + t)",
+            arg=before,
+            timeout=WAIT_MS,
+        )
+    except Exception:
+        pass
     after = b.ui2d("time")
     check(before != after, f"the online match runs on behind B's menu ({before} -> {after})")
     finish()

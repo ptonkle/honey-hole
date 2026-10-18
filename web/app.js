@@ -566,6 +566,11 @@ async function main() {
   // debug flags from the page's address (`?debug=fishing`), for checks
   const debug = new URLSearchParams(location.search).get("debug");
   if (debug) send("debug.flags", debug);
+  // `?fast`: the browser checks' fast mode, and `?mute`: no sound out
+  // (crates/core/src/app/fast.rs); never set for players
+  ["fast", "mute"].forEach((f) => {
+    if (new URLSearchParams(location.search).has(f)) send("flag." + f, "on");
+  });
   startAudio(game);
   // `?codes`: the pasted-code path to online play, for the automated
   // online check (scripts/check-online.sh); players use room codes

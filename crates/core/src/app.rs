@@ -15,6 +15,7 @@ use crate::patch_notes::{self, Entry};
 use crate::strings::{self, Strings};
 use crate::view::{Item, Panel};
 
+mod fast;
 pub mod fishing;
 pub mod gallery;
 pub mod items;
@@ -225,6 +226,10 @@ pub struct App {
     pub debug_flags: Vec<String>,
     /// the menus' lake backdrop (`app/title.rs`)
     pub title_backdrop: title::Backdrop,
+    /// the page's `?fast`: the browser checks' fast mode (`app/fast.rs`)
+    pub fast: bool,
+    /// the page's `?mute`: no sound out (`app/fast.rs`)
+    pub mute: bool,
 }
 
 impl App {
@@ -263,6 +268,8 @@ impl App {
             debug_place: None,
             debug_flags: Vec::new(),
             title_backdrop: title::Backdrop::default(),
+            fast: false,
+            mute: false,
         })
     }
 
@@ -368,6 +375,7 @@ impl App {
             "menu.offline" => self.go(Screen::Lobby),
             "menu.online" => self.go(Screen::Online),
             "flag.codes" => self.online.codes = value == "on",
+            "flag.fast" | "flag.mute" => self.test_flag(name, value),
             "menu.settings" => {
                 self.settings_return = self.screen == Screen::Play;
                 self.go(Screen::Settings);

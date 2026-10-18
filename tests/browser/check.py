@@ -33,6 +33,10 @@ Environment:
                       (default: every step; scripts/quick-check.sh sets it)
     BUILDER_HEADLESS  1: Chromium headless even where it could draw on the
                       GPU in an invisible Xvfb window (tests/browser/engines.py)
+    BUILDER_FAST      0: the players' timing, not the core's fast mode (`?fast`:
+                      no countdown, "Lines up", reveal or Fish-Boy raise to wait
+                      through; rule timings are never shortened)
+    BUILDER_MUTE      0: let the page's sounds be heard (`?mute` by default)
     BUILDER_ORIGIN    check a deployed origin instead of serving dist/, e.g.
                       https://example.github.io/my-tool  (no trailing slash)
     CHECK_PLAIN       1: the plain lines even in a terminal
@@ -136,7 +140,8 @@ def run_engine(p, engine, base, interactions):
     page.on("worker", lambda w: seen["workers"].append(w.url))
     page.on("popup", lambda pg: seen["popups"].append(pg.url))
 
-    page.goto(base + "/index.html")
+    # with the test flags (`?fast&mute`; BUILDER_FAST=0, BUILDER_MUTE=0 turn them off)
+    page.goto(interactions.address(base + "/index.html"))
     page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
     check(True, "page reported ready")
     report.note(f"  WebGL: {engines.renderer(page)}")

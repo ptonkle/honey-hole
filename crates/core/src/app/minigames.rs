@@ -68,7 +68,13 @@ impl App {
         let m = &mut self.minigames;
         m.started += 1;
         let seed = crate::map::rng::mix(self.clock as u64 ^ m.started.wrapping_mul(0x9E37_79B9));
-        m.game = Some(Minigame::new(kind, seed, &tuning.minigames));
+        let mut t = tuning.minigames.clone();
+        if self.fast {
+            // `?fast`: no instruction banner on this screen (`app/fast.rs`)
+            t.banner_ms = 0;
+        }
+        let m = &mut self.minigames;
+        m.game = Some(Minigame::new(kind, seed, &t));
         m.last_now = None;
         m.pending_us = 0;
         m.held = false;

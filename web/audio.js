@@ -17,6 +17,10 @@ let game = null;
 let ctx = null;
 let master = null;
 let noise = null;
+// the last stage before the speakers; joined to them by the first frame the
+// core does not mark `muted` (the page's `?mute`, for the browser checks)
+let limiter = null;
+let speakers = false;
 const voices = new Map();
 
 // For the browser check: the context's state and how many layers have been
@@ -38,9 +42,8 @@ function wake() {
     master = ctx.createGain();
     master.gain.value = 0;
     // a safety net against clipping when many sounds play at once
-    const limiter = ctx.createDynamicsCompressor();
+    limiter = ctx.createDynamicsCompressor();
     master.connect(limiter);
-    limiter.connect(ctx.destination);
     const samples = game.sound_noise();
     noise = ctx.createBuffer(1, samples.length, ctx.sampleRate);
     noise.copyToChannel(samples, 0);
@@ -202,6 +205,10 @@ function syncVoices(frame) {
 
 function play(frame) {
   const now = ctx.currentTime;
+  if (!frame.muted && !speakers) {
+    limiter.connect(ctx.destination);
+    speakers = true;
+  }
   master.gain.setTargetAtTime(frame.master, now, frame.smooth);
   frame.cues.forEach((cue) => playCue(cue, now));
   syncVoices(frame);

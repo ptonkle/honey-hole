@@ -98,6 +98,8 @@ pub struct FishBoy {
     pub pointer_down: bool,
     /// the radar's picture of this match's map, made once a match
     pub radar_map: Option<Bitmap>,
+    /// the browser check's fast mode (`App::fast`): up and down at once
+    pub fast: bool,
 }
 
 impl Default for FishBoy {
@@ -112,6 +114,7 @@ impl Default for FishBoy {
             pointer: None,
             pointer_down: false,
             radar_map: None,
+            fast: false,
         }
     }
 }
@@ -147,7 +150,12 @@ impl FishBoy {
     /// How far raised the device is at `clock`: 0 down, ONE up.
     pub fn amount(&self, clock: i64) -> i32 {
         let dur = self.raise_us();
-        let done = (clock - self.moved_at).clamp(0, dur);
+        // fast mode: no raise to watch, all the way at once
+        let done = if self.fast {
+            dur
+        } else {
+            (clock - self.moved_at).clamp(0, dur)
+        };
         let p = (done * ONE as i64 / dur) as i32;
         if self.open {
             p
