@@ -62,6 +62,8 @@ The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the 
 2026-10-17, six more roster fish (branch `worktree-agent-ad8a32d5f83ca73c9`, after 443a6fd): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 173 passed, 0 failed, 0 ignored; `scripts/break_tests.py roster panic sampled`: 3 of 3 new breaks caught.
 2026-10-17, the match core (Match, boats, collisions, wrecks, respawn, timer, tuning.json, controls.json, New match, Play with a stand-in lake) (branch `worktree-agent-a0098b4853bad3d19`, after 650e51e): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 208 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 124 of 124 breaks caught before the merge with the sound engine.
 
+2026-10-17, the 3D world of Burt Lake (terrain, water, fog, props, instancing, cameras, the Lake preview, a match drawn on the lake, glowing colours), merged with main (branch `worktree-agent-a2ff84d9ac75f0c6e`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 231 passed, 0 failed, 0 ignored; `scripts/break_tests.py` on the world's 18 breaks: all caught.
+
 ## The next action
 
 One action.
