@@ -19,6 +19,7 @@ pub mod gfx;
 pub mod glossary;
 pub mod map;
 pub mod model;
+pub mod online;
 pub mod patch_notes;
 pub mod roster;
 pub mod scene;
