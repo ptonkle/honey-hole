@@ -59,6 +59,9 @@ Every `SECOND-ORDER.md` row with status *person*, by number, with what the perso
 - R4.80: the lower chase camera, in `notes/shots/polish/` (3 to 5c).
 - R4.93: the underwater look, in `notes/shots/polish/` (1 to 2b).
 - R3.123: the match flow's look (the HUD, popups, countdown, wreck burst, ghosted boat, postgame reveal and ranking), in `notes/shots/match-flow/`; every colour and timing is in `data/flow.json`.
+- R5.31: R4.11's fix, the reel holds still while an item's minigame plays (`items.reel_holds_in_minigame`; PLAN.md V52).
+- R5.33: the AI's hand on the minigames, by difficulty (`ai.items.hand`; PLAN.md V53).
+- R5.40: items in AI playtests (camera strongest, Nitrous, Teleporter and Cloaking Tech worth about nothing, the winner's margin wider); whether to let the boat keep its throttle during a minigame, shorten Nitrous's, or lower the camera's weight (`notes/playtests.md`, "Results with items"; PLAN.md V54).
 - R4.26: the items' look, words and numbers (`notes/shots/items/`; try them with `?debug=items,item.<key>`).
 - R2.43: the boat camera's distance, height, pitch and field of view (`lake.camera` in `data/look.json`), and the lake's look in `notes/shots/world/`; the fog distance can be tried live in the Lake preview.
 
@@ -103,6 +106,8 @@ The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the 
 2026-10-18, the AI players and headless playtests (`crates/core/src/ai/`, `examples/playtest.rs`, `notes/playtests.md`), merged with main (match flow, minigames, polish) (branch `ai`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 372 checks, with the new `ai` step); `count-tests.sh`: 380 passed, 0 failed, 0 ignored; `scripts/break_tests.py` on the 10 new breaks and the restored cue delay: 11 of 11 caught.
 
 2026-10-18, items (the buoy's clock, warning, beats and fair point; pickups; Shift and the six minigames; the six effects; claim functions; HUD, icons, popups, world effects; `?debug=items`), merged with main through dc644e7 (online play) (branch `items`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 405 checks, with the new `items` step); `count-tests.sh`: 431 passed, 0 failed, 0 ignored; `scripts/break_tests.py items:`: 29 of 29 caught.
+
+2026-10-18, the AI uses items (the buoy, each item's moment, a hand that plays the six minigames through the pointer), R4.11's fix (the reel holds while a minigame plays) and the playtests with items, merged with main's online items (branch `worktree-agent-abdb694ecf26104d8`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, with the new `ai_items` step); `count-tests.sh`: 455 passed, 0 failed, 0 ignored; `break_tests.py` caught all 11 new breaks.
 
 ## The next action
 

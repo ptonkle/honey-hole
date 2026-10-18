@@ -220,6 +220,32 @@
         "evade_pct": 90,
         "ping_every_ms": 15000
       }
+    },
+    "items": {
+      "_note": "When an AI player goes for the item buoy and uses its item (crates/core/src/ai/items.rs), and how it plays the minigames through the pointer (ai/hand.rs). use_items false: no buoys, no items; use_held false: buoys fetched but never used (a playtest's comparisons, notes/playtests.md). The buoy: a trip of up to buoy_worth_ms (buoy_worth_held_ms holding an item, which the new one would replace); never with a fish at the lure or on the line, nor while hunting or fleeing. Nitrous: on a drive of nitrous_min_mm or more, or a hunt of nitrous_hunt_min_mm. Teleporter: to a hunted rival (landing teleport_short_mm short, for the run-in) or an Enhanced Radar's rare or legendary fish, teleport_min_mm or further, with teleport_lead_ms of the rival's reel left; held teleport_explore_after_ms with neither, to the far water it would explore. Cloaking Tech: on a hunt cloak_hunt_min_mm or more off, and for a fish of cloak_min_tier or rarer before the cast at it (cloak_before_cast; false: on hooking it). Power Reel: on hooking a fish of power_reel_min_tier or rarer (power_reel_on_hook; false: before casting at one). Camera: on a catch of camera_min_tier or rarer, or any catch with under camera_any_left_ms left. Enhanced Radar: after radar_blind_ms exploring with no fish in sight. hand, by difficulty: the pointer's speed (canvas units a second), a pause after each grab, drop, click or photo, its aim's miss (canvas units), its timing's miss on a closing ring, and the Power Reel's circling (thousandths of a turn a second).",
+      "use_items": true,
+      "use_held": true,
+      "buoy_worth_ms": 15000,
+      "buoy_worth_held_ms": 6000,
+      "nitrous_min_mm": 400000,
+      "nitrous_hunt_min_mm": 120000,
+      "teleport_min_mm": 180000,
+      "teleport_lead_ms": 14000,
+      "teleport_short_mm": 35000,
+      "teleport_explore_after_ms": 60000,
+      "cloak_hunt_min_mm": 100000,
+      "cloak_min_tier": "rare",
+      "cloak_before_cast": true,
+      "power_reel_min_tier": "rare",
+      "power_reel_on_hook": true,
+      "camera_min_tier": "rare",
+      "camera_any_left_ms": 45000,
+      "radar_blind_ms": 8000,
+      "hand": {
+        "easy": {"speed_per_s": 1400, "pause_ms": 450, "aim_noise": 26, "timing_noise_ms": 240, "reel_permille_per_s": 900},
+        "normal": {"speed_per_s": 2400, "pause_ms": 250, "aim_noise": 14, "timing_noise_ms": 130, "reel_permille_per_s": 1600},
+        "hard": {"speed_per_s": 3800, "pause_ms": 120, "aim_noise": 6, "timing_noise_ms": 60, "reel_permille_per_s": 2600}
+      }
     }
   },
   "audio": {
@@ -349,7 +375,7 @@
     }
   },
   "items": {
-    "_note": "The item buoy and the items (crates/core/src/sim/items/). A buoy spawns every match.buoy_interval_ms (the setup's choice) at a fair point, a similar boat trip from every player (map/buoy.rs). warning_ms before it, everyone gets the warning popup, then the countdown's beats, beat_ms apart, the last as it spawns (BRIEF: a 5-beat countdown). A boat whose middle comes within pickup_radius_mm takes it and gets an item drawn by weights (each weight's share of their total). unclaimed_moves: when the next buoy is due and the last is still there, it moves to the new fair point (false: it stays, and no other comes until it is taken). The effects: Cloaking Tech hides the player from pings for cloak_ms (BRIEF: 1 min); the Power Reel reels at power_reel_pct for power_reel_ms (BRIEF: 2x for 20 s); nitrous runs nitrous_ms (BRIEF: 15 s; its multipliers are boat.nitrous); the Teleporter charges for teleport_charge_ms (BRIEF: 5 s) and lands at least teleport_clear_mm from land; the High-Quality Camera's offer after a catch stays up camera_prompt_ms, then the camera is kept for later (its 1.5x is fishing.camera_value_pct).",
+    "_note": "The item buoy and the items (crates/core/src/sim/items/). A buoy spawns every match.buoy_interval_ms (the setup's choice) at a fair point, a similar boat trip from every player (map/buoy.rs). warning_ms before it, everyone gets the warning popup, then the countdown's beats, beat_ms apart, the last as it spawns (BRIEF: a 5-beat countdown). A boat whose middle comes within pickup_radius_mm takes it and gets an item drawn by weights (each weight's share of their total). unclaimed_moves: when the next buoy is due and the last is still there, it moves to the new fair point (false: it stays, and no other comes until it is taken). The effects: Cloaking Tech hides the player from pings for cloak_ms (BRIEF: 1 min); the Power Reel reels at power_reel_pct for power_reel_ms (BRIEF: 2x for 20 s); nitrous runs nitrous_ms (BRIEF: 15 s; its multipliers are boat.nitrous); the Teleporter charges for teleport_charge_ms (BRIEF: 5 s) and lands at least teleport_clear_mm from land; the High-Quality Camera's offer after a catch stays up camera_prompt_ms, then the camera is kept for later (its 1.5x is fishing.camera_value_pct). reel_holds_in_minigame: while a minigame plays or a teleport's spot is being picked, a fish on the line waits, its reel bar still (SECOND-ORDER R5.31; false: the reel fights on with no Space and the line may break, R4.11).",
     "warning_ms": 5000,
     "beats": 5,
     "beat_ms": 1000,
@@ -369,6 +395,7 @@
     "nitrous_ms": 15000,
     "teleport_charge_ms": 5000,
     "teleport_clear_mm": 6000,
-    "camera_prompt_ms": 10000
+    "camera_prompt_ms": 10000,
+    "reel_holds_in_minigame": true
   }
 }

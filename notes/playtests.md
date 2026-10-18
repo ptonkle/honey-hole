@@ -88,3 +88,85 @@ The numbers say hunting a hooked rival pays several times better than fishing, t
 ## Cost
 
 The AI costs 0.9 µs per AI player per tick on average in a native release build (`cargo run --release --example playtest -- 48 1`). A path search is the costly part: 52 ticks in 1,152,000 took the four AI players over 1 ms together, the slowest 6 ms. The budget was 0.3 ms per AI per tick (MEASUREMENTS.md).
+
+## Results with items, 2026-10-18
+
+48 matches from seed 1 (`-- 48 1`), each checked again on seeds 1001 to 1048, with the balance settings as shipped (a legendary's hook popup 20 s late, a rammed-off rare or legendary swims 80 m) and the AI now using items (`crates/core/src/ai/items.rs`, its hand on the minigames in `ai/hand.rs`; SECOND-ORDER R5.30 to R5.46). Items come as before: a buoy a minute from the first minute, each item equally likely. Two switches in `ai.items` give the comparisons: `use_items` false (no AI goes for a buoy or uses an item: the game of `notes/balance-options.md`, number for number), and `use_held` false (it drives to buoys but never uses what it picks up: what the trips cost). A run with one item alone sets the other five weights to 0, for example `-- 48 1 items.weights.cloak=0 items.weights.power_reel=0 items.weights.nitrous=0 items.weights.teleporter=0 items.weights.enhanced_radar=0` for the camera alone.
+
+### The balance table (as in `notes/balance-options.md`), seeds 1 to 48
+
+| Option | Fishing / min | Knocked off / hunting min | Rammer lands / hunting min | Landed / player | Knocked off / player | Legendaries landed | Margin | Hunting | Fish left | Rams |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| No items (`ai.items.use_items` false) | 146 | 848 | 150 | 611 | 211 | 119 of 187 (64%) | 22% / 21% | 3% | 48% (51%) | 4.8 |
+| Buoy trips, items never used (`use_held` false) | 145 | 847 | 115 | 596 | 203 | 116 of 183 (63%) | 20% / 20% | 3% | 48% (52%) | 4.6 |
+| **Items, as shipped** | **152** | **820** | **125** | **632** | **210** | **120 of 188 (64%)** | **29% / 31%** | **3%** | **48% (50%)** | **4.8** |
+| Cloaking Tech alone | 147 | 742 | 151 | 598 | 191 | 118 of 174 (68%) | 27% / 24% | 3% | 49% (51%) | 4.8 |
+| Power Reel alone | 156 | 659 | 106 | 631 | 167 | 125 of 164 (76%) | 24% / 26% | 3% | 46% (48%) | 4.9 |
+| Nitrous alone | 145 | 843 | 115 | 594 | 201 | 114 of 180 (63%) | 20% / 20% | 3% | 48% (53%) | 4.6 |
+| Teleporter alone | 145 | 777 | 130 | 604 | 185 | 114 of 171 (67%) | 24% / 24% | 3% | 46% (53%) | 4.3 |
+| High-Quality Camera alone | 160 | 841 | 157 | 666 | 212 | 103 of 167 (62%) | 26% / 25% | 3% | 49% (57%) | 4.9 |
+| Enhanced Radar alone | 148 | 836 | 145 | 606 | 218 | 126 of 198 (64%) | 20% / 18% | 3% | 48% (48%) | 4.8 |
+
+### The same on seeds 1001 to 1048
+
+| Option | Landed / player | Knocked off / player | Legendaries landed | Margin | Rams |
+| --- | --- | --- | --- | --- | --- |
+| No items | 619 | 188 | 122 of 183 (67%) | 21% / 22% | 4.5 |
+| Buoy trips, items never used | 602 | 215 | 120 of 188 (64%) | 22% / 18% | 4.9 |
+| **Items, as shipped** | **589** | **236** | **107 of 183 (58%)** | **31% / 31%** | **5.2** |
+| Cloaking Tech alone | 582 | 217 | 117 of 183 (64%) | 25% / 21% | 5.3 |
+| Power Reel alone | 658 | 163 | 133 of 172 (77%) | 20% / 20% | 4.3 |
+| Nitrous alone | 603 | 214 | 118 of 187 (63%) | 22% / 18% | 4.9 |
+| Teleporter alone | 594 | 197 | 116 of 182 (64%) | 25% / 24% | 4.8 |
+| High-Quality Camera alone | 694 | 196 | 118 of 180 (66%) | 26% / 22% | 4.6 |
+| Enhanced Radar alone | 630 | 229 | 129 of 211 (61%) | 24% / 23% | 4.9 |
+
+The same setting differs by up to about 25 points a player between the two runs of 48 (632 against 589 with items as shipped), so a difference under about 20 points is noise.
+
+### Items: pickups, uses and minigames (seeds 1 to 48, as shipped)
+
+| Item | Picked up / match | Used / match | Minigame to effect, Easy / Normal / Hard |
+| --- | --- | --- | --- |
+| Cloaking Tech | 1.29 | 1.04 | 6.4 s / 3.9 s / 3.7 s |
+| Power Reel | 1.17 | 0.85 | 7.2 s / 4.6 s / 3.4 s |
+| Nitrous | 0.92 | 0.04 | 14.3 s / 8.8 s / 5.9 s |
+| Teleporter | 0.88 | 0.62 | 11.4 s / 9.4 s / 9.4 s |
+| High-Quality Camera | 0.85 | 0.65 | 9.5 s / 8.9 s / 8.8 s |
+| Enhanced Radar | 0.94 | 0.90 | 5.0 s / 4.0 s / 3.4 s |
+| All | 6.04 | 4.10 | |
+
+A match has 7 buoys (one a minute from the first minute); the AI took 6.0 of them. An item not used was held to the end or replaced by the next pickup. Nitrous is seldom used: the AI keeps it for drives of 400 m or more and hunts 120 m or more (below). The minigame times are from the runs with that item alone (many more games), from Shift to the effect; the Teleporter's and the camera's are paced by their circles and fish (a perfect Teleporter run is about 9.2 s), the rest by the hand. None was wasted except one Teleporter whose charge a wreck lost.
+
+### What each item adds a use
+
+Points landed per player against the buoy-trips run (the same trips, no item used), mean of the two runs of 48, divided by the uses per player.
+
+| Item | Points a player, alone (two runs) | Against trips only (599) | Uses a player | Points a use |
+| --- | --- | --- | --- | --- |
+| High-Quality Camera | 680 | +81 | 1.04 | **+78** (the photos themselves add 94 a photo on seed 1: half a rare or legendary catch) |
+| Power Reel | 645 | +46 | 1.13 | **+40** (and legendaries landed rise from 64% to 76%) |
+| Enhanced Radar | 618 | +19 | 1.41 | +13 (within the noise) |
+| Teleporter | 599 | 0 | 1.15 | 0 |
+| Cloaking Tech | 590 | -9 | 1.28 | -7 (within the noise) |
+| Nitrous | 599 | 0 | 0.07 | none measurable; used on every drive of 200 m or more it cost 12 points a use |
+
+The buoy trips themselves cost 16 points a player a match (615 with no items, 599 with trips and no use). With all six items in the mix, the points landed come out level with no items (611 and 619 without; 632 and 589 with), but **the winner's margin widens from 21% to 30%**: the camera and the Power Reel go to whoever lands the rare fish, and Hard players, who reach the buoys and finish the minigames quicker, gain the most (Hard 705 against Easy 502 on seed 1, from 671 against 486 without items).
+
+### Is any item too strong or useless?
+
+- **The High-Quality Camera is clearly the strongest:** about 78 points a use, an eighth of a player's match, and never wasted (the AI saves it for a rare or legendary catch, or any catch in the last 45 s). It is the main reason items widen the winner's margin.
+- **The Power Reel is good:** about 40 points a use, mostly by landing more legendaries before a rival arrives. Using it at the hook is now safe, because the reel holds while its minigame plays (R4.11, below).
+- **Nitrous, the Teleporter and Cloaking Tech are close to useless for AI players.** Each one's minigame leaves the boat coasting for 4 to 15 s, which costs about as much as the effect gains: 15 s of nitrous at 150% saves at most 7.5 s on a straight run, but its minigame takes 6 to 14 s. The Teleporter never reaches a hunt in time (its 9 s minigame and 5 s charge are longer than any announced reel has left), so the AI teleports only to far water. Cloaking Tech hides a boat from the radar only; a hunter that can see or hear its target still finds it, and the AI hunters mostly do. People may do better with all three, since the radar matters more to people.
+- **Enhanced Radar** is a small plus.
+
+**Tuning proposal** (not applied; each is a validate item): the brief names every one of these items' durations, so the only weight or duration changes allowed would be the item weights. Lowering the camera's weight (10 to 6) would narrow the margin a little, but makes the other, weaker items more common, so I left the weights equal. The fix that would make Nitrous and the Teleporter worth their minigames is a rule, so it is the person's: let the boat keep its throttle and course while a full-screen minigame plays, instead of coasting (`Boat::captured`). A shorter Nitrous minigame (slower atoms) would help too; the brief names its 8 N and 4 O atoms.
+
+### R4.11: the Power Reel during a reel
+
+A minigame takes the keys, so before this change a Power Reel used with a fish on the line left the reel bar fighting with no Space, and the fish could break the line (SECOND-ORDER R4.11). Now **the reel holds still while any item's minigame plays, or a teleport's spot is picked** (`items.reel_holds_in_minigame`, true): the catch zone, the fish's marker and the meter wait, and pick up where they were. A ram still snaps the line. The other option, refusing the Power Reel while reeling with a "not now" cue, would push it before the cast, where its 20 s run out during the cast, the sink and the nibbles; holding the reel lets it be used when it is wanted, at the cost of the seconds its minigame takes (SECOND-ORDER R5.31). With the hold off, the game is as before.
+
+### The AI's item tuning (`ai.items`)
+
+Set from these runs: the buoy is worth a trip of 15 s with the slot empty (25 s cost 15 more points a player than 15 s, and 10 s took fewer buoys for the same points) and 6 s with an item held; Nitrous for drives of 400 m or more and hunts of 120 m or more (200 m cost 15 points a player); Cloaking Tech before the cast at a rare or legendary fish, and on hunts 100 m or more off; the Power Reel at the hook of a rare or legendary (before the cast it gave about half as much). Each difficulty's hand (`ai.items.hand`): the pointer's speed 1400 / 2400 / 3800 canvas units a second, a pause of 450 / 250 / 120 ms after each grab, drop or click, its aim off by up to 26 / 14 / 6 units, its click on a closing ring off by up to 240 / 130 / 60 ms, and the Power Reel circled at 0.9 / 1.6 / 2.6 turns a second.
+
+AI cost with items: 1.6 µs per AI player per tick on average (1.2 before); 430 ticks in 1,152,000 took the four AI players over 1 ms together, the slowest 22 ms (a path search).

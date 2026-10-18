@@ -320,6 +320,15 @@ impl Match {
             self.seat_items(seat, &i);
         }
         self.effects_step();
+        // R4.11: a minigame (or a teleport's choice) has the keys, so a
+        // fish on the line waits for it (SECOND-ORDER R5.31)
+        let hold = self.items.tuning.reel_holds_in_minigame;
+        for seat in 0..self.items.seats.len() {
+            let held = hold && self.items.seats[seat].captures();
+            if let Some(h) = self.fishing.reel_held.get_mut(seat) {
+                *h = held;
+            }
+        }
     }
 
     /// The warning, the countdown's beats and the spawn.
