@@ -11,10 +11,12 @@
 //!   within `ai.ram_runup_mm` with clear water between, straight at it at
 //!   full throttle. A run-in under `ai.ram_speed_pct` of top speed close in
 //!   turns away for another run-up.
-//! - **Evading** ([`should_flee`]): a rival in sight or earshot closing
-//!   faster than `ai.threat_speed_pct` of top speed, arriving before its own
-//!   reel would end, is a threat; the brain drops the line and flees by its
-//!   skill's `evade_pct` chance.
+//! - **Evading** ([`should_flee`]): a rival in sight or earshot pointed at
+//!   it, closing faster than `ai.threat_speed_pct` of top speed and arriving
+//!   within `ai.flee_within_ms` (before its own reel would end), is a
+//!   threat; the brain drops the line and dodges across the rival's course
+//!   ([`flee_point`]) by its skill's `evade_pct` chance. Moving across the
+//!   ram takes the speed toward it under the wrecking speed.
 
 use crate::map::fish::Tier;
 use crate::map::trig;
@@ -72,8 +74,11 @@ pub fn worth_hunting(
     gain > cost
 }
 
-/// The point a rival's ram would come from, if `r` is a threat to `b`.
-pub fn should_flee(s: &Senses, b: &Boat, r: &RivalSeen) -> Option<P> {
+/// The way a rival's ram is coming (its course, a map angle), if `r` is a
+/// threat to `b`: in sight or earshot, pointed at it, closing faster than
+/// `ai.threat_speed_pct` of top speed, arriving within `ai.flee_within_ms`,
+/// and before the fish on the line would be landed.
+pub fn should_flee(s: &Senses, b: &Boat, r: &RivalSeen) -> Option<i32> {
     let t = &s.tuning.ai;
     if r.wrecked || r.ghosted {
         return None;
@@ -83,13 +88,20 @@ pub fn should_flee(s: &Senses, b: &Boat, r: &RivalSeen) -> Option<P> {
     if d == 0 || d > t.hear_mm as i64 {
         return None;
     }
-    // its speed toward us
+    // its speed toward us, and whether its bow points our way
     let (ux, uy) = ((at.x - r.at.x) as i64, (at.y - r.at.y) as i64);
     let closing = (r.vel[0] as i64 * ux + r.vel[1] as i64 * uy) / d;
     if closing < pct(s.rules.top, t.threat_speed_pct) as i64 {
         return None;
     }
+    let off = crate::gfx::fx::wrap(bearing(r.at, at) - r.heading).abs();
+    if off > trig::TURN / 18 {
+        return None;
+    }
     let eta = d * 1000 / closing.max(1);
+    if eta > t.flee_within_ms as i64 {
+        return None;
+    }
     if let (Stage::Reeling, Some(rv)) = (s.fishing.stage, s.fishing.reel.as_ref()) {
         let need = (1000 - rv.meter).max(0) as i64;
         let perfect = s.tuning.fishing.reel.perfect_ms.get(rv.tier) as i64;
@@ -99,17 +111,17 @@ pub fn should_flee(s: &Senses, b: &Boat, r: &RivalSeen) -> Option<P> {
             return None;
         }
     }
-    Some(r.at)
+    Some(r.heading)
 }
 
-/// Somewhere to flee to: open water away from `from`.
-pub fn flee_point(s: &Senses, nav: &Nav, at: P, from: P) -> P {
-    let away = if at == from { 0 } else { bearing(from, at) };
-    let eighth = trig::TURN / 8;
-    for turn in [0, 1, -1, 2, -2, 3, -3] {
-        let q = ahead(at, away + turn * eighth, 80_000);
-        if nav.open_at(q) && nav.path(s.map, at, q).is_some() {
-            return q;
+/// Somewhere to dodge to: open water across a ram coming on `course`,
+/// to whichever side is open.
+pub fn flee_point(s: &Senses, nav: &Nav, at: P, course: i32) -> P {
+    let q = trig::QUARTER;
+    for way in [course + q, course - q, course + q / 2, course - q / 2, course] {
+        let p = ahead(at, way, 60_000);
+        if nav.open_at(p) && !nav::land_between(s.map, at, p) {
+            return p;
         }
     }
     s.map.spawn.at

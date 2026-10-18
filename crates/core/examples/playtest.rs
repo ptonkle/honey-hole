@@ -55,6 +55,8 @@ struct Totals {
     by_diff: [SeatStats; 3],
     seats_by_diff: [u32; 3],
     reel_ms: [(i64, u32); 4],
+    /// by tier: hooks, then caught, broke, rammed off, dropped otherwise
+    outcomes: [[u32; 5]; 4],
     left: [(u32, u32); 4],
     margins: Vec<i64>,
     winners_by_diff: [u32; 3],
@@ -174,9 +176,13 @@ fn main() {
                     },
                     MatchEvent::Hooked { seat, tier, .. } => {
                         st[*seat].hooks += 1;
+                        tot.outcomes[tier_ix(*tier)][0] += 1;
                         hooked_at[*seat] = Some((m.tick, *tier));
                     }
                     MatchEvent::FishDropped { seat, fish } => {
+                        let ti = tier_ix(m.fishing.fish[*fish as usize].tier);
+                        let rammed_off = rammed.iter().any(|(v, _)| v == seat);
+                        tot.outcomes[ti][if rammed_off { 3 } else { 4 }] += 1;
                         if let Some(&(_, by)) = rammed.iter().find(|(v, _)| v == seat) {
                             st[*seat].lost_to_rams += 1;
                             let f = &m.fishing.fish[*fish as usize];
@@ -190,8 +196,12 @@ fn main() {
                         }
                         hooked_at[*seat] = None;
                     }
-                    MatchEvent::LineBroke { seat, .. } => hooked_at[*seat] = None,
+                    MatchEvent::LineBroke { seat, fish } => {
+                        hooked_at[*seat] = None;
+                        tot.outcomes[tier_ix(m.fishing.fish[*fish as usize].tier)][2] += 1;
+                    }
                     MatchEvent::Caught { seat, tier, .. } => {
+                        tot.outcomes[tier_ix(*tier)][1] += 1;
                         if let Some((h, _)) = hooked_at[*seat].take() {
                             let r = &mut tot.reel_ms[tier_ix(*tier)];
                             r.0 += (m.tick - h) as i64 * 20;
@@ -320,6 +330,15 @@ fn report(tot: &Totals) {
             l as f64 * 100.0 / s.max(1) as f64,
             if n == 0 { "none".to_string() } else { format!("{:.1} s ({} reels)", ms as f64 / n as f64 / 1000.0, n) }
         );
+    }
+    println!();
+    println!("### What became of each hook (all matches)");
+    println!();
+    println!("| Tier | Hooks | Landed | Line broke | Rammed off | Dropped (fled, hunted, time up) |");
+    println!("| --- | --- | --- | --- | --- | --- |");
+    for k in 0..4 {
+        let o = tot.outcomes[k];
+        println!("| {} | {} | {} | {} | {} | {} |", names[k], o[0], o[1], o[2], o[3], o[4]);
     }
     let mut margins = tot.margins.clone();
     margins.sort_unstable();

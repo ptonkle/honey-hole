@@ -89,6 +89,8 @@ pub struct AiTuning {
     pub hear_mm: i32,
     /// a rival closing faster than this share of top speed is a threat
     pub threat_speed_pct: i32,
+    /// a threat arriving within this is dodged
+    pub flee_within_ms: i32,
     /// it flees for this long, then fishes again
     pub flee_ms: i32,
     /// what it expects a rival's reel of each tier to take
@@ -134,6 +136,7 @@ pub fn check(c: &mut Checker, a: &AiTuning, ram_wreck_pct: i32, land_wreck_pct: 
         .range("ai.hear_mm", a.hear_mm, 0, 400_000)
         .range("ai.threat_speed_pct", a.threat_speed_pct, 1, 100)
         .range("ai.flee_ms", a.flee_ms, 0, 60_000)
+        .range("ai.flee_within_ms", a.flee_within_ms, 0, 60_000)
         .range("ai.fishing_rate_per_min", a.fishing_rate_per_min, 0, 10_000)
         .range("ai.sighting_keep_ms", a.sighting_keep_ms, 0, 600_000);
     for (name, v) in [
