@@ -117,3 +117,7 @@ The person's answers:
 - **Respawn:** caught fish don't respawn; the count is fixed per match.
 - **Names:** "Fishy names, but all conceivably real names, no nicknames like "reel deal ray"". You type your own name once, and it's kept in Settings.
 - **Fish sight:** "Close only, but you shouldn't need to get right over the legnedaries be a little more generous than that". The agent set it to about 40 m for shallow fish, fading with depth, so deep legendaries show from about 25 m. These are tuning values.
+
+> fish do not disappear if you fail the fishing game btw
+
+A fish that breaks the line (or is dropped with Esc, Q or a wreck) swims free and stays in the lake; the Fishpedia count is unchanged (F5 confirmed).
