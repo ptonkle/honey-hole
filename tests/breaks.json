@@ -2924,5 +2924,12 @@
     "find": "let volume = if self.mute { 0 } else { self.settings.volume };",
     "replace": "let volume = self.settings.volume;",
     "test": "mute_sends_the_sounds_nowhere_and_keeps_the_volume_setting"
+  },
+  {
+    "name": "a dot corner reaches past its triangle",
+    "file": "crates/core/src/flow/magazine.rs",
+    "find": "let near = 100 - (dx * 100",
+    "replace": "let near = 200 - (dx * 100",
+    "test": "a_dot_corner_fills_only_the_corner_triangle_with_dots_shrinking_inward"
   }
 ]

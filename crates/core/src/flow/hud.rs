@@ -37,15 +37,38 @@ pub fn rgb(c: [i32; 3]) -> Rgba {
     Rgba::solid(c)
 }
 
-/// A HUD card: its shadow, then its fill and outline.
+/// A HUD card, a box from the magazine: its offset shadow, its paper
+/// and keyline, the triple stripe across its top and a dot screen fading
+/// into its bottom-right corner (`flow/magazine.rs`).
 pub fn card(list: &mut List, k: &CardLook, r: Rect) {
     card_in(list, k, r, k.fill, k.outline);
+    // clear of the rounded corners at the stripe's depth
+    let inset = k.outline_w / 2 + k.radius / 3;
+    super::magazine::stripes(
+        list,
+        &k.stripes,
+        r.x + inset,
+        r.y + k.stripe_at,
+        r.w - 2 * inset,
+        k.stripe_h,
+    );
+    if k.dots_pct > 0 {
+        super::magazine::dot_corner(
+            list,
+            rgb(k.dots).alpha(k.dots_pct),
+            r.inset(k.outline_w + 4),
+            r.w * k.dots_w_pct / 100,
+            r.h * k.dots_h_pct / 100,
+            k.dot_step,
+        );
+    }
 }
 
+/// A plain box in `fill`: the offset shadow, the fill and the keyline.
 pub fn card_in(list: &mut List, k: &CardLook, r: Rect, fill: [i32; 3], outline: [i32; 3]) {
     let shadow = Rect::new(r.x + k.shadow, r.y + k.shadow, r.w, r.h);
     list.round_rect(
-        rgb([0, 0, 0]).alpha(k.shadow_pct),
+        rgb(k.shadow_colour).alpha(k.shadow_pct),
         Rgba::NONE,
         0,
         shadow,
@@ -304,7 +327,8 @@ impl App {
         } else {
             l.card.ink
         };
-        let mono = self.fishboy.theme.as_ref().map_or(l.display(), |t| t.mono());
+        // numbers in the magazine's slab, not the Fish-Boy's monospace
+        let mono = l.display();
         list.text(
             rgb(ink),
             mono,
@@ -423,7 +447,8 @@ impl App {
             PingState::Sweeping(_) => list.line(rgb(colour), 5, c, polar(c, 44, to)),
             PingState::Cooling(left, _) => {
                 let secs = ((left * TICK_MS as i64 + 999) / 1000).to_string();
-                let mono = self.fishboy.theme.as_ref().map_or(l.display(), |t| t.mono());
+                // numbers in the magazine's slab, not the Fish-Boy's monospace
+                let mono = l.display();
                 list.text(rgb(l.card.ink), mono, 34, Align::Centre, c, &secs);
             }
             PingState::Ready => list.circle(rgb(h.gauge_tick), Rgba::NONE, 0, c, 6),
@@ -513,14 +538,29 @@ fn popup(list: &mut List, l: &FlowLook, theme: &Theme, pop: &Popup, y: i32, tier
     let size = 36;
     let h = 78;
     let badge = tier.filter(|_| tier_look.is_some());
-    let badge_w = badge.as_ref().map_or(0, |w| l.display().width(w, 24) + 34);
+    let badge_w = badge.as_ref().map_or(0, |w| l.body().width(w, 26) + 44);
     let icon_w = if style.icon == "none" { 0 } else { 70 };
     let w = icon_w + font.width(&pop.text, size) + 60 + badge_w;
     let r = Rect::new((W - w) / 2, y, w, h);
     let k = &l.card;
     let shadow = Rect::new(r.x + k.shadow, r.y + k.shadow, r.w, r.h);
-    list.round_rect(rgb([0, 0, 0]).alpha(k.shadow_pct), Rgba::NONE, 0, shadow, h / 2);
-    list.round_rect(rgb(style.fill), rgb(outline), 6, r, h / 2);
+    // a magazine box: rounded corners, a solid offset shadow, and the
+    // tier's colour as a keyline inside the outline
+    list.round_rect(
+        rgb(k.shadow_colour).alpha(k.shadow_pct),
+        Rgba::NONE,
+        0,
+        shadow,
+        k.radius,
+    );
+    list.round_rect(rgb(style.fill), rgb(k.outline), k.outline_w + 2, r, k.radius);
+    list.round_rect(
+        Rgba::NONE,
+        rgb(outline),
+        4,
+        r.inset(k.outline_w + 4),
+        k.radius - 6,
+    );
     let ink = rgb(style.ink);
     let mid = r.y + h / 2;
     let icon_at = (r.x + 30 + 18, mid);
@@ -541,11 +581,11 @@ fn popup(list: &mut List, l: &FlowLook, theme: &Theme, pop: &Popup, y: i32, tier
     );
     if let (Some(word), Some((_, c))) = (badge, tier_look) {
         let b = Rect::new(r.right() - 24 - badge_w + 10, r.y + 16, badge_w - 10, h - 32);
-        list.round_rect(rgb(c), rgb(k.outline), 3, b, (h - 32) / 2);
+        list.round_rect(rgb(c), rgb(k.outline), 3, b, 8);
         list.text(
             rgb(k.outline),
-            l.display(),
-            24,
+            l.body(),
+            26,
             Align::Centre,
             (b.x + b.w / 2, mid + 1),
             &word,

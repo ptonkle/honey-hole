@@ -39,10 +39,8 @@
   --book: "Charter", "Bitstream Charter", "Iowan Old Style", "Cambria", "DejaVu Serif", serif;
   /* the triple stripe, top to bottom */
   --stripes: linear-gradient(180deg, var(--orange) 0 33.4%, var(--mustard) 33.4% 66.7%, var(--teal) 66.7%);
-  /* a dot screen, and the paper's worn grain */
+  /* a dot screen, for small accents in a corner */
   --dots: radial-gradient(circle, var(--orange) 0 30%, transparent 34%);
-  --grain: radial-gradient(ellipse at 18% 8%, rgba(255, 255, 255, 0.45), transparent 55%),
-    radial-gradient(ellipse at 90% 100%, rgba(150, 110, 60, 0.16), transparent 60%);
   --keyline: 0.14rem;
   --radius: 1rem;
   /* a solid offset shadow in forest green: the print's second plate */
@@ -103,7 +101,7 @@ body {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  background: var(--grain), var(--paper);
+  background: var(--paper);
   border: var(--keyline) solid var(--ink);
   border-radius: var(--radius);
   box-shadow: var(--lift);
@@ -373,7 +371,7 @@ tr.tone-yellow { --seat: var(--seat-yellow); }
   cursor: pointer;
   z-index: 2;
 }
-body[data-backdrop="on"] #version {
+body[data-backdrop="on"]:not([data-screen="minigames"]) #version {
   right: 1.4rem;
   bottom: 1.2rem;
   width: 5.2rem;
@@ -420,7 +418,7 @@ body[data-screen="title"] .panel.menu .button[id="menu.play"] { font: 800 2.1rem
   align-items: center;
   gap: 0.55rem;
   padding: 0.75rem 1rem 0.95rem;
-  background: var(--grain), var(--paper-shade);
+  background: var(--paper-shade);
   box-shadow: 0.3rem 0.35rem 0 var(--forest);
 }
 .panel.workshop::before,
@@ -575,7 +573,7 @@ body[data-screen="lake"] #menus {
   padding: 0 0.6rem 0.7rem 0;
 }
 .panel.gallery,
-.panel.lake { background: var(--grain), color-mix(in srgb, var(--panel) 94%, transparent); }
+.panel.lake { background: color-mix(in srgb, var(--panel) 94%, transparent); }
 .panel.gallery h2,
 .panel.lake h2 { font-size: 1.5rem; }
 .panel.gallery .field,
@@ -609,7 +607,7 @@ body[data-screen="play"] .panel { pointer-events: auto; }
 body[data-screen="minigames"] #scene,
 body[data-screen="minigames"] #overlay { display: block; }
 body[data-screen="minigames"] #menus { position: relative; }
-.panel.minigames { background: var(--grain), color-mix(in srgb, var(--panel) 96%, transparent); }
+.panel.minigames { background: color-mix(in srgb, var(--panel) 96%, transparent); }
 .panel.minigames .button { font-size: 1.05rem; padding: 0.5rem 1rem; }
 body[data-cursor="none"] #overlay { cursor: none; }
 /* ---- the Sounds screen: a grid of sound buttons, then the loops ---- */
@@ -621,7 +619,7 @@ body[data-screen="sounds"] #menus { max-width: 64rem; }
 .panel.sounds h2, .panel.sounds .sub { grid-column: 1 / -1; }
 .panel.sounds .button { font-size: 0.95rem; padding: 0.45rem 0.7rem; }
 .panel.gallery-more {
-  background: var(--grain), color-mix(in srgb, var(--panel) 94%, transparent);
+  background: color-mix(in srgb, var(--panel) 94%, transparent);
   padding: 0.6rem 0.85rem;
   flex-direction: row;
   flex-wrap: wrap;
@@ -630,9 +628,13 @@ body[data-screen="sounds"] #menus { max-width: 64rem; }
 .panel.gallery-more::before { content: none; }
 
 /* ---- the match flow (crates/core/src/flow/): the HUD is drawn on the 2D
-   layer; the panel keeps only the Menu button, small in the top-right
-   corner above the time box ---- */
+   layer; the panel keeps only the Menu button, small in the bottom-left
+   corner, clear of the time box at the top right ---- */
 body[data-screen="play"] .panel.hud {
+  top: auto;
+  right: auto;
+  bottom: 1rem;
+  left: 1rem;
   width: auto;
   padding: 0;
   background: none;

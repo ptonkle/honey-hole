@@ -52,6 +52,7 @@ mod beats;
 mod camera;
 mod cloak;
 mod focus;
+mod frame;
 mod reel;
 pub(crate) mod shape;
 pub mod sight;
@@ -404,7 +405,11 @@ impl Minigame {
         let mut p = Paint {
             list,
             look,
-            font: theme.mono(),
+            // the device keeps its monospace; full screen, the magazine's slab
+            font: match self.layer() {
+                Layer::FishBoy => theme.mono(),
+                Layer::Hud => theme.fonts.get("banner").unwrap_or(theme.mono()),
+            },
             t,
             canvas: self.canvas,
             pointer: self.pointer,
@@ -420,10 +425,30 @@ impl Minigame {
             Game::Camera(g) => g.draw(&mut p),
             Game::Focus(g) => g.draw(&mut p),
         }
+        if self.layer() == Layer::Hud {
+            frame::draw(p.list, &look.frame, self.canvas);
+        }
         let instruction = self.instruction(t);
         if self.in_banner() && self.state == State::Playing {
+            // on the Fish-Boy the banner is the device's own phosphor
+            let device = (self.layer() == Layer::FishBoy).then_some(&theme.screen);
+            let font = match device {
+                Some(_) => theme.mono(),
+                None => theme.fonts.get("banner").unwrap_or(theme.mono()),
+            };
+            self.draw_banner(&mut p, font, &instruction, device);
+        } else if self.layer() == Layer::Hud {
+            // full screen: the call on a paper label hung from the frame
             let font = theme.fonts.get("banner").unwrap_or(theme.mono());
-            self.draw_banner(&mut p, font, &instruction);
+            frame::label(
+                p.list,
+                &look.frame,
+                font,
+                look.text_size,
+                (w / 2, TOP_LINE),
+                &instruction,
+            );
+            self.draw_progress(&mut p);
         } else {
             p.list.text(
                 c(look.text),
@@ -474,8 +499,18 @@ impl Minigame {
         }
     }
 
-    fn draw_banner(&self, p: &mut Paint, font: &Font, text: &str) {
+    fn draw_banner(
+        &self,
+        p: &mut Paint,
+        font: &Font,
+        text: &str,
+        device: Option<&crate::ui2d::theme::ScreenLook>,
+    ) {
         let b = &p.look.banner;
+        let (band_c, edge, ink, shade) = match device {
+            Some(s) => (s.dim, s.phosphor, s.phosphor, s.background),
+            None => (b.band, b.edge, b.ink, b.shadow),
+        };
         let [w, h] = p.canvas;
         p.list
             .fill_rect(c([0, 0, 0]).alpha(b.dim_pct), Rect::new(0, 0, w, h));
@@ -487,12 +522,20 @@ impl Minigame {
         let fit = (w - 2 * BANNER_MARGIN) * 100 / (chars * font.advance.max(1));
         let size = b.size.min(fit) * (60 + 40 * grown / pop_ticks) / 100;
         let band = Rect::new(0, h / 2 - b.band_h / 2, w, b.band_h);
-        p.list.fill_rect(c(b.band), band);
-        p.list.fill_rect(c(b.edge), Rect::new(0, band.y - 10, w, 10));
-        p.list.fill_rect(c(b.edge), Rect::new(0, band.bottom(), w, 10));
+        p.list.fill_rect(c(band_c), band);
+        let f = &p.look.frame;
+        let stripes = f.stripe_h * f.stripes.len() as i32;
+        for y in [band.y - stripes - 4, band.bottom() + 4] {
+            p.list.fill_rect(c(edge), Rect::new(0, y - 4, w, stripes + 8));
+            // the magazine's triple stripe in an ink keyline, above and
+            // below; plain phosphor bars on the device
+            if device.is_none() {
+                crate::flow::magazine::stripes(p.list, &f.stripes, 0, y, w, f.stripe_h);
+            }
+        }
         let shadow = size / 16;
         p.list.text(
-            c(b.shadow),
+            c(shade),
             font,
             size,
             Align::Centre,
@@ -500,6 +543,6 @@ impl Minigame {
             text,
         );
         p.list
-            .text(c(b.ink), font, size, Align::Centre, (w / 2, h / 2), text);
+            .text(c(ink), font, size, Align::Centre, (w / 2, h / 2), text);
     }
 }
