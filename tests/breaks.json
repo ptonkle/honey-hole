@@ -1745,23 +1745,345 @@
   {
     "name": "the charge meter shows the charge",
     "file": "crates/core/src/app/fishing.rs",
-    "find": "fill: (fv.charge / 10) as u32,",
-    "replace": "fill: 0,",
+    "find": "charge: (fv.stage == Stage::Charging).then_some(fv.charge / 10),",
+    "replace": "charge: (fv.stage == Stage::Charging).then_some(0),",
     "test": "holding_space_charges_a_meter"
   },
   {
     "name": "the reel bar shows the zone",
     "file": "crates/core/src/app/fishing.rs",
-    "find": "zone: Some([to(r.zone), to(r.zone + r.zone_h)]),",
-    "replace": "zone: Some([to(r.zone), to(r.zone)]),",
+    "find": "zone: [to(r.zone), to(r.zone + r.zone_h)],",
+    "replace": "zone: [to(r.zone), to(r.zone)],",
     "test": "the_reel_bar_shows_the_zone_the_fish_and_the_catch_meter"
   },
   {
-    "name": "a popup lasts 2 s",
+    "name": "the countdown holds the boats",
+    "file": "crates/core/src/sim/mod.rs",
+    "find": "        self.countdown = c - 1;",
+    "replace": "        self.countdown = 0;",
+    "test": "the_countdown_holds_the_boats_still_then_lets_them_go"
+  },
+  {
+    "name": "the setup takes the tuning's countdown",
+    "file": "crates/core/src/app/play.rs",
+    "find": "s.countdown_ms = t.flow.countdown_ms;",
+    "replace": "s.countdown_ms = 0;",
+    "test": "the_match_setup_takes_the_countdown_from_the_tuning"
+  },
+  {
+    "name": "a popup goes after its time",
+    "file": "crates/core/src/flow/popups.rs",
+    "find": "now_us - s < life",
+    "replace": "now_us - s < life * 2",
+    "test": "popups_queue_up_and_each_goes_after_its_two_seconds"
+  },
+  {
+    "name": "popups wait for room",
+    "file": "crates/core/src/flow/popups.rs",
+    "find": "if shown >= max_shown {",
+    "replace": "if shown > max_shown {",
+    "test": "popups_queue_up_and_each_goes_after_its_two_seconds"
+  },
+  {
+    "name": "a group replaces in place",
+    "file": "crates/core/src/flow/popups.rs",
+    "find": "if !p.group.is_empty() {",
+    "replace": "if p.group.is_empty() {",
+    "test": "a_popup_in_a_group_replaces_the_one_there_and_starts_again"
+  },
+  {
+    "name": "a template fills its placeholders",
+    "file": "crates/core/src/flow/popups.rs",
+    "find": "text = text.replace(&format!(\"{{{key}}}\"),",
+    "replace": "text = text.replace(&format!(\"{{{key}}}x\"),",
+    "test": "a_hook_names_the_player_and_the_fish_in_its_tier"
+  },
+  {
+    "name": "a row's when picks the wreck's cause",
+    "file": "crates/core/src/flow/popups.rs",
+    "find": "Some(v) => plain(v).as_deref() == Some(want.as_str()),",
+    "replace": "Some(_) => true,",
+    "test": "a_wreck_says_who_rammed_whom_or_who_ran_aground"
+  },
+  {
+    "name": "a player with no catch still takes a turn",
+    "file": "crates/core/src/flow/postgame.rs",
+    "find": "t += card * c.catches.len().max(1) as i64 + gap;",
+    "replace": "t += card * c.catches.len() as i64 + gap;",
+    "test": "the_reveal_shows_each_players_catches_in_turn_and_counts_their_total_up"
+  },
+  {
+    "name": "the newest card counts up",
+    "file": "crates/core/src/flow/postgame.rs",
+    "find": "total -= v - v * since / self.count_ms;",
+    "replace": "total -= 0;",
+    "test": "the_reveal_shows_each_players_catches_in_turn_and_counts_their_total_up"
+  },
+  {
+    "name": "ties share a place",
+    "file": "crates/core/src/flow/postgame.rs",
+    "find": ".map(|t| 1 + totals.iter().filter(|o| *o > t).count())",
+    "replace": ".map(|t| totals.iter().filter(|o| *o >= t).count())",
+    "test": "the_ranking_orders_by_total_and_ties_share_a_place"
+  },
+  {
+    "name": "a rematch draws a new seed",
+    "file": "crates/core/src/flow/mod.rs",
+    "find": "setup.seed = mix(setup.seed ^ self.clock as u64 ^ 0x7265_6d61_7463_6800);",
+    "replace": "setup.seed = setup.seed.wrapping_add(0);",
+    "test": "rematch_keeps_the_setup_with_a_new_seed"
+  },
+  {
+    "name": "the end holds before the postgame",
+    "file": "crates/core/src/flow/mod.rs",
+    "find": "if now - end >= hold_ms as i64 * 1000 {",
+    "replace": "if now - end >= 0 {",
+    "test": "the_end_holds_then_opens_the_postgame_with_its_buttons"
+  },
+  {
+    "name": "one tally tick a card",
+    "file": "crates/core/src/flow/mod.rs",
+    "find": "for _ in 0..ticks {",
+    "replace": "for _ in 0..ticks * 2 {",
+    "test": "the_reveal_plays_a_tally_tick_for_each_card_and_the_fanfare_once"
+  },
+  {
+    "name": "made-up catches skip empty seats",
+    "file": "crates/core/src/flow/mod.rs",
+    "find": "if m.setup.seats[seat].occupant == Occupant::Empty {",
+    "replace": "if seat > 0 {",
+    "test": "the_made_up_catches_fill_every_taken_seat"
+  },
+  {
+    "name": "F8 needs the debug flag",
+    "file": "crates/core/src/flow/mod.rs",
+    "find": "if !self.flow.debug || code != \"F8\"",
+    "replace": "if code != \"F8\"",
+    "test": "f8_jumps_to_the_last_seconds_only_under_the_debug_flag"
+  },
+  {
+    "name": "the seed shows only with the option",
+    "file": "crates/core/src/flow/hud.rs",
+    "find": "if self.settings.show_seed {",
+    "replace": "if true {",
+    "test": "the_map_seed_shows_only_with_the_option_on"
+  },
+  {
+    "name": "the hints fade",
+    "file": "crates/core/src/flow/hud.rs",
+    "find": "(100 - (into - after) * 100 / fade).max(0) as i32",
+    "replace": "100",
+    "test": "the_hud_shows_the_time_speed_mode_and_ping_and_its_hints_fade_after_a_minute"
+  },
+  {
+    "name": "Go shows after the countdown",
+    "file": "crates/core/src/flow/hud.rs",
+    "find": "} else if g.setup.countdown_ms > 0 && since_go < n.go_ms as i64 && !g.ended {",
+    "replace": "} else if g.setup.countdown_ms < 0 {",
+    "test": "the_countdown_is_drawn_then_go"
+  },
+  {
+    "name": "the fireball swells",
+    "file": "crates/core/src/flow/burst.rs",
+    "find": "(look.fireball_mm as i64 * age_ms as i64 / peak.max(1) as i64) as i32",
+    "replace": "look.fireball_mm",
+    "test": "a_wreck_goes_off_where_the_boat_was_and_shakes_its_player"
+  },
+  {
+    "name": "a ghost is see-through",
+    "file": "crates/core/src/gfx/render.rs",
+    "find": "            *slot = opacity;",
+    "replace": "            *slot = ONE;",
+    "test": "a_ghosted_boat_is_drawn_see_through_in_its_own_list"
+  },
+  {
+    "name": "a hook heard pops up",
+    "file": "crates/core/src/flow/mod.rs",
+    "find": "            self.flow.popups.push(pop, now);",
+    "replace": "            let _ = pop;",
+    "test": "a_hook_heard_in_the_match_pops_up_for_this_player"
+  },
+  {
+    "name": "land behind the boat pulls the camera in",
+    "file": "crates/core/src/scene/camera.rs",
+    "find": "if blocked(pivot.lerp(want, t)) {",
+    "replace": "if false {",
+    "test": "land_behind_the_boat_pulls_the_camera_in_and_it_stays_over_the_land"
+  },
+  {
+    "name": "the murk darkens with the camera's depth",
     "file": "crates/core/src/app/fishing.rs",
-    "find": "if now.saturating_sub(*tick) >= keep {",
-    "replace": "if now.saturating_sub(*tick) >= keep * 2 {",
-    "test": "a_hook_pops_up_for_every_player_in_its_tier_for_two_seconds"
+    "find": "(u.colour_deep[k] - u.colour[k]) * t / ONE",
+    "replace": "(u.colour_deep[k] - u.colour[k]) * 0 / ONE",
+    "test": "the_murk_darkens_with_the_cameras_depth"
+  },
+  {
+    "name": "no speck is drawn over the surface",
+    "file": "crates/core/src/app/fishing.rs",
+    "find": "if at[1] > -(size as i64) || (at[1] as i32) < ground + size {",
+    "replace": "if false {",
+    "test": "specks_drift_round_the_eye_under_the_surface_and_over_the_bed"
+  },
+  {
+    "name": "the underwater air turns on the shafts",
+    "file": "crates/core/src/app/fishing.rs",
+    "find": "                hundredth(s.strength_pct),",
+    "replace": "                0,",
+    "test": "a_line_in_the_water_turns_on_the_underwater_camera_and_the_picture_in_picture"
+  },
+  {
+    "name": "anticlockwise winding counts for the reel",
+    "file": "crates/core/src/minigame/reel.rs",
+    "find": "self.swept = (self.swept + signed(a - l) as i64).max(self.banked);",
+    "replace": "self.swept = (self.swept + (signed(a - l) as i64).abs()).max(self.banked);",
+    "test": "anticlockwise_circles_count_for_nothing"
+  },
+  {
+    "name": "winding back undoes a finished turn",
+    "file": "crates/core/src/minigame/reel.rs",
+    "find": "self.swept = (self.swept + signed(a - l) as i64).max(self.banked);",
+    "replace": "self.swept = (self.swept + signed(a - l) as i64).max(0);",
+    "test": "winding_back_loses_only_the_turn_in_progress"
+  },
+  {
+    "name": "the reel has no dead zone",
+    "file": "crates/core/src/minigame/reel.rs",
+    "find": "if dx * dx + dy * dy < dz * dz {",
+    "replace": "if dx * dx + dy * dy < 0 {",
+    "test": "circling_inside_the_dead_zone_counts_for_nothing"
+  },
+  {
+    "name": "the reel needs one turn more",
+    "file": "crates/core/src/minigame/reel.rs",
+    "find": "self.swept >= self.t.turns as i64 * TURN as i64",
+    "replace": "self.swept > self.t.turns as i64 * TURN as i64 + TURN as i64",
+    "test": "a_perfect_reel_run_finishes_after_five_clockwise_turns"
+  },
+  {
+    "name": "the cloak finishes a cell early",
+    "file": "crates/core/src/minigame/cloak.rs",
+    "find": ">= self.t.done_pct as i64 * self.total as i64",
+    "replace": ">= (self.t.done_pct - 1) as i64 * self.total as i64",
+    "test": "erasing_98_percent_of_the_boat_finishes_the_cloak"
+  },
+  {
+    "name": "a stroke erases only its ends",
+    "file": "crates/core/src/minigame/cloak.rs",
+    "find": "let n = len / step + 1;",
+    "replace": "let n = 1;",
+    "test": "a_stroke_erases_the_whole_way_between_two_ticks"
+  },
+  {
+    "name": "the eraser works without the button",
+    "file": "crates/core/src/minigame/cloak.rs",
+    "find": "Some(p) if input.held || input.pressed => self.stroke(ctx, p),",
+    "replace": "Some(p) => self.stroke(ctx, p),",
+    "test": "moving_without_the_button_erases_nothing"
+  },
+  {
+    "name": "any bin takes any atom",
+    "file": "crates/core/src/minigame/atoms.rs",
+    "find": "Some(b) if (b == 0) == a.nitrogen => {",
+    "replace": "Some(_) => {",
+    "test": "a_wrong_bin_throws_the_atom_back_out"
+  },
+  {
+    "name": "nitrous never finishes",
+    "file": "crates/core/src/minigame/atoms.rs",
+    "find": "self.binned() == self.total()\n",
+    "replace": "self.binned() > self.total()\n",
+    "test": "dropping_each_atom_in_its_bin_finishes_nitrous"
+  },
+  {
+    "name": "the timing window is a tick narrower",
+    "file": "crates/core/src/minigame/beats.rs",
+    "find": "let hit = off <= self.window;",
+    "replace": "let hit = off < self.window;",
+    "test": "the_timing_window_is_160_ms_either_side"
+  },
+  {
+    "name": "a hit is timed from the circle's appearing",
+    "file": "crates/core/src/minigame/beats.rs",
+    "find": "let off = self.now.abs_diff(self.meets(&circle));",
+    "replace": "let off = self.now.abs_diff(circle.born);",
+    "test": "a_click_as_the_ring_meets_the_edge_is_a_hit"
+  },
+  {
+    "name": "an unclicked circle stays forever",
+    "file": "crates/core/src/minigame/beats.rs",
+    "find": ".partition(|c| now > c.born + approach + late);",
+    "replace": ".partition(|c| now > c.born + approach + late + 1000);",
+    "test": "an_unclicked_circle_is_missed_after_its_window"
+  },
+  {
+    "name": "the camera reaches twice as far",
+    "file": "crates/core/src/minigame/camera.rs",
+    "find": ".filter(|&k| dist2(self.fish[k].pos(), p) <= reach * reach)",
+    "replace": ".filter(|&k| dist2(self.fish[k].pos(), p) <= 4 * reach * reach)",
+    "test": "a_click_away_from_every_fish_takes_no_photo"
+  },
+  {
+    "name": "the radar snaps at 11%",
+    "file": "crates/core/src/minigame/focus.rs",
+    "find": "let near = self.t.snap_within_pct * 10;",
+    "replace": "let near = self.t.snap_within_pct * 11;",
+    "test": "within_ten_percent_of_every_spot_it_snaps_sharp_then_finishes"
+  },
+  {
+    "name": "the radar does not hold sharp",
+    "file": "crates/core/src/minigame/focus.rs",
+    "find": "return self.now >= at + ticks_of(self.t.snap_ms);",
+    "replace": "return self.now >= at;",
+    "test": "within_ten_percent_of_every_spot_it_snaps_sharp_then_finishes"
+  },
+  {
+    "name": "a slider may start on its sweet spot",
+    "file": "crates/core/src/minigame/focus.rs",
+    "find": "if (try_v - s).abs() >= gap {",
+    "replace": "if (try_v - s).abs() >= 0 {",
+    "test": "every_slider_starts_away_from_its_sweet_spot"
+  },
+  {
+    "name": "Esc does not quit a minigame",
+    "file": "crates/core/src/minigame/mod.rs",
+    "find": "        if input.quit {\n            self.state = State::Quit;",
+    "replace": "        if input.quit && false {\n            self.state = State::Quit;",
+    "test": "esc_quits_every_minigame_in_its_banner_and_in_play"
+  },
+  {
+    "name": "no banner before play",
+    "file": "crates/core/src/minigame/mod.rs",
+    "find": "if self.ticks <= self.banner_ticks {",
+    "replace": "if self.ticks < 1 {",
+    "test": "input_during_the_banner_does_nothing"
+  },
+  {
+    "name": "the cursor hides for every minigame",
+    "file": "crates/core/src/minigame/mod.rs",
+    "find": "matches!(self.game, Game::Camera(_)) && self.state == State::Playing",
+    "replace": "self.state == State::Playing",
+    "test": "the_fish_boy_minigames_say_so_and_the_camera_hides_the_cursor"
+  },
+  {
+    "name": "a Fish-Boy minigame fills the view",
+    "file": "crates/core/src/app/minigames.rs",
+    "find": "let (w, h) = (fit.w * pct / 100, fit.h * pct / 100);",
+    "replace": "let (w, h) = (fit.w, fit.h);",
+    "test": "the_pointer_lands_in_the_minigames_own_units"
+  },
+  {
+    "name": "Esc in a minigame leaves the screen",
+    "file": "crates/core/src/app/minigames.rs",
+    "find": "            self.minigames.quit = true;",
+    "replace": "            self.back();",
+    "test": "a_started_minigame_takes_the_pointer_and_esc_quits_it"
+  },
+  {
+    "name": "the Title has no Minigames button",
+    "file": "crates/core/src/app/menus.rs",
+    "find": "                    self.button(\"menu.minigames\"),\n",
+    "replace": "",
+    "test": "the_app_opens_on_the_title_with_its_menu"
   },
   {
     "name": "the AI drives straight at its goal",

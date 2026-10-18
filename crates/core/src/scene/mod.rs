@@ -257,6 +257,7 @@ impl Lake {
                 let g = render::rgb(w.glint);
                 [g[0], g[1], g[2], w.shine * ONE]
             },
+            deep: render::Deep::none(render::rgb(l.light.fog)),
         }
     }
 }
@@ -337,6 +338,7 @@ pub fn frame(
         statics: [lake.terrain[0], lake.terrain[1], lake.water[0], lake.water[1]],
         groups,
         instances: inst,
+        ..Frame::default()
     }
 }
 

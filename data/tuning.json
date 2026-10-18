@@ -249,5 +249,85 @@
     "_note": "The Fish-Boy's radar (crates/core/src/fishboy/radar.rs). ping_cooldown_ms: from one ping's start to the next allowed, per player (BRIEF: 5 s). ping_sweep_ms: how long the sweep takes to cross the whole map from where the player pinged (BRIEF: about 3 s); it must end before the cooldown does.",
     "ping_cooldown_ms": 5000,
     "ping_sweep_ms": 3000
+  },
+  "flow": {
+    "_note": "The match's flow (crates/core/src/flow/). countdown_ms: the 3-2-1-Go before a match, the boats held still (0 to 3000: the beeps are cues for 3, 2 and 1). popup_ms: how long each popup stays up (round 1: about 2 s). end_hold_ms: at time 0 the horn sounds and 'Lines up' shows this long before the postgame. hints_ms: the HUD's key hints show for this much match time, then fade.",
+    "countdown_ms": 3000,
+    "popup_ms": 2000,
+    "end_hold_ms": 3000,
+    "hints_ms": 60000
+  },
+  "minigames": {
+    "_note": "The item minigames (crates/core/src/minigame/). Sizes and places are in the minigames' own canvas units (canvas: 1600 x 900, the Fish-Boy screen's), speeds in units a second, times in ms. None can be failed; poor play only takes longer. banner_ms: the one-line instruction shows alone this long before play.",
+    "canvas": [
+      1600,
+      900
+    ],
+    "banner_ms": 1400,
+    "cloak": {
+      "_note": "Cloaking Tech: rub out an overhead picture of a boat. picture: its size; cols x rows: the coverage grid over it; eraser: the eraser square's side; done_pct: done when this share of the boat is erased (BRIEF: about 98%); tick_every_pct: a tick sounds each time this much more is gone.",
+      "picture": [
+        1200,
+        600
+      ],
+      "cols": 60,
+      "rows": 30,
+      "eraser": 90,
+      "done_pct": 98,
+      "tick_every_pct": 20
+    },
+    "power_reel": {
+      "_note": "Power Reel: circle the pointer clockwise round the reel turns times (BRIEF: 5). radius: the reel drawn; dead_zone: the pointer this close to the middle counts for nothing. Anticlockwise winds back only the turn in progress.",
+      "turns": 5,
+      "radius": 220,
+      "dead_zone": 40
+    },
+    "nitrous": {
+      "_note": "Nitrous: drag nitrogen N atoms and oxygen O atoms into their bins (BRIEF: 8 and 4). atom_radius: an atom's size; the atoms bounce round the box at speed_min_per_s to speed_max_per_s; grab_slop: a press this far outside an atom still picks it up; an atom dropped in the wrong bin flies back out at bounce_out_per_s; bin_h: the bins' height.",
+      "nitrogen": 8,
+      "oxygen": 4,
+      "atom_radius": 34,
+      "speed_min_per_s": 160,
+      "speed_max_per_s": 280,
+      "grab_slop": 18,
+      "bounce_out_per_s": 700,
+      "bin_h": 200
+    },
+    "teleporter": {
+      "_note": "Teleporter, osu!-style: hits circles right to finish (BRIEF: 10). radius: a circle's; its ring starts at ring_start_pct of that and closes on its edge over approach_ms; a click inside it within window_ms either side of the meeting is a hit, any other click on it or none is a miss. A circle appears every spawn_every_ms, margin from the canvas's edges and min_gap from the others where it can. feedback_ms: a hit's or miss's mark fades.",
+      "hits": 10,
+      "radius": 72,
+      "ring_start_pct": 320,
+      "approach_ms": 1100,
+      "window_ms": 180,
+      "spawn_every_ms": 750,
+      "margin": 130,
+      "min_gap": 240,
+      "feedback_ms": 450
+    },
+    "camera": {
+      "_note": "High-Quality Camera: photograph photos fish (BRIEF: 10). A fish leaps in from the left, right or bottom edge every spawn_min_ms to spawn_max_ms, at most max_fish at once; fish_len: its length; speed_min_per_s to speed_max_per_s: a sideways throw's speed; gravity_per_s2: the pull down; hit_pct: a click this near the fish's middle, percent of its half length, photographs it; flash_ms: the flash after a photo.",
+      "photos": 10,
+      "spawn_min_ms": 450,
+      "spawn_max_ms": 1100,
+      "max_fish": 4,
+      "fish_len": 170,
+      "speed_min_per_s": 280,
+      "speed_max_per_s": 480,
+      "gravity_per_s2": 520,
+      "hit_pct": 110,
+      "flash_ms": 180
+    },
+    "enhanced_radar": {
+      "_note": "Enhanced Radar: three sliders, each with a hidden sweet spot (thousandths of the track, sweet_margin_permille from either end), each starting at least start_gap_permille from it. Within snap_within_pct of every spot (BRIEF: 10%) the picture snaps sharp for snap_ms (BRIEF: a second), then it is done. A slider's fault is whole at falloff_permille from its spot or further: slider one blurs the picture up to blur_max, slider two pixelates it up to pixel_max, slider three doubles it up to ghost_max apart.",
+      "snap_within_pct": 10,
+      "snap_ms": 1000,
+      "sweet_margin_permille": 100,
+      "start_gap_permille": 250,
+      "falloff_permille": 450,
+      "blur_max": 36,
+      "pixel_max": 64,
+      "ghost_max": 90
+    }
   }
 }

@@ -19,6 +19,7 @@ pub mod fishing;
 pub mod gallery;
 pub mod lake;
 mod menus;
+pub mod minigames;
 mod notes;
 pub mod play;
 pub mod sounds;
@@ -40,12 +41,17 @@ pub enum Screen {
     Lobby,
     /// a match (`app/play.rs`)
     Play,
+    /// after a match: each player's catches revealed, then the ranking
+    /// (`flow/`)
+    Postgame,
     /// each model turning, for a look at the art (`app/gallery.rs`)
     Gallery,
     /// every sound, played on a click (`app/sounds.rs`)
     Sounds,
     /// a map drawn in 3D with a camera tour, for debugging (`app/lake.rs`)
     Lake,
+    /// each item's minigame on its own, for trying them (`app/minigames.rs`)
+    Minigames,
 }
 
 /// How large the menus' text is drawn. The page scales its text by it.
@@ -88,6 +94,9 @@ pub struct Settings {
     pub notes_minor: bool,
     /// the person's name in matches; empty for the stand-in name
     pub name: String,
+    /// the map seed shows in the HUD's bottom-right corner (for reporting
+    /// a map with a problem)
+    pub show_seed: bool,
 }
 
 impl Default for Settings {
@@ -97,6 +106,7 @@ impl Default for Settings {
             text_size: TextSize::Medium,
             notes_minor: false,
             name: String::new(),
+            show_seed: false,
         }
     }
 }
@@ -129,6 +139,9 @@ pub struct Ui {
     /// how many AI players' boats are under way now (the page marks it on
     /// the body for the browser check)
     pub ai_moving: u32,
+    /// the page hides its cursor over the 2D layer, which draws its own
+    /// (the camera minigame's viewfinder)
+    pub hide_cursor: bool,
     pub panels: Vec<Panel>,
 }
 
@@ -169,11 +182,20 @@ pub struct App {
     /// the lake drawn now, built once per map (`scene::Lake`); the page
     /// uploads its static vertices when its stamp changes
     pub world: Option<crate::scene::Lake>,
+    /// the match's flow: the HUD, popups, bursts, the end and the
+    /// postgame (`flow/`)
+    pub flow: crate::flow::Flow,
+    /// the Minigames screen's minigame and results
+    pub minigames: minigames::MinigamesScreen,
     /// the page's `?debug=fishing`: a fish by every bobber (`app/fishing.rs`)
     pub debug_fishing: bool,
     /// the page's `?debug=watch`: an AI plays the person's seat too, and the
     /// camera follows it (`app/play.rs`)
     pub debug_watch: bool,
+    /// the page's `?debug=reeds` or `?debug=island`: this seat's boat is
+    /// moved by the biggest reed bed or island once its match starts, for
+    /// the screenshots of the underwater and chase cameras there
+    pub debug_place: Option<String>,
 }
 
 impl App {
@@ -204,8 +226,11 @@ impl App {
             sounds: sounds::SoundsScreen::default(),
             preview: lake::Preview::default(),
             world: None,
+            flow: crate::flow::Flow::default(),
+            minigames: minigames::MinigamesScreen::default(),
             debug_fishing: false,
             debug_watch: false,
+            debug_place: None,
         })
     }
 
@@ -215,7 +240,7 @@ impl App {
 
     // ---- screens ----
 
-    fn go(&mut self, screen: Screen) {
+    pub(crate) fn go(&mut self, screen: Screen) {
         self.screen = screen;
     }
 
@@ -235,12 +260,16 @@ impl App {
     fn escape(&mut self) {
         match self.screen {
             Screen::Play => {}
+            // the reveal skips to the ranking; then Esc goes to the Title
+            Screen::Postgame if !self.postgame_ranked() => self.skip_reveal(),
+            Screen::Postgame => self.leave_match(),
             Screen::Settings
             | Screen::Notes
             | Screen::Gallery
             | Screen::Lobby
             | Screen::Sounds
             | Screen::Lake => self.back(),
+            Screen::Minigames => self.minigames_escape(),
             Screen::Title => {}
         }
     }
@@ -257,6 +286,7 @@ impl App {
                 | Screen::Lobby
                 | Screen::Sounds
                 | Screen::Lake
+                | Screen::Minigames
         )
     }
 
@@ -265,6 +295,9 @@ impl App {
     fn key(&mut self, code: &str) {
         if code == "Escape" {
             self.escape();
+        }
+        if code == "Space" && self.screen == Screen::Postgame {
+            self.skip_reveal();
         }
     }
 
@@ -275,6 +308,9 @@ impl App {
             self.click();
         }
         if name == "key" && self.fishboy_key(value) {
+            return Ok(());
+        }
+        if name == "key" && self.flow_debug_key(value) {
             return Ok(());
         }
         if self.match_input(name, value)? {
@@ -292,6 +328,7 @@ impl App {
             "menu.gallery" => self.go(Screen::Gallery),
             "menu.sounds" => self.go(Screen::Sounds),
             "menu.lake" => self.open_lake(),
+            "menu.minigames" => self.go(Screen::Minigames),
             "scene.unavailable" => self.scene_unavailable = true,
             "version" if self.version_opens_notes() => self.go(Screen::Notes),
             "version" => {}
@@ -302,12 +339,20 @@ impl App {
             "menu.resume" => self.tap("menu", true),
             "notes.minor" => self.settings.notes_minor = value == "on",
             "settings.name" => self.set_name(value),
+            "settings.show_seed" => self.settings.show_seed = value == "on",
+            "data.flow" => self.flow_act(name, value)?,
             "debug.flags" => self.debug_act(value),
+            _ if name.starts_with("postgame.") || name.starts_with("debug.") => self.flow_act(name, value)?,
             "data.ui2d" | "data.fish" => self.fishboy_act(name, value)?,
             _ if name.starts_with("data.") => self.data_act(name, value)?,
             _ if name.starts_with("lobby.") => self.lobby_act(name, value)?,
             _ if name.starts_with("settings.") => self.settings_act(name, value)?,
             _ if name.starts_with("gallery.") => self.gallery_act(name, value)?,
+            _ if name.starts_with("minigames.")
+                || (name.starts_with("pointer.") && self.screen == Screen::Minigames) =>
+            {
+                self.minigames_act(name, value)?
+            }
             _ if name.starts_with("fishboy.") || name.starts_with("pointer.") => {
                 self.fishboy_act(name, value)?
             }
@@ -323,6 +368,8 @@ impl App {
         self.clock = self.clock.max(now);
         self.run_ticks(self.clock);
         self.fishboy_advance();
+        self.flow_advance();
+        self.minigames_advance();
     }
 
     /// The canvas's size in CSS pixels and the device's pixel ratio in
@@ -341,7 +388,7 @@ impl App {
         match self.screen {
             Screen::Gallery => self.gallery_frame(),
             Screen::Lake => self.lake_frame(),
-            Screen::Play => self.match_frame().unwrap_or_default(),
+            Screen::Play | Screen::Postgame => self.match_frame().unwrap_or_default(),
             _ => crate::gfx::render::Frame::default(),
         }
     }
@@ -359,9 +406,11 @@ impl App {
             Screen::Notes => self.notes_panels(),
             Screen::Lobby => self.lobby_panels(),
             Screen::Play => self.play_panels(),
+            Screen::Postgame => self.postgame_panels(),
             Screen::Gallery => self.gallery_panels(),
             Screen::Sounds => self.sounds_panels(),
             Screen::Lake => self.lake_panels(),
+            Screen::Minigames => self.minigames_panels(),
         };
         Ui {
             screen: self.screen,
@@ -370,15 +419,18 @@ impl App {
             version_opens: self.version_opens_notes(),
             text_size: self.settings.text_size,
             volume: self.settings.volume,
-            scene: matches!(self.screen, Screen::Gallery | Screen::Play | Screen::Lake),
+            scene: matches!(
+                self.screen,
+                Screen::Gallery | Screen::Play | Screen::Postgame | Screen::Lake | Screen::Minigames
+            ),
             fishboy: self.fishboy_shown(),
-            pointer: self.fishboy_shown() != "",
+            pointer: self.fishboy_shown() != ""
+                || (self.screen == Screen::Minigames && self.minigames.game.is_some()),
             capture: self.screen == Screen::Play
                 && self
                     .play
                     .as_ref()
                     .is_some_and(|p| !p.menu_open() && !p.game.ended),
-            live: self.screen == Screen::Play && self.play.is_some(),
             ai_moving: self.play.as_ref().map_or(0, |p| {
                 p.ai.brains
                     .iter()
@@ -386,6 +438,9 @@ impl App {
                     .filter(|b| b.speed_mm_per_s() > 1000)
                     .count() as u32
             }),
+            live: (matches!(self.screen, Screen::Play | Screen::Postgame) && self.play.is_some())
+                || self.screen == Screen::Minigames,
+            hide_cursor: self.minigames_hide_cursor(),
             panels,
         }
     }

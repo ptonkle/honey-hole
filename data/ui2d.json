@@ -1,7 +1,8 @@
 {
   "_note": "The 2D layer's look (crates/core/src/ui2d/theme.rs). Colours are 0-255. fonts: CSS families, a weight, and the glyph advance in percent of the size (the core lays labels out by it). fishboy: the screen's virtual canvas, the first-person field of view in degrees, the screen's share of the view (percent of width or height, whichever binds), and how long raising it takes. radar: the map picture in blocks of block_mm (2.5 m: the person's 80% fidelity), its colours, the fine grid, range rings, the ping's sweep band and the players' radar colours. tiers: each tier's colour and frame shape (double, notched, dashed, plain). standin: the plain lake drawn behind the Fish-Boy until the world renderer lands.",
   "fonts": {
-    "mono": { "family": "ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace", "weight": "bold", "advance": 60 }
+    "mono": { "family": "ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace", "weight": "bold", "advance": 60 },
+    "banner": { "family": "Impact, 'Arial Black', 'Helvetica Neue', sans-serif", "weight": "bold", "advance": 52 }
   },
   "hud": { "canvas": [1920, 1080], "ink": [240, 244, 236] },
   "fishboy": {
@@ -53,5 +54,28 @@
     "land": [78, 116, 62],
     "light": { "fog": [184, 198, 204], "sun_dir": [-45, 80, 55], "sun": [150, 144, 132], "sky": [140, 150, 162], "ground": [86, 88, 84] },
     "fog_m": [50, 240]
+  },
+  "minigames": {
+    "_note": "The item minigames' look (crates/core/src/minigame/look.rs). Colours are 0-255; sizes are in the minigames' 1600 x 900 canvas units. banner: the WarioWare-style instruction band (its text pops from 60% to size over pop_ms; dim_pct darkens the minigame under it). bezel: the Fish-Boy's case drawn round an on-device minigame on the Minigames screen. cloak and enhanced_radar are on the Fish-Boy, so they are in its phosphor greens. camera.fish: the flying fish's colours, taken in turn; viewfinder_size and bracket: the viewfinder cursor.",
+    "banner": { "band": [255, 206, 46], "edge": [24, 24, 30], "ink": [255, 255, 255], "shadow": [24, 24, 30], "size": 92, "band_h": 200, "pop_ms": 180, "dim_pct": 45 },
+    "text": [245, 245, 240],
+    "text_size": 38,
+    "hint": [200, 206, 200],
+    "hint_size": 22,
+    "progress_size": 32,
+    "bar": [120, 230, 120],
+    "bar_back": [40, 48, 44],
+    "bezel": [44, 50, 40],
+    "cloak": { "background": [4, 16, 8], "grid": [18, 60, 26], "rim": [150, 255, 160], "floor": [52, 150, 70], "bench": [110, 220, 120], "motor": [190, 255, 190], "deck": [80, 190, 96], "eraser": [255, 170, 190], "eraser_edge": [255, 240, 245] },
+    "power_reel": { "background": [22, 48, 70], "spool": [200, 206, 214], "line": [90, 170, 110], "rim": [52, 58, 66], "hub": [236, 190, 64], "handle": [220, 60, 50], "arrow": [255, 255, 255], "progress": [255, 214, 70], "pip_off": [50, 74, 96], "pip_on": [255, 214, 70] },
+    "nitrous": { "background": [28, 26, 40], "arena": [44, 42, 62], "arena_line": [110, 104, 150], "nitrogen": [70, 130, 255], "oxygen": [240, 70, 70], "atom_ink": [255, 255, 255], "bin": [36, 34, 52], "bin_line": [150, 146, 190], "wrong": [255, 200, 40] },
+    "teleporter": { "background": [16, 10, 34], "glow": [90, 50, 160], "circle": [150, 80, 230], "edge": [255, 255, 255], "ring": [120, 230, 255], "ring_ready": [120, 255, 140], "number": [255, 255, 255], "hit": [120, 255, 140], "miss": [255, 80, 90] },
+    "camera": {
+      "sky": [126, 184, 230], "sky_low": [196, 224, 240], "water": [46, 104, 140], "water_line": [200, 230, 245],
+      "fish": [[96, 140, 70], [200, 170, 60], [90, 120, 150], [170, 110, 60], [120, 150, 110]],
+      "belly": [240, 236, 214], "eye": [20, 20, 24], "flash": [255, 255, 255], "photo": [255, 255, 255],
+      "viewfinder": [255, 255, 255], "viewfinder_size": [220, 160], "bracket": 44
+    },
+    "enhanced_radar": { "background": [4, 16, 8], "frame": [34, 120, 52], "fish": [52, 170, 80], "fish_line": [120, 255, 140], "eye": [4, 22, 10], "track": [60, 180, 80], "knob": [14, 40, 20], "knob_line": [120, 255, 140], "snap": [200, 255, 210] }
   }
 }

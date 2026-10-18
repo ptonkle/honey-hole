@@ -263,6 +263,13 @@ body[data-pointer="on"] #overlay { pointer-events: auto; }
    panels do not */
 body[data-screen="play"] #menus { pointer-events: none; position: relative; }
 body[data-screen="play"] .panel { pointer-events: auto; }
+/* ---- the Minigames screen: its list over the scene, and a minigame on
+   the 2D layer, which draws its own cursor when the core says so ---- */
+body[data-screen="minigames"] #scene,
+body[data-screen="minigames"] #overlay { display: block; }
+body[data-screen="minigames"] #menus { position: relative; }
+.panel.minigames { background: color-mix(in srgb, var(--panel) 92%, transparent); }
+body[data-cursor="none"] #overlay { cursor: none; }
 /* ---- the Sounds screen: a grid of sound buttons, then the loops ---- */
 body[data-screen="sounds"] #menus { max-width: 60rem; }
 .panel.sounds {
@@ -274,3 +281,33 @@ body[data-screen="sounds"] #menus { max-width: 60rem; }
   background: color-mix(in srgb, var(--panel) 88%, transparent);
   padding: 0.5rem 0.75rem;
 }
+
+/* ---- the match flow (crates/core/src/flow/): the HUD is drawn on the 2D
+   layer; the panel keeps only the Menu button, small in the top-right
+   corner above the time card ---- */
+body[data-screen="play"] .panel.hud {
+  width: auto;
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+/* the postgame: the lake and the 2D layer's reveal, its buttons along the
+   bottom */
+body[data-screen="postgame"] #scene,
+body[data-screen="postgame"] #overlay { display: block; }
+body[data-screen="postgame"] #menus { pointer-events: none; }
+body[data-screen="postgame"] .panel.postgame {
+  pointer-events: auto;
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 1rem;
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+body[data-screen="postgame"] .panel.postgame { flex-direction: row; }
+body[data-screen="postgame"] .panel.postgame .button { font-size: 1.15rem; padding: 0.55rem 1.4rem; }
