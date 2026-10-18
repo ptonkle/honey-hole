@@ -207,8 +207,11 @@ fn an_unknown_fish_or_seat_still_makes_a_popup_and_other_events_make_none() {
     );
     assert_eq!(p.len(), 1, "a bump has no popup");
     assert_eq!(p[0].text, "Someone has hooked a fish!");
+    // the buoy's countdown is heard, not shown; its spawn is one line
     let beat = json!({"type": "BuoyBeat", "left": 3});
-    assert_eq!(fill(&[beat], 0)[0].text, "Item buoy in 3");
+    assert!(fill(&[beat], 0).is_empty());
+    let spawned = json!({"type": "BuoySpawned", "at": [0, 0]});
+    assert_eq!(fill(&[spawned], 0)[0].text, "An item has spawned");
 }
 
 #[test]
@@ -220,10 +223,10 @@ fn a_popup_row_with_a_bad_style_or_fill_is_refused_by_name() {
         "Popup row 1 (Announced) names the style \"loud\", which is not listed."
     );
     let mut v: Value = serde_json::from_str(FLOW).unwrap();
-    v["popups"]["rows"][7]["fill"]["player"] = json!("seat");
+    v["popups"]["rows"][5]["fill"]["player"] = json!("seat");
     assert!(FlowLook::parse(&v.to_string())
         .unwrap_err()
-        .contains("Popup row 8 (Wrecked) fills {player}"));
+        .contains("Popup row 6 (Wrecked) fills {player}"));
 }
 
 // ---- the postgame ----
@@ -442,24 +445,15 @@ fn the_map_seed_shows_only_with_the_option_on() {
 }
 
 #[test]
-fn the_hud_shows_the_time_speed_mode_and_ping_and_its_hints_fade_after_a_minute() {
-    let mut a = match_app();
+fn the_hud_shows_the_clock_and_the_ping_and_no_words() {
+    let a = match_app();
     let s = status(&a);
-    for w in [
-        "hud=1",
-        "time=4:00",
-        "speed=0",
-        "mode=driving",
-        "hud_ping=ready",
-        "hints=100",
-    ] {
+    for w in ["hud=1", "time=4:00", "speed=0", "mode=driving", "hud_ping=ready"] {
         assert!(s.split(' ').any(|x| x == w), "{w} in {s}");
     }
-    // the sample's hints last 60 s of match time, then fade over 3 s
-    a.play.as_mut().unwrap().game.tick = 60 * 50 + 75;
-    assert!(status(&a).contains("hints=50"), "{}", status(&a));
-    a.play.as_mut().unwrap().game.tick = 63 * 50;
-    assert!(status(&a).contains("hints=0"));
+    // KISS (the person, 2026-10-18): no speed gauge, no mode badge, no
+    // key hints and no labels; at the start the only text is the clock
+    assert_eq!(a.build_ui2d().list.words(), vec!["4:00".to_string()]);
 }
 
 #[test]

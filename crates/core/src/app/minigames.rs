@@ -222,9 +222,7 @@ impl App {
             .collect();
         items.push(Item::List { rows });
         items.push(self.button("menu.back"));
-        let mut p = Panel::new("minigames", self.t("minigames.heading"), items);
-        p.sub = self.t("minigames.sub");
-        vec![p]
+        vec![Panel::new("minigames", self.t("minigames.heading"), items)]
     }
 
     /// The page hides its cursor: the minigame draws its own.

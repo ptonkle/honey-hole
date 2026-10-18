@@ -489,37 +489,12 @@ impl App {
                     font,
                     fit(font, &name, 22, sw - 16),
                     Align::Centre,
-                    (sx + sw / 2, sy + sh - 52),
+                    (sx + sw / 2, sy + sh - 30),
                     &name,
-                );
-                let key = if item == Item::Camera {
-                    self.t("items.after_catch")
-                } else {
-                    self.t("items.use_key")
-                };
-                let size = fit(font, &key, 22, sw - 40);
-                let w = font.width(&key, size) + 24;
-                let cap = Rect::new(sx + (sw - w) / 2, sy + sh - 36, w, 30);
-                list.round_rect(c(l.key_cap), Rgba::NONE, 0, cap, 6);
-                list.text(
-                    c(l.panel),
-                    font,
-                    size,
-                    Align::Centre,
-                    (sx + sw / 2, cap.y + 15),
-                    &key,
                 );
             }
             None => {
                 list.round_rect(Rgba::NONE, c(l.dim), 3, icon.inset(12), 14);
-                list.text(
-                    c(l.dim),
-                    font,
-                    22,
-                    Align::Centre,
-                    (sx + sw / 2, sy + sh - 40),
-                    &self.t("items.none"),
-                );
             }
         }
     }
@@ -531,7 +506,6 @@ impl App {
             return;
         };
         let l = &theme.items;
-        let font = theme.mono();
         let ink = c(l.ink);
         let [sx, sy, sw, _] = l.slot;
 
@@ -556,18 +530,9 @@ impl App {
                 c(l.icons.get(item)),
                 ink,
             );
-            let label = if item == Item::Teleporter {
-                self.t("items.charging")
-            } else {
-                self.item_name(item)
-            };
+            // the icon and a bar running down: no name, no seconds (KISS)
             let tx = row.x + l.effect_h + 4;
-            list.text(ink, font, 20, Align::Left, (tx, row.y + 20), &label);
-            let secs = self
-                .t("items.left")
-                .replace("{seconds}", &((left + 999) / 1000).to_string());
-            list.text(ink, font, 20, Align::Right, (row.right() - 12, row.y + 20), &secs);
-            let bar = Rect::new(tx, row.bottom() - 18, row.right() - 12 - tx, 8);
+            let bar = Rect::new(tx, row.y + row.h / 2 - 6, row.right() - 12 - tx, 12);
             list.fill_rect(c(l.dim).alpha(60), bar);
             let fill = (bar.w as i64 * left as i64 / total.max(1) as i64) as i32;
             list.fill_rect(
@@ -673,7 +638,7 @@ impl App {
         list.unclip();
         if s.choosing {
             let r = radar::MAP_RECT;
-            let band = Rect::new(r.x, r.y, r.w, 64);
+            let band = Rect::new(r.x, r.y, r.w, 44);
             list.fill_rect(c(theme.radar.label_back).alpha(85), band);
             list.text(
                 c(l.choose),
@@ -682,14 +647,6 @@ impl App {
                 Align::Centre,
                 (r.x + r.w / 2, r.y + 22),
                 &self.t("teleport.choose"),
-            );
-            list.text(
-                c(theme.screen.dim).shade(170),
-                theme.mono(),
-                20,
-                Align::Centre,
-                (r.x + r.w / 2, r.y + 48),
-                &self.t("teleport.keys"),
             );
             status.push("choosing=1".into());
             if let Some((x, y)) = self.fishboy.pointer {

@@ -73,8 +73,7 @@ fn strings() -> String {
         ("fishboy.tab.fishpedia", "Fishpedia"),
         ("fishboy.tab.catch", "My catch"),
         ("catch.feet", "{feet} ft"),
-        ("radar.ping.cooling", "Ready again in {seconds} s"),
-        ("hud.fishboy", "Tab raises the Fish-Boy."),
+        ("radar.ping.cooling", "{seconds} s"),
     ] {
         s[k] = json!(v);
     }
@@ -507,10 +506,12 @@ fn texts(b: &crate::ui2d::Built) -> Vec<String> {
 }
 
 #[test]
-fn down_the_hud_says_how_to_raise_it_and_no_device_is_drawn() {
+fn down_no_device_is_drawn_and_no_hint_names_its_key() {
     let a = app();
     let b = a.build_ui2d();
-    assert!(texts(&b).contains(&"Tab raises the Fish-Boy.".to_string()));
+    // KISS (the person, 2026-10-18): "you don't need all screens to say
+    // that you can raise the fish-boy"
+    assert!(b.list.words().is_empty(), "{:?}", b.list.words());
     assert!(b.passes.is_empty());
 }
 

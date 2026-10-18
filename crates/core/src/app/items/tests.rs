@@ -115,22 +115,23 @@ fn a_click_on_the_radar_picks_the_teleports_destination() {
 }
 
 #[test]
-fn the_flow_announces_a_pickup_with_the_items_name_and_a_wasted_item() {
+fn a_pickup_or_a_wasted_item_makes_no_popup() {
+    // KISS (the person, 2026-10-18): the slot shows what you picked up,
+    // and no popup says an item was taken, replaced or lost
     let mut a = started("items,item.nitrous");
     a.act("data.flow", include_str!("../../../../../data/flow.json"))
         .unwrap();
     let b = a.play.as_ref().unwrap().game.items.buoy.unwrap();
     a.play.as_mut().unwrap().game.boats[0].as_mut().unwrap().set_at(b);
     tick(&mut a);
-    let texts = |a: &App| -> Vec<String> { a.flow.popups.queue.iter().map(|p| p.text.clone()).collect() };
-    let picked = a.t("popup.item_picked").replace("{item}", &a.t("item.nitrous"));
-    assert!(texts(&a).contains(&picked), "{:?}", texts(&a));
+    let keys = |a: &App| -> Vec<String> { a.flow.popups.queue.iter().map(|p| p.key.clone()).collect() };
+    assert!(keys(&a).is_empty(), "{:?}", keys(&a));
     // the flow's HUD draws the slot with the item's name
     assert!(has(&a, "item=nitrous"));
     a.act("key", "ShiftLeft").unwrap();
     tick(&mut a);
     a.act("key", "Escape").unwrap();
     tick(&mut a);
-    let lost = a.t("popup.item_wasted").replace("{item}", &a.t("item.nitrous"));
-    assert!(texts(&a).contains(&lost), "{:?}", texts(&a));
+    assert!(has(&a, "item=none"));
+    assert!(keys(&a).is_empty(), "{:?}", keys(&a));
 }

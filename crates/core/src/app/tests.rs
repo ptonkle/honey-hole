@@ -72,6 +72,9 @@ fn the_app_opens_on_the_title_with_its_menu() {
             ["CONTROLS.DRIVE", "CONTROLS.DRIVE_KEYS"],
             ["CONTROLS.STEER", "CONTROLS.STEER_KEYS"],
             ["CONTROLS.MODE", "CONTROLS.MODE_KEYS"],
+            ["CONTROLS.CAST", "CONTROLS.CAST_KEYS"],
+            ["CONTROLS.ITEM", "CONTROLS.ITEM_KEYS"],
+            ["CONTROLS.FISHBOY", "CONTROLS.FISHBOY_KEYS"],
             ["CONTROLS.LOOK", "CONTROLS.LOOK_KEYS"],
             ["CONTROLS.PAUSE", "CONTROLS.PAUSE_KEYS"]
         ])

@@ -332,6 +332,22 @@ impl List {
         List::default()
     }
 
+    /// The words drawn: the strings table less its colours, fonts and
+    /// alignments (for tests of what a reader sees).
+    #[cfg(test)]
+    pub fn words(&self) -> Vec<String> {
+        self.strings
+            .iter()
+            .filter(|s| {
+                !(s.is_empty()
+                    || s.starts_with("rgba(")
+                    || s.contains("px ")
+                    || ["center", "left", "right"].contains(&s.as_str()))
+            })
+            .cloned()
+            .collect()
+    }
+
     fn s(&mut self, text: &str) -> i32 {
         if let Some(&i) = self.index.get(text) {
             return int(i);
