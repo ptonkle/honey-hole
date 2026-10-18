@@ -37,8 +37,8 @@
   {
     "name": "escape on a sub-screen goes to the title",
     "file": "crates/core/src/app.rs",
-    "find": "Screen::Settings | Screen::Notes => self.go(Screen::Title),",
-    "replace": "Screen::Settings => self.go(Screen::Title), Screen::Notes => {}",
+    "find": "Screen::Settings | Screen::Notes | Screen::Gallery => self.go(Screen::Title),",
+    "replace": "Screen::Settings | Screen::Gallery => self.go(Screen::Title), Screen::Notes => {}",
     "test": "escape_on_a_sub_screen_goes_back_to_the_title"
   },
   {
@@ -100,8 +100,8 @@
   {
     "name": "the version opens what's new from the menus only",
     "file": "crates/core/src/app.rs",
-    "find": "matches!(self.screen, Screen::Title | Screen::Settings | Screen::Notes)",
-    "replace": "true",
+    "find": "Screen::Title | Screen::Settings | Screen::Notes | Screen::Gallery\n        )",
+    "replace": "Screen::Title | Screen::Settings | Screen::Notes | Screen::Gallery | Screen::Play\n        )",
     "test": "the_version_opens_whats_new_from_the_menus_only"
   },
   {
@@ -369,5 +369,12 @@
     "find": "(!corners && dx != 0 && dy != 0)",
     "replace": "(false && dx != 0 && dy != 0)",
     "test": "distances_go_around_walls_and_regions_count_pockets"
+  },
+  {
+    "name": "the first map is named Burt Lake on screen",
+    "file": "crates/core/src/map/mod.rs",
+    "find": "Setting::MichiganLake => \"map.burt_lake\",",
+    "replace": "Setting::MichiganLake => \"map.lake\",",
+    "test": "every_setting_names_a_string_key"
   }
 ]

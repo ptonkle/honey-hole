@@ -7,6 +7,12 @@ Write each entry as a `### Term` heading, then one or two plain sentences, then 
 <!--
 An example entry. It sits inside this comment, so it does not count.
 
+### Burt Lake
+
+The first map: a northern lake with pine and birch shores, small wooded islands and reeds in the coves, in medium fog. Each match on it plays one of its checked layouts.
+
+Not: Michigan Lake, level, course
+
 ### Spout
 
 Where slush comes out. Each line has up to {line.spouts} spouts.

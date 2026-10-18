@@ -356,3 +356,11 @@ fn the_buoy_is_about_as_far_by_boat_from_every_player() {
     let d = s.dist(b);
     assert!((130_000..=165_000).contains(&d), "{d}");
 }
+
+#[test]
+fn every_setting_names_a_string_key() {
+    for setting in Setting::ALL {
+        assert!(crate::strings::KEYS.contains(&setting.name_key()), "{:?}", setting);
+    }
+    assert_eq!(Setting::MichiganLake.name_key(), "map.burt_lake");
+}

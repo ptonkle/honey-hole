@@ -72,6 +72,14 @@ impl Setting {
         }
     }
 
+    /// The strings key of the setting's name on screen (the person named the
+    /// first one Burt Lake, 2026-10-17).
+    pub fn name_key(self) -> &'static str {
+        match self {
+            Setting::MichiganLake => "map.burt_lake",
+        }
+    }
+
     pub fn from_id(id: &str) -> Option<Setting> {
         Setting::ALL.into_iter().find(|s| s.id() == id)
     }
