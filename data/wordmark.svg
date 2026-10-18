@@ -1,51 +1,93 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-44 -40 990 280" role="img" aria-label="Honey Hole">
-  <!-- The Title's wordmark (web/style.css draws it over the heading's
-       text). Drawn by the agent for this game: no font file. Each letter is
-       a centre line stroked thick with round ends, in four layers: a soft
-       shadow, the dark outline, the honey fill and a thin shine. The "y"
-       ends in a fish hook. The ink,
-       cream and shadow match the HUD's cards (data/flow.json "card"). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 30 1560 210" role="img" aria-label="Honey Hole">
+  <!-- The Title's masthead (web/style.css draws it over the heading's
+       text). Drawn by the agent for this game, in the retro outdoors
+       magazine look (DECISIONS.md, 2026-10-18): no font file, no logo
+       copied. Chunky slab-serif capitals built from plain shapes, paper
+       letters with a double offset (burnt orange, then teal) outlined in
+       ink, over the 70s triple stripe, with a worn-print speckle. The
+       colours are the menus' (web/style.css :root). -->
   <defs>
-    <linearGradient id="honey" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
-      <stop offset="0" stop-color="#ffd860"/>
-      <stop offset="0.55" stop-color="#ffb838"/>
-      <stop offset="1" stop-color="#ec8e1a"/>
+    <!-- the worn print: small specks knocked out of the ink -->
+    <filter id="worn" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="7" result="noise"/>
+      <feColorMatrix in="noise" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -14 10.6" result="specks"/>
+      <feComposite in="SourceGraphic" in2="specks" operator="in"/>
+    </filter>
+    <!-- a dot screen for the stripes' tail -->
+    <pattern id="dots" width="14" height="14" patternUnits="userSpaceOnUse">
+      <circle cx="7" cy="7" r="4.2" fill="#c9581f"/>
+    </pattern>
+    <linearGradient id="fade" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#fff"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
     </linearGradient>
-    <!-- the letters' centre lines, each in its own place -->
-    <g id="H"><path d="M0 10V130M60 10V130M0 72H60"/></g>
-    <g id="o"><ellipse cx="32" cy="96" rx="30" ry="34"/></g>
-    <g id="n"><path d="M0 62V130M0 98Q0 62 30 62Q60 62 60 98V130"/></g>
-    <g id="e"><path d="M4 96H62Q62 62 33 62Q2 62 2 96Q2 130 35 130Q52 130 61 119"/></g>
-    <g id="y"><path d="M0 62V94Q0 126 30 126Q60 126 60 94M60 62V164Q60 194 32 194Q10 194 6 174L20 168"/></g>
-    <g id="l"><path d="M0 10V110Q0 132 22 130"/></g>
+    <mask id="tail"><rect x="1386" y="100" width="164" height="100" fill="url(#fade)"/></mask>
+    <!-- the letters: cap height 150 (y 50 to 200), stems 36 wide, slab
+         serifs 14 deep -->
+    <g id="H">
+      <rect x="12" y="50" width="38" height="150"/><rect x="92" y="50" width="38" height="150"/>
+      <rect x="0" y="50" width="62" height="16"/><rect x="80" y="50" width="62" height="16"/>
+      <rect x="0" y="184" width="62" height="16"/><rect x="80" y="184" width="62" height="16"/>
+      <rect x="40" y="110" width="62" height="30"/>
+    </g>
+    <g id="O">
+      <path fill-rule="evenodd" d="M50 50H86A50 50 0 0 1 136 100V150A50 50 0 0 1 86 200H50A50 50 0 0 1 0 150V100A50 50 0 0 1 50 50Z M58 80A20 20 0 0 0 38 100V150A20 20 0 0 0 58 170H78A20 20 0 0 0 98 150V100A20 20 0 0 0 78 80Z"/>
+    </g>
+    <g id="N">
+      <rect x="12" y="50" width="34" height="150"/><rect x="98" y="50" width="32" height="150"/>
+      <polygon points="12,50 54,50 130,200 88,200"/>
+      <rect x="0" y="50" width="54" height="16"/><rect x="0" y="184" width="58" height="16"/><rect x="84" y="50" width="58" height="16"/>
+    </g>
+    <g id="E">
+      <rect x="12" y="50" width="38" height="150"/>
+      <rect x="0" y="50" width="120" height="30"/><rect x="100" y="50" width="20" height="56"/>
+      <rect x="40" y="110" width="58" height="28"/><rect x="88" y="98" width="12" height="52"/>
+      <rect x="0" y="170" width="124" height="30"/><rect x="104" y="140" width="20" height="60"/>
+    </g>
+    <g id="Y">
+      <polygon points="8,50 52,50 90,128 50,128"/>
+      <polygon points="94,50 128,50 88,128 56,128"/>
+      <rect x="50" y="118" width="40" height="82"/>
+      <rect x="0" y="50" width="60" height="16"/><rect x="84" y="50" width="56" height="16"/>
+      <rect x="32" y="184" width="76" height="16"/>
+    </g>
+    <g id="L">
+      <rect x="12" y="50" width="38" height="150"/>
+      <rect x="0" y="50" width="62" height="16"/>
+      <rect x="0" y="170" width="118" height="30"/><rect x="98" y="136" width="20" height="64"/>
+    </g>
     <g id="word">
-      <use href="#H" transform="translate(0 4) rotate(-4 30 70)"/>
-      <use href="#o" transform="translate(104 -4) rotate(3 32 96)"/>
-      <use href="#n" transform="translate(208 2) rotate(-2 30 96)"/>
-      <use href="#e" transform="translate(308 -6) rotate(4 32 96)"/>
-      <use href="#y" transform="translate(414 0) rotate(-3 30 110)"/>
-      <use href="#H" transform="translate(566 -2) rotate(3 30 70)"/>
-      <use href="#o" transform="translate(670 4) rotate(-5 32 96)"/>
-      <use href="#l" transform="translate(774 -4) rotate(4 10 70)"/>
-      <use href="#e" transform="translate(836 2) rotate(-3 32 96)"/>
+      <use href="#H" x="0"/>
+      <use href="#O" x="156"/>
+      <use href="#N" x="306"/>
+      <use href="#E" x="462"/>
+      <use href="#Y" x="598"/>
+      <use href="#H" x="800"/>
+      <use href="#O" x="956"/>
+      <use href="#L" x="1106"/>
+      <use href="#E" x="1238"/>
     </g>
   </defs>
-  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <!-- shadow -->
-    <g stroke="#222634" stroke-opacity="0.3" stroke-width="44" transform="translate(8 10)">
-      <use href="#word"/>
+  <!-- the triple stripe behind the letters, ending in a dot screen -->
+  <g>
+    <rect x="-10" y="108" width="1400" height="18" fill="#c9581f"/>
+    <rect x="-10" y="132" width="1400" height="18" fill="#d9a21e"/>
+    <rect x="-10" y="156" width="1400" height="18" fill="#2c7f7a"/>
+    <rect x="1386" y="106" width="164" height="70" fill="url(#dots)" mask="url(#tail)"/>
+  </g>
+  <g stroke-linejoin="round" filter="url(#worn)">
+    <!-- the second offset: teal -->
+    <g transform="translate(18 16)">
+      <use href="#word" fill="none" stroke="#2b2118" stroke-width="9"/>
+      <use href="#word" fill="#2c7f7a"/>
     </g>
-    <!-- outline -->
-    <g stroke="#222634" stroke-width="44">
-      <use href="#word"/>
+    <!-- the first offset: burnt orange -->
+    <g transform="translate(9 8)">
+      <use href="#word" fill="none" stroke="#2b2118" stroke-width="9"/>
+      <use href="#word" fill="#c9581f"/>
     </g>
-    <!-- honey -->
-    <g stroke="url(#honey)" stroke-width="26">
-      <use href="#word"/>
-    </g>
-    <!-- shine -->
-    <g stroke="#fffaec" stroke-opacity="0.7" stroke-width="6" transform="translate(-4 -5)">
-      <use href="#word"/>
-    </g>
+    <!-- the letters: paper in an ink keyline -->
+    <use href="#word" fill="none" stroke="#2b2118" stroke-width="12"/>
+    <use href="#word" fill="#f4e9d0"/>
   </g>
 </svg>
