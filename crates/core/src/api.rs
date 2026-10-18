@@ -120,6 +120,15 @@ impl Session {
         }
     }
 
+    /// The picture-in-picture (`App::inset_frame`): its rectangle, its
+    /// border's, and its draw data; empty rectangles when there is none.
+    pub fn inset_frame(&self) -> (Vec<i32>, Vec<i32>, crate::gfx::render::Frame) {
+        match &self.app {
+            Ok(app) => app.inset_frame(),
+            Err(_) => Default::default(),
+        }
+    }
+
     /// The static world's stamp: 0 for none; a new one means upload
     /// [`Session::world_vertices`] again.
     pub fn world_stamp(&self) -> u32 {

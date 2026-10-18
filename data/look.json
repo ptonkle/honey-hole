@@ -103,5 +103,36 @@
       "above_mm": 620000,
       "above_pitch_deg": 62
     }
+  },
+  "fishing": {
+    "_note": "How the fishing is drawn (crates/core/src/app/fishing.rs). From the boat camera a fish under the water is drawn fish_scale_pct of its size and at fish_depth_pct of its depth, so it reads from nine metres back (SECOND-ORDER R2.38, R3.6); the bobber and lure are drawn bobber_scale_pct and lure_scale_pct of life. The line is line_mm wide from the boat camera and line_under_mm under the water, in the line colour. A landed fish hangs landed_drop_mm under the rod's tip. under: the underwater camera, back_mm behind the lure and up_mm above it, looking pitch_deg down; the murk is colour, fading in from fog_start_pct of fog_mm, with a lighter zenith overhead, and things deeper than the lure tint toward colour by up to tint_pct over clear_mm. It stays clear_surface_mm under the surface and clear_bed_mm over the bed. pip: the picture-in-picture of the boat in the top-left corner, width_pct of the screen wide, tall_pct as tall as it is wide, margin_pct from the corner, with a white border border_permille thousandths of the screen wide.",
+    "fish_scale_pct": 200,
+    "fish_depth_pct": 45,
+    "bobber_scale_pct": 300,
+    "lure_scale_pct": 150,
+    "line_mm": 22,
+    "line_under_mm": 5,
+    "line": [236, 240, 232],
+    "landed_drop_mm": 450,
+    "under": {
+      "colour": [38, 96, 98],
+      "zenith": [126, 182, 170],
+      "fog_mm": 16000,
+      "fog_start_pct": 15,
+      "clear_mm": 9000,
+      "tint_pct": 35,
+      "back_mm": 2600,
+      "up_mm": 500,
+      "pitch_deg": 8,
+      "fov_deg": 62,
+      "clear_surface_mm": 250,
+      "clear_bed_mm": 300
+    },
+    "pip": {
+      "width_pct": 26,
+      "tall_pct": 60,
+      "margin_pct": 1,
+      "border_permille": 3
+    }
   }
 }

@@ -405,6 +405,12 @@ impl App {
     /// [`App::sight_mm`]. `None` when the match's world is not built (no
     /// lake look), and Play draws nothing.
     pub fn match_frame(&self) -> Option<Frame> {
+        self.match_frame_as(self.underwater(), render::aspect(self.size))
+    }
+
+    /// The match's frame at a screen `aspect`; `under` asks for the
+    /// fishing's underwater camera (`app/fishing.rs`) instead of the boat's.
+    pub fn match_frame_as(&self, under: bool, aspect: i32) -> Option<Frame> {
         let (view, look, lake) = (self.play_view()?, self.look.as_ref()?, self.world.as_ref()?);
         let play = self.play.as_ref()?;
         if lake.map != play.game.map {
@@ -468,20 +474,15 @@ impl App {
                 view.cam_pitch - deg(cam_look.pitch_deg),
             ),
         };
-        let clock_ms = (self.clock.max(0) / 1000) as u64;
-        Some(scene::frame(
-            lake,
-            cam,
-            render::aspect(self.size),
-            self.sight_mm(),
-            clock_ms,
-            &instances,
-        ))
+        // the fish, bobbers and lines, and the underwater camera (not with
+        // the Fish-Boy up)
+        let under = under && self.fishboy_eye().is_none();
+        Some(self.fishing_frame(lake, &view, cam, aspect, under, instances))
     }
 }
 
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;
 
 /// A map point `d` mm from `p` toward a map heading.
 fn scene_ahead(p: P, heading: i32, d: i32) -> P {

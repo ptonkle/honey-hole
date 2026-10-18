@@ -51,6 +51,10 @@ pub struct Look {
     /// draws no lake
     #[serde(default)]
     pub lake: Option<crate::scene::LakeLook>,
+    /// the fishing's look (`app::fishing::FishingLook`); without it no
+    /// fishing is drawn
+    #[serde(default)]
+    pub fishing: Option<super::fishing::FishingLook>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]

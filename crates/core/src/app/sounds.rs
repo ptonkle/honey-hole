@@ -87,6 +87,14 @@ impl App {
                 voices.extend(s.voice(&format!("rival.{}", b.seat), RIVAL_MOTOR, heard));
             }
         }
+        // the line's whine while reeling (0 to 1000, as MILLI)
+        if let Some(level) = self.line_tension() {
+            voices.extend(s.voice(
+                "tension",
+                LINE_TENSION,
+                motor::line_tension(&t.line_tension, level),
+            ));
+        }
         voices
     }
     /// Takes the sound recipes and the tuning file, checked, or says why not.

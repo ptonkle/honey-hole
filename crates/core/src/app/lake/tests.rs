@@ -8,7 +8,7 @@ use serde_json::{json, Value};
 const NOTES: &str = r#"[{"version": "0.1.0", "date": "2026-10-17", "notes": ["A."]}]"#;
 
 /// The models the lake's look names, and the boat and angler.
-fn models() -> String {
+pub(crate) fn models() -> String {
     let files = [
         ("pine", include_str!("../../../../../data/models/pine.json")),
         (
@@ -49,7 +49,7 @@ fn models() -> String {
     Value::Object(all).to_string()
 }
 
-const LOOK: &str = include_str!("../../../../../data/look.json");
+pub(crate) const LOOK: &str = include_str!("../../../../../data/look.json");
 
 fn maps() -> String {
     json!({
