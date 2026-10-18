@@ -7,6 +7,7 @@ Every file in this repository that is not code written for it: its source, its a
 | Path | Source | Terms |
 | --- | --- | --- |
 | `web/art/` | drawn by `tools/art/art.py` from TikZ in this repository | this repository's licence |
+| `data/wordmark.svg`, `web/icon.svg`, `web/icon-32.png`, `web/icon-180.png` | drawn by the agent as SVG for this game (the PNGs rendered from `web/icon.svg`); no font file | this repository's licence |
 
 ## Vendored code
 
