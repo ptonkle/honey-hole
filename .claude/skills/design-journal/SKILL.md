@@ -39,4 +39,4 @@ Keep it in one lasting folder, called JOURNAL here (ask the person where it live
 
 ## In this project (fishing)
 
-- **The journal:** not started yet. When the game has a first look, make `../fishing-journal/` from `template/` beside this skill (its own git repo, never pushed), with one page per area of the game.
+- **The journal:** the journal is `../honey-hole-journal/` beside this repo (its own git repo, never pushed). Pages: one per area of the game (models, maps, Fish-Boy and minigames).
