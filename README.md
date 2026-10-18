@@ -23,7 +23,7 @@ Needs Rust (pinned in `rust-toolchain.toml`), `wasm-bindgen-cli` 0.2.127, and Py
 
 | Path | Holds |
 | --- | --- |
-| `crates/core` | every application rule; no input or output; `api.rs` is the door: `start`, and `act(name, value)` |
+| `crates/core` | every application rule; no input or output; `api.rs` is the door: a `Session` with `ui()` and `act(name, value)` |
 | `crates/shim` | the `wasm-bindgen` functions the page calls; each is one call into the core |
 | `web/` | the static page: a generic renderer for the core's view model |
 | `data/` | reader-visible text, presentation numbers, shaders |

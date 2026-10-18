@@ -6,7 +6,6 @@
 # Besides building, this script:
 # - refuses to build when a vendored file under web/ does not match the
 #   SHA256SUMS beside it;
-# - copies GLOSSARY.md to dist/data/glossary.md for the page's hover hints;
 # - stamps a content hash on every internal URL (cache busting: GitHub Pages
 #   serves files with a ten-minute cache, so a returning reader would keep the
 #   old module after a deploy), and fails if one is left unstamped;
@@ -40,7 +39,6 @@ wasm-bindgen --target web --no-typescript --out-dir dist/pkg \
   target/wasm32-unknown-unknown/release/tool_shim.wasm
 cp -R web/. dist/
 cp -R data/. dist/data/
-cp GLOSSARY.md dist/data/glossary.md
 
 # Cache busting. The hash covers every file, so any change gives new URLs.
 BUILD=$(find dist -type f | LC_ALL=C sort | xargs cat | sha256 | cut -c1-12)

@@ -1,16 +1,177 @@
 [
   {
-    "name": "an empty title is refused",
-    "file": "crates/core/src/page.rs",
-    "find": "if strings.title.trim().is_empty() {",
-    "replace": "if false {",
-    "test": "an_empty_title_is_rejected_by_name"
+    "name": "an empty string is refused",
+    "file": "crates/core/src/strings.rs",
+    "find": "Some(text) if text.trim().is_empty() =>",
+    "replace": "Some(text) if text.is_empty() =>",
+    "test": "an_empty_string_is_refused_by_name"
+  },
+  {
+    "name": "a missing string is refused",
+    "file": "crates/core/src/strings.rs",
+    "find": "None => return Err(StringsError::Missing(key.to_string())),",
+    "replace": "None => {}",
+    "test": "a_missing_key_is_refused_by_name"
+  },
+  {
+    "name": "an unused string is refused",
+    "file": "crates/core/src/strings.rs",
+    "find": "map.keys().find(|k| !KEYS.contains(&k.as_str()))",
+    "replace": "map.keys().find(|k| k.is_empty())",
+    "test": "a_key_no_screen_uses_is_refused"
   },
   {
     "name": "an unknown action is refused",
-    "file": "crates/core/src/api.rs",
+    "file": "crates/core/src/app.rs",
     "find": "other => return Err(format!(\"Unknown action \\\"{other}\\\".\")),",
     "replace": "_ => {}",
-    "test": "act_refuses_an_unknown_action"
+    "test": "an_unknown_action_is_refused_by_name"
+  },
+  {
+    "name": "escape toggles the pause menu in play",
+    "file": "crates/core/src/app.rs",
+    "find": "Screen::Play => self.paused = !self.paused,",
+    "replace": "Screen::Play => self.paused = true,",
+    "test": "escape_in_play_opens_and_closes_the_pause_menu"
+  },
+  {
+    "name": "escape on a sub-screen goes to the title",
+    "file": "crates/core/src/app.rs",
+    "find": "Screen::Settings | Screen::Notes => self.go(Screen::Title),",
+    "replace": "Screen::Settings => self.go(Screen::Title), Screen::Notes => {}",
+    "test": "escape_on_a_sub_screen_goes_back_to_the_title"
+  },
+  {
+    "name": "only escape is a key with a use",
+    "file": "crates/core/src/app.rs",
+    "find": "if code == \"Escape\" {",
+    "replace": "if !code.is_empty() {",
+    "test": "escape_on_the_title_and_other_keys_change_nothing"
+  },
+  {
+    "name": "back goes to the title",
+    "file": "crates/core/src/app.rs",
+    "find": "\"menu.back\" | \"menu.quit\" => self.go(Screen::Title),",
+    "replace": "\"menu.quit\" => self.go(Screen::Title), \"menu.back\" => {}",
+    "test": "every_sub_screen_ends_with_back_and_back_goes_to_the_title"
+  },
+  {
+    "name": "notes end with back",
+    "file": "crates/core/src/app/notes.rs",
+    "find": "self.button(\"menu.back\"),",
+    "replace": "",
+    "test": "every_sub_screen_ends_with_back"
+  },
+  {
+    "name": "settings end with back",
+    "file": "crates/core/src/app/menus.rs",
+    "find": "                self.button(\"menu.back\"),",
+    "replace": "",
+    "test": "every_sub_screen_ends_with_back"
+  },
+  {
+    "name": "a new screen closes the pause menu",
+    "file": "crates/core/src/app.rs",
+    "find": "        self.paused = false;\n    }",
+    "replace": "    }",
+    "test": "the_pause_button_resume_and_quit"
+  },
+  {
+    "name": "resume closes the pause menu",
+    "file": "crates/core/src/app.rs",
+    "find": "\"menu.resume\" => self.paused = false,",
+    "replace": "\"menu.resume\" => {}",
+    "test": "the_pause_button_resume_and_quit"
+  },
+  {
+    "name": "the pause button works in play only",
+    "file": "crates/core/src/app.rs",
+    "find": "\"menu.pause\" if self.screen == Screen::Play =>",
+    "replace": "\"menu.pause\" if true =>",
+    "test": "the_pause_button_does_nothing_off_play"
+  },
+  {
+    "name": "the pause menu shows only while paused",
+    "file": "crates/core/src/app/menus.rs",
+    "find": "if self.paused {",
+    "replace": "if true {",
+    "test": "escape_in_play_opens_and_closes_the_pause_menu"
+  },
+  {
+    "name": "the version opens what's new from the menus only",
+    "file": "crates/core/src/app.rs",
+    "find": "matches!(self.screen, Screen::Title | Screen::Settings | Screen::Notes)",
+    "replace": "true",
+    "test": "the_version_opens_whats_new_from_the_menus_only"
+  },
+  {
+    "name": "the volume keeps to its range",
+    "file": "crates/core/src/app/menus.rs",
+    "find": "v.min(VOLUME_MAX) / VOLUME_STEP * VOLUME_STEP",
+    "replace": "v / VOLUME_STEP * VOLUME_STEP",
+    "test": "the_volume_slider_keeps_to_its_range_and_steps"
+  },
+  {
+    "name": "the volume keeps to its steps",
+    "file": "crates/core/src/app/menus.rs",
+    "find": "v.min(VOLUME_MAX) / VOLUME_STEP * VOLUME_STEP",
+    "replace": "v.min(VOLUME_MAX)",
+    "test": "the_volume_slider_keeps_to_its_range_and_steps"
+  },
+  {
+    "name": "an unlisted text size is refused",
+    "file": "crates/core/src/app.rs",
+    "find": "TextSize::ALL.into_iter().find(|t| t.key() == key)",
+    "replace": "Some(TextSize::ALL.into_iter().find(|t| t.key() == key).unwrap_or(TextSize::Small))",
+    "test": "the_text_size_select_takes_a_listed_size_only"
+  },
+  {
+    "name": "what's new hides minor versions until asked",
+    "file": "crates/core/src/app/notes.rs",
+    "find": "self.settings.notes_minor || !e.minor()",
+    "replace": "true",
+    "test": "whats_new_lists_major_versions_until_minor_ones_are_ticked_in"
+  },
+  {
+    "name": "a minor version is known by its last number",
+    "file": "crates/core/src/patch_notes.rs",
+    "find": "v.2 != 0",
+    "replace": "v.1 != 0",
+    "test": "notes_are_read_newest_first_and_a_minor_version_is_known"
+  },
+  {
+    "name": "patch notes out of order are refused",
+    "file": "crates/core/src/patch_notes.rs",
+    "find": "if parse_version(&w[0].version) <= parse_version(&w[1].version) {",
+    "replace": "if false {",
+    "test": "notes_out_of_order_are_refused"
+  },
+  {
+    "name": "versions compare by number, not text",
+    "file": "crates/core/src/patch_notes.rs",
+    "find": "if parse_version(&w[0].version) <= parse_version(&w[1].version) {",
+    "replace": "if w[0].version <= w[1].version {",
+    "test": "a_version_compares_by_number_not_by_text"
+  },
+  {
+    "name": "a bad patch notes date is refused",
+    "file": "crates/core/src/patch_notes.rs",
+    "find": "if !is_date(&e.date) {",
+    "replace": "if e.date.is_empty() {",
+    "test": "a_bad_version_date_or_empty_entry_is_refused_by_name"
+  },
+  {
+    "name": "a patch notes entry with no line is refused",
+    "file": "crates/core/src/patch_notes.rs",
+    "find": "if e.notes.iter().all(|l| l.trim().is_empty()) {",
+    "replace": "if e.notes.is_empty() {",
+    "test": "a_bad_version_date_or_empty_entry_is_refused_by_name"
+  },
+  {
+    "name": "empty patch notes are refused",
+    "file": "crates/core/src/patch_notes.rs",
+    "find": "if entries.is_empty() {",
+    "replace": "if false {",
+    "test": "a_bad_version_date_or_empty_entry_is_refused_by_name"
   }
 ]
