@@ -83,16 +83,18 @@ pub struct UnderLook {
 #[serde(deny_unknown_fields)]
 pub struct PipLook {
     /// its width as a share of the screen's, its height over its width,
-    /// its gap from the corner and its border, in percent of the screen's
-    /// width
+    /// and its gap from the corner, in percent of the screen's width, and
+    /// its border in thousandths of it
     pub width_pct: i32,
     pub tall_pct: i32,
     pub margin_pct: i32,
-    pub border_pct: i32,
+    pub border_permille: i32,
 }
 
 /// Popups last this long (the person: about 2 s).
 const POPUP_MS: u32 = 2000;
+/// The hook window under `?debug=fishing`.
+const DEBUG_HOOK_WINDOW_MS: i32 = 5000;
 
 fn pct(v: i32, p: i32) -> i32 {
     (v as i64 * p as i64 / 100) as i32
@@ -212,7 +214,8 @@ impl App {
                 // the catch, hanging from the rod's tip
                 if let (Some(tip), Some(f)) = (tip, fv.on_line.as_ref().filter(|_| l.seat == fv.seat)) {
                     if let Some(model) = self.models.iter().find(|m| m.id == f.kind) {
-                        let s = (f.length_mm as i64 * ONE as i64 / f.base_length_mm.max(1) as i64) as i32;
+                        let s = (f.length_mm as i64 * ONE as i64 * look.fish_scale_pct as i64
+                            / (100 * f.base_length_mm.max(1) as i64)) as i32;
                         let hang = tip.sub(v3(0, mm(look.landed_drop_mm), 0));
                         let place = Affine::translate(hang)
                             .then(&Affine::rot_x(-fx::QUARTER))
@@ -359,7 +362,7 @@ impl App {
         let iw = pct(w, pip.width_pct);
         let ih = pct(iw, pip.tall_pct);
         let gap = pct(w, pip.margin_pct);
-        let edge = pct(w, pip.border_pct).max(1);
+        let edge = (w * pip.border_permille / 1000).max(1);
         let rect = vec![gap, h - gap - ih, iw, ih];
         let border = vec![gap - edge, h - gap - ih - edge, iw + 2 * edge, ih + 2 * edge];
         match self.match_frame_as(false, render::aspect([iw, ih])) {
@@ -498,8 +501,9 @@ impl App {
     }
 
     /// The `debug` flags the page passes on from its address (`?debug=`):
-    /// `fishing` puts a fish by this seat's bobber each time it lands, and
-    /// tames the reel, so a browser check can hook and land one by script.
+    /// `fishing` puts a fish by this seat's bobber each time it lands, tames
+    /// the reel and widens the hook window to 5 s, so a browser check can
+    /// hook and land one by script.
     pub(super) fn debug_act(&mut self, value: &str) {
         self.debug_fishing = value.split(',').any(|f| f.trim() == "fishing");
     }
@@ -543,6 +547,8 @@ impl App {
             phase_ms: 0,
         });
         fi.tame = true;
+        // a page drawing slowly (a software renderer) still strikes in time
+        fi.tuning.hook_window_ms = fi.tuning.hook_window_ms.max(DEBUG_HOOK_WINDOW_MS);
     }
 
     /// The line's whine while this seat reels, for the sound engine.

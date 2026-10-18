@@ -23,6 +23,8 @@ fn floats(v: &[i32]) -> Vec<f32> {
 pub struct Game {
     s: tool_core::api::Session,
     frame: tool_core::gfx::render::Frame,
+    /// the picture-in-picture's rectangle, its border's, and its frame
+    inset: (Vec<i32>, Vec<i32>, tool_core::gfx::render::Frame),
 }
 
 #[wasm_bindgen]
@@ -32,6 +34,7 @@ impl Game {
         Game {
             s: tool_core::api::Session::new(strings_json, notes_json),
             frame: Default::default(),
+            inset: Default::default(),
         }
     }
 
@@ -77,7 +80,43 @@ impl Game {
     /// Builds this frame; read it with `view`, `vertices`, `vertex_count`,
     /// `statics`, `groups` and `instances`.
     pub fn build_frame(&mut self) {
-        self.frame = self.s.frame()
+        self.frame = self.s.frame();
+        self.inset = self.s.inset_frame();
+    }
+
+    /// The picture-in-picture's rectangle in drawing-buffer pixels from the
+    /// bottom left (x, y, width, height), empty when there is none; its
+    /// border's; and its draw data, read as the main frame's is.
+    pub fn inset_rect(&self) -> Vec<i32> {
+        self.inset.0.clone()
+    }
+
+    pub fn inset_border(&self) -> Vec<i32> {
+        self.inset.1.clone()
+    }
+
+    pub fn inset_view(&self) -> Vec<f32> {
+        floats(&self.inset.2.view)
+    }
+
+    pub fn inset_vertices(&self) -> Vec<f32> {
+        floats(&self.inset.2.tris)
+    }
+
+    pub fn inset_vertex_count(&self) -> u32 {
+        tool_core::gfx::render::vertex_count(&self.inset.2.tris)
+    }
+
+    pub fn inset_statics(&self) -> Vec<i32> {
+        self.inset.2.statics.to_vec()
+    }
+
+    pub fn inset_groups(&self) -> Vec<i32> {
+        self.inset.2.groups.clone()
+    }
+
+    pub fn inset_instances(&self) -> Vec<f32> {
+        floats(&self.inset.2.instances)
     }
 
     pub fn view(&self) -> Vec<f32> {

@@ -403,8 +403,9 @@ fn the_power_reel_doubles_the_reel() {
 fn the_meter_drains_out_of_the_zone_and_the_line_breaks_only_when_empty() {
     let t = sample().fishing.reel;
     let mut rng = Rng::new(1);
-    // tamed, the marker sits at 900 of 1000; the zone falls away from it
+    // tamed, the marker sits at 900 of 1000; the zone starts at the bottom
     let mut r = Reel::new(Tier::Common, &t, true);
+    r.zone = 0;
     let mut last = r.meter;
     let mut tick = 0;
     loop {
@@ -423,8 +424,8 @@ fn the_meter_drains_out_of_the_zone_and_the_line_breaks_only_when_empty() {
         assert!(r.meter > 0);
         last = r.meter;
     }
-    // from 300 000 at 4000 a tick: 75 ticks, give or take the first ticks in the zone
-    assert!((70..=90).contains(&tick), "{tick}");
+    // from 300 000 at 4000 a tick: 75 ticks
+    assert_eq!(tick, 75);
 }
 
 #[test]

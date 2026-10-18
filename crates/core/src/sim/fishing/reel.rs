@@ -48,7 +48,8 @@ pub struct Reel {
     pub target: i32,
     pub course_until: u32,
     pub meter: i32,
-    /// the marker never moves and stays near the top (a test hook)
+    /// the marker never moves and stays near the top, and the zone starts
+    /// round it (a test hook)
     pub tame: bool,
     /// ticks reeled
     pub ticks: u32,
@@ -60,7 +61,8 @@ impl Reel {
         let marker = if tame { BAR * 9 / 10 } else { BAR / 2 };
         Reel {
             tier,
-            zone: (BAR / 2 - zone_h / 2).clamp(0, BAR - zone_h),
+            // tamed, the zone starts round the still marker
+            zone: if tame { BAR - zone_h } else { (BAR / 2 - zone_h / 2).clamp(0, BAR - zone_h) },
             zone_h,
             zone_v: 0,
             marker,

@@ -158,6 +158,79 @@ body[data-screen="play"] #menus {
   width: 16rem;
 }
 .panel.hud { background: color-mix(in srgb, var(--panel) 80%, transparent); }
+/* the HUD keeps to the right: the fishing's picture-in-picture of the boat
+   takes the top-left corner */
+body[data-screen="play"] #menus { left: auto; right: 1rem; }
+
+/* ---- fishing (app/fishing.rs): the line's state and its meters at the
+   right, popups across the top in the tier's colour, always with its name */
+.panel.fishing {
+  position: fixed;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16rem;
+  background: color-mix(in srgb, var(--panel) 85%, transparent);
+}
+.panel.fishing h2 { font-size: 1.05rem; }
+.panel.fishing:has(.meter.vertical) { display: grid; grid-template-columns: 1fr 1fr; gap: 0 0.75rem; }
+.panel.fishing:has(.meter.vertical) h2,
+.panel.fishing:has(.meter.vertical) .sub { grid-column: 1 / -1; }
+.field.meter { display: flex; flex-direction: column; gap: 0.25rem; }
+.meter-label { font-weight: 600; }
+.meter-text { color: var(--muted); font-size: 0.85rem; }
+.meter-bar {
+  position: relative;
+  height: 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 0.3rem;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  overflow: hidden;
+}
+.meter-fill { position: absolute; left: 0; top: 0; bottom: 0; width: var(--at); background: var(--accent); }
+.meter:not(.vertical) .meter-bar { align-self: stretch; }
+.meter.vertical { align-items: center; text-align: center; }
+.meter.vertical .meter-bar { width: 2.2rem; height: 16rem; }
+.meter.vertical .meter-fill { top: auto; right: 0; width: auto; height: var(--at); background: #3f9a4a; }
+.meter-zone {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: var(--from);
+  height: calc(var(--to) - var(--from));
+  background: rgba(80, 200, 110, 0.55);
+  border-top: 2px solid #2e7d3a;
+  border-bottom: 2px solid #2e7d3a;
+}
+.meter-marker {
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  bottom: var(--at);
+  height: 0.7rem;
+  margin-bottom: -0.35rem;
+  border-radius: 50% 40% 40% 50%;
+  background: #f2a33a;
+  border: 2px solid #5a3a10;
+}
+.panel.popup {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 1rem;
+  min-width: 22rem;
+  text-align: center;
+  border-width: 3px;
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+}
+.panel.popup ~ .panel.popup { top: 6rem; }
+.panel.popup ~ .panel.popup ~ .panel.popup { top: 11rem; }
+.panel.popup h2 { font-size: 1.15rem; margin: 0; }
+.panel.popup .sub { font-weight: 700; margin: 0.2rem 0 0; }
+.panel.tier-legendary { border-color: #e8871e; } .panel.tier-legendary .sub { color: #c46a0c; }
+.panel.tier-rare { border-color: #8e44c9; } .panel.tier-rare .sub { color: #7a34b4; }
+.panel.tier-uncommon { border-color: #2f7fd0; } .panel.tier-uncommon .sub { color: #2468ad; }
+.panel.tier-common { border-color: #3a9a48; } .panel.tier-common .sub { color: #2e7d3a; }
 body[data-screen="gallery"] #menus,
 body[data-screen="lake"] #menus {
   position: fixed;
