@@ -380,6 +380,7 @@ impl App {
             "menu.offline" => self.go(Screen::Lobby),
             "menu.online" => self.go(Screen::Online),
             "flag.codes" => self.online.codes = value == "on",
+            "flag.page_url" | "flag.room_link" => self.online_flag(name, value)?,
             "flag.fast" | "flag.mute" => self.test_flag(name, value),
             "menu.settings" => {
                 self.settings_return = self.screen == Screen::Play;

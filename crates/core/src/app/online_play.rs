@@ -49,6 +49,12 @@ pub struct OnlinePlay {
     pub problem: Option<(String, Vec<(String, String)>)>,
     /// what the transport is asked to do next
     pub requests: Vec<Value>,
+    /// the page's own address, no query or hash (`flag.page_url`), for the
+    /// room link
+    pub page_url: String,
+    /// the Copy button last pressed and when, in ms: it reads Copied for
+    /// `COPIED_MS`
+    pub copied: Option<(String, i64)>,
 }
 
 /// What `net_pump` hands the page.
@@ -66,6 +72,9 @@ pub struct Pump {
 
 /// How far a boat must go from its spawn slot to count as moved.
 const MOVED_MM: i64 = 3000;
+
+/// How long a Copy button reads Copied after a press, in milliseconds.
+const COPIED_MS: i64 = 1500;
 
 /// The longest pasted code a field takes (a compressed session
 /// description is a few hundred characters).
@@ -125,6 +134,27 @@ impl App {
         Ok(())
     }
 
+    /// The page's flags for online play: its own address (`flag.page_url`)
+    /// and a room link it was opened from (`flag.room_link`, the code after
+    /// `#room=`), which goes straight to that room's Lobby.
+    pub(super) fn online_flag(&mut self, name: &str, value: &str) -> Result<(), String> {
+        match name {
+            "flag.page_url" => self.online.page_url = value.to_string(),
+            "flag.room_link" if online::clean_code(value).is_some() => {
+                self.go(Screen::Online);
+                self.online.room = value.to_string();
+                self.online_act("online.join", "")?;
+            }
+            _ => {}
+        }
+        Ok(())
+    }
+
+    /// The room as a link: opening it joins the room.
+    pub(crate) fn room_link(&self) -> String {
+        format!("{}#room={}", self.online.page_url, self.online.room)
+    }
+
     /// The Online screen's and the Lobby's controls (`online.*`).
     pub(super) fn online_act(&mut self, name: &str, value: &str) -> Result<(), String> {
         match name {
@@ -181,6 +211,9 @@ impl App {
                     let r = !s.ready();
                     s.set_ready(r);
                 }
+            }
+            "online.copy" | "online.copy_link" => {
+                self.online.copied = Some((name.to_string(), self.now_ms()))
             }
             "online.start" => self.start_online()?,
             "online.leave" => {
@@ -454,6 +487,41 @@ impl App {
         }
     }
 
+    /// A Copy button, reading Copied for a moment after a press.
+    fn copy_item(&self, id: &str, value: &str, copy: String) -> Item {
+        let copied = self
+            .online
+            .copied
+            .as_ref()
+            .is_some_and(|(k, at)| k == id && self.now_ms() - at < COPIED_MS);
+        Item::Copy {
+            id: id.into(),
+            label: if value.is_empty() {
+                String::new()
+            } else {
+                self.t("online.room")
+            },
+            value: value.to_string(),
+            copy,
+            text: self.t(if copied { "online.copied" } else { id }),
+            disabled: false,
+        }
+    }
+
+    /// The room code shown big with Copy code, and Copy link, while the
+    /// lobby has a room code (a pasted-code lobby has none).
+    fn room_items(&self) -> Vec<Item> {
+        let room = &self.online.room;
+        if room.is_empty() {
+            return Vec::new();
+        }
+        let mut items = vec![self.copy_item("online.copy", room, room.clone())];
+        if !self.online.page_url.is_empty() {
+            items.push(self.copy_item("online.copy_link", "", self.room_link()));
+        }
+        items
+    }
+
     pub(super) fn online_lobby_panels(&self) -> Vec<Panel> {
         let Some(s) = self.online.session.as_ref() else {
             return vec![Panel::new(
@@ -495,7 +563,8 @@ impl App {
                 }
             })
             .collect();
-        let mut items = vec![Item::Table {
+        let mut items = self.room_items();
+        items.push(Item::Table {
             head: vec![
                 self.t("online_lobby.colour"),
                 self.t("online_lobby.name"),
@@ -503,7 +572,7 @@ impl App {
                 self.t("online_lobby.ping"),
             ],
             rows,
-        }];
+        });
         if s.is_host() {
             items.extend(self.host_setup_items(roster));
             let mut start = Item::button("online.start", self.t("lobby.start"));
@@ -536,15 +605,7 @@ impl App {
         }
         items.push(self.button("online.leave"));
         let mut p = Panel::new("online_lobby", self.t("online_lobby.heading"), items);
-        let mut sub = Vec::new();
-        if !self.online.room.is_empty() {
-            sub.push(self.t("online_lobby.room").replace("{code}", &self.online.room));
-        }
-        let status = self.status_text(s);
-        if !status.is_empty() {
-            sub.push(status);
-        }
-        p.sub = sub.join(" · ");
+        p.sub = self.status_text(s);
         vec![p]
     }
 

@@ -18,6 +18,11 @@ request is aborted and counted as a failure. For each engine it:
   (`body[data-remote-moved="true"]`, from the core); A holds W and B sees
   A's boat move;
 - B's match menu does not stop the online match's time;
+- a room link: a tab hosting by room code with `relay=none` (no relay
+  contacted) shows the room code; Copy code and Copy link copy the code and
+  the page's own address with `#room=CODE` (read from `body[data-copied]`,
+  since a headless clipboard may refuse to be read); a new tab opening that
+  link goes straight to the room's Lobby;
 - fails on any off-origin request, WebSocket, CSP violation, console error
   or uncaught page error.
 
@@ -55,7 +60,7 @@ def by_id(id_):
 
 
 class Tab:
-    def __init__(self, browser, origin, name, seen):
+    def __init__(self, browser, origin, name, seen, url=None):
         self.name = name
         self.context = transport.watched_context(browser, origin, seen)
         self.page = self.context.new_page()
@@ -64,7 +69,7 @@ class Tab:
         self.page.on("console", lambda m: seen["console"].append(tag + m.text) if m.type == "error" else None)
         self.page.on("pageerror", lambda e: seen["errors"].append(tag + str(e)))
         self.page.on("websocket", lambda ws: seen["sockets"].append(ws.url))
-        self.page.goto(origin + "/index.html?codes&ice=none" + FLAGS)
+        self.page.goto(url or origin + "/index.html?codes&ice=none" + FLAGS)
         self.page.wait_for_selector("body[data-ready='true']", timeout=WAIT_MS)
 
     def click(self, id_):
@@ -130,17 +135,46 @@ class Tab:
         return self.page.evaluate("() => window.__builderCsp || []")
 
 
+def room_link(browser, origin, seen):
+    """Copy code and Copy link in a room-code Lobby, and the link joining."""
+    query = "?codes&ice=none&relay=none" + FLAGS
+    a = Tab(browser, origin, "A", seen, origin + "/index.html" + query)
+    a.click("menu.play")
+    a.click("menu.online")
+    a.click("online.host")
+    check(a.screen("online_lobby"), "A hosts by room code and is in the Lobby")
+    a.page.wait_for_selector(by_id("online.copy.code"), timeout=WAIT_MS)
+    code = a.page.text_content(by_id("online.copy.code"))
+    a.click("online.copy")
+    check(a.page.get_attribute("body", "data-copied") == code, f"Copy code copies the room code {code}")
+    check(a.has_text([STRINGS["online.copied"]]), "Copy code reads Copied")
+    a.click("online.copy_link")
+    link = a.page.get_attribute("body", "data-copied") or ""
+    want = origin + "/index.html#room=" + code
+    check(link == want, f"Copy link copies the page's address with the room code ({link})")
+    base, _, frag = link.partition("#")
+    b = Tab(browser, origin, "B", seen, base + query + "#" + frag)
+    check(b.screen("online_lobby"), "opening the room link goes straight to the Lobby")
+    check(b.has_text([code]), "the linked Lobby shows the room code")
+    check("#" not in b.page.url, "the room link's code is cleared from the address")
+    csp = a.csp() + b.csp()
+    a.context.close()
+    b.context.close()
+    return csp
+
+
 def run_engine(p, engine, origin):
     transport.report.note(f"\n[{engine}] {origin}/index.html?codes&ice=none")
     seen = {"foreign": [], "console": [], "errors": [], "sockets": []}
     browser, _ = engines.launch(p, engine)
     paste = transport.loopback if engine in transport.LOOPBACK_ONLY else (lambda c: c)
+    link_csp = room_link(browser, origin, seen)
     a = Tab(browser, origin, "A", seen)
     b = Tab(browser, origin, "B", seen)
     tabs = [a, b]
 
     def finish():
-        csp = [x for t in tabs for x in t.csp()]
+        csp = link_csp + [x for t in tabs for x in t.csp()]
         check(not csp, f"no Content-Security-Policy violation {csp}")
         check(not seen["foreign"], f"no off-origin request at any point {seen['foreign']}")
         check(not seen["sockets"], f"no WebSocket {seen['sockets']}")

@@ -338,6 +338,12 @@ The letters and digits that name an online match. The host's browser makes it; t
 
 Not: lobby code, game ID, PIN
 
+### Room link
+
+The game's address with a room code on the end. Opening it goes straight to that room's Lobby.
+
+Not: invite link, share link, URL
+
 ### Settings
 
 The screen where the reader sets the volume, the text size, their name in matches, the mouse sensitivity, whether the mouse is inverted up and down, and whether the map seed shows in a match. The browser keeps them for the next visit.

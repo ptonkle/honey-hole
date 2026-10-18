@@ -3106,5 +3106,33 @@
     "find": "(true, Some(l)) => fx::deg(l.camera_tilt_deg),",
     "replace": "(true, Some(_)) => 0,",
     "test": "the_cast_follows_the_camera_and_the_camera_looks_down_to_fish"
+  },
+  {
+    "name": "online: the room link carries the room code",
+    "file": "crates/core/src/app/online_play.rs",
+    "find": "format!(\"{}#room={}\", self.online.page_url, self.online.room)",
+    "replace": "format!(\"{}\", self.online.page_url)",
+    "test": "the_lobby_offers_the_room_code_and_its_link_to_copy"
+  },
+  {
+    "name": "online: the lobby offers the room code to copy",
+    "file": "crates/core/src/app/online_play.rs",
+    "find": "let mut items = self.room_items();",
+    "replace": "let mut items: Vec<Item> = Vec::new();",
+    "test": "the_lobby_offers_the_room_code_and_its_link_to_copy"
+  },
+  {
+    "name": "online: Copied reads for a moment only",
+    "file": "crates/core/src/app/online_play.rs",
+    "find": "self.now_ms() - at < COPIED_MS",
+    "replace": "self.now_ms() - at >= 0",
+    "test": "the_lobby_offers_the_room_code_and_its_link_to_copy"
+  },
+  {
+    "name": "online: a room link joins its room",
+    "file": "crates/core/src/app/online_play.rs",
+    "find": "self.online_act(\"online.join\", \"\")?;",
+    "replace": "",
+    "test": "opening_a_room_link_joins_that_room"
   }
 ]

@@ -131,6 +131,19 @@ pub enum Item {
         id: String,
         entries: Vec<NoteEntry>,
     },
+    /// a Copy button: the page puts `copy` on the clipboard when it is
+    /// pressed, then sends `id`; `value`, when not empty, is shown big
+    /// beside it under `label` (the room code)
+    Copy {
+        id: String,
+        label: String,
+        value: String,
+        copy: String,
+        /// the button's text
+        text: String,
+        #[serde(skip_serializing_if = "is_false")]
+        disabled: bool,
+    },
     /// a bar the core fills, read-only: `fill` percent of it filled, an
     /// optional `zone` (from, to percent) drawn over it and a `marker` at a
     /// percent, across or (`vertical`) from the bottom up; `text` says the

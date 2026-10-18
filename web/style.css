@@ -286,6 +286,17 @@ select:focus-visible,
 .field.text input { width: 100%; min-width: 0; }
 .field.text input::placeholder { color: var(--soft); opacity: 0.8; }
 .toggle { cursor: pointer; }
+
+/* the room code, big, with its Copy button; Copy link below it */
+.copy-code {
+  font: 800 2rem/1 var(--slab);
+  letter-spacing: 0.18em;
+  color: var(--orange-deep);
+  user-select: all;
+}
+.button[id="online.copy_link"] { align-self: flex-end; margin-top: -0.5rem; }
+/* the clipboard fallback's scratch field, off screen */
+.copy-scratch { position: fixed; top: 0; left: -100vw; opacity: 0; }
 .toggle input { margin: 0; width: 1.35rem; height: 1.35rem; accent-color: var(--orange); }
 
 /* ---- lists and tables ---- */
