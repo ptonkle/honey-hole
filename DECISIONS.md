@@ -46,3 +46,26 @@ The agent decided (questions in `brief/questions.md`):
 - P2: rename the folder to `honey-hole/` (done once no agent is working in a worktree under it).
 - P4: no GitHub yet; local deploys only.
 - Unanswered questions keep the agent's suggestions (F5, R2, I1–I4, O2, O3, P3).
+
+## 2026-10-17 (radar look, map name)
+
+> let's do lower fidelity on the radar
+> also call this map "Burt Lake" in the UI
+> not that blocky, do like 80% the fidelity of the original
+> yeah that's good
+
+The agent decided: the radar keeps its first look (fine grid, thin ping rings, sweep, bright shoreline, two water shades, scanlines) at about 80% of the first preview's fidelity: the shoreline is judged in 2.5 px blocks where it used 2 (`tools/maps/preview.py`, `RADAR_CHUNK`). The in-game radar matches this. The first map's on-screen name is Burt Lake (`map.burt_lake`).
+
+## 2026-10-17 (reeds, fog)
+
+> reeds have no effect, I woul dneed to see the fog distance in game
+
+The agent decided: boats pass through reeds with no slowdown or collision; reeds are scenery (and later a fish habitat). The fog distance stays at 120 m for now, and the map checker's cover rule uses that value. Once the lake is drawn in 3D, a debug control will set the fog distance live so the person can choose it in the game; the checker's sight distance then follows the chosen value. Boat top speed (16 m/s) and rare/legendary spacing (60 m) keep the map work's defaults until the person says otherwise.
+
+> fog distance should be very easy to tune quickly too
+
+The agent decided: the fog distance is one constant, `sight_mm` in the Burt Lake parameters (`crates/core/src/map/mod.rs`), which the 3D fog and the map checker both read. It can also be changed live in game from a debug control, for trying values without a rebuild. A changed value can make some pregenerated layouts too open or too cramped, so one command rescans the layout list; a test fails if the list was checked against a different fog distance than the file holds, so the two can't drift apart unnoticed.
+
+> like surely it's just a single const right
+
+Yes: `sight_mm: 120_000` (mm) in `crates/core/src/map/mod.rs`.

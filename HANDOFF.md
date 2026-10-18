@@ -27,6 +27,8 @@ What a new session gets wrong first.
 Every `SECOND-ORDER.md` row with status *person*, by number, with what the person has to decide or supply. `scripts/notebook_check.py` fails while one is missing.
 
 - R1.23: whether settings are kept between visits (browser storage, D17). Today they last for the visit.
+- R1.63: the fog's sight distance (120 m assumed), which the map validator's hiding rule depends on.
+- R1.69: the fish roster and how the example counts split over it.
 - R1.30: the game's name ("Fishing" is the working name), and a read of the menu strings and text size choices the agent wrote.
 
 ## Mistakes so far
@@ -42,3 +44,5 @@ The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the 
 ## The next action
 
 One action.
+
+2026-10-17, map generation (branch `worktree-agent-a13a60c04e6220e7c`, after df1b4b7): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 82 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 53 of 53 breaks caught.
