@@ -107,18 +107,22 @@ const UNDER_FISH: &[(&str, i32, i32, i32, i32)] = &[
 ];
 
 impl App {
-    /// The fog distance the world is drawn with, in mm, in the preview and
-    /// in a match: the map's own, or the preview's slider; `None` when the
-    /// preview's Fog toggle is off.
+    /// The fog distance the world is drawn with, in mm. In the Lake preview:
+    /// the map's own, or the preview's slider, and `None` when its Fog
+    /// toggle is off. Everywhere else (a match, the menus' backdrop) the
+    /// map's own: the preview's choices stay in the preview, and only the
+    /// fog override under `?debug=fog` (Settings) carries into a match
+    /// (SECOND-ORDER R7.31).
     pub fn sight_mm(&self) -> Option<i32> {
-        if !self.preview.fog_on {
-            return None;
-        }
         let own = self
             .world
             .as_ref()
             .map_or(Setting::MichiganLake.params().sight_mm, |l| l.sight_mm);
-        Some(self.preview.fog_m.map_or(own, |m| m as i32 * 1000))
+        let set = self.preview.fog_m.map(|m| m as i32 * 1000);
+        if self.screen == Screen::Lake {
+            return self.preview.fog_on.then(|| set.unwrap_or(own));
+        }
+        Some(set.filter(|_| self.debug_fog()).unwrap_or(own))
     }
 
     /// Builds the world for a map, unless it is the one drawn now, and

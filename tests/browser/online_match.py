@@ -217,6 +217,10 @@ def run_engine(p, engine, origin):
             moved = False
         check(moved, f"{t.name} sees {other} move")
         driver.page.keyboard.up("KeyW")
+    # and each tab's match on the lake, to see its fog
+    if os.environ.get("ONLINE_SHOTS") and engine != "webkit":
+        for t in tabs:
+            t.page.screenshot(path=str(pathlib.Path(os.environ["ONLINE_SHOTS"]) / f"match-{engine}-{t.name}.png"))
 
     # the match menu over B: the online match's time runs on
     b.page.keyboard.press("Escape")

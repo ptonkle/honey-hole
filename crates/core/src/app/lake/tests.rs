@@ -226,3 +226,53 @@ fn a_match_draws_its_boats_on_the_lakes_world_and_without_the_look_nothing() {
     assert!(b.world.is_none());
     assert_eq!(b.frame(), Frame::default());
 }
+
+/// The frame's fog: (start, end, curve) as the shaders take them.
+fn fog_of(f: &Frame) -> (i32, i32, i32) {
+    let (at, _) = render::uniform_at("uFog");
+    let (curve, _) = render::uniform_at("uFogCurve");
+    (f.view[at], f.view[at + 1], f.view[curve])
+}
+
+#[test]
+fn a_match_draws_the_lakes_own_fog_whatever_the_preview_was_left_at() {
+    use crate::scene::mm;
+    // the person: "I can't see the fog in single player" (SECOND-ORDER R7.31)
+    let start = |a: &mut App| {
+        a.act("menu.play", "").unwrap();
+        a.act("menu.offline", "").unwrap();
+        a.act("lobby.start", "").unwrap();
+        a.advance(0);
+    };
+    let leave = |a: &mut App| {
+        a.act("menu.quit", "").unwrap();
+        assert_eq!(a.screen, Screen::Title);
+    };
+    let mut a = crate::app::play::tests::lobby();
+    a.load_models(&models(), LOOK).unwrap();
+    a.act("menu.back", "").unwrap();
+    a.act("menu.back", "").unwrap();
+    assert_eq!(a.screen, Screen::Title);
+    // a fresh match: the map's 120 m, from 8% of it (9.6 m), thickening
+    // with k = 2.5 (the look's fog_start_pct, fog_thickness_pct)
+    start(&mut a);
+    let lake_fog = (mm(9_600), mm(120_000), 5 * fx::ONE / 2);
+    assert_eq!(fog_of(&a.frame()), lake_fog);
+    leave(&mut a);
+    // the preview's fog turned off and pushed to 300 m stays in the preview
+    a.act("menu.lake", "").unwrap();
+    a.act("lake.fog", "300").unwrap();
+    a.act("lake.fog_on", "off").unwrap();
+    assert_eq!(a.sight_mm(), None);
+    a.act("menu.back", "").unwrap();
+    assert_eq!(a.sight_mm(), Some(120_000), "the menus' backdrop too");
+    a.act("menu.back", "").unwrap();
+    start(&mut a);
+    assert_eq!(fog_of(&a.frame()), lake_fog);
+    leave(&mut a);
+    // the fog override under ?debug=fog is the only way to change it
+    a.act("debug.flags", "fog").unwrap();
+    a.act("settings.fog", "200").unwrap();
+    start(&mut a);
+    assert_eq!(fog_of(&a.frame()), (mm(16_000), mm(200_000), 5 * fx::ONE / 2));
+}

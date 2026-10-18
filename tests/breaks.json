@@ -1206,9 +1206,30 @@
   {
     "name": "the fog toggle turns the fog off",
     "file": "crates/core/src/app/lake.rs",
-    "find": "if !self.preview.fog_on {",
-    "replace": "if false {",
+    "find": "return self.preview.fog_on.then(|| set.unwrap_or(own));",
+    "replace": "return Some(set.unwrap_or(own));",
     "test": "the_fog_slider_keeps_to_its_range_and_steps_and_the_toggle_turns_it_off"
+  },
+  {
+    "name": "the preview's fog stays in the preview",
+    "file": "crates/core/src/app/lake.rs",
+    "find": "Some(set.filter(|_| self.debug_fog()).unwrap_or(own))",
+    "replace": "Some(set.unwrap_or(own))",
+    "test": "a_match_draws_the_lakes_own_fog_whatever_the_preview_was_left_at"
+  },
+  {
+    "name": "the fog override under the debug flag reaches a match",
+    "file": "crates/core/src/app/lake.rs",
+    "find": "Some(set.filter(|_| self.debug_fog()).unwrap_or(own))",
+    "replace": "Some(own)",
+    "test": "a_match_draws_the_lakes_own_fog_whatever_the_preview_was_left_at"
+  },
+  {
+    "name": "the lake's fog thickens by the look's curve",
+    "file": "crates/core/src/scene/mod.rs",
+    "find": "fog_curve: pct(l.fog_thickness_pct),",
+    "replace": "fog_curve: 0,",
+    "test": "a_match_draws_the_lakes_own_fog_whatever_the_preview_was_left_at"
   },
   {
     "name": "a seed outside the list is refused",
