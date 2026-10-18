@@ -84,7 +84,7 @@
       "log": "fallen-log",
       "log_permille": 12,
       "weeds": ["pondweed", "eelgrass", "eelgrass"],
-      "weeds_pct": 260,
+      "weeds_pct": 420,
       "weed_reach_pct": 170,
       "weed_permille": 90,
       "weed_depth_mm": [450, 5000],
@@ -138,22 +138,26 @@
       "zenith": [176, 226, 206],
       "zenith_band": [10, 80],
       "sheen": [230, 255, 214],
+      "sun": [100, 116, 98],
+      "sky": [140, 176, 164],
+      "ground": [96, 124, 118],
+      "fish_lift_pct": 30,
       "shafts": {
         "dir": [-25, 100, 20],
         "counts": [19, 31],
         "drift_ms": [26000, 37000],
-        "strength_pct": 45,
+        "strength_pct": 55,
         "power_pct": 120,
-        "fade": [15, 75]
+        "fade": [-10, 50]
       },
       "caustics": {
         "ripples": [
-          { "length_mm": 1700, "toward_deg": 20, "period_ms": 2300 },
-          { "length_mm": 2300, "toward_deg": 140, "period_ms": 3100 },
-          { "length_mm": 1300, "toward_deg": 260, "period_ms": 1900 }
+          { "length_mm": 1700, "toward_deg": 15, "period_ms": 2300 },
+          { "length_mm": 2600, "toward_deg": 98, "period_ms": 3100 },
+          { "length_mm": 1150, "toward_deg": 205, "period_ms": 1900 }
         ],
         "power": 6,
-        "bed_pct": 35,
+        "bed_pct": 13,
         "surface_pct": 16
       },
       "surface": {
@@ -177,11 +181,11 @@
         "rise_mm_per_s": 450,
         "glow_pct": 70
       },
-      "fog_mm": 24000,
-      "fog_start_pct": 12,
+      "fog_mm": 32000,
+      "fog_start_pct": 4,
       "clear_mm": 14000,
       "tint_pct": 45,
-      "back_mm": 2600,
+      "back_mm": 2200,
       "up_mm": 500,
       "pitch_deg": 8,
       "fov_deg": 62,

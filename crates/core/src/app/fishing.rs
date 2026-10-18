@@ -73,6 +73,14 @@ pub struct UnderLook {
     pub zenith_band: [i32; 2],
     /// the light's colour (shafts, caustics, the surface's sheen)
     pub sheen: [i32; 3],
+    /// the light under the water: brighter and greener than over it, so
+    /// the fish read against the murk
+    pub sun: [i32; 3],
+    pub sky: [i32; 3],
+    pub ground: [i32; 3],
+    /// the fish are drawn this much (percent) unlit, in their own colours,
+    /// so they stand out from the bed and the murk
+    pub fish_lift_pct: i32,
     pub shafts: ShaftLook,
     pub caustics: CausticLook,
     pub surface: SurfaceLook,
@@ -217,6 +225,9 @@ pub fn under_air(lake: &Lake, u: &UnderLook, eye: V3, clock_ms: u64) -> (Light, 
     let murk: [i32; 3] = [0, 1, 2].map(|k| u.colour[k] + (u.colour_deep[k] - u.colour[k]) * t / ONE);
     let light = Light {
         fog: murk,
+        sun: u.sun,
+        sky: u.sky,
+        ground: u.ground,
         ..lake.look.light.clone()
     };
     let hundredth = |v: i32| v * ONE / 100;
@@ -411,7 +422,20 @@ impl App {
         };
         let ms = ((self.clock.max(0) / 1000) % 60_000) as u32;
         for f in &fv.fish {
-            instances.extend(self.fish_instance(lake, f, under, look));
+            let Some(fish) = self.fish_instance(lake, f, under, look) else {
+                continue;
+            };
+            if under {
+                // lifted toward their own colours so they read against the murk
+                let lift = look.under.fish_lift_pct * ONE / 100;
+                let mut posed = scene::pose(&[fish]);
+                for v in posed.chunks_mut(render::VERTEX_VALUES) {
+                    v[9] = v[9].max(lift);
+                }
+                tris.extend(posed);
+            } else {
+                instances.push(fish);
+            }
         }
         let tips = self.rod_tips(lake, view);
         let bobber = self.models.iter().find(|m| m.id == "bobber");

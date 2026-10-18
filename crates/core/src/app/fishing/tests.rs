@@ -70,16 +70,16 @@ fn a_line_in_the_water_turns_on_the_underwater_camera_and_the_picture_in_picture
         tick(&mut a);
     }
     assert!(a.underwater(), "{:?}", a.my_fishing().map(|v| v.stage));
-    // the murk ends at 24 m
+    // the murk ends at 32 m
     let f = a.frame();
-    assert_eq!(f.view[at + 1], mm(24_000));
-    // under the water the shafts are on at 45%, looking down turns to the
+    assert_eq!(f.view[at + 1], mm(32_000));
+    // under the water the shafts are on at 55%, looking down turns to the
     // look's dark green-blue (18, 48, 52), and the surface's sheen is 16%
     let value = |name: &str| {
         let (i, n) = render::uniform_at(name);
         f.view[i..i + n].to_vec()
     };
-    assert_eq!(value("uShaftLook")[0], 45 * ONE / 100);
+    assert_eq!(value("uShaftLook")[0], 55 * ONE / 100);
     assert_eq!(value("uDeep"), vec![18 * ONE / 255, 48 * ONE / 255, 52 * ONE / 255]);
     assert_eq!(value("uCaustic")[3], 16 * ONE / 100);
     // and the boat camera has none of it
