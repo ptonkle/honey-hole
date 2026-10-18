@@ -28,6 +28,7 @@ Every `SECOND-ORDER.md` row with status *person*, by number, with what the perso
 
 - R1.23: whether settings are kept between visits (browser storage, D17). Today they last for the visit.
 - R1.30: the game's name ("Fishing" is the working name), and a read of the menu strings and text size choices the agent wrote.
+- R1.107: a read of the eleven lake prop names the Gallery shows (listed at the foot of `SECOND-ORDER.md`), and the props' look (`notes/shots/models/props/`).
 
 ## Mistakes so far
 
