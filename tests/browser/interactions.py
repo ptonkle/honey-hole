@@ -112,18 +112,20 @@ def step_play(page, check):
     check(page.is_disabled("#version"), "the version does not open What's New from Play")
     page.wait_for_selector("body[data-drawn]", state="attached", timeout=10000)
     check(page.is_visible("#scene"), "the lake is drawn behind the HUD")
-    start = page.inner_text(".panel.hud h2")
+    check(ui2d_has(page, "hud=1", "countdown=3"), "the HUD is drawn, and the match counts down from 3")
+    check(ui2d_has(page, "countdown=", timeout=8000), "the countdown ends")
+    start = ui2d_value(page, "time")
     check(start.startswith("8:00") or start.startswith("7:5"), f"the match starts with 8 minutes left ({start})")
     page.keyboard.down("KeyW")
-    # the HUD reads "Driving · {speed} km/h"; 20 km/h is about 1.7 s of W
+    # 20 km/h is about 1.7 s of W
     page.wait_for_function(
-        "() => { const s = document.querySelector('.panel.hud .sub');"
-        " return s && (s.textContent.split(' km/h')[0].split(' ').pop() | 0) >= 20; }",
+        "() => (document.body.dataset.ui2d || '').split(' ')"
+        ".some((w) => w.startsWith('speed=') && (w.slice(6) | 0) >= 20)",
         timeout=10000,
     )
     page.keyboard.up("KeyW")
-    check(True, "holding W drives the boat up to speed")
-    check(page.inner_text(".panel.hud h2") != start, "the time left counts down")
+    check(ui2d_value(page, "mode") == "driving", "holding W drives the boat up to speed, in driving mode")
+    check(ui2d_value(page, "time") != start, "the time left counts down")
     page.keyboard.press("Escape")
     page.wait_for_selector(".panel.pause", timeout=5000)
     check(page.inner_text(".panel.pause h2") == STRINGS["pause.heading"], "Esc opens the menu, and the offline match waits")
@@ -209,6 +211,8 @@ def step_fishboy(page, check):
     page.keyboard.press("Tab")
     page.wait_for_selector("body[data-fishboy='radar']", state="attached", timeout=5000)
     check(ui2d_has(page, "raised=100", "ping=ready"), "Tab raises the Fish-Boy on the radar, its ping ready")
+    # the radar pings once the countdown is over
+    ui2d_has(page, "countdown=", timeout=8000)
     page.keyboard.press("Space")
     check(ui2d_has(page, "ping=sweeping", timeout=5000), "Space starts a ping's sweep")
     # the sweep takes about 3 s, then the 5 s cooldown runs on
@@ -298,14 +302,9 @@ def step_sounds(page, check):
 
 
 # The steps in order, by name; `boot` always runs.
-def fishing_heading(page, want, timeout=30000):
-    """Waits until the fishing panel's heading starts with `want`."""
-    page.wait_for_function(
-        "(w) => { const h = document.querySelector('.panel.fishing h2'); return h && h.textContent.startsWith(w); }",
-        arg=want,
-        timeout=timeout,
-    )
-    return page.inner_text(".panel.fishing h2").startswith(want)
+def fishing_stage(page, want, timeout=30000):
+    """Waits until the fishing HUD (body[data-ui2d]) shows the stage `want`."""
+    return ui2d_has(page, f"fishing={want}", timeout=timeout)
 
 
 def step_fishing(page, check):
@@ -319,23 +318,26 @@ def step_fishing(page, check):
     page.click(by_id("lobby.start"))
     check(screen(page, "play"), "a match starts")
     page.wait_for_selector("body[data-drawn]", state="attached", timeout=10000)
+    ui2d_has(page, "countdown=", timeout=8000)
     page.keyboard.press("KeyQ")
-    check(fishing_heading(page, STRINGS["fishing.ready"], 10000), "Q to fishing mode offers the cast")
+    check(fishing_stage(page, "ready", 10000), "Q to fishing mode offers the cast")
     page.keyboard.down("Space")
-    check(fishing_heading(page, STRINGS["fishing.charging"], 10000), "holding Space charges the cast")
-    check(page.locator(by_id("fishing.charge")).count() == 1, "the charge meter shows")
+    check(fishing_stage(page, "charging", 10000), "holding Space charges the cast")
+    check(ui2d_some(page, "charge"), "the charge meter fills")
     page.keyboard.up("Space")
-    check(fishing_heading(page, STRINGS["fishing.sinking"], 10000), "the bobber lands and the lure sinks")
+    check(fishing_stage(page, "sinking", 10000), "the bobber lands and the lure sinks")
     page.keyboard.press("Space")
-    check(fishing_heading(page, STRINGS["fishing.bite"], 30000), "a fish nibbles and then bites")
+    check(fishing_stage(page, "bite", 30000), "a fish nibbles and then bites")
     page.keyboard.down("Space")
-    check(fishing_heading(page, STRINGS["fishing.reeling"], 10000), "Space on the bite hooks the fish")
-    popup = page.inner_text(".panel.popup h2")
-    tail = STRINGS["popup.hooked"].split("{fish}")[1]
-    check(popup.endswith(tail) and popup != tail, f"every player is told of the hook ({popup})")
-    check(page.locator(by_id("fishing.reel")).count() == 1, "the reel bar shows")
-    landed = STRINGS["fishing.landed"].split("{feet}")[0]
-    check(fishing_heading(page, landed, 30000), "holding Space reels the fish in and lands it")
+    check(fishing_stage(page, "reeling", 10000), "Space on the bite hooks the fish")
+    page.wait_for_function(
+        "() => (document.body.dataset.ui2d || '').split(' ')"
+        ".some((w) => w.startsWith('popup_keys=') && w.slice(11).split(',').includes('popup.hooked'))",
+        timeout=5000,
+    )
+    check(True, "every player is told of the hook in a popup")
+    check(ui2d_some(page, "reel"), "the reel bar shows")
+    check(fishing_stage(page, "landed", 30000), "holding Space reels the fish in and lands it")
     page.keyboard.up("Space")
     page.keyboard.press("Escape")
     page.wait_for_selector(".panel.pause", timeout=5000)
@@ -344,6 +346,52 @@ def step_fishing(page, check):
     # back to the plain page for the steps after
     page.goto(base)
     page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
+
+
+def step_match_flow(page, check):
+    # A 4-minute match under `?debug=flow`: the countdown, the HUD, the map
+    # seed shown from Settings, F8 to the last seconds (with made-up
+    # catches), the end, the postgame's reveal and ranking, Back to Title.
+    base = page.url.split("?")[0]
+    page.goto(base + "?debug=flow")
+    page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
+    page.click(by_id("menu.play"))
+    screen(page, "lobby")
+    page.select_option(by_id("lobby.ai"), "2")
+    page.wait_for_selector(f"{by_id('lobby.ai')} option[value='2']:checked", state="attached", timeout=5000)
+    page.select_option(by_id("lobby.length"), "240000")
+    page.click(by_id("lobby.start"))
+    check(screen(page, "play"), "a 4-minute match starts")
+    check(ui2d_has(page, "countdown=3", "seed="), "the countdown shows, and the map seed is hidden by default")
+    check(ui2d_has(page, "countdown=go", timeout=8000), "the countdown ends with Go")
+    check(ui2d_has(page, "hud_ping=ready", "hints=100", "mode=driving"), "the HUD shows the ping, the hints and the mode")
+    # the seed, from Settings in the match menu
+    page.keyboard.press("Escape")
+    page.wait_for_selector(".panel.pause", timeout=5000)
+    page.click(by_id("menu.settings"))
+    screen(page, "settings")
+    page.click(by_id("settings.show_seed"))
+    page.wait_for_selector(f"{by_id('settings.show_seed')}:checked", state="attached", timeout=5000)
+    page.click(by_id("menu.back"))
+    screen(page, "play")
+    page.keyboard.press("Escape")
+    page.wait_for_selector(".panel.pause", state="detached", timeout=5000)
+    check(ui2d_some(page, "seed"), f"the map seed shows with the option on ({ui2d_value(page, 'seed')})")
+    page.keyboard.press("F8")
+    check(ui2d_has(page, "ended=1", timeout=10000), "time runs out: Lines up")
+    check(screen_soon(page, "postgame", 15000), "the postgame opens after the end")
+    check(ui2d_has(page, "postgame=reveal"), "the catches are revealed")
+    check(ui2d_has(page, "postgame=ranking", timeout=40000), "then the ranking shows")
+    check(page.locator(by_id("postgame.rematch")).count() == 1, "Rematch is offered")
+    page.click(by_id("postgame.title"))
+    check(screen(page, "title"), "Back to Title goes to the Title")
+    page.goto(base)
+    page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
+
+
+def screen_soon(page, name, timeout):
+    page.wait_for_selector(f"body[data-screen='{name}']", state="attached", timeout=timeout)
+    return True
 
 
 STEPS = [
@@ -356,6 +404,7 @@ STEPS = [
     ("lake", step_lake),
     ("fishboy", step_fishboy),
     ("fishing", step_fishing),
+    ("match_flow", step_match_flow),
 ]
 
 

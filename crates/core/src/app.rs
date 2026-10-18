@@ -287,6 +287,9 @@ impl App {
         if name == "key" && self.fishboy_key(value) {
             return Ok(());
         }
+        if name == "key" && self.flow_debug_key(value) {
+            return Ok(());
+        }
         if self.match_input(name, value)? {
             return Ok(());
         }
@@ -314,8 +317,8 @@ impl App {
             "settings.name" => self.set_name(value),
             "settings.show_seed" => self.settings.show_seed = value == "on",
             "data.flow" => self.flow_act(name, value)?,
-            _ if name.starts_with("postgame.") || name.starts_with("debug.") => self.flow_act(name, value)?,
             "debug.flags" => self.debug_act(value),
+            _ if name.starts_with("postgame.") || name.starts_with("debug.") => self.flow_act(name, value)?,
             "data.ui2d" | "data.fish" => self.fishboy_act(name, value)?,
             _ if name.starts_with("data.") => self.data_act(name, value)?,
             _ if name.starts_with("lobby.") => self.lobby_act(name, value)?,

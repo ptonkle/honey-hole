@@ -48,6 +48,9 @@ use look::FlowLook;
 use popups::{Names, Popups};
 use postgame::Reveal;
 
+/// How much time F8 leaves under `?debug=flow`.
+pub const DEBUG_LEFT_MS: i32 = 3000;
+
 /// What the flow keeps between frames.
 #[derive(Debug, Clone, Default)]
 pub struct Flow {
@@ -58,6 +61,10 @@ pub struct Flow {
     /// when the match's time ran out, page µs
     pub ended_us: Option<i64>,
     pub postgame: Option<Postgame>,
+    /// the page's `?debug=flow`: F8 jumps the match to its last
+    /// seconds, with made-up catches if no one has landed a fish
+    /// ([`App::flow_debug_key`]), for the browser check and screenshots
+    pub debug: bool,
 }
 
 /// The postgame screen's state.
@@ -143,6 +150,24 @@ impl App {
             other => return Err(format!("Unknown action \"{other}\".")),
         }
         Ok(())
+    }
+
+    /// Under `?debug=flow`, F8 in a match: [`DEBUG_LEFT_MS`] left, and
+    /// made-up catches when no one has landed one. Returns whether the key
+    /// was used.
+    pub(crate) fn flow_debug_key(&mut self, code: &str) -> bool {
+        if !self.flow.debug || code != "F8" || self.screen != Screen::Play || self.play.is_none() {
+            return false;
+        }
+        let empty = self
+            .play
+            .as_ref()
+            .is_some_and(|p| p.game.scores.iter().all(|s| s.catches.is_empty()));
+        if empty {
+            let _ = self.flow_act("debug.catches", "");
+        }
+        let _ = self.flow_act("debug.time_left", &DEBUG_LEFT_MS.to_string());
+        true
     }
 
     /// A tick's events heard: their popups, a wreck's burst, the end.

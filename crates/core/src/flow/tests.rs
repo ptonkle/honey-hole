@@ -552,6 +552,25 @@ fn the_made_up_catches_fill_every_taken_seat() {
     }
 }
 
+#[test]
+fn f8_jumps_to_the_last_seconds_only_under_the_debug_flag() {
+    let mut a = match_app();
+    a.act("key", "F8").unwrap();
+    assert_eq!(
+        a.play.as_ref().unwrap().game.remaining_ms(),
+        240_000,
+        "no flag: F8 does nothing"
+    );
+    a.act("debug.flags", "flow").unwrap();
+    a.act("key", "F8").unwrap();
+    let g = &a.play.as_ref().unwrap().game;
+    assert_eq!(g.remaining_ms(), DEBUG_LEFT_MS);
+    assert!(
+        g.scores.iter().any(|s| !s.catches.is_empty()),
+        "made-up catches for the postgame"
+    );
+}
+
 // ---- sounds ----
 
 #[test]
