@@ -70,9 +70,22 @@ fn a_line_in_the_water_turns_on_the_underwater_camera_and_the_picture_in_picture
         tick(&mut a);
     }
     assert!(a.underwater(), "{:?}", a.my_fishing().map(|v| v.stage));
-    // the murk ends at 16 m
+    // the murk ends at 24 m
     let f = a.frame();
-    assert_eq!(f.view[at + 1], mm(16_000));
+    assert_eq!(f.view[at + 1], mm(24_000));
+    // under the water the shafts are on at 45%, looking down turns to the
+    // look's dark green-blue (18, 48, 52), and the surface's sheen is 16%
+    let value = |name: &str| {
+        let (i, n) = render::uniform_at(name);
+        f.view[i..i + n].to_vec()
+    };
+    assert_eq!(value("uShaftLook")[0], 45 * ONE / 100);
+    assert_eq!(value("uDeep"), vec![18 * ONE / 255, 48 * ONE / 255, 52 * ONE / 255]);
+    assert_eq!(value("uCaustic")[3], 16 * ONE / 100);
+    // and the boat camera has none of it
+    let (_, _, boat) = a.inset_frame();
+    let (i, _) = render::uniform_at("uShaftLook");
+    assert_eq!(boat.view[i], 0);
     // 26% of 1600 wide is 416, 60% of that tall is 249; 1% (16) from the
     // top-left corner, so 900 - 16 - 249 = 635 up from the bottom; the
     // border is 3 thousandths of 1600, 4 pixels
@@ -175,4 +188,50 @@ fn a_hook_pops_up_for_every_player_in_its_tier_for_two_seconds() {
     assert_eq!(panels_of(&a, "popup tier-uncommon").len(), 1);
     tick(&mut a);
     assert!(panels_of(&a, "popup tier-uncommon").is_empty());
+}
+
+#[test]
+fn the_murk_darkens_with_the_cameras_depth() {
+    let a = fishing();
+    let lake = a.world.as_ref().unwrap();
+    let u = &a.fishing_look().unwrap().under;
+    // just under: the look's colour; half of deep_mm (6 m) down: halfway
+    // to colour_deep; past it: all colour_deep
+    let (top, _) = under_air(lake, u, v3(0, -mm(1), 0), 0);
+    assert_eq!(top.fog, [56, 122, 118]);
+    let (mid, _) = under_air(lake, u, v3(0, -mm(6000), 0), 0);
+    assert_eq!(mid.fog, [42, 98, 101]);
+    let (low, _) = under_air(lake, u, v3(0, -mm(20_000), 0), 0);
+    assert_eq!(low.fog, [28, 74, 84]);
+}
+
+#[test]
+fn specks_drift_round_the_eye_under_the_surface_and_over_the_bed() {
+    let a = fishing();
+    let lake = a.world.as_ref().unwrap();
+    let m = &a.fishing_look().unwrap().under.motes;
+    // over the spawn, 2 m down, looking north
+    let eye = lake.world(lake.map.spawn.at, -2000);
+    let cam = Camera {
+        eye,
+        fwd: v3(0, 0, -ONE),
+        fov: deg(60),
+        near: mm(50),
+        far: mm(24_000),
+    };
+    let mut first = Vec::new();
+    motes(lake, m, &cam, 0, &mut first);
+    // two triangles of ten values a speck; some are drawn, none more than
+    // there are
+    let specks = first.len() / 60;
+    assert!(specks > 20 && specks <= m.count as usize, "{specks}");
+    let half = mm(m.box_mm) / 2 + mm(m.bubble_mm);
+    for v in first.chunks(10) {
+        assert!(v[1] < 0, "a speck over the surface");
+        assert!((v[0] - eye.x).abs() <= half && (v[2] - eye.z).abs() <= half);
+    }
+    // a second later they have moved
+    let mut later = Vec::new();
+    motes(lake, m, &cam, 1000, &mut later);
+    assert_ne!(first, later);
 }

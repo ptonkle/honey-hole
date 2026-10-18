@@ -61,7 +61,13 @@ fn look_json() -> Value {
     for k in ["pine", "birch", "maple"] {
         lake["props"][k] = json!(["tree"]);
     }
+    for k in ["weeds", "bed_rocks"] {
+        lake["props"][k] = json!(["rock"]);
+    }
     for k in [
+        "reed_stems",
+        "lily_stems",
+        "bed_log",
         "reeds",
         "lily_pads",
         "shore_rocks",
@@ -77,6 +83,10 @@ fn look_json() -> Value {
         "boulder_permille",
         "log_permille",
         "lily_pct",
+        "weeds_pct",
+        "weed_permille",
+        "bed_rock_permille",
+        "bed_log_permille",
     ] {
         lake["props"][k] = json!(0);
     }

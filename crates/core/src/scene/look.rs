@@ -131,6 +131,28 @@ pub struct PropsLook {
     pub log: String,
     /// a share of forest cells (permille) holds a fallen log
     pub log_permille: i32,
+    /// under the water: weeds on the bed by the reed beds (`weeds_pct` per
+    /// clump of reeds, within `weed_reach_pct` of the bed's radius) and
+    /// scattered over shallow cells (`weed_permille`), in water
+    /// `weed_depth_mm` deep; each grows to at most `weed_fill_pct` of
+    /// the depth
+    pub weeds: Vec<String>,
+    pub weeds_pct: i32,
+    pub weed_reach_pct: i32,
+    pub weed_permille: i32,
+    pub weed_depth_mm: [i32; 2],
+    pub weed_fill_pct: i32,
+    /// the stalks under each clump of reeds and the stems under each lily
+    /// pad, one metre tall, stretched from the bed to the surface
+    pub reed_stems: String,
+    pub lily_stems: String,
+    /// rocks and sunken logs on the bed of water cells at least
+    /// `bed_min_mm` deep
+    pub bed_rocks: Vec<String>,
+    pub bed_rock_permille: i32,
+    pub bed_log: String,
+    pub bed_log_permille: i32,
+    pub bed_min_mm: i32,
     pub dock: String,
     pub cabin: String,
     pub cabins: u32,
@@ -256,7 +278,11 @@ impl LakeLook {
             p.log.as_str(),
             p.dock.as_str(),
             p.cabin.as_str(),
+            p.reed_stems.as_str(),
+            p.lily_stems.as_str(),
+            p.bed_log.as_str(),
         ]);
+        out.extend(p.weeds.iter().chain(&p.bed_rocks).map(|s| s.as_str()));
         out.sort();
         out.dedup();
         out

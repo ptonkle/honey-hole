@@ -168,6 +168,10 @@ pub struct App {
     pub world: Option<crate::scene::Lake>,
     /// the page's `?debug=fishing`: a fish by every bobber (`app/fishing.rs`)
     pub debug_fishing: bool,
+    /// the page's `?debug=reeds` or `?debug=island`: this seat's boat is
+    /// moved by the biggest reed bed or island once its match starts, for
+    /// the screenshots of the underwater and chase cameras there
+    pub debug_place: Option<String>,
 }
 
 impl App {
@@ -199,6 +203,7 @@ impl App {
             preview: lake::Preview::default(),
             world: None,
             debug_fishing: false,
+            debug_place: None,
         })
     }
 

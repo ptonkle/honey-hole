@@ -37,6 +37,16 @@ pub(crate) fn models() -> String {
             "fallen-log",
             include_str!("../../../../../data/models/fallen-log.json"),
         ),
+        ("pondweed", include_str!("../../../../../data/models/pondweed.json")),
+        ("eelgrass", include_str!("../../../../../data/models/eelgrass.json")),
+        (
+            "reed-stems",
+            include_str!("../../../../../data/models/reed-stems.json"),
+        ),
+        (
+            "lily-stems",
+            include_str!("../../../../../data/models/lily-stems.json"),
+        ),
         ("dock", include_str!("../../../../../data/models/dock.json")),
         ("cabin", include_str!("../../../../../data/models/cabin.json")),
         ("boat", include_str!("../../../../../data/models/boat.json")),
