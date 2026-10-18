@@ -138,7 +138,9 @@ impl Lake {
         look.check()?;
         for id in look.model_ids() {
             if !models.iter().any(|m| m.id == id) {
-                return Err(format!("The lake's look names the model \"{id}\", which is not loaded."));
+                return Err(format!(
+                    "The lake's look names the model \"{id}\", which is not loaded."
+                ));
             }
         }
         let mut lake = Lake {
@@ -244,7 +246,12 @@ impl Lake {
             ],
             under_colour: render::rgb(l.under.colour),
             waves: [wave(0), wave(1)],
-            water: [pct(w.alpha_down_pct), pct(w.alpha_grazing_pct), pct(w.fresnel_pow_pct), 0],
+            water: [
+                pct(w.alpha_down_pct),
+                pct(w.alpha_grazing_pct),
+                pct(w.fresnel_pow_pct),
+                0,
+            ],
             spec: {
                 let g = render::rgb(w.glint);
                 [g[0], g[1], g[2], w.shine * ONE]
@@ -323,8 +330,8 @@ pub fn frame(
             for &(i, blend) in list {
                 let a = &lake.props[i].place;
                 inst.extend_from_slice(&[
-                    a.c0.x, a.c0.y, a.c0.z, a.c1.x, a.c1.y, a.c1.z, a.c2.x, a.c2.y, a.c2.z, a.t.x, a.t.y, a.t.z,
-                    blend,
+                    a.c0.x, a.c0.y, a.c0.z, a.c1.x, a.c1.y, a.c1.z, a.c2.x, a.c2.y, a.c2.z, a.t.x, a.t.y,
+                    a.t.z, blend,
                 ]);
             }
         }

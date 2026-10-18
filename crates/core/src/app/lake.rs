@@ -43,7 +43,14 @@ pub enum View {
 }
 
 impl View {
-    pub const ALL: [View; 6] = [View::Tour, View::Spawn, View::Island, View::Reeds, View::Under, View::Above];
+    pub const ALL: [View; 6] = [
+        View::Tour,
+        View::Spawn,
+        View::Island,
+        View::Reeds,
+        View::Under,
+        View::Above,
+    ];
 
     pub fn key(self) -> &'static str {
         match self {
@@ -112,7 +119,10 @@ impl App {
         if !self.preview.fog_on {
             return None;
         }
-        let own = self.world.as_ref().map_or(Setting::MichiganLake.params().sight_mm, |l| l.sight_mm);
+        let own = self
+            .world
+            .as_ref()
+            .map_or(Setting::MichiganLake.params().sight_mm, |l| l.sight_mm);
         Some(self.preview.fog_m.map_or(own, |m| m as i32 * 1000))
     }
 
@@ -221,7 +231,10 @@ impl App {
             label: self.t("lake.fog_on"),
             value: p.fog_on,
         });
-        let own = self.world.as_ref().map_or(Setting::MichiganLake.params().sight_mm, |l| l.sight_mm);
+        let own = self
+            .world
+            .as_ref()
+            .map_or(Setting::MichiganLake.params().sight_mm, |l| l.sight_mm);
         let metres = p.fog_m.unwrap_or((own / 1000) as u32);
         items.push(Item::Slider {
             id: "lake.fog".into(),
@@ -260,7 +273,9 @@ impl App {
         let map = &lake.map;
         let spawn = map.spawn;
         let near_tour = |t: P| {
-            let k = (0..lake.tour.len()).min_by_key(|&k| lake.tour[k].dist2(t)).unwrap_or(0);
+            let k = (0..lake.tour.len())
+                .min_by_key(|&k| lake.tour[k].dist2(t))
+                .unwrap_or(0);
             lake.tour.get(k).copied().unwrap_or(spawn.at)
         };
         let heading_to = |a: P, b: P| trig::atan2((b.y - a.y) as i64, (b.x - a.x) as i64);
@@ -274,12 +289,20 @@ impl App {
             }
             View::Spawn | View::Above => (spawn.at, spawn.heading, 0),
             View::Island => {
-                let island = map.islands.iter().max_by_key(|i| i.area_m2).map_or(spawn.at, |i| i.at);
+                let island = map
+                    .islands
+                    .iter()
+                    .max_by_key(|i| i.area_m2)
+                    .map_or(spawn.at, |i| i.at);
                 let at = near_tour(island);
                 (at, heading_to(at, island) - deg(35), deg(20))
             }
             View::Reeds | View::Under => {
-                let reeds = map.reeds.iter().max_by_key(|r| r.clumps.len()).map_or(spawn.at, |r| r.at);
+                let reeds = map
+                    .reeds
+                    .iter()
+                    .max_by_key(|r| r.clumps.len())
+                    .map_or(spawn.at, |r| r.at);
                 let at = near_tour(reeds);
                 (at, heading_to(at, reeds), 0)
             }
@@ -315,9 +338,10 @@ impl App {
                 colour,
             };
             instances.push(b);
-            if let (Some(angler), Some(seat)) =
-                (self.models.iter().find(|m| m.kind == Kind::Figure), scene::seat(&b, "drive"))
-            {
+            if let (Some(angler), Some(seat)) = (
+                self.models.iter().find(|m| m.kind == Kind::Figure),
+                scene::seat(&b, "drive"),
+            ) {
                 instances.push(Instance {
                     model: angler,
                     place: seat,
@@ -351,9 +375,19 @@ impl App {
                 }
             }
         }
-        scene::frame(lake, cam, render::aspect(self.size), self.sight_mm(), clock_ms, &instances)
+        scene::frame(
+            lake,
+            cam,
+            render::aspect(self.size),
+            self.sight_mm(),
+            clock_ms,
+            &instances,
+        )
     }
 }
+
+#[cfg(test)]
+mod tests;
 
 /// A map point `d` mm from `p` toward a map heading.
 fn scene_ahead(p: P, heading: i32, d: i32) -> P {

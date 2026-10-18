@@ -207,7 +207,9 @@ fn the_colour_choice_shows_for_a_slot_and_all_four_draws_four() {
     a.act("gallery.colour", "all").unwrap();
     assert_eq!(triangles(&a), 4 + 32);
     let tris = a.frame().tris;
-    let colours: Vec<&[i32]> = (0..4).map(|k| &tris[k * 3 * VERTEX_VALUES + 6..k * 3 * VERTEX_VALUES + 9]).collect();
+    let colours: Vec<&[i32]> = (0..4)
+        .map(|k| &tris[k * 3 * VERTEX_VALUES + 6..k * 3 * VERTEX_VALUES + 9])
+        .collect();
     assert_eq!(
         colours,
         [&[0, 0, ONE][..], &[ONE, 0, 0], &[0, ONE, 0], &[ONE, ONE, 0]]

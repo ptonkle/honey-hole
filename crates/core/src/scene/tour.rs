@@ -32,7 +32,16 @@ fn way(map: &Map, open: &[bool], a: usize, b: usize) -> Option<Vec<usize>> {
             return Some(out);
         }
         let (x, y) = ((c % n) as i32, (c / n) as i32);
-        for (dx, dy) in [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)] {
+        for (dx, dy) in [
+            (1, 0),
+            (-1, 0),
+            (0, 1),
+            (0, -1),
+            (1, 1),
+            (1, -1),
+            (-1, 1),
+            (-1, -1),
+        ] {
             let (u, v) = (x + dx, y + dy);
             if u < 0 || v < 0 || u >= n as i32 || v >= n as i32 {
                 continue;
@@ -59,7 +68,10 @@ pub fn path(map: &Map) -> (Vec<P>, Vec<i64>) {
     let open: Vec<bool> = (0..map.n * map.n)
         .map(|i| map.cells[i].water() && map.shore[i] >= ROOM_MM)
         .collect();
-    let Some(start) = map.index(map.spawn.at).filter(|&i| open[i]).or_else(|| pass_by(map, &open, map.spawn.at))
+    let Some(start) = map
+        .index(map.spawn.at)
+        .filter(|&i| open[i])
+        .or_else(|| pass_by(map, &open, map.spawn.at))
     else {
         return (vec![map.spawn.at], vec![0]);
     };

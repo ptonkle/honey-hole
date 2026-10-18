@@ -656,5 +656,103 @@
     "find": "        if g.lineup {\n            return self.lineup_frame(",
     "replace": "        if g.lineup && false {\n            return self.lineup_frame(",
     "test": "the_line_up_is_the_same_whichever_fish_is_chosen"
+  },
+  {
+    "name": "props past the fog are left out",
+    "file": "crates/core/src/scene/mod.rs",
+    "find": "if off.flat().longer_than(r + p.radius) {",
+    "replace": "if false {",
+    "test": "props_past_the_fog_or_behind_the_camera_are_left_out"
+  },
+  {
+    "name": "props behind the camera are left out",
+    "file": "crates/core/src/scene/mod.rs",
+    "find": "if off.dot(fwd) < -p.radius {",
+    "replace": "if false {",
+    "test": "props_past_the_fog_or_behind_the_camera_are_left_out"
+  },
+  {
+    "name": "each prop sways from its own phase",
+    "file": "crates/core/src/scene/props.rs",
+    "find": "phase_ms: (p.hash % mesh.ms as u64) as u32,",
+    "replace": "phase_ms: 0,",
+    "test": "copies_of_one_model_sway_from_their_own_phases"
+  },
+  {
+    "name": "a group blends toward the next frame",
+    "file": "crates/core/src/scene/mod.rs",
+    "find": "let next = (f + 1) % m.frames as usize;",
+    "replace": "let next = f;",
+    "test": "groups_point_inside_the_static_buffer_at_a_frame_and_the_next"
+  },
+  {
+    "name": "a map heading turns a model's front that way",
+    "file": "crates/core/src/scene/mod.rs",
+    "find": "fx::wrap(QUARTER + heading)",
+    "replace": "fx::wrap(heading)",
+    "test": "a_map_point_lands_where_the_axes_say"
+  },
+  {
+    "name": "the ground is read on the drawn triangles",
+    "file": "crates/core/src/scene/terrain.rs",
+    "find": "h00 + (h10 - h00) * fx / c + (h01 - h00) * fy / c",
+    "replace": "h00",
+    "test": "the_ground_under_a_point_is_on_the_drawn_triangles"
+  },
+  {
+    "name": "the water covers only low ground",
+    "file": "crates/core/src/scene/terrain.rs",
+    "find": ">= w.shore_overlap_mm {",
+    "replace": ">= i32::MAX {",
+    "test": "the_terrain_and_water_fill_the_grid_and_the_water_only_where_it_is_low"
+  },
+  {
+    "name": "the camera keeps clear of the ground",
+    "file": "crates/core/src/scene/camera.rs",
+    "find": "v3(eye.x, eye.y.max(lowest), eye.z)",
+    "replace": "eye",
+    "test": "the_boat_camera_stands_behind_and_above_and_keeps_clear_of_the_ground"
+  },
+  {
+    "name": "the waves travel with the clock",
+    "file": "crates/core/src/scene/mod.rs",
+    "find": "let phase = -(fx::TWO_PI * t / v.period_ms as i64) as i32;",
+    "replace": "let phase = 0;",
+    "test": "the_waves_travel_with_the_clock"
+  },
+  {
+    "name": "a look naming a missing model is refused",
+    "file": "crates/core/src/scene/mod.rs",
+    "find": "if !models.iter().any(|m| m.id == id) {",
+    "replace": "if false {",
+    "test": "a_look_naming_a_model_that_is_not_loaded_is_refused_by_name"
+  },
+  {
+    "name": "the fog slider keeps to its range",
+    "file": "crates/core/src/app/lake.rs",
+    "find": "let m = m.clamp(FOG_MIN_M, FOG_MAX_M);",
+    "replace": "let m = m.max(FOG_MIN_M);",
+    "test": "the_fog_slider_keeps_to_its_range_and_steps_and_the_toggle_turns_it_off"
+  },
+  {
+    "name": "the fog toggle turns the fog off",
+    "file": "crates/core/src/app/lake.rs",
+    "find": "if !self.preview.fog_on {",
+    "replace": "if false {",
+    "test": "the_fog_slider_keeps_to_its_range_and_steps_and_the_toggle_turns_it_off"
+  },
+  {
+    "name": "a seed outside the list is refused",
+    "file": "crates/core/src/app/lake.rs",
+    "find": ".is_some_and(|l| l.maps.iter().any(|m| m.seed == *s))",
+    "replace": ".is_some()",
+    "test": "a_seed_from_the_list_builds_its_map_and_another_is_refused"
+  },
+  {
+    "name": "a glowing colour is drawn unlit",
+    "file": "crates/core/src/model.rs",
+    "find": "let glow = if self.glows[face.paint] { ONE } else { 0 };",
+    "replace": "let glow = 0;",
+    "test": "a_colour_marked_glow_is_drawn_unlit_and_a_plain_one_lit"
   }
 ]

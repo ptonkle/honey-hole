@@ -24,7 +24,9 @@ pub fn boat(lake: &Lake, look: &CameraLook, target: V3, boat_yaw: i32, yaw: i32,
     let aim = target.add(v3(0, mm(look.aim_mm), 0));
     let down = deg(look.pitch_deg) + pitch;
     let back = facing(boat_yaw + yaw, -down);
-    let eye = aim.sub(back.scale(mm(look.back_mm))).add(v3(0, mm(look.up_mm - look.aim_mm), 0));
+    let eye = aim
+        .sub(back.scale(mm(look.back_mm)))
+        .add(v3(0, mm(look.up_mm - look.aim_mm), 0));
     let eye = clear(lake, look, eye);
     Camera {
         eye,

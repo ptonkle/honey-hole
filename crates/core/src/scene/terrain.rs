@@ -25,7 +25,12 @@ pub fn corner_heights(map: &Map) -> Vec<i32> {
     for j in 0..=n {
         for i in 0..=n {
             let (mut sum, mut count) = (0i64, 0i64);
-            for (ci, cj) in [(i.wrapping_sub(1), j.wrapping_sub(1)), (i, j.wrapping_sub(1)), (i.wrapping_sub(1), j), (i, j)] {
+            for (ci, cj) in [
+                (i.wrapping_sub(1), j.wrapping_sub(1)),
+                (i, j.wrapping_sub(1)),
+                (i.wrapping_sub(1), j),
+                (i, j),
+            ] {
                 if ci < n && cj < n {
                     sum += map.ground[cj * n + ci] as i64;
                     count += 1;
@@ -40,7 +45,7 @@ pub fn corner_heights(map: &Map) -> Vec<i32> {
 /// Whether a cell's diagonal runs from its south-west corner to its
 /// north-east one (or else from south-east to north-west).
 fn rising(i: usize, j: usize) -> bool {
-    (i + j) % 2 == 0
+    (i + j).is_multiple_of(2)
 }
 
 /// The height (mm) on the drawn triangles at a map point.
@@ -130,7 +135,11 @@ impl Paint<'_> {
             let open = mix(rgb(g.grass), rgb(g.meadow), smooth((bump + 1024) * ONE / 2048));
             mix(open, rgb(g.forest), forest)
         };
-        jitter(base, g.jitter_pct, hash2(self.seed ^ 0x6a69_7474, id as i32, (id >> 32) as i32))
+        jitter(
+            base,
+            g.jitter_pct,
+            hash2(self.seed ^ 0x6a69_7474, id as i32, (id >> 32) as i32),
+        )
     }
 }
 

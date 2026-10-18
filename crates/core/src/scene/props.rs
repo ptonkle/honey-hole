@@ -67,7 +67,10 @@ fn segment_dist(q: P, a: P, b: P) -> i64 {
         return q.dist(a);
     }
     let t = (((q.x - a.x) as i64 * abx + (q.y - a.y) as i64 * aby) * 1024 / len2).clamp(0, 1024);
-    q.dist(P::new(a.x + (abx * t / 1024) as i32, a.y + (aby * t / 1024) as i32))
+    q.dist(P::new(
+        a.x + (abx * t / 1024) as i32,
+        a.y + (aby * t / 1024) as i32,
+    ))
 }
 
 /// The lowest ground within `r` of a point: a cabin set there sinks into a
@@ -82,7 +85,9 @@ fn lowest(lake: &Lake, p: P, r: i32) -> i32 {
 
 /// How uneven the ground is within `r` of a point (highest minus lowest).
 fn unevenness(lake: &Lake, p: P, r: i32) -> i32 {
-    let hs: Vec<i32> = (0..8).map(|k| lake.ground_mm(toward(p, k * TURN / 8, r))).collect();
+    let hs: Vec<i32> = (0..8)
+        .map(|k| lake.ground_mm(toward(p, k * TURN / 8, r)))
+        .collect();
     hs.iter().max().unwrap_or(&0) - hs.iter().min().unwrap_or(&0)
 }
 
@@ -150,7 +155,15 @@ pub fn place(lake: &Lake, look: &LakeLook) -> Vec<Placed> {
         cabins.push((c, downhill(lake, c)));
     }
     for &(at, facing) in &cabins {
-        put(&mut out, &p.cabin, at, lowest(lake, at, 2600), facing, 1000, h(map, CABIN, at.x, at.y));
+        put(
+            &mut out,
+            &p.cabin,
+            at,
+            lowest(lake, at, 2600),
+            facing,
+            1000,
+            h(map, CABIN, at.x, at.y),
+        );
     }
     let clear = |q: P| {
         cabins.iter().any(|(c, _)| c.dist(q) < p.cabin_clear_mm as i64)
@@ -170,7 +183,15 @@ pub fn place(lake: &Lake, look: &LakeLook) -> Vec<Placed> {
         let k = h(map, TREE, t.at.x, t.at.y);
         let model = &list[(k % list.len() as u64) as usize];
         let turn = ((k >> 16) % TURN as u64) as i32;
-        put(&mut out, model, t.at, lake.ground_mm(t.at), turn, t.scale, k >> 24);
+        put(
+            &mut out,
+            model,
+            t.at,
+            lake.ground_mm(t.at),
+            turn,
+            t.scale,
+            k >> 24,
+        );
     }
 
     // reeds, and lily pads off them
@@ -178,7 +199,15 @@ pub fn place(lake: &Lake, look: &LakeLook) -> Vec<Placed> {
         for c in &patch.clumps {
             let k = h(map, REED, c.x, c.y);
             let scale = 800 + (k % 400) as i32;
-            put(&mut out, &p.reeds, *c, 0, ((k >> 12) % TURN as u64) as i32, scale, k >> 28);
+            put(
+                &mut out,
+                &p.reeds,
+                *c,
+                0,
+                ((k >> 12) % TURN as u64) as i32,
+                scale,
+                k >> 28,
+            );
         }
         let want = patch.clumps.len() as i32 * p.lily_pct / 100;
         let mut placed = 0;
@@ -199,7 +228,15 @@ pub fn place(lake: &Lake, look: &LakeLook) -> Vec<Placed> {
                 continue;
             }
             let scale = 700 + ((k >> 40) % 600) as i32;
-            put(&mut out, &p.lily_pads, q, 0, ((k >> 44) % TURN as u64) as i32, scale, k >> 8);
+            put(
+                &mut out,
+                &p.lily_pads,
+                q,
+                0,
+                ((k >> 44) % TURN as u64) as i32,
+                scale,
+                k >> 8,
+            );
             placed += 1;
         }
     }
@@ -248,7 +285,13 @@ pub fn place(lake: &Lake, look: &LakeLook) -> Vec<Placed> {
 pub fn forest_cells(map: &Map, placed: &[Placed], look: &LakeLook) -> Vec<i32> {
     let n = map.n;
     let mut count = vec![0i32; n * n];
-    let trees: Vec<&String> = look.props.pine.iter().chain(&look.props.birch).chain(&look.props.maple).collect();
+    let trees: Vec<&String> = look
+        .props
+        .pine
+        .iter()
+        .chain(&look.props.birch)
+        .chain(&look.props.maple)
+        .collect();
     for p in placed.iter().filter(|p| trees.contains(&&p.model)) {
         if let Some(i) = map.index(p.at) {
             count[i] += 1;
@@ -279,7 +322,9 @@ pub fn forest_cells(map: &Map, placed: &[Placed], look: &LakeLook) -> Vec<i32> {
 
 /// The animation a prop plays in place: its sway, else its bob.
 fn idle(m: &Model) -> Option<Anim> {
-    [Anim::Sway, Anim::Bob].into_iter().find(|a| m.animation(*a).is_some())
+    [Anim::Sway, Anim::Bob]
+        .into_iter()
+        .find(|a| m.animation(*a).is_some())
 }
 
 /// Bakes each model the props use, appending its frames to `out`, and

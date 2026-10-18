@@ -15,7 +15,10 @@ use tool_core::app::lake::View;
 use tool_core::app::App;
 
 fn models_json() -> String {
-    let mut files: Vec<_> = fs::read_dir("data/models").expect("data/models").map(|e| e.unwrap().path()).collect();
+    let mut files: Vec<_> = fs::read_dir("data/models")
+        .expect("data/models")
+        .map(|e| e.unwrap().path())
+        .collect();
     files.sort();
     let parts: Vec<String> = files
         .iter()
@@ -30,15 +33,21 @@ fn models_json() -> String {
 fn main() {
     let read = |p: &str| fs::read_to_string(p).unwrap_or_else(|e| panic!("{p}: {e}"));
     let seeds: Vec<String> = std::env::args().skip(1).collect();
-    let seeds = if seeds.is_empty() { vec!["0".to_string()] } else { seeds };
+    let seeds = if seeds.is_empty() {
+        vec!["0".to_string()]
+    } else {
+        seeds
+    };
     let mut app = App::new(&read("data/strings.json"), &read("data/patch-notes.json")).unwrap();
     app.load_models(&models_json(), &read("data/look.json")).unwrap();
     app.load_maps(&read("data/maps/michigan-lake.json")).unwrap();
     app.resize(1920, 1080, 100);
     for seed in seeds {
-        app.act("menu.lake", "").unwrap();
+        // a fresh world each time, so the build is timed whole
+        app.world = None;
         let t = Instant::now();
         app.act("lake.seed", &seed).unwrap();
+        app.act("menu.lake", "").unwrap();
         let built = t.elapsed();
         let lake = app.world.as_ref().expect("a world");
         let props: usize = lake.props.len();

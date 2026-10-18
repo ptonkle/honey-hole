@@ -231,7 +231,13 @@ impl LakeLook {
     /// Every model the lake places, by id.
     pub fn model_ids(&self) -> Vec<&str> {
         let p = &self.props;
-        let mut out: Vec<&str> = p.pine.iter().chain(&p.birch).chain(&p.maple).map(|s| s.as_str()).collect();
+        let mut out: Vec<&str> = p
+            .pine
+            .iter()
+            .chain(&p.birch)
+            .chain(&p.maple)
+            .map(|s| s.as_str())
+            .collect();
         out.extend([
             p.reeds.as_str(),
             p.lily_pads.as_str(),
