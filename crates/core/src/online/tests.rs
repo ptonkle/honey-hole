@@ -705,8 +705,11 @@ use crate::sim::items::Item;
 
 /// Where the host's buoy is once it is up on every browser.
 fn buoy_up(l: &mut Loop) -> crate::map::P {
-    let t = l.nodes[0].game().tick;
-    l.nodes[0].game_mut().items.next_buoy = t + 3;
+    // the buoy's clock is every browser's; the buoy is the host's
+    for n in l.nodes.iter_mut() {
+        let t = n.game().tick;
+        n.game_mut().items.next_buoy = t + 3;
+    }
     assert!(
         l.run_until(3000, |l| l.nodes.iter().all(|n| n.game().items.buoy.is_some())),
         "the host's buoy reaches every browser"
