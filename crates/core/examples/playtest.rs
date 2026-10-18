@@ -47,6 +47,9 @@ struct SeatStats {
     lost_to_rams: u32,
     /// points of the fish this seat's rams knocked off a line
     denied: i64,
+    /// fish it knocked off a line and then landed itself, and their points
+    steals: u32,
+    stolen: i64,
 }
 
 #[derive(Default)]
@@ -79,6 +82,8 @@ fn add(a: &mut SeatStats, b: &SeatStats) {
     a.hooks += b.hooks;
     a.lost_to_rams += b.lost_to_rams;
     a.denied += b.denied;
+    a.steals += b.steals;
+    a.stolen += b.stolen;
 }
 
 fn lineup(k: u32) -> [Difficulty; 4] {
@@ -128,6 +133,7 @@ fn main() {
         let mut crew = Crew::new(&m);
         let mut st = vec![SeatStats::default(); 4];
         let mut hooked_at = [None::<(u32, Tier)>; 4];
+        let mut knocked: Vec<(u32, usize)> = Vec::new();
         while !m.ended {
             let a = Instant::now();
             let inputs = crew.inputs(&m);
@@ -184,6 +190,7 @@ fn main() {
                         let rammed_off = rammed.iter().any(|(v, _)| v == seat);
                         tot.outcomes[ti][if rammed_off { 3 } else { 4 }] += 1;
                         if let Some(&(_, by)) = rammed.iter().find(|(v, _)| v == seat) {
+                            knocked.push((*fish, by));
                             st[*seat].lost_to_rams += 1;
                             let f = &m.fishing.fish[*fish as usize];
                             let kind = &m.fishing.roster.0[f.kind];
@@ -200,7 +207,12 @@ fn main() {
                         hooked_at[*seat] = None;
                         tot.outcomes[tier_ix(m.fishing.fish[*fish as usize].tier)][2] += 1;
                     }
-                    MatchEvent::Caught { seat, tier, .. } => {
+                    MatchEvent::Caught { seat, tier, fish, .. } => {
+                        if knocked.contains(&(*fish, *seat)) {
+                            let c = m.scores[*seat].catches.last().map_or(0, |c| c.value);
+                            st[*seat].steals += 1;
+                            st[*seat].stolen += c as i64;
+                        }
                         tot.outcomes[tier_ix(*tier)][1] += 1;
                         if let Some((h, _)) = hooked_at[*seat].take() {
                             let r = &mut tot.reel_ms[tier_ix(*tier)];
@@ -310,9 +322,12 @@ fn report(tot: &Totals) {
     let pts: i64 = a.value.iter().sum();
     println!();
     println!(
-        "Points per minute spent fishing: {:.1}. Points knocked off a rival's line per minute spent hunting: {:.1}.",
+        "Points per minute spent fishing: {:.1}. Points knocked off a rival's line per minute spent hunting: {:.1}; the rammer then landed {} of those fish itself ({:.1} a match, {:.0} points a match).",
         pts as f64 / fish_min.max(0.001),
-        a.denied as f64 / hunt_min.max(0.001)
+        a.denied as f64 / hunt_min.max(0.001),
+        a.steals,
+        a.steals as f64 / m,
+        a.stolen as f64 / m
     );
     println!();
     println!("### Fish left at the end, and reel times");

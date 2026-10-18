@@ -94,6 +94,8 @@ pub struct Play {
     pub cam_pitch: i32,
     /// the latest events, oldest first, with their ticks
     pub log: Vec<(u32, MatchEvent)>,
+    /// the AI seats' brains (`ai/`), which make their inputs each tick
+    pub ai: crate::ai::Crew,
 }
 
 impl Play {
@@ -324,6 +326,7 @@ impl App {
         if !self.fishboy.roster.0.is_empty() {
             game.stock(&self.fishboy.roster)?;
         }
+        let ai = crate::ai::Crew::new(&game);
         self.play = Some(Play {
             game,
             seat: 0,
@@ -333,6 +336,7 @@ impl App {
             cam_yaw: 0,
             cam_pitch: deg(controls.mouse.pitch_start_deg),
             log: Vec::new(),
+            ai,
         });
         self.go(Screen::Play);
         Ok(())
@@ -406,7 +410,8 @@ impl App {
         let mut ran = 0;
         let mut heard = Vec::new();
         while p.pending_us >= step_us && ran < MAX_CATCH_UP {
-            let mut inputs = vec![sim::SeatInput::default(); p.game.seats.len()];
+            // the AI seats play by the same inputs (`ai/`)
+            let mut inputs = p.ai.inputs(&p.game);
             inputs[p.seat] = p.gather.take();
             let tick = p.game.tick;
             for e in p.game.step(&inputs) {

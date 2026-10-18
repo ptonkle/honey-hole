@@ -249,6 +249,12 @@ impl Nav {
     }
 }
 
+/// The careful speed near land: the tuning's, and always under the speed
+/// that grounds a boat.
+pub fn careful(r: &Rules, t: &AiTuning) -> i32 {
+    pct(r.top, t.careful_speed_pct).min(r.land_wreck - 1000).max(500)
+}
+
 /// `a` percent of `v`.
 pub fn pct(v: i32, a: i32) -> i32 {
     (v as i64 * a as i64 / 100) as i32
@@ -303,7 +309,7 @@ pub fn steer(map: &Map, r: &Rules, t: &AiTuning, b: &Boat, to: P, want: i32, rec
             ahead = 0;
         }
         if ahead < t.look_ahead_mm {
-            let careful = pct(r.top, t.careful_speed_pct);
+            let careful = careful(r, t);
             want = want.min(stop_speed(ahead - 8000, decel(r, t), careful));
         }
     }

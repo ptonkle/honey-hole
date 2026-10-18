@@ -238,7 +238,7 @@ impl Tuning {
                 r.ping_sweep_ms <= r.ping_cooldown_ms,
                 "radar.ping_sweep_ms must end before radar.ping_cooldown_ms.",
             );
-        crate::ai::tuning::check(&mut c, &self.ai, w.ram_wreck_pct, w.land_wreck_pct);
+        crate::ai::tuning::check(&mut c, &self.ai);
         c.done()
     }
 }

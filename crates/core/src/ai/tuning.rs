@@ -118,19 +118,19 @@ fn check_skill(c: &mut Checker, key: &str, s: &Skill) {
         .range(&k("ping_every_ms"), s.ping_every_ms, 1000, 600_000);
 }
 
-/// The section's range checks. `ram_wreck_pct` and `land_wreck_pct` are the
-/// match's: a ram must be driven fast enough to wreck, and careful driving
-/// slow enough to bounce.
-pub fn check(c: &mut Checker, a: &AiTuning, ram_wreck_pct: i32, land_wreck_pct: i32) {
+/// The section's range checks. Whatever these say, the AI drives carefully
+/// under the match's grounding speed and rams over its wrecking speed
+/// (`nav::careful`, `hunt::ram_speed`).
+pub fn check(c: &mut Checker, a: &AiTuning) {
     c.range("ai.path_cell_mm", a.path_cell_mm, 1000, 32_000)
         .range("ai.path_clear_mm", a.path_clear_mm, 0, 40_000)
         .range("ai.path_roomy_mm", a.path_roomy_mm, a.path_clear_mm, 80_000)
         .range("ai.waypoint_mm", a.waypoint_mm, 500, 40_000)
         .range("ai.look_ahead_mm", a.look_ahead_mm, 1000, 200_000)
         .range("ai.near_land_mm", a.near_land_mm, 0, 40_000)
-        .range("ai.careful_speed_pct", a.careful_speed_pct, 5, land_wreck_pct - 1)
+        .range("ai.careful_speed_pct", a.careful_speed_pct, 5, 100)
         .range("ai.brake_use_pct", a.brake_use_pct, 10, 100)
-        .range("ai.ram_speed_pct", a.ram_speed_pct, ram_wreck_pct, 100)
+        .range("ai.ram_speed_pct", a.ram_speed_pct, 1, 100)
         .range("ai.ram_runup_mm", a.ram_runup_mm, 5000, 200_000)
         .range("ai.cast_stop_mm", a.cast_stop_mm, 2000, 40_000)
         .range("ai.lure_wait_ms", a.lure_wait_ms, 1000, 120_000)

@@ -44,10 +44,16 @@ pub fn kind_worth(s: &Senses, kind: &str, tier: Tier) -> i32 {
     crate::sim::fishing::value(k.value, k.base_length_mm, mid as i32, s.tuning.fishing.tier_value_pct.get(tier))
 }
 
+/// The speed a ram is driven at: the tuning's, and always over the speed
+/// that wrecks a boat.
+pub fn ram_speed(s: &Senses) -> i32 {
+    pct(s.rules.top, s.tuning.ai.ram_speed_pct).max(s.rules.ram_wreck + 500)
+}
+
 /// The time to drive `d` mm from rest at a ram's speed, ms, allowing for
 /// the way round islands.
 pub fn eta_ms(s: &Senses, d: i64) -> i64 {
-    let speed = pct(s.rules.top, s.tuning.ai.ram_speed_pct).max(1) as i64;
+    let speed = ram_speed(s).max(1) as i64;
     d * 13 / 10 * 1000 / speed + 2500
 }
 
@@ -171,10 +177,10 @@ pub fn chase(brain: &mut Brain, s: &Senses, nav: &Nav, b: &Boat, seat: usize, ou
         brain.drive_to(s, nav, b, aim, s.rules.top, false, out);
         return;
     }
-    let ram = pct(s.rules.top, t.ram_speed_pct);
+    let ram = ram_speed(s);
     let speed = b.forward_speed();
     let off = crate::gfx::fx::wrap(bearing(at, aim) - b.heading).abs();
-    if d < 20_000 && (speed < pct(s.rules.top, s.tuning.wreck.ram_wreck_pct) || off > trig::TURN / 12) {
+    if d < 20_000 && (speed < s.rules.ram_wreck || off > trig::TURN / 12) {
         // too slow or off line this close: round again
         let back = ahead(where_, bearing(where_, at), t.ram_runup_mm * 4 / 5);
         brain.runup = Some(if nav.open_at(back) {
