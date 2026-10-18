@@ -103,6 +103,12 @@ The screen where the reader sets the volume and the text size. Settings last for
 
 Not: options, preferences, config
 
+### Sounds
+
+The screen, opened from the Gallery, that plays each of the game's sounds on a click, and runs the motors and the line's whine at chosen settings, including another boat's motor driving past. The game makes every sound from a recipe as it plays; there are no recordings.
+
+Not: soundboard, audio test, sound test
+
 ### Text size
 
 How large the menus' text is drawn: small, medium or large.
@@ -123,7 +129,7 @@ Not: build, release
 
 ### Volume
 
-How loud the game's sounds play, in percent. The game plays no sound yet.
+How loud the game's sounds play, in percent. Sound starts after the reader's first click or key press on the page.
 
 Not: loudness, sound level
 

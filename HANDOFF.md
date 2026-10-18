@@ -28,6 +28,7 @@ Every `SECOND-ORDER.md` row with status *person*, by number, with what the perso
 
 - R1.23: whether settings are kept between visits (browser storage, D17). Today they last for the visit.
 - R1.63: the fog's sight distance (120 m assumed), which the map validator's hiding rule depends on.
+- R2.100: the sound labels on the Sounds screen (`label` in `data/sounds.json`), a generated list a reader sees.
 - R1.69: the fish roster and how the example counts split over it.
 - R1.30: the game's name ("Fishing" is the working name), and a read of the menu strings and text size choices the agent wrote.
 - R1.107: a read of the eleven lake prop names the Gallery shows (listed at the foot of `SECOND-ORDER.md`), and the props' look (`notes/shots/models/props/`).
