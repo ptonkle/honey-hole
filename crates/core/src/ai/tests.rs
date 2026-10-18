@@ -207,9 +207,11 @@ fn the_ai_hooks_within_its_reaction_time() {
     }
 }
 
-/// Points per seat after a 4-minute match of four AIs on a seed.
-fn match_points(seed: u64, seats: [Difficulty; 4]) -> Vec<i32> {
-    let t = sample();
+/// Points per seat after a 4-minute match of four AIs on a seed, with the
+/// AI going for the item buoys or not (`ai.items.use_items`).
+fn match_points(seed: u64, seats: [Difficulty; 4], items: bool) -> Vec<i32> {
+    let mut t = sample();
+    t.ai.items.use_items = items;
     let mut s = Setup::new(&t);
     s.seed = seed;
     s.length_ms = 240_000;
@@ -235,24 +237,31 @@ fn match_points(seed: u64, seats: [Difficulty; 4]) -> Vec<i32> {
 #[test]
 fn hard_beats_easy_on_average() {
     use Difficulty::{Easy, Hard};
-    let (mut hard, mut easy) = (0, 0);
-    for seed in 1..=4 {
-        // the seats change round so neither sits nearer the fish
-        let seats = if seed % 2 == 0 {
-            [Hard, Easy, Hard, Easy]
-        } else {
-            [Easy, Hard, Easy, Hard]
-        };
-        let p = match_points(seed, seats);
-        for (k, d) in seats.iter().enumerate() {
-            if *d == Hard {
-                hard += p[k];
+    // with items, and without: there the skill alone decides (with items,
+    // Hard's quicker hand at the minigames wins even on Easy's skill)
+    for items in [true, false] {
+        let (mut hard, mut easy) = (0, 0);
+        for seed in 1..=4 {
+            // the seats change round so neither sits nearer the fish
+            let seats = if seed % 2 == 0 {
+                [Hard, Easy, Hard, Easy]
             } else {
-                easy += p[k];
+                [Easy, Hard, Easy, Hard]
+            };
+            let p = match_points(seed, seats, items);
+            for (k, d) in seats.iter().enumerate() {
+                if *d == Hard {
+                    hard += p[k];
+                } else {
+                    easy += p[k];
+                }
             }
         }
+        assert!(
+            hard > easy,
+            "items {items}: Hard {hard} points against Easy {easy}"
+        );
     }
-    assert!(hard > easy, "Hard {hard} points against Easy {easy}");
 }
 
 #[test]
@@ -488,4 +497,48 @@ fn the_ai_hunts_on_the_hook_popup_not_the_hook_and_knows_its_delay() {
     m.events.push(announced(0));
     crew.inputs(&m);
     assert!(hunting(&crew), "{:?}", crew.brains[0].goal);
+}
+
+/// The worst tick of a seeded 8-minute match of four Hard AI players on
+/// Burt Lake, layout `layout`: (A* searches in it, their steps), and the
+/// match's searches in all.
+fn worst_tick_of_four_hard_ais(seed: u64, layout: u32) -> ((u64, u64), u64) {
+    let t = sample();
+    let r = roster();
+    let mut s = Setup::new(&t);
+    s.seed = seed;
+    s.fish = r.0.iter().map(|k| (k.id.clone(), k.count)).collect();
+    for k in 0..4 {
+        s = s.with(k, Occupant::Ai(Difficulty::Hard), &format!("P{k}"));
+    }
+    let mut m = Match::new(generate(Setting::MichiganLake, layout), &t, s).unwrap();
+    m.stock(&r).unwrap();
+    let mut crew = Crew::new(&m);
+    let mut worst = (0, 0);
+    let mut was = crew.nav.work();
+    while !m.ended {
+        let i = crew.inputs(&m);
+        let now = crew.nav.work();
+        worst = (worst.0.max(now.0 - was.0), worst.1.max(now.1 - was.1));
+        was = now;
+        m.step(&i);
+    }
+    (worst, was.0)
+}
+
+#[test]
+fn four_hard_ais_run_at_most_one_path_search_a_tick() {
+    // A cost guard, counted in steps rather than timed, so a busy machine
+    // cannot fail it. The AI's slow ticks were path searches, several
+    // players starting one in the same tick (all four leave the spawn on
+    // the first). One search on this 96-cell grid takes at most
+    // 96 x 96 = 9216 cells off the open list, plus its 2 m line samples;
+    // the steps allowed are about 3 times the worst measured (SECOND-ORDER
+    // R6.4).
+    for (seed, layout) in [(9, 3), (5, 0)] {
+        let ((searches, steps), all) = worst_tick_of_four_hard_ais(seed, layout);
+        assert!(all > 10, "seed {seed}: only {all} searches in a match");
+        assert_eq!(searches, 1, "seed {seed}: {searches} path searches in one tick");
+        assert!(steps <= 10_000, "seed {seed}: a tick took {steps} search steps");
+    }
 }

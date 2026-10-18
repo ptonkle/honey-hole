@@ -9,6 +9,13 @@
 //! (eight neighbours, no cut corners), then pulled straight wherever the
 //! water between two points is `ai.path_roomy_mm` from land ([`clear_line`]).
 //!
+//! **The budget**: the crew runs at most `ai.path_searches_per_tick` A*
+//! searches a tick between all its AI players ([`Nav::search`]); a player
+//! whose search would go over waits a tick or two, keeping its old path (or
+//! heading straight for its goal), so a tick where several players need a
+//! new path at once costs no more than one. [`Nav::work`] counts the
+//! searches and their steps, for the cost guard (`ai::tests`).
+//!
 //! **Steering** ([`steer`]) turns toward the next waypoint and sets the
 //! throttle for a wanted speed: slower for a sharp turn, for a stop, and
 //! under `ai.careful_speed_pct` of top speed with land within
@@ -16,6 +23,7 @@
 //! water) or within `ai.near_land_mm` at all, which is under the speed that
 //! grounds a boat.
 
+use std::cell::Cell;
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 
@@ -38,6 +46,19 @@ pub struct Nav {
     pub cost: Vec<i32>,
     /// the clearance a straight stretch of path needs
     clear_mm: i32,
+    /// A* searches the crew may still run this tick ([`Nav::new_tick`])
+    left: Cell<u32>,
+    /// searches a tick, from `ai.path_searches_per_tick`
+    per_tick: u32,
+    /// A* searches run, and their steps (cells taken off the open list and
+    /// clear-line samples), since the crew was made
+    searches: Cell<u64>,
+    steps: Cell<u64>,
+}
+
+/// How many samples [`clear_line`] takes from `a` to `b` (one each 2 m).
+fn line_samples(a: P, b: P) -> u64 {
+    (a.dist(b) / 2000).max(1) as u64 + 1
 }
 
 /// Whether the water from `a` to `b` is clear: every point along it, each
@@ -110,13 +131,38 @@ impl Nav {
                 }
             }
         }
+        let per_tick = t.path_searches_per_tick.max(1) as u32;
         Nav {
             n,
             cell_mm: k as i32 * map.cell_mm,
             open,
             cost,
             clear_mm: t.path_roomy_mm,
+            left: Cell::new(per_tick),
+            per_tick,
+            searches: Cell::new(0),
+            steps: Cell::new(0),
         }
+    }
+
+    /// A new tick: the crew's searches start again from the budget.
+    pub fn new_tick(&self) {
+        self.left.set(self.per_tick);
+    }
+
+    /// The A* searches run, and their steps, since the crew was made.
+    pub fn work(&self) -> (u64, u64) {
+        (self.searches.get(), self.steps.get())
+    }
+
+    /// [`Nav::path`] within the tick's budget: `None` when it would need an
+    /// A* search and the crew has run its searches this tick (try again
+    /// next tick). A straight run in clear water needs no search.
+    pub fn search(&self, map: &Map, from: P, to: P) -> Option<Option<Vec<P>>> {
+        if self.left.get() == 0 && !clear_line(map, from, to, self.clear_mm) {
+            return None;
+        }
+        Some(self.path(map, from, to))
     }
 
     fn cell_of(&self, p: P) -> Option<usize> {
@@ -174,9 +220,12 @@ impl Nav {
     /// The waypoints from `from` to `to`, ending at `to` itself, or `None`
     /// when no open water joins them.
     pub fn path(&self, map: &Map, from: P, to: P) -> Option<Vec<P>> {
+        self.steps.set(self.steps.get() + line_samples(from, to));
         if clear_line(map, from, to, self.clear_mm) {
             return Some(vec![to]);
         }
+        self.left.set(self.left.get().saturating_sub(1));
+        self.searches.set(self.searches.get() + 1);
         let start = self.nearest_open(from)?;
         let goal = self.nearest_open(to)?;
         let n = self.n;
@@ -192,7 +241,9 @@ impl Nav {
         };
         g[start] = 0;
         heap.push(Reverse((h(start), start as u32)));
+        let mut popped = 0u64;
         while let Some(Reverse((_, c))) = heap.pop() {
+            popped += 1;
             let c = c as usize;
             if c == goal {
                 break;
@@ -231,6 +282,7 @@ impl Nav {
                 }
             }
         }
+        self.steps.set(self.steps.get() + popped);
         if g[goal] == i32::MAX {
             return None;
         }
@@ -247,7 +299,10 @@ impl Nav {
         let mut i = 0;
         while i < raw.len() {
             let mut j = i;
-            while j + 1 < raw.len() && clear_line(map, at, raw[j + 1], self.clear_mm) {
+            while j + 1 < raw.len() && {
+                self.steps.set(self.steps.get() + line_samples(at, raw[j + 1]));
+                clear_line(map, at, raw[j + 1], self.clear_mm)
+            } {
                 j += 1;
             }
             out.push(raw[j]);

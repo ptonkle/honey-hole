@@ -12,6 +12,9 @@
        Join (BUILDER-SPEC.md, the D4 change). -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' wss://nos.lol wss://relay.mostr.pub wss://purplerelay.com wss://nostr.data.haus wss://relay.agorist.space; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>Fishing</title>
+  <!-- no icon file: without this line a browser asks for /favicon.ico,
+       which the site does not have (a 404 in the console; SECOND-ORDER R6.10) -->
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css">
 </head>
 <body data-ready="false">

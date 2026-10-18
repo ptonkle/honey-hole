@@ -65,15 +65,15 @@
   {
     "name": "settings end with back",
     "file": "crates/core/src/app/menus.rs",
-    "find": "                self.button(\"menu.back\"),",
+    "find": "        items.push(self.button(\"menu.back\"));\n",
     "replace": "",
     "test": "every_sub_screen_ends_with_back"
   },
   {
     "name": "leaving a match ends it",
     "file": "crates/core/src/app/play.rs",
-    "find": "        self.play = None;\n        self.settings_return = false;",
-    "replace": "        self.settings_return = false;",
+    "find": "        self.play = None;\n        self.flow.reset();",
+    "replace": "        self.flow.reset();",
     "test": "the_menu_button_resume_and_leave_match"
   },
   {
@@ -681,8 +681,8 @@
   {
     "name": "a ram wrecks at eighty percent",
     "file": "crates/core/src/sim/collide.rs",
-    "find": "(a_toward >= r.ram_wreck, b_toward >= r.ram_wreck)",
-    "replace": "(a_toward > r.ram_wreck, b_toward > r.ram_wreck)",
+    "find": "let (a_rams, b_rams) = (a_toward >= need(reel_j), b_toward >= need(reel_i));",
+    "replace": "let (a_rams, b_rams) = (a_toward > need(reel_j), b_toward > need(reel_i));",
     "test": "a_ram_at_eighty_percent"
   },
   {
@@ -716,8 +716,8 @@
   {
     "name": "the timer ends the match",
     "file": "crates/core/src/sim/mod.rs",
-    "find": "if self.tick >= self.rules.length_ticks {",
-    "replace": "if self.tick > self.rules.length_ticks {",
+    "find": "if self.tick >= self.rules.length_ticks && !self.online.end_elsewhere {",
+    "replace": "if self.tick > self.rules.length_ticks && !self.online.end_elsewhere {",
     "test": "the_timer_ends"
   },
   {
@@ -1346,8 +1346,8 @@
   {
     "name": "tab raises the fish-boy",
     "file": "crates/core/src/sim/mod.rs",
-    "find": "            if i.pressed.fishboy && self.boats[seat].is_some() {",
-    "replace": "            if false {",
+    "find": "if i.pressed.fishboy && self.boats[seat].is_some() && !held {",
+    "replace": "if false {",
     "test": "tab_raises_esc_lowers_and_it_opens_again_on_the_last_tab"
   },
   {
@@ -1520,7 +1520,7 @@
   },
   {
     "name": "a raised fish-boy makes the boat coast",
-    "file": "crates/core/src/sim/mod.rs",
+    "file": "crates/core/src/sim/items/mod.rs",
     "find": "            b.captured = up;",
     "replace": "            b.captured = false;",
     "test": "raised_the_boat_coasts_and_lowered_it_drives_again"
@@ -1528,8 +1528,8 @@
   {
     "name": "a ping needs the fish-boy up",
     "file": "crates/core/src/sim/mod.rs",
-    "find": "if i.pressed.ping && self.seats[seat].fishboy {",
-    "replace": "if i.pressed.ping {",
+    "find": "if i.pressed.ping && self.seats[seat].fishboy && !playing {",
+    "replace": "if i.pressed.ping && !playing {",
     "test": "the_ping_is_a_seat_input_and_needs_the_fishboy_up"
   },
   {
@@ -1548,9 +1548,9 @@
   },
   {
     "name": "a catch lowers the fish left",
-    "file": "crates/core/src/sim/mod.rs",
-    "find": "(kind.clone(), n.saturating_sub(caught))",
-    "replace": "(kind.clone(), *n)",
+    "file": "crates/core/src/sim/fishing/mod.rs",
+    "find": "self.fish.iter().filter(|f| f.kind == kind && f.in_lake()).count()",
+    "replace": "self.fish.iter().filter(|f| f.kind == kind).count()",
     "test": "the_fishpedia_shows_each_tier_its_fish_and_how_many_are_left"
   },
   {
@@ -1668,7 +1668,7 @@
   {
     "name": "a freed fish swims off",
     "file": "crates/core/src/sim/fishing/mod.rs",
-    "find": "to: lake::flee_point(map, &self.fish_tuning, f.at, from),",
+    "find": "to: lake::flee_point_by(map, f.at, from, swim_mm),",
     "replace": "to: f.at,",
     "test": "a_broken_line_loses_the_fish_which_stays_in_the_lake_and_swims_away"
   },
@@ -1899,7 +1899,7 @@
   {
     "name": "F8 needs the debug flag",
     "file": "crates/core/src/flow/mod.rs",
-    "find": "if !self.flow.debug || code != \"F8\"",
+    "find": "if !self.flow.debug\n            || code != \"F8\"",
     "replace": "if code != \"F8\"",
     "test": "f8_jumps_to_the_last_seconds_only_under_the_debug_flag"
   },
@@ -1969,7 +1969,7 @@
   {
     "name": "online: a joiner sets its clock from the host",
     "file": "crates/core/src/online/session.rs",
-    "find": "                    m.tick = expected.max(0) as u32;\n",
+    "find": "                    m.set_steps(expected.max(0) as u32);\n",
     "replace": "",
     "test": "two_to_four_browsers_agree_on_the_seats_and_the_timer"
   },
@@ -2319,8 +2319,8 @@
   {
     "name": "the Title has no Minigames button",
     "file": "crates/core/src/app/menus.rs",
-    "find": "                    self.button(\"menu.minigames\"),\n",
-    "replace": "",
+    "find": "\"menu.sounds\", \"menu.minigames\"]",
+    "replace": "\"menu.sounds\"]",
     "test": "the_app_opens_on_the_title_with_its_menu"
   },
   {
@@ -2438,8 +2438,8 @@
   {
     "name": "items: a ram is judged on the plain top speed, nitrous or not",
     "file": "crates/core/src/sim/collide.rs",
-    "find": "let (a_rams, b_rams) = (a_toward >= r.ram_wreck, b_toward >= r.ram_wreck);",
-    "replace": "let (a_rams, b_rams) = (a_toward >= r.ram_wreck * r.nitrous_top_pct / 100, b_toward >= r.ram_wreck);",
+    "find": "let (a_rams, b_rams) = (a_toward >= need(reel_j), b_toward >= need(reel_i));",
+    "replace": "let (a_rams, b_rams) = (a_toward >= need(reel_j) * r.nitrous_top_pct / 100, b_toward >= need(reel_i));",
     "test": "nitrous_does_not_change_the_ram_threshold"
   },
   {
@@ -2550,8 +2550,8 @@
   {
     "name": "Easy and Hard swap skills",
     "file": "crates/core/src/ai/tuning.rs",
-    "find": "            Difficulty::Easy => &self.easy,\n            Difficulty::Normal => &self.normal,\n            Difficulty::Hard => &self.hard,",
-    "replace": "            Difficulty::Easy => &self.hard,\n            Difficulty::Normal => &self.normal,\n            Difficulty::Hard => &self.easy,",
+    "find": "pub fn get(&self, d: Difficulty) -> &Skill {\n        match d {\n            Difficulty::Easy => &self.easy,\n            Difficulty::Normal => &self.normal,\n            Difficulty::Hard => &self.hard,",
+    "replace": "pub fn get(&self, d: Difficulty) -> &Skill {\n        match d {\n            Difficulty::Easy => &self.hard,\n            Difficulty::Normal => &self.normal,\n            Difficulty::Hard => &self.easy,",
     "test": "hard_beats_easy_on_average"
   },
   {
@@ -2620,8 +2620,8 @@
   {
     "name": "a hook's announcement ignores its delay",
     "file": "crates/core/src/sim/fishing/announce.rs",
-    "find": "due: tick + ticks(delay_ms),",
-    "replace": "due: tick,",
+    "find": "let w = Waiting {\n                        due: tick + ticks(delay_ms),",
+    "replace": "let w = Waiting {\n                        due: tick,",
     "test": "a_delayed_hook_is_announced_late_and_a_lost_one_never"
   },
   {
@@ -2875,5 +2875,19 @@
     "find": "if self.reel_held.get(seat).copied().unwrap_or(false) {",
     "replace": "if false {",
     "test": "a_minigame_holds_the_reel_still_until_it_ends"
+  },
+  {
+    "name": "the AI crew runs any number of path searches a tick (R6.4)",
+    "file": "crates/core/src/ai/nav.rs",
+    "find": "if self.left.get() == 0 && !clear_line(map, from, to, self.clear_mm) {",
+    "replace": "if false {",
+    "test": "four_hard_ais_run_at_most_one_path_search_a_tick"
+  },
+  {
+    "name": "a model out of the camera's picture is posed (R6.5)",
+    "file": "crates/core/src/scene/mod.rs",
+    "find": "!off.longer_than(cam.far.saturating_add(r)) && off.dot64(cam.fwd) >= -(r as i64) * ONE as i64",
+    "replace": "true",
+    "test": "a_model_past_the_far_plane_or_behind_the_camera_is_not_posed"
   }
 ]

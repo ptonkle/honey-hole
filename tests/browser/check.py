@@ -9,6 +9,8 @@ own interactions from tests/browser/interactions.py. The run fails on:
 - a console error;
 - any request to another origin, during load, idle or the interactions;
 - a Content-Security-Policy violation (a blocked attempt is still an attempt);
+- a request for a file the site does not have (the server answered 404), even
+  one the browser makes by itself, such as an icon;
 - a WebSocket, a popup, a worker or a service worker opened by the page;
 - a failed check inside the interactions.
 
@@ -56,6 +58,8 @@ IDLE_MS = int(float(os.environ.get("BUILDER_IDLE", "10")) * 1000)
 
 failures = []
 report = None  # tests/browser/progress.py: the bars or the plain lines
+# what the local server could not serve: "<status> <path>" (SECOND-ORDER R6.10)
+missing = []
 
 
 def check(ok, what):
@@ -74,6 +78,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
     def log_message(self, *args):
         pass
+
+    def send_error(self, code, message=None, explain=None):
+        missing.append(f"{code} {self.path}")
+        super().send_error(code, message, explain)
 
 
 def serve():
@@ -120,7 +128,9 @@ def run_engine(p, engine, base, interactions):
         " e => window.__builderCsp.push(e.violatedDirective + ' ' + e.blockedURI));"
     )
     page = context.new_page()
+    missing.clear()
     page.on("console", lambda m: seen["console"].append(m.text) if m.type == "error" else None)
+    page.on("response", lambda r: missing.append(f"{r.status} {r.url}") if r.status >= 400 else None)
     page.on("pageerror", lambda e: seen["errors"].append(str(e)))
     page.on("websocket", lambda ws: seen["sockets"].append(ws.url))
     page.on("worker", lambda w: seen["workers"].append(w.url))
@@ -142,6 +152,7 @@ def run_engine(p, engine, base, interactions):
     sw = page.evaluate("() => navigator.serviceWorker ? navigator.serviceWorker.getRegistrations().then(r => r.length) : 0")
     check(not seen["errors"], f"no uncaught page error {seen['errors']}")
     check(not seen["console"], f"no console error {seen['console']}")
+    check(not missing, f"no request for a missing file {sorted(set(missing))}")
     check(not seen["foreign"], f"no off-origin request at any point {seen['foreign']}")
     check(not seen["sockets"], f"no WebSocket {seen['sockets']}")
     check(not seen["popups"], f"no popup {seen['popups']}")

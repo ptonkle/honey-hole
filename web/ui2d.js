@@ -6,7 +6,8 @@
 //
 // A "hole" clears its rectangle, so the model the WebGL renderer drew there
 // shows through; a "bitmap" draws an image the core made, fetched once and
-// kept under its id.
+// kept under its id. A list the same as the last one drawn is not drawn
+// again: the canvas still shows it (SECOND-ORDER R6.9).
 
 export function makeOverlay(canvas, N, fetchBitmap) {
   const ctx = canvas.getContext("2d");
@@ -146,6 +147,18 @@ export function makeOverlay(canvas, N, fetchBitmap) {
     },
   };
 
+  // the list last drawn, and whether the canvas still shows it
+  let lastValues = null;
+  let lastStrings = null;
+  let shown = false;
+
+  function unchanged(values, strings) {
+    if (!shown || lastValues.length !== values.length || lastStrings.length !== strings.length) return false;
+    for (let k = 0; k < values.length; k++) if (lastValues[k] !== values[k]) return false;
+    for (let k = 0; k < strings.length; k++) if (lastStrings[k] !== strings[k]) return false;
+    return true;
+  }
+
   // code -> op, from the core's names
   const byCode = [];
   Object.keys(N.ops).forEach((name) => {
@@ -159,8 +172,13 @@ export function makeOverlay(canvas, N, fetchBitmap) {
       if (canvas.width === width && canvas.height === height) return;
       canvas.width = width;
       canvas.height = height;
+      shown = false;
     },
     draw(values, strings) {
+      if (unchanged(values, strings)) return;
+      lastValues = values;
+      lastStrings = strings;
+      shown = true;
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.globalAlpha = 1;
       ctx.setLineDash([]);

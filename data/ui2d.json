@@ -2,9 +2,13 @@
   "_note": "The 2D layer's look (crates/core/src/ui2d/theme.rs). Colours are 0-255. fonts: CSS families, a weight, and the glyph advance in percent of the size (the core lays labels out by it). fishboy: the screen's virtual canvas, the first-person field of view in degrees, the screen's share of the view (percent of width or height, whichever binds), and how long raising it takes. radar: the map picture in blocks of block_mm (2.5 m: the person's 80% fidelity), its colours, the fine grid, range rings, the ping's sweep band and the players' radar colours. tiers: each tier's colour and frame shape (double, notched, dashed, plain). standin: the plain lake drawn behind the Fish-Boy until the world renderer lands.",
   "fonts": {
     "mono": { "family": "ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace", "weight": "bold", "advance": 60 },
-    "banner": { "family": "Impact, 'Arial Black', 'Helvetica Neue', sans-serif", "weight": "bold", "advance": 52 }
+    "banner": {
+      "family": "'Rockwell Extra Bold', 'Rockwell', 'Roboto Slab', 'Zilla Slab', 'Clarendon', 'Bookman Old Style', 'DejaVu Serif', 'Bitstream Charter', serif",
+      "weight": "bold",
+      "advance": 76
+    }
   },
-  "hud": { "canvas": [1920, 1080], "ink": [240, 244, 236] },
+  "hud": { "canvas": [1920, 1080], "ink": [248, 239, 220] },
   "fishboy": {
     "canvas": [1600, 900],
     "fov_deg": 50,
@@ -57,35 +61,121 @@
   },
   "minigames": {
     "_note": "The item minigames' look (crates/core/src/minigame/look.rs). Colours are 0-255; sizes are in the minigames' 1600 x 900 canvas units. banner: the WarioWare-style instruction band (its text pops from 60% to size over pop_ms; dim_pct darkens the minigame under it). bezel: the Fish-Boy's case drawn round an on-device minigame on the Minigames screen. cloak and enhanced_radar are on the Fish-Boy, so they are in its phosphor greens. camera.fish: the flying fish's colours, taken in turn; viewfinder_size and bracket: the viewfinder cursor.",
-    "banner": { "band": [255, 206, 46], "edge": [24, 24, 30], "ink": [255, 255, 255], "shadow": [24, 24, 30], "size": 92, "band_h": 200, "pop_ms": 180, "dim_pct": 45 },
-    "text": [245, 245, 240],
+    "banner": {
+      "band": [217, 162, 30],
+      "edge": [43, 33, 24],
+      "ink": [248, 239, 220],
+      "shadow": [150, 64, 15],
+      "size": 92,
+      "band_h": 200,
+      "pop_ms": 180,
+      "dim_pct": 45
+    },
+    "text": [248, 239, 220],
     "text_size": 38,
-    "hint": [200, 206, 200],
+    "hint": [227, 209, 170],
     "hint_size": 22,
     "progress_size": 32,
-    "bar": [120, 230, 120],
-    "bar_back": [40, 48, 44],
+    "bar": [217, 162, 30],
+    "bar_back": [24, 42, 29],
     "bezel": [44, 50, 40],
-    "cloak": { "background": [4, 16, 8], "grid": [18, 60, 26], "rim": [150, 255, 160], "floor": [52, 150, 70], "bench": [110, 220, 120], "motor": [190, 255, 190], "deck": [80, 190, 96], "eraser": [255, 170, 190], "eraser_edge": [255, 240, 245] },
-    "power_reel": { "background": [22, 48, 70], "spool": [200, 206, 214], "line": [90, 170, 110], "rim": [52, 58, 66], "hub": [236, 190, 64], "handle": [220, 60, 50], "arrow": [255, 255, 255], "progress": [255, 214, 70], "pip_off": [50, 74, 96], "pip_on": [255, 214, 70] },
-    "nitrous": { "background": [28, 26, 40], "arena": [44, 42, 62], "arena_line": [110, 104, 150], "nitrogen": [70, 130, 255], "oxygen": [240, 70, 70], "atom_ink": [255, 255, 255], "bin": [36, 34, 52], "bin_line": [150, 146, 190], "wrong": [255, 200, 40] },
-    "teleporter": { "background": [16, 10, 34], "glow": [90, 50, 160], "circle": [150, 80, 230], "edge": [255, 255, 255], "ring": [120, 230, 255], "ring_ready": [120, 255, 140], "number": [255, 255, 255], "hit": [120, 255, 140], "miss": [255, 80, 90] },
-    "camera": {
-      "sky": [126, 184, 230], "sky_low": [196, 224, 240], "water": [46, 104, 140], "water_line": [200, 230, 245],
-      "fish": [[96, 140, 70], [200, 170, 60], [90, 120, 150], [170, 110, 60], [120, 150, 110]],
-      "belly": [240, 236, 214], "eye": [20, 20, 24], "flash": [255, 255, 255], "photo": [255, 255, 255],
-      "viewfinder": [255, 255, 255], "viewfinder_size": [220, 160], "bracket": 44
+    "cloak": {
+      "background": [4, 16, 8],
+      "grid": [18, 60, 26],
+      "rim": [150, 255, 160],
+      "floor": [52, 150, 70],
+      "bench": [110, 220, 120],
+      "motor": [190, 255, 190],
+      "deck": [80, 190, 96],
+      "eraser": [255, 170, 190],
+      "eraser_edge": [255, 240, 245]
     },
-    "enhanced_radar": { "background": [4, 16, 8], "frame": [34, 120, 52], "fish": [52, 170, 80], "fish_line": [120, 255, 140], "eye": [4, 22, 10], "track": [60, 180, 80], "knob": [14, 40, 20], "knob_line": [120, 255, 140], "snap": [200, 255, 210] }
+    "power_reel": {
+      "background": [29, 87, 84],
+      "spool": [227, 209, 170],
+      "line": [44, 127, 122],
+      "rim": [43, 33, 24],
+      "hub": [217, 162, 30],
+      "handle": [201, 88, 31],
+      "arrow": [248, 239, 220],
+      "progress": [217, 162, 30],
+      "pip_off": [44, 110, 106],
+      "pip_on": [217, 162, 30]
+    },
+    "nitrous": {
+      "background": [24, 42, 29],
+      "arena": [38, 64, 45],
+      "arena_line": [120, 150, 108],
+      "nitrogen": [60, 118, 196],
+      "oxygen": [201, 70, 40],
+      "atom_ink": [248, 239, 220],
+      "bin": [30, 52, 36],
+      "bin_line": [227, 209, 170],
+      "wrong": [217, 162, 30]
+    },
+    "teleporter": {
+      "background": [42, 30, 44],
+      "glow": [110, 58, 84],
+      "circle": [201, 88, 31],
+      "edge": [248, 239, 220],
+      "ring": [233, 191, 85],
+      "ring_ready": [59, 149, 143],
+      "number": [248, 239, 220],
+      "hit": [59, 149, 143],
+      "miss": [214, 72, 52]
+    },
+    "camera": {
+      "sky": [150, 188, 184],
+      "sky_low": [226, 214, 180],
+      "water": [44, 110, 106],
+      "water_line": [227, 209, 170],
+      "fish": [[110, 130, 70], [205, 160, 60], [80, 118, 130], [176, 100, 52], [124, 140, 100]],
+      "belly": [248, 239, 220],
+      "eye": [43, 33, 24],
+      "flash": [255, 255, 255],
+      "photo": [248, 239, 220],
+      "viewfinder": [248, 239, 220],
+      "viewfinder_size": [220, 160],
+      "bracket": 44
+    },
+    "enhanced_radar": {
+      "background": [4, 16, 8],
+      "frame": [34, 120, 52],
+      "fish": [52, 170, 80],
+      "fish_line": [120, 255, 140],
+      "eye": [4, 22, 10],
+      "track": [60, 180, 80],
+      "knob": [14, 40, 20],
+      "knob_line": [120, 255, 140],
+      "snap": [200, 255, 210]
+    }
   },
   "items": {
     "_note": "The items on screen (crates/core/src/app/items.rs). slot: the item slot on the HUD canvas, [x, y, w, h] (bottom right); effect_h: each running effect's timer row, stacked above it; offer: the High-Quality Camera's offer after a catch (bottom middle). icons: each item's colour in its icon. cloak_tint, cloak_tint_pct: your own boat while cloaked is drawn this far toward the tint, to read as see-through. trail: the nitrous trail's colour, and its length and width behind the boat (mm). shimmer: the teleport's charge round the boat: its colour, radius and strands' full height (mm). choose: the teleport's destination marker on the radar.",
-    "slot": [1708, 868, 176, 176], "panel": [16, 24, 30], "edge": [230, 236, 226], "ink": [240, 244, 236], "dim": [120, 128, 124], "key_cap": [230, 236, 226],
-    "icons": { "cloak": [150, 190, 230], "power_reel": [255, 170, 60], "nitrous": [80, 170, 255], "teleporter": [220, 110, 255], "camera": [200, 204, 210], "enhanced_radar": [120, 255, 140] },
-    "effect_h": 64, "offer": [500, 640, 920, 170],
-    "cloak_tint": [200, 225, 240], "cloak_tint_pct": 40,
-    "trail": [90, 190, 255], "trail_mm": 9000, "trail_width_mm": 1400,
-    "shimmer": [230, 150, 255], "shimmer_mm": 3200, "shimmer_height_mm": 5000,
-    "choose": [255, 240, 120]
+    "slot": [1708, 868, 176, 176],
+    "panel": [38, 64, 45],
+    "edge": [241, 229, 202],
+    "ink": [248, 239, 220],
+    "dim": [160, 150, 128],
+    "key_cap": [241, 229, 202],
+    "icons": {
+      "cloak": [150, 190, 230],
+      "power_reel": [255, 170, 60],
+      "nitrous": [80, 170, 255],
+      "teleporter": [220, 110, 255],
+      "camera": [200, 204, 210],
+      "enhanced_radar": [120, 255, 140]
+    },
+    "effect_h": 64,
+    "offer": [500, 640, 920, 170],
+    "cloak_tint": [200, 225, 240],
+    "cloak_tint_pct": 40,
+    "trail": [90, 190, 255],
+    "trail_mm": 9000,
+    "trail_width_mm": 1400,
+    "shimmer": [230, 150, 255],
+    "shimmer_mm": 3200,
+    "shimmer_height_mm": 5000,
+    "choose": [233, 191, 85]
   }
 }
