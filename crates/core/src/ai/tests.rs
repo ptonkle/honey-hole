@@ -207,9 +207,11 @@ fn the_ai_hooks_within_its_reaction_time() {
     }
 }
 
-/// Points per seat after a 4-minute match of four AIs on a seed.
-fn match_points(seed: u64, seats: [Difficulty; 4]) -> Vec<i32> {
-    let t = sample();
+/// Points per seat after a 4-minute match of four AIs on a seed, with the
+/// AI going for the item buoys or not (`ai.items.use_items`).
+fn match_points(seed: u64, seats: [Difficulty; 4], items: bool) -> Vec<i32> {
+    let mut t = sample();
+    t.ai.items.use_items = items;
     let mut s = Setup::new(&t);
     s.seed = seed;
     s.length_ms = 240_000;
@@ -235,24 +237,31 @@ fn match_points(seed: u64, seats: [Difficulty; 4]) -> Vec<i32> {
 #[test]
 fn hard_beats_easy_on_average() {
     use Difficulty::{Easy, Hard};
-    let (mut hard, mut easy) = (0, 0);
-    for seed in 1..=4 {
-        // the seats change round so neither sits nearer the fish
-        let seats = if seed % 2 == 0 {
-            [Hard, Easy, Hard, Easy]
-        } else {
-            [Easy, Hard, Easy, Hard]
-        };
-        let p = match_points(seed, seats);
-        for (k, d) in seats.iter().enumerate() {
-            if *d == Hard {
-                hard += p[k];
+    // with items, and without: there the skill alone decides (with items,
+    // Hard's quicker hand at the minigames wins even on Easy's skill)
+    for items in [true, false] {
+        let (mut hard, mut easy) = (0, 0);
+        for seed in 1..=4 {
+            // the seats change round so neither sits nearer the fish
+            let seats = if seed % 2 == 0 {
+                [Hard, Easy, Hard, Easy]
             } else {
-                easy += p[k];
+                [Easy, Hard, Easy, Hard]
+            };
+            let p = match_points(seed, seats, items);
+            for (k, d) in seats.iter().enumerate() {
+                if *d == Hard {
+                    hard += p[k];
+                } else {
+                    easy += p[k];
+                }
             }
         }
+        assert!(
+            hard > easy,
+            "items {items}: Hard {hard} points against Easy {easy}"
+        );
     }
-    assert!(hard > easy, "Hard {hard} points against Easy {easy}");
 }
 
 #[test]
