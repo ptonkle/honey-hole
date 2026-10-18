@@ -319,3 +319,142 @@ fn a_nibble_dips_the_bobber_and_lets_it_back_up() {
     }
     assert!((tops[0] - tops[1] - mm(90)).abs() <= 2, "{tops:?}");
 }
+
+// ---- aiming (aim.rs, SECOND-ORDER R7.70-R7.71) ----
+
+/// While Space is held the marker's ring is drawn round the spot the view
+/// gives as the aim, and the bobber lands on that spot.
+#[test]
+fn the_aim_marker_is_drawn_where_the_bobber_lands() {
+    let mut a = fishing();
+    let g = &mut a.play.as_mut().unwrap().game;
+    // swivelled a sixteenth of a turn left
+    g.boats[0].as_mut().unwrap().cast_yaw = fx::TURN / 16;
+    assert_eq!(a.my_fishing().unwrap().aim, None);
+    a.act("key", "Space").unwrap();
+    for _ in 0..30 {
+        tick(&mut a);
+    }
+    let aim = a.my_fishing().unwrap().aim.expect("the marker while charging");
+    let (lake, view) = (a.world.as_ref().unwrap(), a.play_view().unwrap());
+    let cam = Camera {
+        eye: lake.world(aim, 5000),
+        fwd: v3(0, -ONE, 0),
+        fov: deg(60),
+        near: mm(50),
+        far: mm(50_000),
+    };
+    let tris = a.fishing_instances(lake, &view, false, &cam, &mut Vec::new());
+    // the ring's vertices, in the look's marker colour (255, 236, 160):
+    // 32 segments of two triangles, all round the aim
+    let colour = render::rgb([255, 236, 160]);
+    let ring: Vec<&[i32]> = tris.chunks(10).filter(|v| v[6..9] == colour).collect();
+    assert_eq!(ring.len(), 32 * 6);
+    let n = ring.len() as i64;
+    let centre = v3(
+        (ring.iter().map(|v| v[0] as i64).sum::<i64>() / n) as i32,
+        0,
+        (ring.iter().map(|v| v[2] as i64).sum::<i64>() / n) as i32,
+    );
+    let drawn = lake.map_point(centre);
+    assert!(
+        (drawn.x - aim.x).abs() <= 5 && (drawn.y - aim.y).abs() <= 5,
+        "{drawn:?} {aim:?}"
+    );
+    // each point of it 40 mm over the waves under it
+    let clock_ms = (a.clock / 1000) as u64;
+    for v in &ring {
+        let under = lake.surface_at(lake.map_point(v3(v[0], 0, v[2])), clock_ms);
+        assert!((v[1] - under - mm(40)).abs() <= 2, "{} over {}", v[1], under);
+    }
+    // let go: the bobber flies and lands on the marker
+    a.act("key.up", "Space").unwrap();
+    for _ in 0..80 {
+        tick(&mut a);
+        if a.my_fishing().unwrap().stage != Stage::Flying {
+            break;
+        }
+    }
+    let fv = a.my_fishing().unwrap();
+    assert_eq!(fv.aim, None, "the marker goes once the bobber lands");
+    let l = fv.lines.iter().find(|l| l.seat == fv.seat).unwrap();
+    assert_ne!(l.stage, Stage::Flying);
+    assert_eq!((l.bobber_x_mm, l.bobber_y_mm), (aim.x, aim.y));
+}
+
+/// The marker and the bobber ride the waves as the page draws them
+/// (`water.vert`), so the water never hides the ring. At the map's middle
+/// (the world's origin, a corner of the water mesh) each wave is its height
+/// times the sine of its phase: at 925 ms the 3.7 s wave is a quarter
+/// period in, -140 mm, and the 2.6 s wave 925/2600 of a turn in, 70 * sin
+/// (-128 degrees) = -55 mm, together -195 mm.
+#[test]
+fn the_water_surface_is_the_drawn_waves() {
+    let a = fishing();
+    let lake = a.world.as_ref().unwrap();
+    let half = lake.map.size_mm() / 2;
+    assert_eq!(half % lake.map.cell_mm, 0, "the middle is a corner of the mesh");
+    let middle = P::new(half, half);
+    assert_eq!(lake.surface_at(middle, 0), 0);
+    let s = lake.surface_at(middle, 925);
+    assert!((s + mm(195)).abs() <= mm(3), "{} mm", scene::to_mm(s));
+}
+
+/// From the boat camera a fish is drawn straight over its map spot, just
+/// under the surface, so the chase camera shows it over that spot.
+#[test]
+fn a_fish_seen_from_the_boat_is_drawn_over_its_true_spot() {
+    let a = fishing();
+    let (lake, look) = (a.world.as_ref().unwrap(), a.fishing_look().unwrap());
+    let b = a.play.as_ref().unwrap().game.boat(0).unwrap().clone();
+    // a 200 mm bluegill 2 m down, 15 m ahead of the boat
+    let at = crate::sim::fishing::lake::ahead(b.at(), b.heading, 15_000);
+    let f = FishSeen {
+        id: 0,
+        kind: "bluegill".into(),
+        tier: crate::map::fish::Tier::Common,
+        x_mm: at.x,
+        y_mm: at.y,
+        depth_mm: 2000,
+        length_mm: 200,
+        base_length_mm: 170,
+        heading: 0,
+        swim_ms: 0,
+        panic: false,
+    };
+    let (fish, depth) = a.fish_instance(lake, &f, false, look).unwrap();
+    // drawn 400 mm long (200%): 120 mm plus 8% of that, 152 mm under the
+    // waves over it
+    assert_eq!(depth, 152);
+    let p = fish.place.t;
+    let water = lake.surface_at(at, (a.clock / 1000) as u64);
+    assert!((p.y - water + mm(152)).abs() <= mm(1), "{p:?} {water}");
+    let spot = lake.map_point(p);
+    assert!(
+        (spot.x - at.x).abs() <= 1 && (spot.y - at.y).abs() <= 1,
+        "{spot:?} {at:?}"
+    );
+    // the chase camera, the mouse at rest, from behind the boat: eye 2.84 m
+    // up (1.5 m pivot + 7 m * sin 11) and 6.87 m behind, so the fish is
+    // 21.9 m off. The surface spot shows 7.40 degrees under the horizon and
+    // the fish 152 mm under it at 7.79: 0.39 degrees apart, about 7 pixels
+    // of 1080 (a 55 degree view). At the old 45% of its depth (900 mm) it
+    // was 42 pixels nearer, three times its drawn length on screen.
+    let cam = crate::scene::camera::boat(
+        lake,
+        &lake.look.camera,
+        lake.world(b.at(), 0),
+        scene::yaw_of_heading(b.heading),
+        0,
+        0,
+    );
+    let m = cam.matrix(render::aspect([1920, 1080]));
+    let pixel = |q: V3| {
+        let c = m.project(q);
+        [c[0] as i64 * 960 / c[3] as i64, c[1] as i64 * 540 / c[3] as i64]
+    };
+    let (fish_px, spot_px) = (pixel(p), pixel(lake.world(at, 0).add(v3(0, water, 0))));
+    assert!((fish_px[0] - spot_px[0]).abs() <= 1, "{fish_px:?} {spot_px:?}");
+    let gap = spot_px[1] - fish_px[1];
+    assert!((5..=9).contains(&gap), "{gap} pixels");
+}

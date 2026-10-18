@@ -505,6 +505,7 @@ impl App {
         self.debug_fish(landed);
         self.items_after_ticks(&heard);
         self.debug_move();
+        self.debug_aim_fish();
     }
 
     /// The match as a world renderer reads it.

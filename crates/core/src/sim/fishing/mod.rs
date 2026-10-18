@@ -518,15 +518,7 @@ impl Fishing {
             return;
         }
         let power = charge_permille(t, w.tick - line.since);
-        let reach = t.cast_min_mm + ((t.cast_max_mm - t.cast_min_mm) as i64 * power as i64 / 1000) as i32;
-        let way = b.heading + b.cast_yaw;
-        // the last water short of land, in quarter-metre steps back
-        let mut d = reach;
-        let mut to = lake::ahead(rod, way, d);
-        while d > 0 && !(w.map.wet(to) && lake::bed_mm(w.map, to) > t.bed_clear_mm) {
-            d = (d - 250).max(0);
-            to = lake::ahead(rod, way, d);
-        }
+        let (to, d) = cast_landing(w.map, t, rod, b.heading + b.cast_yaw, power);
         line.stage = Stage::Flying;
         line.from = rod;
         line.to = to;
@@ -749,6 +741,21 @@ impl Fishing {
             line.lure_depth_mm = d;
         }
     }
+}
+
+/// Where a cast with the charge `power` (0 to 1000) from `rod` toward the
+/// map angle `way` lands, and how far that is: the charge's reach, or the
+/// last water short of land, in quarter-metre steps back. The cast and the
+/// aim marker (`view.rs`'s `aim`) both come from here.
+pub fn cast_landing(map: &Map, t: &FishingTuning, rod: P, way: i32, power: i32) -> (P, i32) {
+    let reach = t.cast_min_mm + ((t.cast_max_mm - t.cast_min_mm) as i64 * power as i64 / 1000) as i32;
+    let mut d = reach;
+    let mut to = lake::ahead(rod, way, d);
+    while d > 0 && !(map.wet(to) && lake::bed_mm(map, to) > t.bed_clear_mm) {
+        d = (d - 250).max(0);
+        to = lake::ahead(rod, way, d);
+    }
+    (to, d)
 }
 
 /// The charge, 0 to 1000, after holding Space for `held` ticks.

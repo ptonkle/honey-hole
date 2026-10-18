@@ -6,11 +6,14 @@
 //! and draws it; no rule is decided here. The drawing's numbers are the
 //! `fishing` section of `data/look.json` ([`FishingLook`]).
 //!
-//! - **Fish** from the boat camera are drawn `fish_scale_pct` of life size
-//!   and at `fish_depth_pct` of their depth, so a fish a few tens of
-//!   centimetres long reads from the chase camera nine metres back
-//!   (SECOND-ORDER R2.38); under the water they are life size at their true
-//!   depth. A fish on a line plays its panic swim.
+//! - **Fish** from the boat camera are drawn `fish_scale_pct` of life size,
+//!   so a fish a few tens of centimetres long reads from the chase camera
+//!   nine metres back (SECOND-ORDER R2.38), straight over their map spot
+//!   just under the surface and tinted as deep as `fish_depth_pct` of their
+//!   depth ([`aim`], R7.70); under the water they are life size at their
+//!   true depth. A fish on a line plays its panic swim.
+//! - **The aim marker**: a ring on the water where the cast will land, while
+//!   Space is held ([`aim`]).
 //! - **The underwater camera**: with this seat's line in the water, the
 //!   main view looks at the lure from `under.back_mm` behind it, turned by
 //!   the mouse, in a short green-blue fog; the boat camera's view goes into
@@ -40,9 +43,15 @@ use crate::sim::Mode;
 pub struct FishingLook {
     #[serde(rename = "_note", default)]
     pub note: String,
-    /// fish seen from the boat camera: their size and depth drawn, percent
+    /// fish seen from the boat camera: their size drawn, percent; how deep
+    /// they look (the water's tint), percent of their depth; and how deep
+    /// they are drawn (`aim::drawn_depth_mm`)
     pub fish_scale_pct: i32,
     pub fish_depth_pct: i32,
+    pub fish_float_mm: i32,
+    pub fish_float_pct: i32,
+    /// the aim marker (`aim.rs`)
+    pub aim: aim::AimLook,
     pub bobber_scale_pct: i32,
     pub lure_scale_pct: i32,
     /// the line's width drawn from the boat camera and under the water
@@ -434,28 +443,39 @@ impl App {
     }
 
     /// A fish model where the view says it is: life size at its depth
-    /// under the water, or larger and shallower from the boat camera.
-    fn fish_instance<'a>(
+    /// under the water, or larger and just under the surface straight over
+    /// its map spot from the boat camera (`aim.rs`), with the depth it is
+    /// drawn at.
+    pub(crate) fn fish_instance<'a>(
         &'a self,
         lake: &Lake,
         f: &FishSeen,
         under: bool,
         look: &FishingLook,
-    ) -> Option<Instance<'a>> {
+    ) -> Option<(Instance<'a>, i32)> {
         let model = self.models.iter().find(|m| m.id == f.kind)?;
         let mut scale = (f.length_mm as i64 * 1000 / f.base_length_mm.max(1) as i64) as i32;
-        let mut depth = f.depth_mm;
+        let at = P::new(f.x_mm, f.y_mm);
+        let (mut depth, mut surface) = (f.depth_mm, 0);
         if !under {
             scale = pct(scale, look.fish_scale_pct);
-            depth = pct(depth, look.fish_depth_pct);
+            depth = aim::drawn_depth_mm(
+                look.fish_float_mm,
+                look.fish_float_pct,
+                pct(f.length_mm, look.fish_scale_pct),
+            )
+            .min(f.depth_mm);
+            // just under the waves, riding them
+            surface = scene::to_mm(lake.surface_at(at, (self.clock.max(0) / 1000) as u64));
         }
-        Some(Instance {
+        let fish = Instance {
             model,
-            place: lake.place(P::new(f.x_mm, f.y_mm), -depth, f.heading, scale),
+            place: lake.place(at, surface - depth, f.heading, scale),
             anim: Some(if f.panic { Anim::Panic } else { Anim::Idle }),
             ms: f.swim_ms % 60_000,
             colour: [0; 3],
-        })
+        };
+        Some((fish, depth))
     }
 
     /// The fish, bobbers and lures to draw this frame, and the lines as
@@ -480,8 +500,9 @@ impl App {
             return tris;
         };
         let ms = ((self.clock.max(0) / 1000) % 60_000) as u32;
+        let clock_ms = (self.clock.max(0) / 1000) as u64;
         for f in &fv.fish {
-            let Some(fish) = self.fish_instance(lake, f, under, look) else {
+            let Some((fish, drawn)) = self.fish_instance(lake, f, under, look) else {
                 continue;
             };
             if under {
@@ -496,8 +517,20 @@ impl App {
                 }
                 tris.extend(posed);
             } else {
-                instances.push(fish);
+                // as tinted as it would be `fish_depth_pct` of its depth down
+                let mut posed = scene::pose(&[fish]);
+                aim::deepen(
+                    &mut posed,
+                    &lake.look.under,
+                    drawn,
+                    pct(f.depth_mm, look.fish_depth_pct),
+                );
+                tris.extend(posed);
             }
+        }
+        // where the cast will land, while Space is held
+        if let (false, Some(at)) = (under, fv.aim) {
+            look.aim.marker(&mut tris, lake, at, clock_ms);
         }
         let tips = self.rod_tips(lake, view);
         let bobber = self.models.iter().find(|m| m.id == "bobber");
@@ -528,7 +561,11 @@ impl App {
                 }
                 continue;
             }
-            let float = lake.world(P::new(l.bobber_x_mm, l.bobber_y_mm), l.bobber_up_mm);
+            // riding the waves, as the aim marker does
+            let on = P::new(l.bobber_x_mm, l.bobber_y_mm);
+            let float = lake
+                .world(on, l.bobber_up_mm)
+                .add(v3(0, lake.surface_at(on, clock_ms), 0));
             // the bite (T4): the bobber plunges under in splash rings
             let dip = match l.bite_ms {
                 Some(b) => {
@@ -761,7 +798,8 @@ impl App {
     /// `fishing` puts a fish by this seat's bobber each time it lands, tames
     /// the reel and widens the hook window to 5 s, so a browser check can
     /// hook and land one by script. `watch` hands the person's seat to a
-    /// Hard AI player, for watching the AI play (`app/play.rs`).
+    /// Hard AI player, for watching the AI play (`app/play.rs`). `aimfish`
+    /// puts a fish out from the bow for the aim's screenshots (`aim.rs`).
     pub(super) fn debug_act(&mut self, value: &str) {
         self.debug_fishing = value.split(',').any(|f| f.trim() == "fishing");
         self.debug_watch = value.split(',').any(|f| f.trim() == "watch");
@@ -889,6 +927,7 @@ impl App {
     }
 }
 
+pub mod aim;
 pub mod cue;
 #[cfg(test)]
 mod tests;

@@ -1189,3 +1189,43 @@ fn the_view_counts_the_bite_from_its_tick() {
     until(&mut m, 100, |e| matches!(e, MatchEvent::Missed { seat: 0 }));
     assert_eq!(mine(&m), None);
 }
+
+/// The aim marker (SECOND-ORDER R7.71): while Space is held the view says
+/// where the cast will land if Space is let go now, and it lands there.
+#[test]
+fn the_cast_lands_where_the_aim_marker_shows() {
+    let mut m = fresh(1);
+    // swivelled an eighth of a turn right: the cast goes south-east
+    m.boats[0].as_mut().unwrap().cast_yaw = -crate::map::trig::TURN / 8;
+    assert_eq!(m.fishing_view(0).aim, None, "no marker before Space");
+    step0(&mut m, space_down());
+    for _ in 1..24 {
+        step0(&mut m, space_held());
+    }
+    // let go now, the cast has 24 ticks of charge: 4 m + 24 * 400 mm =
+    // 13.6 m from the bow (61 850, 80 000), along -45 degrees: 13 600 *
+    // cos 45 east and as far south; `map::trig`'s sine (Bhaskara's) gives
+    // 3/4.25 for cos 45, so 9600 each way
+    let aim = m.fishing_view(0).aim.expect("the marker while Space is held");
+    assert!(
+        (aim.x - (BOW_X + 9600)).abs() <= 3 && (aim.y - (AT.y - 9600)).abs() <= 3,
+        "{aim:?}"
+    );
+    let e = step0(&mut m, space_up());
+    assert!(
+        e.contains(&MatchEvent::Cast {
+            seat: 0,
+            distance_mm: 13_600
+        }),
+        "{e:?}"
+    );
+    assert_eq!(m.fishing.lines[0].to, aim, "the cast flies to the marker");
+    assert_eq!(
+        m.fishing_view(0).aim,
+        Some(aim),
+        "the marker stays through the flight"
+    );
+    until(&mut m, 60, |e| matches!(e, MatchEvent::BobberLanded { .. }));
+    assert_eq!(m.fishing.lines[0].bobber, aim, "the bobber lands on the marker");
+    assert_eq!(m.fishing_view(0).aim, None, "and the marker goes");
+}

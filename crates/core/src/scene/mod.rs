@@ -203,6 +203,12 @@ impl Lake {
         terrain::height_at(self, p)
     }
 
+    /// The water's surface over a map point at `clock_ms`, world units over
+    /// the still water, as the page draws the waves (`terrain::wave_at`).
+    pub fn surface_at(&self, p: P, clock_ms: u64) -> i32 {
+        terrain::wave_at(self, p, clock_ms)
+    }
+
     /// The draw data's stamp for this world: the page uploads
     /// [`Lake::vertices`] again when it changes.
     pub fn stamp(&self) -> u32 {
