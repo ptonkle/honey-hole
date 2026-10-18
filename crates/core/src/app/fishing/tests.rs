@@ -236,6 +236,7 @@ fn lure_with_fish(a: &mut App, biting: bool) -> P {
         next: u32::MAX,
         nibbles_left: 0,
         biting_until: biting.then(|| tick + window - 5),
+        nibbled: None,
     });
     let f = &mut g.fishing.fish[0];
     f.at = at;
@@ -290,4 +291,31 @@ fn on_the_bite_the_bobber_plunges_in_rings_and_bubbles_burst_from_the_lure() {
     }
     // the bobber is 260 mm lower on the bite (to a unit's rounding)
     assert!((tops[0] - tops[1] - mm(260)).abs() <= 2, "{tops:?}");
+}
+
+/// A nibble (T1) dips the bobber 90 mm, down in the first quarter of
+/// 320 ms (80 ms) and back up over the other 240: 45 mm at 40 ms, all 90
+/// at 80, 45 again at 200, none from 320.
+#[test]
+fn a_nibble_dips_the_bobber_and_lets_it_back_up() {
+    let mut tops = Vec::new();
+    for nibbled in [None, Some(4)] {
+        let mut a = fishing();
+        let at = lure_with_fish(&mut a, false);
+        let g = &mut a.play.as_mut().unwrap().game;
+        let tick = g.tick;
+        if let Some(i) = g.fishing.lines[0].interest.as_mut() {
+            // four ticks (80 ms) ago
+            i.nibbled = nibbled.map(|k| tick - k);
+        }
+        let lake = a.world.as_ref().unwrap();
+        let (_, _, boat) = a.inset_frame();
+        tops.push(bobber_top(&boat, lake.world(at, 0)));
+        let b = &a.fishing_look().unwrap().bite;
+        assert_eq!(
+            [None, Some(0), Some(40), Some(80), Some(200), Some(320)].map(|ms| b.nibble_dip_mm(ms)),
+            [0, 0, 45, 90, 45, 0]
+        );
+    }
+    assert!((tops[0] - tops[1] - mm(90)).abs() <= 2, "{tops:?}");
 }

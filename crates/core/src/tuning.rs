@@ -436,6 +436,10 @@ pub mod tests {
             },
             "strike": {
                 "speed_mm_per_s": 3000,
+                "back_mm_per_s": 1000,
+                "lead_ms": 200,
+                "rest_gap_mm": 300,
+                "touch_gap_mm": 0,
                 "bite_gap_mm": -20
             },
             "tier_value_pct": {"common": 100, "uncommon": 200, "rare": 300, "legendary": 500},
