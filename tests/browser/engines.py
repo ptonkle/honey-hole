@@ -67,8 +67,19 @@ def launch(p, engine):
         # before this); no Wayland, so the window can only go to Xvfb
         env = {k: v for k, v in os.environ.items() if k != "WAYLAND_DISPLAY"}
         env.update(DISPLAY=_xvfb(), GALLIUM_DRIVER="d3d12")
-        return p.chromium.launch(channel="chromium", headless=False, args=GPU_ARGS, env=env), profile
+        return p.chromium.launch(channel="chromium", headless=False, args=GPU_ARGS + MUTE_ARGS, env=env), profile
+    if launcher == "chromium":
+        return p.chromium.launch(args=MUTE_ARGS), profile
+    if launcher == "firefox":
+        return p.firefox.launch(firefox_user_prefs=MUTE_PREFS), profile
     return getattr(p, launcher).launch(), profile
+
+
+# The checks make no sound unless BUILDER_MUTE=0: the GPU Chromium runs in a
+# real (hidden) window and would otherwise play through the speakers.
+_MUTED = os.environ.get("BUILDER_MUTE") != "0"
+MUTE_ARGS = ["--mute-audio"] if _MUTED else []
+MUTE_PREFS = {"media.volume_scale": "0.0"} if _MUTED else {}
 
 
 def renderer(page):
