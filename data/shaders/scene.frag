@@ -16,6 +16,7 @@ in vec3 vColour;
 in float vGlow;
 uniform vec3 uEye;
 uniform vec2 uFog;
+uniform float uFogCurve;
 uniform vec3 uFogColour;
 uniform vec3 uZenith;
 uniform vec2 uSkyBand;
@@ -41,6 +42,14 @@ uniform vec3 uUnderColour;
 uniform float uGlow;
 uniform float uOpacity;
 out vec4 outColour;
+// The fog's share at distance d: from uFog.x to whole at uFog.y, quickly at
+// first by uFogCurve (k: (1 - e^(-k t)) / (1 - e^(-k))), or an even S-curve
+// when it is 0.
+float fogAt(float d) {
+  if (uFogCurve <= 0.0) return smoothstep(uFog.x, uFog.y, d);
+  float t = clamp((d - uFog.x) / (uFog.y - uFog.x), 0.0, 1.0);
+  return (1.0 - exp(-uFogCurve * t)) / (1.0 - exp(-uFogCurve));
+}
 vec3 murk(vec3 d) {
   vec3 c = mix(uFogColour, uZenith, smoothstep(uSkyBand.x, uSkyBand.y, d.y));
   c = mix(c, uDeep, smoothstep(uDeepBand.x, uDeepBand.y, -d.y));
@@ -73,7 +82,7 @@ void main() {
     lit = mix(lit, uShadow, uSilhouette.y);
   }
   vec3 ray = vWorld - uEye;
-  float f = smoothstep(uFog.x, uFog.y, length(ray)) * mix(1.0, uGlow, vGlow);
+  float f = fogAt(length(ray)) * mix(1.0, uGlow, vGlow);
   // the sky only where the fog has begun: mixing in none of it is the same
   vec3 sky = f > 0.0 ? murk(normalize(ray)) : lit;
   outColour = vec4(mix(lit, sky, f), uOpacity);

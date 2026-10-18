@@ -327,6 +327,58 @@ def step_lake(page, check):
     check(page.get_attribute("body", "data-backdrop") == "on", "off the preview the scene is the menus' lake backdrop")
 
 
+FOG_SCAN = """(fog) => {
+  // the 3D canvas alone (the HUD is its own layer), a column a quarter in
+  const gl = document.getElementById("scene");
+  const c = document.createElement("canvas");
+  c.width = gl.width; c.height = gl.height;
+  const g = c.getContext("2d");
+  g.drawImage(gl, 0, 0);
+  const x = Math.floor(gl.width / 4);
+  const px = g.getImageData(x, 0, 1, gl.height).data;
+  const off = (y) => Math.max(...[0, 1, 2].map((k) => Math.abs(px[y * 4 + k] - fog[k])));
+  // up from below the horizon to the first row the fog has whole
+  let y = Math.floor(gl.height * 0.6);
+  while (y > 0 && off(y) > 12) y--;
+  const below = y + Math.round(gl.height * 0.02);
+  return { edge: y, height: gl.height, off: off(below) };
+}"""
+
+
+def step_fog(page, check):
+    # the fog in a match: the Lake preview's fog left off does not carry
+    # in, and the open water thickens into the fog's colour toward the
+    # horizon rather than meeting it at a hard line (SECOND-ORDER R7.31; the
+    # person: "I can't see the fog in single player")
+    page.click(by_id("menu.lake"))
+    screen(page, "lake")
+    if page.is_checked(by_id("lake.fog_on")):
+        page.click(by_id("lake.fog_on"))
+    page.wait_for_selector(f"{by_id('lake.fog_on')}:not(:checked)", state="attached", timeout=5000)
+    page.click(by_id("menu.back"))
+    screen(page, "title")
+    page.click(by_id("menu.play"))
+    page.click(by_id("menu.offline"))
+    screen(page, "lobby")
+    # seed 0 starts facing open water
+    page.fill(by_id("lobby.seed"), "0")
+    page.click(by_id("lobby.start"))
+    check(screen(page, "play"), "a match on map seed 0 starts after the preview's fog was turned off")
+    page.wait_for_selector("body[data-drawn]", state="attached", timeout=10000)
+    page.wait_for_timeout(1500)
+    fog = json.loads((DATA / "look.json").read_text())["lake"]["light"]["fog"]
+    seen = page.evaluate(FOG_SCAN, fog)
+    check(0 < seen["edge"] < seen["height"] // 2, f"the fog's colour meets the water at the horizon ({seen})")
+    check(
+        seen["off"] <= 60,
+        f"2% of the screen below that the water is still most of the way to the fog's colour {fog} ({seen})",
+    )
+    page.click(by_id("menu.pause"))
+    page.wait_for_selector(".panel.pause", timeout=5000)
+    page.click(by_id("menu.quit"))
+    check(screen(page, "title"), "Leave match goes to the Title")
+
+
 def step_sounds(page, check):
     # the Sounds screen, from the Gallery: every cue by its label, one played,
     # and another boat's motor driving past. A headless browser may play no
@@ -584,6 +636,7 @@ STEPS = [
     ("gallery", step_gallery),
     ("sounds", step_sounds),
     ("lake", step_lake),
+    ("fog", step_fog),
     ("fishboy", step_fishboy),
     ("minigames", step_minigames),
     ("fishing", step_fishing),

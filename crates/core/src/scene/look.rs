@@ -23,6 +23,11 @@ pub struct LakeLook {
     /// whole at that share
     pub fog_start_pct: i32,
     pub fog_end_pct: i32,
+    /// how fast the fog thickens between them (hundredths): a share t of
+    /// the way in is (1 - e^(-k t)) / (1 - e^(-k)) fog, so the larger, the
+    /// more of it shows early (real fog thickens this way, not evenly);
+    /// 0 is an even S-curve
+    pub fog_thickness_pct: i32,
     pub ground: GroundLook,
     pub water: WaterLook,
     pub under: UnderLook,
@@ -229,6 +234,9 @@ impl LakeLook {
         }
         if self.fog_start_pct >= self.fog_end_pct {
             return Err("The lake's fog must start before it ends.".into());
+        }
+        if !(0..=1000).contains(&self.fog_thickness_pct) {
+            return Err("The lake's fog_thickness_pct is outside 0 to 1000.".into());
         }
         let lengths = [
             ("bed_deep_mm", g.bed_deep_mm),

@@ -280,6 +280,8 @@ pub fn under_air(lake: &Lake, u: &UnderLook, eye: V3, clock_ms: u64) -> (Light, 
             u.tint_pct * ONE / 100,
         ],
         under_colour: rgb(murk),
+        // the murk thickens evenly, as tuned (R3.11)
+        fog_curve: 0,
         deep: render::Deep {
             colour: rgb(u.down),
             band: [hundredth(u.down_band[0]), hundredth(u.down_band[1])],
