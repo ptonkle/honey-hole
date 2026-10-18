@@ -55,3 +55,9 @@ The agent decided (questions in `brief/questions.md`):
 > yeah that's good
 
 The agent decided: the radar keeps its first look (fine grid, thin ping rings, sweep, bright shoreline, two water shades, scanlines) at about 80% of the first preview's fidelity: the shoreline is judged in 2.5 px blocks where it used 2 (`tools/maps/preview.py`, `RADAR_CHUNK`). The in-game radar matches this. The first map's on-screen name is Burt Lake (`map.burt_lake`).
+
+## 2026-10-17 (reeds, fog)
+
+> reeds have no effect, I woul dneed to see the fog distance in game
+
+The agent decided: boats pass through reeds with no slowdown or collision; reeds are scenery (and later a fish habitat). The fog distance stays at 120 m for now, and the map checker's cover rule uses that value. Once the lake is drawn in 3D, a debug control will set the fog distance live so the person can choose it in the game; the checker's sight distance then follows the chosen value. Boat top speed (16 m/s) and rare/legendary spacing (60 m) keep the map work's defaults until the person says otherwise.
