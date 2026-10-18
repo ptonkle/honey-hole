@@ -469,6 +469,8 @@
     "Bite": [{ "cue": "bite", "who": "mine" }],
     "Hooked": [{ "cue": "hook_set", "who": "mine" }, { "cue": "hook_announce", "who": "others" }],
     "LineBroke": [{ "cue": "line_snap", "who": "mine" }],
+    "ReelTick": [{ "cue": "reel_click", "who": "mine" }],
+    "FishDropped": [{ "cue": "line_snap", "who": "mine", "gain": 0.6 }],
     "Caught": [{ "cue": "catch_{tier}", "who": "mine", "each": { "tier": ["common", "uncommon", "rare", "legendary"] } }],
     "Pinged": [{ "cue": "radar_ping", "who": "mine" }, { "cue": "sweep_hum", "who": "mine", "duration_field": "sweep_ms" }],
     "Revealed": [{ "cue": "radar_blip", "who": "mine" }],

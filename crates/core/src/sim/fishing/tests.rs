@@ -774,3 +774,40 @@ fn the_same_inputs_give_the_same_catches() {
     assert_eq!(sa, sb);
     assert!(a.iter().any(|e| matches!(e, MatchEvent::Hooked { .. })), "the script never hooked");
 }
+
+/// A steady player, who holds Space while the zone's middle (led a little
+/// by its speed) is under the marker, lands nearly every fish of every tier
+/// on the shipped tuning, in at most three times the tier's perfect time.
+/// Measured on 2026-10-18: every one of 200 landed per tier, in 3.0, 5.3,
+/// 12.8 and 47 s on average (perfect 3, 5, 10, 20 s); a person reacting
+/// later will do worse (SECOND-ORDER R3.12).
+#[test]
+fn a_steady_player_lands_every_tier_in_fair_time() {
+    let t = crate::tuning::parse(include_str!("../../../../../data/tuning.json")).unwrap();
+    let r = &t.fishing.reel;
+    for tier in [Tier::Common, Tier::Uncommon, Tier::Rare, Tier::Legendary] {
+        let (mut landed, mut ticks_sum) = (0u32, 0u32);
+        for seed in 0..200 {
+            let mut rng = Rng::new(seed);
+            let mut reel = Reel::new(tier, r, false);
+            let mut tick = 0;
+            loop {
+                tick += 1;
+                let mid = reel.zone + reel.zone_h / 2 + reel.zone_v / 5;
+                match reel.step(r, &mut rng, tick, mid < reel.marker, 100) {
+                    Outcome::Landed => {
+                        landed += 1;
+                        ticks_sum += tick;
+                        break;
+                    }
+                    Outcome::Broke => break,
+                    Outcome::Fighting => {}
+                }
+            }
+        }
+        let mean_ms = ticks_sum / landed.max(1) * 20;
+        let perfect = r.perfect_ms.get(tier) as u32;
+        assert!(landed >= 180, "{tier:?}: landed {landed} of 200");
+        assert!(mean_ms <= 3 * perfect, "{tier:?}: {mean_ms} ms on average");
+    }
+}

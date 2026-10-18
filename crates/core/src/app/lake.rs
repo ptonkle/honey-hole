@@ -405,6 +405,12 @@ impl App {
     /// [`App::sight_mm`]. `None` when the match's world is not built (no
     /// lake look), and the match draws its stand-in.
     pub fn match_frame(&self) -> Option<Frame> {
+        self.match_frame_as(self.underwater(), render::aspect(self.size))
+    }
+
+    /// The match's frame at a screen `aspect`; `under` asks for the
+    /// fishing's underwater camera (`app/fishing.rs`) instead of the boat's.
+    pub fn match_frame_as(&self, under: bool, aspect: i32) -> Option<Frame> {
         let (view, look, lake) = (self.play_view()?, self.look.as_ref()?, self.world.as_ref()?);
         let play = self.play.as_ref()?;
         if lake.map != play.game.map {
@@ -454,15 +460,8 @@ impl App {
             0,
             view.cam_pitch - deg(cam_look.pitch_deg),
         );
-        let clock_ms = (self.clock.max(0) / 1000) as u64;
-        Some(scene::frame(
-            lake,
-            cam,
-            render::aspect(self.size),
-            self.sight_mm(),
-            clock_ms,
-            &instances,
-        ))
+        // the fish, bobbers and lines, and the underwater camera
+        Some(self.fishing_frame(lake, &view, cam, aspect, under, instances))
     }
 }
 

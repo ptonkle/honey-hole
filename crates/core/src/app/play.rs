@@ -163,6 +163,7 @@ impl App {
                 self.tuning = Some(t);
             }
             "data.controls" => self.controls = Some(controls::parse(value)?),
+            "data.fish" => self.roster = Some(crate::roster::Roster::parse(value)?),
             "data.maps" => {
                 let l = list::parse(value)?;
                 self.maps = Some(l);
@@ -313,7 +314,11 @@ impl App {
         // the lake's world, uploaded once (`app/lake.rs`); without the
         // lake's look the match draws its stand-in
         let _ = self.show_world(&map);
-        let game = Match::new(map, &t, setup)?;
+        let mut game = Match::new(map, &t, setup)?;
+        // the lake's fish; a page that sent no roster plays a lake without
+        if let Some(r) = &self.roster {
+            game.stock(r)?;
+        }
         self.play = Some(Play {
             game,
             seat: 0,
@@ -405,6 +410,9 @@ impl App {
             p.pending_us -= step_us;
             ran += 1;
         }
+        let landed = heard
+            .iter()
+            .any(|e| e["type"] == "BobberLanded" && e["seat"] == p.seat as u64);
         // the rest is dropped, not run later
         p.pending_us = p.pending_us.min(step_us - 1);
         let over = p.log.len().saturating_sub(LOG_KEEP);
@@ -416,6 +424,7 @@ impl App {
                 s.event(e, listener);
             }
         }
+        self.debug_fish(landed);
     }
 
     /// The match as a world renderer reads it.
@@ -566,6 +575,7 @@ impl App {
         );
         hud.sub = lines.join(" · ");
         let mut panels = vec![hud];
+        panels.extend(self.fishing_panels());
         if w.ended {
             panels.push(Panel::new(
                 "pause",

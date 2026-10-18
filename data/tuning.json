@@ -106,15 +106,15 @@
       },
       "drain_ms": {
         "common": 5000,
-        "uncommon": 4500,
-        "rare": 4000,
-        "legendary": 3500
+        "uncommon": 6000,
+        "rare": 10000,
+        "legendary": 24000
       },
       "fish_speed_per_s": {
         "common": 350,
         "uncommon": 550,
-        "rare": 750,
-        "legendary": 950
+        "rare": 580,
+        "legendary": 640
       },
       "fish_turn_ms": {
         "common": 1500,
@@ -125,8 +125,8 @@
       "fish_dart_pct": {
         "common": 5,
         "uncommon": 12,
-        "rare": 22,
-        "legendary": 35
+        "rare": 15,
+        "legendary": 25
       },
       "tick_ms": 90,
       "surface_depth_mm": 300
