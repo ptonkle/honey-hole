@@ -14,7 +14,6 @@ use super::*;
 use crate::gfx::fx::{self, deg, HALF, ONE};
 use crate::gfx::geom::{v3, Affine, V3};
 use crate::gfx::render::{self, Frame};
-use crate::map::list::{self, MapList};
 use crate::map::{trig, Setting, P};
 use crate::model::{Anim, Kind};
 use crate::scene::{self, camera, tour, yaw_of_heading, Instance, Lake};
@@ -71,7 +70,7 @@ impl View {
 /// The preview's choices.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Preview {
-    pub list: Option<MapList>,
+    /// the map seed shown, from the checked list (`App::maps`)
     pub seed: Option<u32>,
     pub view: View,
     pub fog_on: bool,
@@ -86,7 +85,6 @@ pub struct Preview {
 impl Default for Preview {
     fn default() -> Preview {
         Preview {
-            list: None,
             seed: None,
             view: View::Tour,
             fog_on: true,
@@ -109,16 +107,9 @@ const UNDER_FISH: &[(&str, i32, i32, i32, i32)] = &[
 ];
 
 impl App {
-    /// Takes the setting's checked map list (`data/maps/<setting>.json`).
-    pub fn load_maps(&mut self, json: &str) -> Result<(), String> {
-        let list = list::parse(json)?;
-        self.preview.seed = list.maps.first().map(|m| m.seed);
-        self.preview.list = Some(list);
-        Ok(())
-    }
-
-    /// The fog distance the world is drawn with, in mm: `None` when the
-    /// fog is off.
+    /// The fog distance the world is drawn with, in mm, in the preview and
+    /// in a match: the map's own, or the preview's slider; `None` when the
+    /// preview's Fog toggle is off.
     pub fn sight_mm(&self) -> Option<i32> {
         if !self.preview.fog_on {
             return None;
@@ -130,24 +121,30 @@ impl App {
         Some(self.preview.fog_m.map_or(own, |m| m as i32 * 1000))
     }
 
+    /// Builds the world for a map, unless it is the one drawn now, and
+    /// makes it the one drawn (the page uploads it once). A match calls
+    /// this as it starts.
+    pub fn show_world(&mut self, map: &crate::map::Map) -> Result<(), String> {
+        if self.world.as_ref().is_some_and(|w| w.map == *map) {
+            return Ok(());
+        }
+        let look = self
+            .look
+            .as_ref()
+            .and_then(|l| l.lake.as_ref())
+            .ok_or_else(|| self.t("lake.none"))?;
+        self.world = Some(Lake::build(map, &self.models, look)?);
+        Ok(())
+    }
+
     /// Builds the chosen map's world, or records why it cannot.
     fn build_preview(&mut self) {
-        let lake_look = self.look.as_ref().and_then(|l| l.lake.as_ref());
-        let made = match (self.preview.seed, lake_look) {
-            (Some(seed), Some(look)) => {
-                if self.world.as_ref().is_some_and(|w| w.map.seed == seed) {
-                    return;
-                }
-                let map = crate::map::generate(Setting::MichiganLake, seed);
-                Lake::build(&map, &self.models, look)
-            }
-            _ => Err(self.t("lake.none")),
+        let made = match self.preview.seed {
+            Some(seed) => self.show_world(&crate::map::generate(Setting::MichiganLake, seed)),
+            None => Err(self.t("lake.none")),
         };
-        match made {
-            Ok(lake) => {
-                self.world = Some(lake);
-                self.preview.problem = None;
-            }
+        match made.map(|_| ()) {
+            Ok(()) => self.preview.problem = None,
             Err(e) => {
                 self.world = None;
                 self.preview.problem = Some(e);
@@ -157,6 +154,9 @@ impl App {
 
     pub(super) fn open_lake(&mut self) {
         self.go(Screen::Lake);
+        if self.preview.seed.is_none() {
+            self.preview.seed = self.maps.as_ref().and_then(|l| l.maps.first()).map(|m| m.seed);
+        }
         self.preview.from = self.clock;
         self.build_preview();
     }
@@ -169,8 +169,7 @@ impl App {
                     .parse()
                     .ok()
                     .filter(|s| {
-                        self.preview
-                            .list
+                        self.maps
                             .as_ref()
                             .is_some_and(|l| l.maps.iter().any(|m| m.seed == *s))
                     })
@@ -201,7 +200,7 @@ impl App {
     pub(super) fn lake_panels(&self) -> Vec<Panel> {
         let p = &self.preview;
         let mut items = Vec::new();
-        if let Some(list) = &p.list {
+        if let Some(list) = &self.maps {
             items.push(Item::Select {
                 id: "lake.seed".into(),
                 label: self.t("lake.seed"),
@@ -396,6 +395,74 @@ impl App {
             clock_ms,
             &instances,
         )
+    }
+}
+
+impl App {
+    /// A match's frame on the lake's world (`scene`): every boat with its
+    /// angler in the pose its mode calls for, the boat camera on this
+    /// browser's boat turned and tilted by the mouse, and the fog at
+    /// [`App::sight_mm`]. `None` when the match's world is not built (no
+    /// lake look), and the match draws its stand-in.
+    pub fn match_frame(&self) -> Option<Frame> {
+        let (view, look, lake) = (self.play_view()?, self.look.as_ref()?, self.world.as_ref()?);
+        let play = self.play.as_ref()?;
+        if lake.map != play.game.map {
+            return None;
+        }
+        let ms = ((self.clock.max(0) / 1000) % 60_000) as u32;
+        let boat = self.models.iter().find(|m| m.kind == Kind::Boat)?;
+        let angler = self.models.iter().find(|m| m.kind == Kind::Figure);
+        let mut instances = Vec::new();
+        for b in view.world.boats.iter().filter(|b| !b.wrecked) {
+            let slot = crate::sim::SEAT_COLOURS
+                .iter()
+                .position(|c| *c == b.colour)
+                .unwrap_or(0);
+            let colour = look.player(slot);
+            let on = Instance {
+                model: boat,
+                place: lake.place(P::new(b.x_mm, b.y_mm), 0, b.heading, 1000),
+                anim: None,
+                ms,
+                colour,
+            };
+            instances.push(on);
+            let (pose, turn) = match b.mode {
+                crate::sim::Mode::Driving => (Anim::Drive, 0),
+                crate::sim::Mode::Fishing => (Anim::Fish, b.cast_yaw),
+            };
+            if let (Some(a), Some(seat)) = (angler, scene::seat(&on, pose.key())) {
+                instances.push(Instance {
+                    model: a,
+                    place: seat.then(&Affine::rot_y(turn)),
+                    anim: Some(pose),
+                    ms,
+                    colour,
+                });
+            }
+        }
+        let me = view.world.boats.iter().find(|b| b.seat == view.seat);
+        let at = me.map_or(lake.map.spawn.at, |b| P::new(b.x_mm, b.y_mm));
+        // the match's pitch is the whole tilt; the look's is the camera's own
+        let cam_look = &lake.look.camera;
+        let cam = camera::boat(
+            lake,
+            cam_look,
+            lake.world(at, 0),
+            yaw_of_heading(view.cam_yaw),
+            0,
+            view.cam_pitch - deg(cam_look.pitch_deg),
+        );
+        let clock_ms = (self.clock.max(0) / 1000) as u64;
+        Some(scene::frame(
+            lake,
+            cam,
+            render::aspect(self.size),
+            self.sight_mm(),
+            clock_ms,
+            &instances,
+        ))
     }
 }
 

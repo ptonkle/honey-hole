@@ -302,7 +302,7 @@ impl App {
                 vec![self.button("menu.back")],
             );
             p.sub = self.t("gallery.none");
-            return vec![p];
+            return vec![p, self.sounds_link()];
         };
         let choice = |value: String, text: String| Choice {
             value,
@@ -378,11 +378,21 @@ impl App {
             _ => ("gallery.long", m.length_mm()),
         };
         p.sub = self.t(key).replace("{feet}", &feet(size));
-        let mut panels = vec![p];
+        let mut panels = vec![p, self.sounds_link()];
         if self.scene_unavailable {
             panels.push(Panel::new("notice", self.t("gallery.no_scene"), Vec::new()));
         }
         panels
+    }
+
+    /// The way to the Sounds screen, in a panel of its own so the
+    /// Gallery's own controls stay as they are.
+    fn sounds_link(&self) -> Panel {
+        Panel::new(
+            "gallery-more",
+            String::new(),
+            vec![Item::quiet_button("menu.sounds", self.t("menu.sounds"))],
+        )
     }
 
     /// The Gallery's frame: its view values and triangles (empty off the

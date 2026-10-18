@@ -14,6 +14,12 @@ Where slush comes out. Each line has up to {line.spouts} spouts.
 Not: tap, dispenser, nozzle
 -->
 
+### AI player
+
+A seat the computer plays, with a name of its own and a difficulty: Easy, Normal or Hard. It drives a boat by the same rules as a person.
+
+Not: bot, CPU, computer player, NPC
+
 ### Animation
 
 A model's movement, played in a loop: a fish's idle swim and panic swim, the angler's driving and fishing poses, a plant's sway. Still shows the model at rest.
@@ -50,11 +56,24 @@ The keys the game uses, listed on the Title.
 
 Not: keybindings, hotkeys, bindings
 
+### Driving mode
+
+The boat's mode for getting about: the angler sits on the back bench by the motor, W and S drive, and A and D turn. Q switches to fishing mode at once, keeping the boat's speed.
+
+Not: boating mode, sailing
+
 ### Fish-Boy
 
 The angler's computer, strapped to the left forearm. Raised to the face, its screen fills most of the view and shows the game's tabs, with the lake still in sight round its edge.
 
 Not: Pip-Boy, pipboy, fishboy, PDA
+
+### Fishing mode
+
+The boat's mode for fishing: the angler stands at the bow, the motor is off so the boat coasts to a stop, and A and D swivel the cast. Q switches back to driving mode.
+
+Not: angling mode, cast mode
+
 ### Fog distance
 
 How far a player can see across the lake before the fog hides everything. The fog thickens from part of the way out and is whole at this distance.
@@ -81,9 +100,21 @@ Not: level editor, map viewer, flyover
 
 ### Map seed
 
-The number a map's layout is made from. The same seed always gives the same shoreline, islands, trees and reeds.
+The number that picks a map's layout. A match on the same map seed has the same shoreline and islands. Left empty on New match, the game picks a checked layout at random.
 
-Not: map ID, level number
+Not: map code, map ID
+
+### Match
+
+One game on the lake, from the start to the end of its time ({match.minutes} minutes unless New match says otherwise). The fish caught in it are added up at the end.
+
+Not: round, session
+
+### Match menu
+
+The menu over Play that Esc opens when there is nothing else to cancel, and the Menu button too. It offers Resume, Settings and Leave match. A match against AI players only waits while it is open.
+
+Not: options
 
 ### Minor version
 
@@ -97,15 +128,15 @@ One fish, boat, figure, item or piece of scenery, kept as its own file of flat-c
 
 Not: mesh, asset, sprite
 
-### Pause menu
+### New match
 
-The menu over Play that Esc opens and closes. It offers Resume and Quit to Title.
+The screen Play opens, where an offline match is set up: how many AI players and how hard each plays, the match length, the item buoy interval and the map seed. Start match begins it.
 
-Not: freeze, halt
+Not: lobby screen, setup wizard
 
 ### Play
 
-The screen where the game runs. It is a stand-in until the game is designed.
+The screen where a match runs: the lake, the boats, and the time left in the corner.
 
 Not: level, stage, round
 
@@ -117,15 +148,21 @@ Not: team colour
 
 ### Settings
 
-The screen where the reader sets the volume and the text size. Settings last for this visit.
+The screen where the reader sets the volume, the text size and their name in matches. Settings last for this visit.
 
 Not: options, preferences, config
 
+### Sounds
+
+The screen, opened from the Gallery, that plays each of the game's sounds on a click, and runs the motors and the line's whine at chosen settings, including another boat's motor driving past. The game makes every sound from a recipe as it plays; there are no recordings.
+
+Not: soundboard, audio test, sound test
+
 ### Spawn point
 
-Where every boat starts a match and comes back after a wreck: open water near the dock at one end of the lake.
+The place at one end of the lake where every boat starts a match, side by side, and comes back after a wreck.
 
-Not: start line, base, home
+Not: start line, base
 
 ### Text size
 
@@ -147,7 +184,7 @@ Not: build, release
 
 ### Volume
 
-How loud the game's sounds play, in percent. The game plays no sound yet.
+How loud the game's sounds play, in percent. Sound starts after the reader's first click or key press on the page.
 
 Not: loudness, sound level
 
@@ -156,3 +193,9 @@ Not: loudness, sound level
 The screen listing what each version changed, newest first.
 
 Not: changelog, release notes, patch notes, news
+
+### Wreck
+
+A boat blown up by hitting land at {wreck.land_pct}% of top speed or more, or by a boat ramming it at {wreck.ram_pct}% or more. It comes back at the spawn point after {wreck.respawn_s} seconds, ghosted for a few seconds: it passes through boats and cannot ram or be rammed.
+
+Not: death, kill, crash, explode

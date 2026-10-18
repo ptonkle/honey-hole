@@ -46,7 +46,7 @@ impl App {
     }
 
     fn controls_panel(&self) -> Panel {
-        let rows = ["pause"]
+        let rows = ["drive", "steer", "mode", "look", "pause"]
             .iter()
             .map(|k| {
                 [
@@ -87,27 +87,15 @@ impl App {
                     value: s.text_size.key().into(),
                     options: sizes,
                 },
+                Item::Text {
+                    id: "settings.name".into(),
+                    label: self.t("settings.name"),
+                    value: s.name.clone(),
+                    max: super::play::NAME_MAX,
+                    placeholder: self.t("name.default"),
+                },
                 self.button("menu.back"),
             ],
         )]
-    }
-
-    /// Play's placeholder, and the pause menu over it while it is open.
-    pub(super) fn play_panels(&self) -> Vec<Panel> {
-        let mut play = Panel::new(
-            "play",
-            String::new(),
-            vec![Item::quiet_button("menu.pause", self.t("menu.pause"))],
-        );
-        play.sub = self.t("play.placeholder");
-        let mut panels = vec![play];
-        if self.paused {
-            panels.push(Panel::new(
-                "pause",
-                self.t("pause.heading"),
-                vec![self.button("menu.resume"), self.button("menu.quit")],
-            ));
-        }
-        panels
     }
 }

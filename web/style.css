@@ -147,6 +147,17 @@ table { border-collapse: collapse; width: 100%; }
 }
 body[data-screen="gallery"] #scene,
 body[data-screen="lake"] #scene { display: block; }
+body[data-screen="play"] #scene { display: block; }
+/* Play: the HUD in the top corner over the lake */
+body[data-screen="play"] #menus {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  margin: 0;
+  padding: 0;
+  width: 16rem;
+}
+.panel.hud { background: color-mix(in srgb, var(--panel) 80%, transparent); }
 body[data-screen="gallery"] #menus,
 body[data-screen="lake"] #menus {
   position: fixed;
@@ -159,3 +170,16 @@ body[data-screen="lake"] #menus {
 .panel.gallery,
 .panel.lake { background: color-mix(in srgb, var(--panel) 88%, transparent); }
 .panel.notice { color: var(--error); }
+.field.text input { font: inherit; padding: 0.35rem 0.5rem; }
+
+/* ---- the Sounds screen: a grid of sound buttons, then the loops ---- */
+body[data-screen="sounds"] #menus { max-width: 60rem; }
+.panel.sounds {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+}
+.panel.sounds h2, .panel.sounds .sub { grid-column: 1 / -1; }
+.panel.gallery-more {
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  padding: 0.5rem 0.75rem;
+}

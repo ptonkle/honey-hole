@@ -66,6 +66,36 @@ impl Session {
         }
     }
 
+    /// Takes the sound recipes (`data/sounds.json`) and the tuning file
+    /// (`data/tuning.json`, its audio section), and returns what the page
+    /// draws, or why they were refused.
+    pub fn load_sounds(&mut self, sounds_json: &str, tuning_json: &str) -> String {
+        match &mut self.app {
+            Ok(app) => match app.load_sounds(sounds_json, tuning_json) {
+                Ok(()) => ok(&app.ui()),
+                Err(e) => error(&e),
+            },
+            Err(e) => error(e),
+        }
+    }
+
+    /// What the page's synth plays now (`sound::Sound::frame`); the cues
+    /// in it are taken, so each plays once.
+    pub fn sound(&mut self) -> String {
+        match &mut self.app {
+            Ok(app) => ok(&app.sound_frame()),
+            Err(e) => error(e),
+        }
+    }
+
+    /// The noise buffer the synth's noise layers play (Q16.16).
+    pub fn sound_noise(&self) -> Vec<i32> {
+        match &self.app {
+            Ok(app) => app.sound_noise(),
+            Err(_) => Vec::new(),
+        }
+    }
+
     /// The page's clock, in microseconds.
     pub fn advance(&mut self, now: i64) {
         if let Ok(app) = &mut self.app {
@@ -87,18 +117,6 @@ impl Session {
         match &self.app {
             Ok(app) => app.frame(),
             Err(_) => Default::default(),
-        }
-    }
-
-    /// Takes the setting's checked map list, and returns what the page
-    /// draws, or why it was refused.
-    pub fn load_maps(&mut self, list_json: &str) -> String {
-        match &mut self.app {
-            Ok(app) => match app.load_maps(list_json) {
-                Ok(()) => ok(&app.ui()),
-                Err(e) => error(&e),
-            },
-            Err(e) => error(e),
         }
     }
 

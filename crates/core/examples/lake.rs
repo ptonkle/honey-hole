@@ -40,7 +40,8 @@ fn main() {
     };
     let mut app = App::new(&read("data/strings.json"), &read("data/patch-notes.json")).unwrap();
     app.load_models(&models_json(), &read("data/look.json")).unwrap();
-    app.load_maps(&read("data/maps/michigan-lake.json")).unwrap();
+    app.act("data.maps", &read("data/maps/michigan-lake.json"))
+        .unwrap();
     app.resize(1920, 1080, 100);
     for seed in seeds {
         // a fresh world each time, so the build is timed whole

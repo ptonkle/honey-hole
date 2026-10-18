@@ -47,8 +47,18 @@ impl Game {
         self.s.load_models(models_json, look_json)
     }
 
-    pub fn load_maps(&mut self, list_json: &str) -> String {
-        self.s.load_maps(list_json)
+    pub fn load_sounds(&mut self, sounds_json: &str, tuning_json: &str) -> String {
+        self.s.load_sounds(sounds_json, tuning_json)
+    }
+
+    /// This frame's cues and loops for the synth (`web/audio.js`).
+    pub fn sound(&mut self) -> String {
+        self.s.sound()
+    }
+
+    /// The synth's noise samples, -1 to 1.
+    pub fn sound_noise(&self) -> Vec<f32> {
+        floats(&self.s.sound_noise())
     }
 
     pub fn numbers(&self) -> String {

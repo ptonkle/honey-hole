@@ -64,7 +64,7 @@ fn maps() -> String {
 fn app() -> App {
     let mut a = App::new(&crate::strings::tests::complete(), NOTES).unwrap();
     a.load_models(&models(), LOOK).unwrap();
-    a.load_maps(&maps()).unwrap();
+    a.act("data.maps", &maps()).unwrap();
     a.resize(1600, 900, 100);
     a
 }
@@ -163,9 +163,45 @@ fn without_the_lakes_look_the_preview_says_why_and_draws_nothing() {
     let mut look: Value = serde_json::from_str(LOOK).unwrap();
     look.as_object_mut().unwrap().remove("lake");
     a.load_models(&models(), &look.to_string()).unwrap();
-    a.load_maps(&maps()).unwrap();
+    a.act("data.maps", &maps()).unwrap();
     a.act("menu.lake", "").unwrap();
     assert!(a.world.is_none());
     assert_eq!(a.ui().panels[0].sub, "LAKE.NONE");
     assert_eq!(a.frame(), Frame::default());
+}
+
+#[test]
+fn a_match_draws_its_boats_on_the_lakes_world_and_without_the_look_its_stand_in() {
+    let mut a = crate::app::play::tests::lobby();
+    a.load_models(&models(), LOOK).unwrap();
+    a.act("lobby.start", "").unwrap();
+    a.advance(0);
+    let map = &a.play.as_ref().unwrap().game.map;
+    assert_eq!(
+        a.world.as_ref().map(|w| &w.map),
+        Some(map),
+        "the match's own map is built"
+    );
+    let f = a.frame();
+    let lake = a.world.as_ref().unwrap();
+    assert_eq!(
+        f.statics,
+        [lake.terrain[0], lake.terrain[1], lake.water[0], lake.water[1]]
+    );
+    assert!(!f.groups.is_empty(), "the props near the spawn are drawn");
+    assert!(!f.tris.is_empty(), "the boats are posed");
+    // the fog is the map's own 120 m: whole at 120 m
+    let (at, _) = render::uniform_at("uFog");
+    assert_eq!(f.view[at + 1], crate::scene::mm(120_000));
+
+    // a look file with no lake: the match draws its stand-in, no world
+    let mut b = crate::app::play::tests::lobby();
+    let mut look: Value = serde_json::from_str(LOOK).unwrap();
+    look.as_object_mut().unwrap().remove("lake");
+    b.load_models(&models(), &look.to_string()).unwrap();
+    b.act("lobby.start", "").unwrap();
+    assert!(b.world.is_none());
+    let f = b.frame();
+    assert_eq!(f.statics, [0; 4]);
+    assert!(!f.tris.is_empty());
 }

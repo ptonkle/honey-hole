@@ -100,25 +100,40 @@ def step_notes(page, check):
 
 
 def step_play(page, check):
-    # Play and its pause menu
+    # Play opens the match setup; Start match puts a boat on the lake, and
+    # holding W drives it
     page.click(by_id("menu.play"))
-    check(screen(page, "play"), "Play opens from the Title")
+    check(screen(page, "lobby"), "Play opens the match setup")
+    check(page.inner_text(".panel.lobby h2") == STRINGS["lobby.heading"], "the setup is headed New match")
+    check(page.locator(by_id("lobby.ai")).count() == 1, "the setup offers AI players")
+    page.click(by_id("lobby.start"))
+    check(screen(page, "play"), "Start match opens Play")
+    check(page.inner_text("#message") == "", "the match files load without a refusal")
     check(page.is_disabled("#version"), "the version does not open What's New from Play")
-    check(page.locator(".panel.pause").count() == 0, "Play opens with the pause menu closed")
+    page.wait_for_selector("body[data-drawn]", state="attached", timeout=10000)
+    check(page.is_visible("#scene"), "the lake is drawn behind the HUD")
+    start = page.inner_text(".panel.hud h2")
+    check(start.startswith("8:00") or start.startswith("7:5"), f"the match starts with 8 minutes left ({start})")
+    page.keyboard.down("KeyW")
+    # the HUD reads "Driving · {speed} km/h"; 20 km/h is about 1.7 s of W
+    page.wait_for_function(
+        "() => { const s = document.querySelector('.panel.hud .sub');"
+        " return s && (s.textContent.split(' km/h')[0].split(' ').pop() | 0) >= 20; }",
+        timeout=10000,
+    )
+    page.keyboard.up("KeyW")
+    check(True, "holding W drives the boat up to speed")
+    check(page.inner_text(".panel.hud h2") != start, "the time left counts down")
     page.keyboard.press("Escape")
     page.wait_for_selector(".panel.pause", timeout=5000)
-    check(page.inner_text(".panel.pause h2") == STRINGS["pause.heading"], "Escape in Play opens the pause menu")
+    check(page.inner_text(".panel.pause h2") == STRINGS["pause.heading"], "Esc opens the menu, and the offline match waits")
     page.keyboard.press("Escape")
     page.wait_for_selector(".panel.pause", state="detached", timeout=5000)
-    check(page.locator(".panel.pause").count() == 0, "Escape again closes it")
+    check(page.locator(".panel.pause").count() == 0, "Esc again closes it")
     page.click(by_id("menu.pause"))
     page.wait_for_selector(".panel.pause", timeout=5000)
-    page.click(by_id("menu.resume"))
-    page.wait_for_selector(".panel.pause", state="detached", timeout=5000)
-    check(screen(page, "play"), "Resume closes the pause menu and stays in Play")
-    page.keyboard.press("Escape")
     page.click(by_id("menu.quit"))
-    check(screen(page, "title"), "Quit to Title goes to the Title")
+    check(screen(page, "title"), "Leave match goes to the Title")
     check(page.inner_text("#message") == "", "no error message after the round trip")
 
 
@@ -186,8 +201,41 @@ def step_lake(page, check):
     check(page.is_hidden("#scene"), "the scene hides off the preview")
 
 
+def step_sounds(page, check):
+    # the Sounds screen, from the Gallery: every cue by its label, one played,
+    # and another boat's motor driving past. A headless browser may play no
+    # sound, so the check is that the WebAudio graph is built without an
+    # error: the page marks the context started, each sound it builds and
+    # the loops it runs.
+    page.click(by_id("menu.gallery"))
+    screen(page, "gallery")
+    page.click(by_id("menu.sounds"))
+    check(screen(page, "sounds"), "the Sounds screen opens from the Gallery")
+    recipes = json.loads((DATA / "sounds.json").read_text())
+    labels = [c["label"] for c in recipes["cues"] if "label" in c]
+    shown = page.locator(".panel.sounds .button").all_inner_texts()
+    check(shown == labels, f"the Sounds screen lists every cue by its label ({len(shown)} of {len(labels)})")
+    page.wait_for_selector("body[data-audio='started']", state="attached", timeout=5000)
+    check(page.get_attribute("body", "data-audio") == "started", "a click starts the sound")
+    page.click(by_id("sounds.play.catch_legendary"))
+    page.wait_for_selector("body[data-last-sound='catch_legendary']", state="attached", timeout=5000)
+    check(page.get_attribute("body", "data-last-sound") == "catch_legendary", "the legendary catch builds its sound graph")
+    page.click(by_id("sounds.play.explosion"))
+    page.wait_for_selector("body[data-last-sound='explosion']", state="attached", timeout=5000)
+    check(page.get_attribute("body", "data-last-sound") == "explosion", "the explosion, with its noise layers, builds too")
+    # the other boat starts 100 m off, out of hearing, and is heard as it nears
+    page.click(by_id("sounds.drive_past"))
+    page.wait_for_selector("body[data-audio-voices='rival.debug']", state="attached", timeout=8000)
+    check(page.get_attribute("body", "data-audio-voices") == "rival.debug", "the other boat's motor is heard as it drives past")
+    check(page.inner_text("#message") == "", "no refusal on the Sounds screen")
+    page.keyboard.press("Escape")
+    check(screen(page, "title"), "Escape on Sounds goes to the Title")
+    page.wait_for_selector("body[data-audio-voices='']", state="attached", timeout=5000)
+    check(page.get_attribute("body", "data-audio-voices") == "", "leaving the Sounds screen stops its motor")
+
+
 # The steps in order, by name; `boot` always runs.
-STEPS = [("boot", step_boot), ("settings", step_settings), ("notes", step_notes), ("play", step_play), ("gallery", step_gallery), ("lake", step_lake)]
+STEPS = [("boot", step_boot), ("settings", step_settings), ("notes", step_notes), ("play", step_play), ("gallery", step_gallery), ("sounds", step_sounds), ("lake", step_lake)]
 
 
 def chosen_steps():
