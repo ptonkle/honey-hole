@@ -80,6 +80,12 @@ The part of the reel bar that Space lifts and gravity pulls down. Keeping the fi
 
 Not: green bar, box
 
+### Cloaking Tech
+
+An item that hides its player from every radar's ping for a while: blips of them already on a radar are wiped. The boat still shows in the lake, see-through to its own player.
+
+Not: invisibility, stealth
+
 ### Controls
 
 The keys the game uses, listed on the Title.
@@ -91,6 +97,12 @@ Not: keybindings, hotkeys, bindings
 The boat's mode for getting about: the angler sits on the back bench by the motor, W and S drive, and A and D turn. Q switches to fishing mode at once, keeping the boat's speed.
 
 Not: boating mode, sailing
+
+### Enhanced Radar
+
+An item that pings the radar at once and marks the nearest fish of each tier on its player's radar until their next ping.
+
+Not: sonar, fish finder
 
 ### Fish-Boy
 
@@ -121,11 +133,23 @@ The screen, opened from the Title, that shows each model turning on a plain floo
 
 Not: showcase, viewer, model viewer
 
+### High-Quality Camera
+
+An item offered after a catch: Use camera photographs the catch, which makes it worth more; Save for later keeps the camera.
+
+Not: photo, snapshot
+
 ### Hook
 
 To catch a biting fish on the line by pressing Space in time. Every player sees a popup naming who hooked which fish.
 
 Not: snag
+
+### Item
+
+A powerup a player holds, taken from an item buoy and hidden until then: Cloaking Tech, Power Reel, Nitrous, Teleporter, High-Quality Camera or Enhanced Radar. A player holds one at a time; a new one replaces it. Shift uses it, after its minigame.
+
+Not: power-up, loot, perk
 
 ### Item buoy
 
@@ -163,6 +187,12 @@ The menu over Play that Esc opens when there is nothing else to cancel, and the 
 
 Not: options
 
+### Minigame
+
+A short game an item plays before it works, with a one-line instruction. It cannot be failed, only finished slowly; Esc quits it, and the item is lost.
+
+Not: challenge, puzzle
+
 ### Minor version
 
 A version whose last number is not zero. It holds fixes only, and What's New lists it when the reader asks.
@@ -193,6 +223,12 @@ A fish tasting the lure before it bites. Space during a nibble scares the fish a
 
 Not: tug, peck
 
+### Nitrous
+
+An item that makes its player's boat faster to speed up, faster at the top and sharper in the turns for a while. Rams and grounding are judged on the plain top speed.
+
+Not: boost, turbo, nitro
+
 ### Ping
 
 A sweep of the radar outward from your boat that shows each other player where it passes them. Each player waits out a cooldown between pings.
@@ -210,6 +246,12 @@ Not: level, stage, round
 The colour a player's lobby slot gives them: blue, red, green or yellow. It marks their boat and their name, and the name is always shown with it.
 
 Not: team colour
+
+### Power Reel
+
+An item that makes its player's reel stronger for a while, so a fish comes in faster.
+
+Not: super reel
 
 ### Radar
 
@@ -240,6 +282,12 @@ Not: soundboard, audio test, sound test
 The place at one end of the lake where every boat starts a match, side by side, and comes back after a wreck.
 
 Not: start line, base
+
+### Teleporter
+
+An item that moves its player's boat to a point picked on the radar, after a charge every player can see. The boat arrives at rest.
+
+Not: warp, portal
 
 ### Text size
 

@@ -532,6 +532,7 @@ impl App {
     /// hook and land one by script.
     pub(super) fn debug_act(&mut self, value: &str) {
         self.debug_fishing = value.split(',').any(|f| f.trim() == "fishing");
+        self.debug_flags = value.split(',').map(|f| f.trim().to_string()).collect();
     }
 
     /// After the ticks: the debug fish by a bobber that just landed.

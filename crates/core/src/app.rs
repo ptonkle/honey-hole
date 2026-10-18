@@ -17,6 +17,7 @@ use crate::view::{Item, Panel};
 
 pub mod fishing;
 pub mod gallery;
+pub mod items;
 pub mod lake;
 mod menus;
 pub mod minigames;
@@ -174,6 +175,9 @@ pub struct App {
     pub world: Option<crate::scene::Lake>,
     /// the page's `?debug=fishing`: a fish by every bobber (`app/fishing.rs`)
     pub debug_fishing: bool,
+    /// the page's `?debug=` flags, each (`items`, `item.nitrous`, `quick`:
+    /// `app/items.rs`)
+    pub debug_flags: Vec<String>,
     /// the Minigames screen's minigame and results
     pub minigames: minigames::MinigamesScreen,
 }
@@ -207,6 +211,7 @@ impl App {
             preview: lake::Preview::default(),
             world: None,
             debug_fishing: false,
+            debug_flags: Vec::new(),
             minigames: minigames::MinigamesScreen::default(),
         })
     }
@@ -388,6 +393,7 @@ impl App {
             ),
             fishboy: self.fishboy_shown(),
             pointer: self.fishboy_shown() != ""
+                || self.items_take_pointer()
                 || (self.screen == Screen::Minigames && self.minigames.game.is_some()),
             capture: self.screen == Screen::Play
                 && self

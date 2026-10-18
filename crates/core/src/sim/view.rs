@@ -34,6 +34,12 @@ pub struct BoatView {
     pub ghosted: bool,
     pub stalled: bool,
     pub nitrous: bool,
+    /// Cloaking Tech runs: hidden from radars (its own player sees it
+    /// see-through)
+    pub cloaked: bool,
+    /// a teleport charging, thousandths done (0 for none): everyone sees
+    /// its shimmer
+    pub charge_permille: i32,
 }
 
 /// What the screen shows of the match.
@@ -46,6 +52,8 @@ pub struct WorldView {
     pub map_seed: u32,
     /// one per taken seat, in seat order
     pub boats: Vec<BoatView>,
+    /// the item buoy in the lake, mm (east, north)
+    pub buoy: Option<[i32; 2]>,
 }
 
 impl Match {
@@ -80,6 +88,8 @@ impl Match {
                     ghosted: b.ghosted(self.tick),
                     stalled: b.stalled(self.tick),
                     nitrous: b.nitrous,
+                    cloaked: self.items.cloaked(b.seat, self.tick),
+                    charge_permille: self.items.charge_permille(b.seat, self.tick),
                 }
             })
             .collect();
@@ -90,6 +100,7 @@ impl Match {
             paused: self.paused(),
             map_seed: self.map.seed,
             boats,
+            buoy: self.items.buoy.map(|p| [p.x, p.y]),
         }
     }
 }

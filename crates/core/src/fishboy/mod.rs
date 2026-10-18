@@ -363,7 +363,9 @@ impl App {
         };
         let k = self.fishboy.dpr_pct as i64;
         let (px, py) = ((x * k / 100) as i32, (y * k / 100) as i32);
-        Ok(self.screen_transform().map(|t| t.invert(px, py)))
+        // a minigame's own canvas while one plays, else the screen's
+        let t = self.items_pointer_transform().or_else(|| self.screen_transform());
+        Ok(t.map(|t| t.invert(px, py)))
     }
 
     /// The Fish-Boy's actions and the pointer, and its data files.
@@ -384,6 +386,7 @@ impl App {
             "pointer.move" | "pointer.down" | "pointer.up" => {
                 let at = self.pointer_at(value)?;
                 self.fishboy.pointer = at;
+                self.items_pointer(name, at);
                 match name {
                     "pointer.down" => {
                         self.fishboy.pointer_down = true;
@@ -497,6 +500,7 @@ impl App {
                         (hud[0] / 2, hud[1] - 48),
                         &self.t("hud.fishboy"),
                     );
+                    self.draw_items_hud(list, theme, &mut status);
                 }
                 status.push("raised=0".into());
             }
@@ -508,7 +512,18 @@ impl App {
                     built.passes.push(p);
                 }
                 list.layer(Transform::onto(theme.fishboy.canvas, r.px));
-                self.draw_screen(list, theme, &mut status);
+                match self
+                    .my_minigame()
+                    .filter(|m| m.layer() == crate::minigame::Layer::FishBoy)
+                {
+                    // an item's minigame on the screen (`app/items.rs`)
+                    Some(mg) => {
+                        list.layer(mg.transform(r.px));
+                        mg.draw(list, theme, &|k| self.t(k));
+                        status.push(mg.status());
+                    }
+                    None => self.draw_screen(list, theme, &mut status),
+                }
             }
         }
         for shot in built.list.shots.clone() {
@@ -610,6 +625,7 @@ impl App {
                         seen,
                     };
                     scene.draw(list);
+                    self.draw_radar_items(list, theme, &scene, status);
                 }
             }
             Tab::Fishpedia => {

@@ -85,7 +85,7 @@ pub struct Play {
     pub game: Match,
     /// the seat this browser plays
     pub seat: usize,
-    gather: Gather,
+    pub(crate) gather: Gather,
     /// µs of page time not yet run as ticks
     pending_us: i64,
     last_now: Option<i64>,
@@ -371,7 +371,7 @@ impl App {
                     .ok_or_else(|| format!("The mouse move \"{value}\" is not two whole numbers."))?;
                 p.gather.mouse(dx, dy);
                 // with the Fish-Boy up the mouse points at its screen
-                if !p.menu_open() && !p.game.seats[p.seat].fishboy {
+                if !p.menu_open() && !p.game.seats[p.seat].fishboy && !p.game.items.seats[p.seat].captures() {
                     let m = &controls.mouse;
                     // right turns the camera clockwise from above: a smaller map angle
                     p.cam_yaw =
@@ -431,6 +431,7 @@ impl App {
             }
         }
         self.debug_fish(landed);
+        self.items_after_ticks(&heard);
     }
 
     /// The match as a world renderer reads it.
@@ -584,6 +585,7 @@ impl App {
         let mut panels = if self.fishboy.open { Vec::new() } else { vec![hud] };
         if !self.fishboy.open {
             panels.extend(self.fishing_panels());
+            panels.extend(self.item_popups());
         }
         if w.ended {
             panels.push(Panel::new(

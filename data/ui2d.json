@@ -77,5 +77,15 @@
       "viewfinder": [255, 255, 255], "viewfinder_size": [220, 160], "bracket": 44
     },
     "enhanced_radar": { "background": [4, 16, 8], "frame": [34, 120, 52], "fish": [52, 170, 80], "fish_line": [120, 255, 140], "eye": [4, 22, 10], "track": [60, 180, 80], "knob": [14, 40, 20], "knob_line": [120, 255, 140], "snap": [200, 255, 210] }
+  },
+  "items": {
+    "_note": "The items on screen (crates/core/src/app/items.rs). slot: the item slot on the HUD canvas, [x, y, w, h] (bottom right); effect_h: each running effect's timer row, stacked above it; offer: the High-Quality Camera's offer after a catch (bottom middle). icons: each item's colour in its icon. cloak_tint, cloak_tint_pct: your own boat while cloaked is drawn this far toward the tint, to read as see-through. trail: the nitrous trail's colour, and its length and width behind the boat (mm). shimmer: the teleport's charge round the boat: its colour, radius and strands' full height (mm). choose: the teleport's destination marker on the radar.",
+    "slot": [1700, 840, 190, 200], "panel": [16, 24, 30], "edge": [230, 236, 226], "ink": [240, 244, 236], "dim": [120, 128, 124], "key_cap": [230, 236, 226],
+    "icons": { "cloak": [150, 190, 230], "power_reel": [255, 170, 60], "nitrous": [80, 170, 255], "teleporter": [220, 110, 255], "camera": [200, 204, 210], "enhanced_radar": [120, 255, 140] },
+    "effect_h": 64, "offer": [600, 820, 720, 170],
+    "cloak_tint": [200, 225, 240], "cloak_tint_pct": 70,
+    "trail": [90, 190, 255], "trail_mm": 9000, "trail_width_mm": 1400,
+    "shimmer": [230, 150, 255], "shimmer_mm": 3200, "shimmer_height_mm": 5000,
+    "choose": [255, 240, 120]
   }
 }

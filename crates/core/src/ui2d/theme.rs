@@ -29,6 +29,8 @@ pub struct Theme {
     pub standin: Standin,
     /// the item minigames' look (`minigame/look.rs`)
     pub minigames: crate::minigame::look::Look,
+    /// the items' HUD, icons and world effects (`app/items.rs`)
+    pub items: crate::app::items::ItemsLook,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]

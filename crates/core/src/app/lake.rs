@@ -425,7 +425,7 @@ impl App {
                 .iter()
                 .position(|c| *c == b.colour)
                 .unwrap_or(0);
-            let colour = look.player(slot);
+            let colour = self.boat_colour(look.player(slot), b, view.seat);
             let on = Instance {
                 model: boat,
                 place: lake.place(P::new(b.x_mm, b.y_mm), 0, b.heading, 1000),
@@ -477,7 +477,14 @@ impl App {
         // the fish, bobbers and lines, and the underwater camera (not with
         // the Fish-Boy up)
         let under = under && self.fishboy_eye().is_none();
-        Some(self.fishing_frame(lake, &view, cam, aspect, under, instances))
+        // the item buoy, the nitrous trails and teleport shimmers
+        self.item_instances(lake, &view, &mut instances);
+        let eye = cam.eye;
+        let mut frame = self.fishing_frame(lake, &view, cam, aspect, under, instances);
+        if !under {
+            frame.tris.extend(self.item_tris(lake, &view, eye));
+        }
+        Some(frame)
     }
 }
 

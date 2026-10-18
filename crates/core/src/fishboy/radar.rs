@@ -340,6 +340,24 @@ impl RadarScene<'_> {
         (x as i32, y as i32)
     }
 
+    /// A map point on the screen, in screen units (the items' marks).
+    pub fn screen_point(&self, p: P) -> (i32, i32) {
+        self.to_screen(p)
+    }
+
+    /// A marked fish (Enhanced Radar): a diamond in `colour` and a label.
+    pub fn mark(&self, list: &mut List, at: P, colour: Rgba, text: &str) {
+        let (x, y) = self.to_screen(at);
+        let d = 13;
+        list.poly(
+            colour,
+            c(self.theme.radar.label_back),
+            3,
+            &[(x, y - d), (x + d, y), (x, y + d), (x - d, y)],
+        );
+        self.label(list, (x, y), text, colour);
+    }
+
     fn to_screen(&self, p: P) -> (i32, i32) {
         let (x, y) = self.to_screen_q(p);
         (x >> 16, y >> 16)
