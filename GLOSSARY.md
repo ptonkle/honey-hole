@@ -189,9 +189,15 @@ Not: options
 
 ### Minigame
 
-A short game an item plays before it works, with a one-line instruction. It cannot be failed, only finished slowly; Esc quits it, and the item is lost.
+The short game an item plays before it takes effect, opened by a one-line instruction. It cannot be lost: playing it badly only takes longer. Esc quits it, and the item is wasted.
 
-Not: challenge, puzzle
+Not: mini-game, microgame, puzzle, challenge
+
+### Minigames
+
+The debug screen, opened from the Title, that plays each item's minigame on its own and shows how long the last try took.
+
+Not: minigame menu, arcade
 
 ### Minor version
 

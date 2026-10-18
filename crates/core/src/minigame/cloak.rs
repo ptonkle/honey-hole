@@ -20,16 +20,18 @@ const MOTOR: u8 = 4;
 const DECK: u8 = 5;
 
 /// The boat from above, bow to the right, in thousandths of the picture.
-const HULL: [Pt; 9] = [
-    (70, 190),
-    (560, 110),
-    (760, 150),
-    (900, 280),
+const HULL: [Pt; 11] = [
+    (60, 200),
+    (300, 150),
+    (600, 140),
+    (780, 180),
+    (900, 290),
     (975, 500),
-    (900, 720),
-    (760, 850),
-    (560, 890),
-    (70, 810),
+    (900, 710),
+    (780, 820),
+    (600, 860),
+    (300, 850),
+    (60, 800),
 ];
 /// The floor inside the gunwale: the hull drawn in to this many
 /// thousandths about its middle.

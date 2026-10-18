@@ -222,12 +222,12 @@ impl Shoot {
         let [w, h] = p.canvas;
         let horizon = h * HORIZON_PERMILLE / 1000;
         // the sky in bands, from its top colour down to the haze at the
-        // horizon
+        // horizon, each a little over the next so no seam shows
         for k in 0..SKY_BANDS {
             let mix = |a: i32, b: i32| a + (b - a) * k / (SKY_BANDS - 1);
             let col = [0, 1, 2].map(|i| mix(look.sky[i], look.sky_low[i]));
             let (y0, y1) = (horizon * k / SKY_BANDS, horizon * (k + 1) / SKY_BANDS);
-            p.list.fill_rect(c(col), Rect::new(0, y0, w, y1 - y0));
+            p.list.fill_rect(c(col), Rect::new(0, y0, w, y1 - y0 + 2));
         }
         p.list
             .fill_rect(c(look.water), Rect::new(0, horizon, w, h - horizon));
