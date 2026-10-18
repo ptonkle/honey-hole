@@ -11,6 +11,8 @@ request is aborted and counted as a failure. For each engine it:
   and shows a reply code; A pastes that back;
 - B is seated in A's Lobby: A's seats list both names and B's ping; B's
   Start is not offered, and A's Start waits for B;
+- B renames itself in the Lobby and A sees the name; A changes the match
+  length and B's Lobby shows it;
 - A adds an AI player and B's Lobby shows it;
 - B presses Ready; A's Start comes on; A presses it;
 - both tabs reach Play, and both countdowns run out;
@@ -22,7 +24,8 @@ request is aborted and counted as a failure. For each engine it:
   contacted) shows the room code; Copy code and Copy link copy the code and
   the page's own address with `#room=CODE` (read from `body[data-copied]`,
   since a headless clipboard may refuse to be read); a new tab opening that
-  link goes straight to the room's Lobby;
+  link goes straight to the room's Lobby, keeps the room in its address
+  and goes back to it after a refresh;
 - fails on any off-origin request, WebSocket, CSP violation, console error
   or uncaught page error.
 
@@ -156,7 +159,11 @@ def room_link(browser, origin, seen):
     b = Tab(browser, origin, "B", seen, base + query + "#" + frag)
     check(b.screen("online_lobby"), "opening the room link goes straight to the Lobby")
     check(b.has_text([code]), "the linked Lobby shows the room code")
-    check("#" not in b.page.url, "the room link's code is cleared from the address")
+    check(b.page.url.endswith("#room=" + code), "the joiner's address keeps the room")
+    check("#" not in a.page.url, "the host's address keeps no room")
+    b.page.reload()
+    b.page.wait_for_selector("body[data-ready='true']", timeout=WAIT_MS)
+    check(b.screen("online_lobby") and b.has_text([code]), "a joiner's refresh goes back to the room")
     csp = a.csp() + b.csp()
     a.context.close()
     b.context.close()
@@ -220,6 +227,12 @@ def run_engine(p, engine, origin):
     except Exception:
         pinged = False
     check(pinged, "A's Lobby shows B's ping")
+    b.fill("online.name", "Bea Moss")
+    check(a.has_text(["Bea Moss"]), "B renames itself in the Lobby and A sees it")
+    length = a.page.eval_on_selector(by_id("lobby.length"), "s => [...s.options].map(o => [o.value, o.text])")
+    other = [o for o in length if o[0] != a.page.input_value(by_id("lobby.length"))][0]
+    a.page.select_option(by_id("lobby.length"), other[0])
+    check(b.has_text([other[1]]), f"A's match length shows in B's Lobby at once ({other[1]})")
     a.page.select_option(by_id("lobby.ai"), "1")
     ai = STRINGS["lobby.ai_player"].split("{")[0]
     check(b.has_text([ai]), "A's AI player shows in B's Lobby")

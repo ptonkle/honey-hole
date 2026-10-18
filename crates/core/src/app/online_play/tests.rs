@@ -234,7 +234,10 @@ fn the_hosts_rematch_takes_everyone_back_to_the_lobby_for_the_next_match() {
     run(&mut a, &mut b, &mut now, 1000);
     assert_eq!((a.screen, b.screen), (Screen::OnlineLobby, Screen::OnlineLobby));
     assert!(a.play.is_none() && b.play.is_none());
-    assert!(disabled(&a, "online.start"), "B marks itself Ready again");
+    assert!(!disabled(&a, "online.start"), "B is Ready from the last match");
+    b.act("online.ready", "").unwrap();
+    run(&mut a, &mut b, &mut now, 1000);
+    assert!(disabled(&a, "online.start"), "and can take it back");
     b.act("online.ready", "").unwrap();
     run(&mut a, &mut b, &mut now, 1000);
     a.act("online.start", "").unwrap();
@@ -303,4 +306,96 @@ fn opening_a_room_link_joins_that_room() {
     let req = a.net_pump(1_000_000).requests;
     assert_eq!(req[0]["op"], "join_room");
     assert_eq!(req[0]["room"], online::room_name(&code));
+}
+
+#[test]
+fn a_seat_a_player_left_shows_no_ping_once_an_ai_player_has_it() {
+    let (mut a, mut b, mut now) = playing();
+    a.act("lobby.ai", "1").unwrap();
+    // B has a ping, then leaves mid-match; the host's Rematch gives its
+    // seat to an AI player
+    assert!(a.online.session.as_ref().unwrap().roster().seats[1]
+        .ping_ms
+        .is_some());
+    b.act("menu.quit", "").unwrap();
+    for o in b.net_pump(now * 1000).out {
+        a.net_event("message", "b", &o.text, false);
+    }
+    run(&mut a, &mut b, &mut now, 200);
+    a.act("postgame.rematch", "").unwrap();
+    run(&mut a, &mut b, &mut now, 3000);
+    let seat = &a.online.session.as_ref().unwrap().roster().seats[1];
+    assert!(matches!(seat.who, online::Who::Ai { .. }), "{seat:?}");
+    assert_eq!(seat.ping_ms, None);
+    let rows = item_rows(&a);
+    assert_eq!(rows[1][3], "", "no ping shown for the AI player");
+}
+
+#[test]
+fn a_joiner_waits_with_the_room_alone_and_names_itself_in_the_lobby() {
+    let mut b = lobby();
+    b.advance(1_000_000);
+    let code = online::room_code(9);
+    b.act("flag.room_link", &code).unwrap();
+    assert_eq!(
+        ids(&b),
+        ["online.copy", "online.leave"],
+        "no seats or setup before the host answers"
+    );
+    assert_eq!(b.net_pump(1_000_000).hash, format!("#room={code}"));
+    let (mut a, mut b, mut now) = meet();
+    assert!(ids(&b).contains(&"online.name".to_string()));
+    b.act("online.name", "Bea Two").unwrap();
+    run(&mut a, &mut b, &mut now, 1000);
+    assert_eq!(
+        a.online.session.as_ref().unwrap().roster().seats[1].name,
+        "Bea Two"
+    );
+    assert_eq!(a.net_pump(now * 1000).hash, "", "a host's address keeps no room");
+}
+
+#[test]
+fn a_lobby_the_host_leaves_goes_back_to_the_online_screen_and_says_so() {
+    let (mut a, mut b, mut now) = meet();
+    a.act("online.leave", "").unwrap();
+    for o in a.net_pump(now * 1000).out {
+        b.net_event("message", "a", &o.text, true);
+    }
+    run(&mut a, &mut b, &mut now, 200);
+    assert_eq!(b.screen, Screen::Online);
+    assert!(b.online.session.is_none());
+    let sub = serde_json::to_value(b.ui()).unwrap()["panels"][0]["sub"].clone();
+    assert_eq!(sub, "ONLINE.HOST_LEFT");
+    assert_eq!(
+        b.online.room.len(),
+        online::CODE_LEN,
+        "the code is kept to try again"
+    );
+}
+
+/// The seat table's rows, as text.
+fn item_rows(a: &App) -> Vec<Vec<String>> {
+    let v = serde_json::to_value(a.ui()).unwrap();
+    v["panels"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .flat_map(|p| p["items"].as_array().unwrap().iter())
+        .find(|i| i["type"] == "table")
+        .map(|t| {
+            t["rows"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|r| {
+                    r["cells"]
+                        .as_array()
+                        .unwrap()
+                        .iter()
+                        .map(|c| c.as_str().unwrap().to_string())
+                        .collect()
+                })
+                .collect()
+        })
+        .unwrap_or_default()
 }

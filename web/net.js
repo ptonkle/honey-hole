@@ -60,6 +60,8 @@ function pump() {
   }
   p.requests.forEach(request);
   if (p.remote_moved !== undefined) document.body.dataset.remoteMoved = String(p.remote_moved);
+  // a joiner's room stays in the address, so a refresh joins it again
+  if (location.hash !== p.hash) history.replaceState(null, "", location.pathname + location.search + p.hash);
   if (p.redraw && !document.hidden) redraw();
 }
 

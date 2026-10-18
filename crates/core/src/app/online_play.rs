@@ -68,6 +68,9 @@ pub struct Pump {
     /// spawn on this screen (the online check reads it)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub remote_moved: Option<bool>,
+    /// the address's hash: `#room=CODE` while this browser is a joiner in
+    /// a room, so a refresh joins it again; empty otherwise
+    pub hash: String,
 }
 
 /// How far a boat must go from its spawn slot to count as moved.
@@ -314,6 +317,7 @@ impl App {
         if over {
             self.online.session = None;
         }
+        self.lobby_ended();
         if back {
             // the host's Rematch: everyone to the Lobby for the next one
             self.play = None;
@@ -332,6 +336,54 @@ impl App {
             requests: std::mem::take(&mut self.online.requests),
             redraw,
             remote_moved: self.remote_moved(),
+            hash: self.room_hash(),
+        }
+    }
+
+    /// `#room=CODE` while this browser is a joiner in a room by its code.
+    fn room_hash(&self) -> String {
+        match &self.online.session {
+            Some(s) if !s.is_host() && !self.online.room.is_empty() => {
+                format!("#room={}", self.online.room)
+            }
+            _ => String::new(),
+        }
+    }
+
+    /// A Lobby whose session is over (refused, the host gone, the
+    /// transport failed): back to the Online screen, which says why, with
+    /// the room code kept for another try (Ape Race's lobby).
+    fn lobby_ended(&mut self) {
+        if self.screen != Screen::OnlineLobby {
+            return;
+        }
+        let Some(s) = self.online.session.as_ref() else {
+            return;
+        };
+        if let Some(why) = self.ended_why(s.status()) {
+            self.online.problem = Some(why);
+            self.online.session = None;
+            self.request("leave", json!({}));
+            self.go(Screen::Online);
+        }
+    }
+
+    /// Why a session is over, as a strings key and its placeholders.
+    fn ended_why(&self, status: &Status) -> Option<(String, Vec<(String, String)>)> {
+        let key = |k: &str| Some((k.to_string(), Vec::new()));
+        match status {
+            Status::Refused { refusal } => match refusal {
+                Refusal::Full => key("online.refused.full"),
+                Refusal::Underway => key("online.refused.underway"),
+                Refusal::Tuning => key("online.refused.tuning"),
+                Refusal::Version { host, mine } => Some((
+                    "online.refused.version".into(),
+                    vec![("{host}".into(), host.clone()), ("{mine}".into(), mine.clone())],
+                )),
+            },
+            Status::HostLeft => key("online.host_left"),
+            Status::Failed { key: k } => key(k),
+            _ => None,
         }
     }
 
@@ -436,15 +488,20 @@ impl App {
         }
     }
 
+    /// The player's name, on the Online screen and in the Lobby.
+    fn name_field(&self) -> Item {
+        Item::Text {
+            id: "online.name".into(),
+            label: self.t("settings.name"),
+            value: self.settings.name.clone(),
+            max: play::NAME_MAX,
+            placeholder: self.t("name.default"),
+        }
+    }
+
     pub(super) fn online_panels(&self) -> Vec<Panel> {
         let mut items = vec![
-            Item::Text {
-                id: "online.name".into(),
-                label: self.t("settings.name"),
-                value: self.settings.name.clone(),
-                max: play::NAME_MAX,
-                placeholder: self.t("name.default"),
-            },
+            self.name_field(),
             self.button("online.host"),
             Item::Text {
                 id: "online.room".into(),
@@ -472,18 +529,11 @@ impl App {
             Status::Lobby if s.is_host() && !s.can_start() => self.t("online.waiting"),
             Status::Lobby => String::new(),
             Status::Starting { .. } | Status::Playing => self.t("online.starting"),
-            Status::Refused { refusal } => match refusal {
-                Refusal::Full => self.t("online.refused.full"),
-                Refusal::Underway => self.t("online.refused.underway"),
-                Refusal::Tuning => self.t("online.refused.tuning"),
-                Refusal::Version { host, mine } => self
-                    .t("online.refused.version")
-                    .replace("{host}", host)
-                    .replace("{mine}", mine),
-            },
-            Status::HostLeft => self.t("online.host_left"),
-            Status::Failed { key } => self.t(key),
             Status::Left => String::new(),
+            other => match self.ended_why(other) {
+                Some((key, args)) => args.iter().fold(self.t(&key), |t, (k, v)| t.replace(k, v)),
+                None => String::new(),
+            },
         }
     }
 
@@ -530,6 +580,16 @@ impl App {
                 vec![self.button("online.leave")],
             )];
         };
+        if !s.is_host() && s.seat().is_none() {
+            let mut items = self.room_items();
+            if self.online.codes {
+                items.push(self.code_field("online.reply", &self.online.my_code));
+            }
+            items.push(self.button("online.leave"));
+            let mut p = Panel::new("online_lobby", self.t("online_lobby.heading"), items);
+            p.sub = self.status_text(s);
+            return vec![p];
+        }
         let roster = s.roster();
         let rows = roster
             .seats
@@ -552,8 +612,10 @@ impl App {
                         .t("lobby.ai_player")
                         .replace("{difficulty}", &self.t(&format!("difficulty.{difficulty}"))),
                 };
+                // a person's ping only: never an AI player's (TRIAGE T11)
                 let ping = seat
                     .ping_ms
+                    .filter(|_| seat.who == Who::Player)
                     .map(|ms| self.t("online.ping").replace("{ms}", &ms.to_string()))
                     .unwrap_or_default();
                 TableRow {
@@ -564,6 +626,7 @@ impl App {
             })
             .collect();
         let mut items = self.room_items();
+        items.push(self.name_field());
         items.push(Item::Table {
             head: vec![
                 self.t("online_lobby.colour"),
@@ -590,7 +653,11 @@ impl App {
                 } else {
                     "online.ready"
                 };
-                items.push(Item::button("online.ready", self.t(key)));
+                let mut ready = Item::button("online.ready", self.t(key));
+                if let Item::Button { disabled, .. } = &mut ready {
+                    *disabled = *s.status() != Status::Lobby;
+                }
+                items.push(ready);
             }
         }
         if self.online.codes {
