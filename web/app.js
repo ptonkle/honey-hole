@@ -8,6 +8,7 @@
 // what the core last returned.
 import init, { Game } from "./pkg/tool_shim.js";
 import { makeRenderer } from "./gl.js";
+import { makeOverlay, bitmapFrom } from "./ui2d.js";
 
 const el = (id) => document.getElementById(id);
 const make = (tag, cls, text) => {
@@ -278,6 +279,7 @@ function draw(result) {
   ui = result.ok;
   document.title = ui.title;
   document.body.dataset.screen = ui.screen;
+  document.body.dataset.fishboy = ui.fishboy;
   document.documentElement.dataset.textSize = ui.text_size;
   const version = el("version");
   if (version.textContent !== ui.version) version.textContent = ui.version;
@@ -301,21 +303,34 @@ function bindInput() {
   el("version").addEventListener("click", () => send("version", ""));
   // every key goes to the core, which decides what it does
   window.addEventListener("keydown", (e) => {
-    if (e.repeat || typing(e)) return;
+    if (typing(e)) return;
+    // keys the core uses in Play that the browser would take (Tab, Space)
+    if (ui && ui.keys.includes(e.code)) e.preventDefault();
+    if (e.repeat) return;
     send("key", e.code);
   });
   watchSelects();
+  // the pointer over the 2D layer, in CSS pixels (the core turns it into
+  // its own units)
+  const overlay = el("overlay");
+  const point = (name) => (e) => send(name, e.offsetX + " " + e.offsetY);
+  overlay.addEventListener("pointermove", point("pointer.move"));
+  overlay.addEventListener("pointerdown", point("pointer.down"));
+  overlay.addEventListener("pointerup", point("pointer.up"));
 }
 
 // ---- the 3D scene ----
 
 let renderer = null;
+let overlay = null;
+let passLayout = null;
 
 // The canvas's size goes to the core, which says how many pixels to draw.
 function resize() {
   const canvas = el("scene");
   const [w, h] = game.resize(canvas.clientWidth, canvas.clientHeight, window.devicePixelRatio);
   if (canvas.width !== w || canvas.height !== h) renderer.resize(w, h);
+  if (overlay) overlay.resize(w, h);
 }
 
 // Each frame: the clock to the core, and, when the core says the screen
@@ -325,7 +340,17 @@ function frame(now) {
     game.advance(now);
     game.build_frame();
     renderer.frame(game.view(), game.vertices(), game.vertex_count());
-    document.body.dataset.drawn = ui.panels[0].heading;
+    // the 2D layer: its models and the Fish-Boy through the renderer,
+    // then the draw list on the overlay
+    game.build_ui2d();
+    const passes = game.pass_count();
+    for (let k = 0; k < passes; k++) {
+      renderer.pass(passLayout, game.pass_values(k), game.pass_vertices(k), game.pass_vertex_count(k));
+    }
+    const list = JSON.parse(game.ui2d_strings());
+    overlay.draw(game.ui2d_values(), list.strings);
+    document.body.dataset.ui2d = list.status;
+    if (ui.panels.length) document.body.dataset.drawn = ui.panels[0].heading;
   }
   requestAnimationFrame(frame);
 }
@@ -338,9 +363,18 @@ async function main() {
   const look = await (await fetch("data/look.json")).text();
   const vertex = await (await fetch("data/shaders/scene.vert")).text();
   const fragment = await (await fetch("data/shaders/scene.frag")).text();
+  const ui2dLook = await (await fetch("data/ui2d.json")).text();
+  const fish = await (await fetch("data/fish.json")).text();
+  const tuning = await (await fetch("data/tuning.json")).text();
   game = new Game(strings, notes);
   bindInput();
   draw(JSON.parse(game.load_models(models, look)));
+  send("data.ui2d", ui2dLook);
+  send("data.fish", fish);
+  send("data.tuning", tuning);
+  const ui2dNumbers = JSON.parse(game.ui2d_numbers());
+  passLayout = ui2dNumbers.pass;
+  overlay = makeOverlay(el("overlay"), ui2dNumbers, (id) => bitmapFrom(game.bitmap_rgba(id), game.bitmap_size(id)));
   renderer = makeRenderer(el("scene"), JSON.parse(game.numbers()), { vertex, fragment });
   if (!renderer) send("scene.unavailable", "");
   window.addEventListener("resize", () => renderer && resize());

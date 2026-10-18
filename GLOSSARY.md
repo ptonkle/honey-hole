@@ -55,6 +55,12 @@ Not: keybindings, hotkeys, bindings
 The angler's computer, strapped to the left forearm. Raised to the face, its screen fills most of the view and shows the game's tabs, with the lake still in sight round its edge.
 
 Not: Pip-Boy, pipboy, fishboy, PDA
+### Fishpedia
+
+The Fish-Boy's tab that lists each kind of fish in this match, in rows by tier, each with its name, a box of its idle swim and how many are left. The counts are known to everyone.
+
+Not: encyclopedia, bestiary, fish log
+
 ### Gallery
 
 The screen, opened from the Title, that shows each model turning on a plain floor, in its animations and in each player colour.
@@ -79,11 +85,23 @@ One fish, boat, figure, item or piece of scenery, kept as its own file of flat-c
 
 Not: mesh, asset, sprite
 
+### My catch
+
+The Fish-Boy's tab that lists your own catches this match, newest first: each fish's name, tier and length. It shows no points; scores stay hidden until the postgame.
+
+Not: inventory, bag, haul
+
 ### Pause menu
 
 The menu over Play that Esc opens and closes. It offers Resume and Quit to Title.
 
 Not: freeze, halt
+
+### Ping
+
+A sweep of the radar outward from your boat that shows each other player where it passes them. Each player waits out a cooldown between pings.
+
+Not: scan, pulse
 
 ### Play
 
@@ -97,6 +115,12 @@ The colour a player's lobby slot gives them: blue, red, green or yellow. It mark
 
 Not: team colour
 
+### Radar
+
+The Fish-Boy's green overhead map of the lake. It always shows your boat and its heading and the item buoy, and shows other players only where the last ping found them.
+
+Not: minimap, sonar
+
 ### Settings
 
 The screen where the reader sets the volume and the text size. Settings last for this visit.
@@ -108,6 +132,12 @@ Not: options, preferences, config
 How large the menus' text is drawn: small, medium or large.
 
 Not: font size, zoom
+
+### Tier
+
+How rare a kind of fish is: Common, Uncommon, Rare or Legendary. Each tier has a colour and, in the Fishpedia, a frame shape of its own.
+
+Not: rarity class, grade
 
 ### Title
 

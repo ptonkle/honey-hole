@@ -156,3 +156,18 @@ body[data-screen="gallery"] #menus {
 }
 .panel.gallery { background: color-mix(in srgb, var(--panel) 88%, transparent); }
 .panel.notice { color: var(--error); }
+
+/* ---- Play: the world, and the 2D layer over it (the HUD, the Fish-Boy) ---- */
+body[data-screen="play"] #scene { display: block; }
+#overlay {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+}
+body[data-screen="play"] #overlay { display: block; }
+/* the menus' column lets the pointer through to the 2D layer, their
+   panels do not */
+body[data-screen="play"] #menus { pointer-events: none; position: relative; }
+body[data-screen="play"] .panel { pointer-events: auto; }

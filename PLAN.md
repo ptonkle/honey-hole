@@ -34,6 +34,12 @@ Collected as the agent makes them; brought up in the morning. Each also has a ro
 
 - V1. Online sync model (decision 11).
 - V2. 50 ticks per second (decision 2).
+- V-R2.60. The Fish-Boy's screen is drawn on a 2D layer over the view, fitted to where the device's screen lands, not as a texture on the model; the device slides straight up when raised (SECOND-ORDER R2.60).
+- V-R2.63. Keys 1, 2 and 3 (and a click) switch the Fish-Boy's tabs, and Space pings with the radar up; A and D keep steering (R2.63).
+- V-R2.64. A ping shows each rival where the sweep found them until the next sweep; a cloaked rival's old blip is wiped (R2.64). The cooldown runs from the ping's start (R2.65).
+- V-R2.69. The fish's base lengths and values in `data/fish.json` (R2.69).
+- V-R2.71. The radar shows the lake's square, not the whole map (R2.71); the radar's brighter player colours (R2.75).
+- V-R2.73. A third Fish-Boy tab, My catch, lists your catches without values (R2.73).
 
 ## Status
 

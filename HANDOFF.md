@@ -33,6 +33,8 @@ Every `SECOND-ORDER.md` row with status *person*, by number, with what the perso
 - R1.107: a read of the eleven lake prop names the Gallery shows (listed at the foot of `SECOND-ORDER.md`), and the props' look (`notes/shots/models/props/`).
 - R1.48: the draft fish roster and their names (seven fish, Midwest lakes), shown in the Gallery.
 - R1.54: the four player colours and the Gallery's light in `data/look.json`.
+- R2.69: the fish's base lengths and values in `data/fish.json` (the 13 names and tiers are the person's).
+- R2.75: the radar's brighter player colours in `data/ui2d.json` (`radar.players`).
 - R1.149: the remodelled angler's look (tapered limbs, round head, no boxes), in `notes/shots/models/angler-v2/`.
 
 ## Mistakes so far

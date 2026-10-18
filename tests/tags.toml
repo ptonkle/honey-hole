@@ -24,13 +24,14 @@ gfx = "the 3D drawing's core: fixed-point maths, geometry, the renderer and the 
 models = "model files and their reader: data/models/, model.rs"
 gallery = "the Gallery screen that shows each model (app/gallery.rs)"
 maps = "map generation: the generator, validator, fish placement and buoy point (crates/core/src/map/), the map tool (crates/core/examples/), data/maps/ and the preview renderer (tools/maps/)"
+fishboy = "the screen 2D layer and the Fish-Boy: the draw list (crates/core/src/ui2d/), the device, radar, Fishpedia and catch list (crates/core/src/fishboy/), the fish roster (roster.rs, data/fish.json), data/ui2d.json, data/tuning.json's radar section"
 tooling = "scripts outside the check (serve, publish, audits, watch window): nothing beyond the always-run tests"
 
 # Hitting a tag also hits these, for a tag whose change reaches another's
 # tests: `a = ["b"]`.
 [implies]
-gfx = ["models", "gallery"]
-models = ["gallery"]
+gfx = ["models", "gallery", "fishboy"]
+models = ["gallery", "fishboy"]
 
 # Tags whose tests always run in a quick check.
 [always]
@@ -78,6 +79,13 @@ tags = ["boundary"]
 "crates/core/tests/angler_boat_buoy.rs" = ["models"]
 "crates/core/tests/props.rs" = ["models"]
 "crates/core/tests/fishboy.rs" = ["models"]
+"crates/core/tests/fishboy_data.rs" = ["fishboy"]
+"crates/core/src/ui2d/**" = ["fishboy"]
+"crates/core/src/fishboy/**" = ["fishboy"]
+"crates/core/src/roster.rs" = ["fishboy"]
+"data/ui2d.json" = ["fishboy"]
+"data/fish.json" = ["fishboy", "copy"]
+"data/tuning.json" = ["fishboy"]
 "crates/shim/**" = ["all"]
 "web/**" = ["page"]
 "data/strings.json" = ["copy"]
@@ -177,6 +185,10 @@ tags = ["boundary"]
 "test:angler_boat_buoy" = ["models"]
 "test:props" = ["models"]
 "test:fishboy" = ["models"]
+"test:fishboy_data" = ["fishboy", "copy"]
+"lib:ui2d::" = ["fishboy"]
+"lib:fishboy::" = ["fishboy", "menus", "copy"]
+"lib:roster::" = ["fishboy"]
 
 # ---------------------------------------------------------------------------
 # Browser steps (tests/browser/interactions.py STEPS) -> tags. The load and
@@ -187,3 +199,4 @@ settings = ["menus", "copy", "page"]
 notes = ["menus", "copy", "whatsnew", "page"]
 play = ["menus", "copy", "page"]
 gallery = ["gallery", "models", "gfx", "menus", "copy", "page"]
+fishboy = ["fishboy", "models", "gfx", "menus", "copy", "page"]

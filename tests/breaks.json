@@ -628,5 +628,271 @@
     "find": "[(css_w * dpr_pct / 100).max(1), (css_h * dpr_pct / 100).max(1)]",
     "replace": "[css_w * dpr_pct / 100, css_h * dpr_pct / 100]",
     "test": "the_buffer_is_the_css_size_at_the_pixel_ratio_and_never_empty"
+  },
+  {
+    "name": "an op carries its code then its arguments",
+    "file": "crates/core/src/ui2d/mod.rs",
+    "find": "self.nums.extend(v.iter().map(|&x| int(x)));",
+    "replace": "self.nums.extend(v.iter().map(|&x| x));",
+    "test": "an_op_is_its_code_then_its_arguments_and_strings_are_shared"
+  },
+  {
+    "name": "a string is shared by index",
+    "file": "crates/core/src/ui2d/mod.rs",
+    "find": "        if let Some(&i) = self.index.get(text) {\n            return int(i);\n        }",
+    "replace": "",
+    "test": "an_op_is_its_code_then_its_arguments_and_strings_are_shared"
+  },
+  {
+    "name": "the numbers give a full turn",
+    "file": "crates/core/src/ui2d/mod.rs",
+    "find": "let micro = TWO_PI * 1_000_000 / ONE as i64;",
+    "replace": "let micro = TWO_PI * 500_000 / ONE as i64;",
+    "test": "the_numbers_name_every_op_once_and_a_full_turn"
+  },
+  {
+    "name": "a colour with no opacity draws nothing",
+    "file": "crates/core/src/ui2d/mod.rs",
+    "find": "        if self.1 <= 0 {\n            return String::new();\n        }",
+    "replace": "",
+    "test": "colours_are_css_and_a_clear_colour_draws_nothing"
+  },
+  {
+    "name": "a letterbox keeps the canvas shape",
+    "file": "crates/core/src/ui2d/mod.rs",
+    "find": "fx::ratio(target.w, canvas[0].max(1)).min(fx::ratio(target.h, canvas[1].max(1)))",
+    "replace": "fx::ratio(target.w, canvas[0].max(1)).max(fx::ratio(target.h, canvas[1].max(1)))",
+    "test": "a_letterboxed_layer_keeps_its_shape_and_sits_in_the_middle"
+  },
+  {
+    "name": "a letterbox centres the canvas",
+    "file": "crates/core/src/ui2d/mod.rs",
+    "find": "ty: target.y + (target.h - h) / 2,",
+    "replace": "ty: target.y,",
+    "test": "a_letterboxed_layer_keeps_its_shape_and_sits_in_the_middle"
+  },
+  {
+    "name": "a pixel inverts to its layer point",
+    "file": "crates/core/src/ui2d/mod.rs",
+    "find": "let (x, y) = (back(px - self.tx, self.sx), back(py - self.ty, self.sy));",
+    "replace": "let (x, y) = (back(px, self.sx), back(py, self.sy));",
+    "test": "a_point_on_a_layer_comes_back_from_its_pixel"
+  },
+  {
+    "name": "a model shot keeps its pixels",
+    "file": "crates/core/src/ui2d/mod.rs",
+    "find": "let px = self.transform().rect(r);",
+    "replace": "let px = r;",
+    "test": "a_model_cuts_a_hole_and_keeps_its_place_in_pixels"
+  },
+  {
+    "name": "a pass rectangle counts rows from the bottom",
+    "file": "crates/core/src/ui2d/mod.rs",
+    "find": "[px.x, size[1] - px.y - px.h, px.w.max(0), px.h.max(0)]",
+    "replace": "[px.x, px.y, px.w.max(0), px.h.max(0)]",
+    "test": "a_pass_turns_its_rectangle_up_the_buffer_as_gl_counts_rows"
+  },
+  {
+    "name": "a bitmap pixel takes its palette colour",
+    "file": "crates/core/src/ui2d/mod.rs",
+    "find": "let c = self.palette.get(p as usize).copied().unwrap_or(Rgba::NONE);",
+    "replace": "let c = self.palette.first().copied().unwrap_or(Rgba::NONE);",
+    "test": "a_bitmap_is_four_bytes_a_pixel_from_its_palette"
+  },
+  {
+    "name": "text is laid out by the advance",
+    "file": "crates/core/src/ui2d/mod.rs",
+    "find": "text.chars().count() as i32 * size * self.advance / 100",
+    "replace": "text.len() as i32 * size / 2",
+    "test": "text_names_its_colour_font_alignment_and_words"
+  },
+  {
+    "name": "a roster tier must be known",
+    "file": "crates/core/src/roster.rs",
+    "find": ".ok_or_else(|| format!(\"The fish \\\"{}\\\" has no tier \\\"{}\\\".\", f.id, f.tier))?;",
+    "replace": ".unwrap_or(Tier::Common);",
+    "test": "a_roster_reads_its_tiers_and_refuses_a_bad_fish_by_name"
+  },
+  {
+    "name": "a fish is listed once",
+    "file": "crates/core/src/roster.rs",
+    "find": "if out.iter().any(|k| k.id == f.id) {",
+    "replace": "if false {",
+    "test": "a_roster_reads_its_tiers_and_refuses_a_bad_fish_by_name"
+  },
+  {
+    "name": "tab raises the fish-boy",
+    "file": "crates/core/src/fishboy/mod.rs",
+    "find": "        if code == \"Tab\" {\n            self.fishboy.toggle(self.clock);",
+    "replace": "        if code == \"KeyT\" {\n            self.fishboy.toggle(self.clock);",
+    "test": "tab_raises_esc_lowers_and_it_opens_again_on_the_last_tab"
+  },
+  {
+    "name": "esc lowers the fish-boy",
+    "file": "crates/core/src/fishboy/mod.rs",
+    "find": "        if code == \"Escape\" {\n            self.fishboy.toggle(self.clock);\n            return true;\n        }",
+    "replace": "",
+    "test": "tab_raises_esc_lowers_and_it_opens_again_on_the_last_tab"
+  },
+  {
+    "name": "the fish-boy opens on its last tab",
+    "file": "crates/core/src/fishboy/mod.rs",
+    "find": "        self.open = !self.open;\n",
+    "replace": "        self.open = !self.open;\n        self.tab = Tab::Radar;\n",
+    "test": "tab_raises_esc_lowers_and_it_opens_again_on_the_last_tab"
+  },
+  {
+    "name": "the screen fills its share of the view",
+    "file": "crates/core/src/fishboy/mod.rs",
+    "find": "let pct = fx::ratio(theme.fishboy.screen_pct, 100);",
+    "replace": "let pct = fx::ratio(theme.fishboy.screen_pct + 10, 100);",
+    "test": "raised_the_screen_spans_80_percent_of_a_wide_view"
+  },
+  {
+    "name": "on a tall view the width binds",
+    "file": "crates/core/src/fishboy/mod.rs",
+    "find": "let dist = by_h.max(by_w);",
+    "replace": "let dist = by_h;",
+    "test": "on_a_tall_view_the_width_binds"
+  },
+  {
+    "name": "raising slides up from below",
+    "file": "crates/core/src/fishboy/mod.rs",
+    "find": "let lift = -mul(ONE - ease(amount), 2 * half + sh);",
+    "replace": "let lift = 0;",
+    "test": "raising_slides_the_screen_up_from_below_the_view"
+  },
+  {
+    "name": "lowering starts from where it is",
+    "file": "crates/core/src/fishboy/mod.rs",
+    "find": "let from = if self.open { r } else { ONE as i64 - r };",
+    "replace": "let from = 0;",
+    "test": "lowering_halfway_up_goes_back_down_from_where_it_is"
+  },
+  {
+    "name": "a click on a tab picks it",
+    "file": "crates/core/src/fishboy/mod.rs",
+    "find": "        if let Some((t, _)) = self.tab_rects().into_iter().find(|(_, r)| r.contains(x, y)) {\n            self.fishboy.tab = t;",
+    "replace": "        if let Some((_, _)) = self.tab_rects().into_iter().find(|(_, r)| r.contains(x, y)) {",
+    "test": "clicking_a_tab_switches_to_it"
+  },
+  {
+    "name": "space pings on the radar",
+    "file": "crates/core/src/fishboy/mod.rs",
+    "find": "        if code == \"Space\" && self.fishboy.tab == Tab::Radar {\n            self.fishboy_ping();",
+    "replace": "        if code == \"Space\" && self.fishboy.tab == Tab::Radar {",
+    "test": "space_pings_on_the_radar_and_the_cooldown_holds_the_next"
+  },
+  {
+    "name": "space pings on the radar only",
+    "file": "crates/core/src/fishboy/mod.rs",
+    "find": "if code == \"Space\" && self.fishboy.tab == Tab::Radar {",
+    "replace": "if code == \"Space\" {",
+    "test": "space_on_another_tab_does_not_ping"
+  },
+  {
+    "name": "a ping waits out its cooldown",
+    "file": "crates/core/src/fishboy/radar.rs",
+    "find": "        } else if since < t.cooldown_ticks() {",
+    "replace": "        } else if since < t.sweep_ticks() {",
+    "test": "a_ping_waits_out_its_five_second_cooldown"
+  },
+  {
+    "name": "the sweep grows with the ticks",
+    "file": "crates/core/src/fishboy/radar.rs",
+    "find": "        let r = self.reach_mm * since / t.sweep_ticks().max(1);\n        self.passed.resize",
+    "replace": "        let r = self.reach_mm;\n        self.passed.resize",
+    "test": "the_sweep_crosses_the_map_in_its_time_and_sees_boats_as_it_passes"
+  },
+  {
+    "name": "you are never your own blip",
+    "file": "crates/core/src/fishboy/radar.rs",
+    "find": "        self.passed[view.me] = true;\n",
+    "replace": "",
+    "test": "the_sweep_crosses_the_map_in_its_time_and_sees_boats_as_it_passes"
+  },
+  {
+    "name": "a cloaked boat is not seen",
+    "file": "crates/core/src/fishboy/radar.rs",
+    "find": "            self.sightings[i] = if b.cloaked {",
+    "replace": "            self.sightings[i] = if false {",
+    "test": "a_cloaked_boat_is_not_seen_and_its_old_blip_is_wiped"
+  },
+  {
+    "name": "a sweep must end before its cooldown",
+    "file": "crates/core/src/fishboy/radar.rs",
+    "find": "if t.ping_sweep_ms < TICK_MS || t.ping_cooldown_ms < t.ping_sweep_ms {",
+    "replace": "if t.ping_sweep_ms < TICK_MS {",
+    "test": "the_tuning_file_gives_the_ping_its_numbers_and_refuses_a_stray_key"
+  },
+  {
+    "name": "the shore is where land meets water",
+    "file": "crates/core/src/fishboy/radar.rs",
+    "find": "wet(x as usize, y as usize) != water",
+    "replace": "wet(x as usize, y as usize) && !water",
+    "test": "the_map_picture_draws_the_shore_where_land_meets_water"
+  },
+  {
+    "name": "every other row of the map is darker",
+    "file": "crates/core/src/fishboy/radar.rs",
+    "find": "pixels.push(kind + if by % 2 == 1 { SCANNED } else { 0 });",
+    "replace": "pixels.push(kind);",
+    "test": "the_map_picture_draws_the_shore_where_land_meets_water"
+  },
+  {
+    "name": "down the hud says how to raise it",
+    "file": "crates/core/src/fishboy/mod.rs",
+    "find": "&self.t(\"hud.fishboy\"),",
+    "replace": "&self.t(\"hud.fishboy\").to_lowercase(),",
+    "test": "down_the_hud_says_how_to_raise_it_and_no_device_is_drawn"
+  },
+  {
+    "name": "the device does not clear the world",
+    "file": "crates/core/src/fishboy/mod.rs",
+    "find": "            gl_rect: [0, 0, self.size[0], self.size[1]],\n            clear: None,",
+    "replace": "            gl_rect: [0, 0, self.size[0], self.size[1]],\n            clear: Some([0, 0, 0]),",
+    "test": "up_the_device_is_drawn_over_the_world_without_clearing_it"
+  },
+  {
+    "name": "a fish without a model gets an outline",
+    "file": "crates/core/src/fishboy/fishpedia.rs",
+    "find": "            if has_model(model) {",
+    "replace": "            if true {",
+    "test": "the_fishpedia_shows_each_tier_its_fish_and_how_many_are_left"
+  },
+  {
+    "name": "a tier row counts its fish left",
+    "file": "crates/core/src/fishboy/fishpedia.rs",
+    "find": "let total: u32 = fish.iter().map(|r| r.left).sum();",
+    "replace": "let total: u32 = fish.len() as u32;",
+    "test": "the_fishpedia_shows_each_tier_its_fish_and_how_many_are_left"
+  },
+  {
+    "name": "a catch shows its length in feet",
+    "file": "crates/core/src/fishboy/fishpedia.rs",
+    "find": ".replace(\"{feet}\", &crate::app::gallery::feet(row.length_mm));",
+    "replace": ".clone();",
+    "test": "the_catch_list_gives_each_catch_its_length_in_feet"
+  },
+  {
+    "name": "a theme names every radar colour",
+    "file": "crates/core/src/ui2d/theme.rs",
+    "find": "None => return Err(format!(\"The ui2d file has no radar colour \\\"{name}\\\".\")),",
+    "replace": "None => {}",
+    "test": "a_theme_without_a_radar_colour_is_refused_by_name"
+  },
+  {
+    "name": "the roster is the person's",
+    "file": "data/fish.json",
+    "find": "\"id\": \"rock-bass\", \"name\": \"Rock bass\", \"tier\": \"common\"",
+    "replace": "\"id\": \"rock-bass\", \"name\": \"Rock bass\", \"tier\": \"uncommon\"",
+    "test": "the_roster_is_the_persons_thirteen_fish_in_their_tiers"
+  },
+  {
+    "name": "the ping cooldown is five seconds",
+    "file": "data/tuning.json",
+    "find": "\"ping_cooldown_ms\": 5000",
+    "replace": "\"ping_cooldown_ms\": 6000",
+    "test": "the_shipped_theme_roster_and_tuning_are_accepted"
   }
 ]

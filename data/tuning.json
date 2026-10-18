@@ -1,0 +1,7 @@
+{
+  "_note": "Gameplay numbers likely to change (PLAN.md decision 6). Each section belongs to the system named; a system reads only its own section and refuses a key it does not know. radar: a ping's cooldown per player (from the ping's start) and how long its sweep takes to cross the whole map, in ms.",
+  "radar": {
+    "ping_cooldown_ms": 5000,
+    "ping_sweep_ms": 3000
+  }
+}

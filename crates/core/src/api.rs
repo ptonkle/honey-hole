@@ -90,6 +90,35 @@ impl Session {
         }
     }
 
+    /// This frame's 2D draw list and the 3D passes that go with it
+    /// (`ui2d`, `fishboy`).
+    pub fn build_ui2d(&self) -> crate::ui2d::Built {
+        match &self.app {
+            Ok(app) => app.build_ui2d(),
+            Err(_) => Default::default(),
+        }
+    }
+
+    /// An image the 2D list draws by id, as RGBA bytes (empty if unknown).
+    pub fn bitmap_rgba(&self, id: &str) -> Vec<u8> {
+        self.bitmap(id).map_or(Vec::new(), |b| b.rgba())
+    }
+
+    /// The image's width and height (0, 0 if unknown).
+    pub fn bitmap_size(&self, id: &str) -> Vec<i32> {
+        self.bitmap(id).map_or(vec![0, 0], |b| vec![b.w, b.h])
+    }
+
+    fn bitmap(&self, id: &str) -> Option<&crate::ui2d::Bitmap> {
+        let app = self.app.as_ref().ok()?;
+        app.fishboy.radar_map.as_ref().filter(|b| b.id == id)
+    }
+
+    /// Every number the 2D replayer needs (`ui2d::numbers_json`).
+    pub fn ui2d_numbers(&self) -> String {
+        crate::ui2d::numbers_json()
+    }
+
     /// Every number the renderer needs (`gfx::render::numbers_json`).
     pub fn numbers(&self) -> String {
         crate::gfx::render::numbers_json()

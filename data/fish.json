@@ -1,0 +1,18 @@
+{
+  "_note": "The fish roster (crates/core/src/roster.rs): the person's 13 fish for Burt Lake (DECISIONS.md, questions before the night). id: the fish's name in rules and saves. name: shown on screen. tier: common, uncommon, rare or legendary. model: the model file's id (data/models/<model>.json); a fish whose model is not made yet shows a plain outline in the Fishpedia. base_length_mm: a typical adult's length, which catches vary about. value: points for a fish of base length before the tier's multiplier; a starting point for the playtests to tune. Listed by tier, then as the Fishpedia shows them.",
+  "fish": [
+    { "id": "muskellunge", "name": "Muskellunge", "tier": "legendary", "model": "muskellunge", "base_length_mm": 1100, "value": 55 },
+    { "id": "lake-sturgeon", "name": "Lake sturgeon", "tier": "legendary", "model": "lake-sturgeon", "base_length_mm": 1500, "value": 75 },
+    { "id": "northern-pike", "name": "Northern pike", "tier": "rare", "model": "northern-pike", "base_length_mm": 750, "value": 37 },
+    { "id": "channel-catfish", "name": "Channel catfish", "tier": "rare", "model": "channel-catfish", "base_length_mm": 650, "value": 32 },
+    { "id": "lake-trout", "name": "Lake trout", "tier": "rare", "model": "lake-trout", "base_length_mm": 700, "value": 35 },
+    { "id": "smallmouth-bass", "name": "Smallmouth bass", "tier": "uncommon", "model": "smallmouth-bass", "base_length_mm": 400, "value": 20 },
+    { "id": "largemouth-bass", "name": "Largemouth bass", "tier": "uncommon", "model": "largemouth-bass", "base_length_mm": 450, "value": 22 },
+    { "id": "walleye", "name": "Walleye", "tier": "uncommon", "model": "walleye", "base_length_mm": 500, "value": 25 },
+    { "id": "black-crappie", "name": "Black crappie", "tier": "uncommon", "model": "black-crappie", "base_length_mm": 260, "value": 13 },
+    { "id": "bluegill", "name": "Bluegill", "tier": "common", "model": "bluegill", "base_length_mm": 200, "value": 10 },
+    { "id": "yellow-perch", "name": "Yellow perch", "tier": "common", "model": "yellow-perch", "base_length_mm": 230, "value": 11 },
+    { "id": "pumpkinseed", "name": "Pumpkinseed", "tier": "common", "model": "pumpkinseed", "base_length_mm": 180, "value": 9 },
+    { "id": "rock-bass", "name": "Rock bass", "tier": "common", "model": "rock-bass", "base_length_mm": 220, "value": 11 }
+  ]
+}

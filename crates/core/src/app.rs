@@ -104,6 +104,10 @@ pub struct Ui {
     pub volume: u32,
     /// whether the page draws the 3D scene (`frame`) behind the panels
     pub scene: bool,
+    /// keys the page keeps from the browser's own use (Tab, Space in Play)
+    pub keys: Vec<String>,
+    /// the Fish-Boy's tab while it is up, else "" (`fishboy/`)
+    pub fishboy: String,
     pub panels: Vec<Panel>,
 }
 
@@ -126,6 +130,8 @@ pub struct App {
     pub size: [i32; 2],
     /// the page could not start WebGL 2
     pub scene_unavailable: bool,
+    /// the Fish-Boy, its data and the demo match behind it (`fishboy/`)
+    pub fishboy: crate::fishboy::FishBoy,
 }
 
 impl App {
@@ -145,6 +151,7 @@ impl App {
             clock: 0,
             size: [1, 1],
             scene_unavailable: false,
+            fishboy: crate::fishboy::FishBoy::default(),
         })
     }
 
@@ -156,6 +163,7 @@ impl App {
 
     fn go(&mut self, screen: Screen) {
         self.screen = screen;
+        self.fishboy.reset();
         self.paused = false;
     }
 
@@ -181,6 +189,9 @@ impl App {
     /// A key went down (`KeyboardEvent.code`). The core decides what each
     /// key does; a key with no use is ignored.
     fn key(&mut self, code: &str) {
+        if self.fishboy_key(code) {
+            return;
+        }
         if code == "Escape" {
             self.escape();
         }
@@ -191,7 +202,10 @@ impl App {
     pub fn act(&mut self, name: &str, value: &str) -> Result<(), String> {
         match name {
             "key" => self.key(value),
-            "menu.play" => self.go(Screen::Play),
+            "menu.play" => {
+                self.go(Screen::Play);
+                self.fishboy_enter_play();
+            }
             "menu.settings" => self.go(Screen::Settings),
             "menu.notes" => self.go(Screen::Notes),
             "menu.gallery" => self.go(Screen::Gallery),
@@ -205,6 +219,12 @@ impl App {
             "notes.minor" => self.settings.notes_minor = value == "on",
             _ if name.starts_with("settings.") => self.settings_act(name, value)?,
             _ if name.starts_with("gallery.") => self.gallery_act(name, value)?,
+            _ if name.starts_with("fishboy.")
+                || name.starts_with("pointer.")
+                || name.starts_with("data.") =>
+            {
+                self.fishboy_act(name, value)?
+            }
             other => return Err(format!("Unknown action \"{other}\".")),
         }
         Ok(())
@@ -213,12 +233,14 @@ impl App {
     /// The page's clock, in microseconds. It only goes forward.
     pub fn advance(&mut self, now: i64) {
         self.clock = self.clock.max(now);
+        self.fishboy_advance();
     }
 
     /// The canvas's size in CSS pixels and the device's pixel ratio in
     /// hundredths; returns the drawing buffer's size.
     pub fn resize(&mut self, css_w: i32, css_h: i32, dpr_pct: i32) -> [i32; 2] {
         self.size = crate::gfx::render::buffer_size(css_w, css_h, dpr_pct);
+        self.fishboy.dpr_pct = dpr_pct;
         self.size
     }
 
@@ -239,7 +261,9 @@ impl App {
             version_opens: self.version_opens_notes(),
             text_size: self.settings.text_size,
             volume: self.settings.volume,
-            scene: self.screen == Screen::Gallery,
+            scene: matches!(self.screen, Screen::Gallery | Screen::Play),
+            keys: self.captured_keys(),
+            fishboy: self.fishboy_shown(),
             panels,
         }
     }

@@ -153,8 +153,75 @@ def step_gallery(page, check):
     check(page.is_hidden("#scene"), "the scene hides off the Gallery")
 
 
+def ui2d_has(page, *words, timeout=10000):
+    """Waits until the 2D layer's status (body[data-ui2d]) holds every word."""
+    js = "(ws) => ws.every((w) => (document.body.dataset.ui2d || '').split(' ').includes(w))"
+    page.wait_for_function(js, arg=list(words), timeout=timeout)
+    return True
+
+
+def ui2d_some(page, key, timeout=10000):
+    """Waits until the status's `key` is a number other than 0."""
+    js = """(k) => (document.body.dataset.ui2d || '').split(' ')
+        .some((w) => w.startsWith(k + '=') && w !== k + '=0' && w !== k + '=')"""
+    page.wait_for_function(js, arg=key, timeout=timeout)
+    return True
+
+
+def ui2d_value(page, key):
+    """One `key=value` of the 2D layer's status."""
+    for word in (page.get_attribute("body", "data-ui2d") or "").split(" "):
+        if word.startswith(key + "="):
+            return word[len(key) + 1:]
+    return ""
+
+
+def step_fishboy(page, check):
+    # the Fish-Boy over Play: Tab, the radar's ping, the tabs, Esc
+    page.click(by_id("menu.play"))
+    check(screen(page, "play"), "Play opens from the Title")
+    check(ui2d_has(page, "fishboy=", "raised=0"), "Play opens with the Fish-Boy down")
+    page.keyboard.press("Tab")
+    page.wait_for_selector("body[data-fishboy='radar']", state="attached", timeout=5000)
+    check(ui2d_has(page, "raised=100", "ping=ready"), "Tab raises the Fish-Boy on the radar, its ping ready")
+    page.keyboard.press("Space")
+    check(ui2d_has(page, "ping=sweeping", timeout=5000), "Space starts a ping's sweep")
+    # the sweep takes about 3 s, then the 5 s cooldown runs on
+    check(ui2d_has(page, "ping=cooling", timeout=8000), "the sweep ends and the ping cools down")
+    check(ui2d_some(page, "blips"), f"the ping found other players ({ui2d_value(page, 'blips')})")
+    page.keyboard.press("Digit2")
+    page.wait_for_selector("body[data-fishboy='fishpedia']", state="attached", timeout=5000)
+    check(ui2d_some(page, "shots"), "the Fishpedia draws its fish swimming in their boxes")
+    # a click on the Radar tab: units (100, 50) of the 1600 x 900 screen
+    x, y, w, h = (int(v) for v in ui2d_value(page, "screen").split(","))
+    ratio = page.evaluate("() => window.devicePixelRatio")
+    page.mouse.click((x + w * 100 / 1600) / ratio, (y + h * 50 / 900) / ratio)
+    page.wait_for_selector("body[data-fishboy='radar']", state="attached", timeout=5000)
+    check(True, "clicking the Radar tab switches back to it")
+    page.keyboard.press("Escape")
+    page.wait_for_selector("body[data-fishboy='']", state="attached", timeout=5000)
+    check(page.locator(".panel.pause").count() == 0, "Esc puts the Fish-Boy down without pausing")
+    page.keyboard.press("Tab")
+    page.wait_for_selector("body[data-fishboy='radar']", state="attached", timeout=5000)
+    check(True, "it opens again on the last tab viewed")
+    page.keyboard.press("Tab")
+    page.wait_for_selector("body[data-fishboy='']", state="attached", timeout=5000)
+    page.keyboard.press("Escape")
+    page.wait_for_selector(".panel.pause", timeout=5000)
+    page.click(by_id("menu.quit"))
+    check(screen(page, "title"), "Quit to Title goes to the Title")
+    check(page.inner_text("#message") == "", "no error message after the Fish-Boy")
+
+
 # The steps in order, by name; `boot` always runs.
-STEPS = [("boot", step_boot), ("settings", step_settings), ("notes", step_notes), ("play", step_play), ("gallery", step_gallery)]
+STEPS = [
+    ("boot", step_boot),
+    ("settings", step_settings),
+    ("notes", step_notes),
+    ("play", step_play),
+    ("gallery", step_gallery),
+    ("fishboy", step_fishboy),
+]
 
 
 def chosen_steps():

@@ -47,6 +47,14 @@ export function makeRenderer(canvas, N, shaders) {
   const uVP = gl.getUniformLocation(program, "uVP");
   const uniforms = N.uniforms.map(([name, size, at, call]) => ({ loc: gl.getUniformLocation(program, name), size, at, call }));
 
+  function draw(view, vertices, count) {
+    if (!count) return;
+    gl.uniformMatrix4fv(uVP, false, view.subarray(...N.matrix));
+    uniforms.forEach((u) => gl[u.call](u.loc, view.subarray(u.at, u.at + u.size)));
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STREAM_DRAW);
+    gl.drawArrays(gl.TRIANGLES, 0, count);
+  }
+
   return {
     resize(width, height) {
       canvas.width = width;
@@ -58,11 +66,27 @@ export function makeRenderer(canvas, N, shaders) {
       const [r, g, b] = view.subarray(...N.fog_colour);
       gl.clearColor(r, g, b, 1);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-      if (!count) return;
-      gl.uniformMatrix4fv(uVP, false, view.subarray(...N.matrix));
-      uniforms.forEach((u) => gl[u.call](u.loc, view.subarray(u.at, u.at + u.size)));
-      gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STREAM_DRAW);
-      gl.drawArrays(gl.TRIANGLES, 0, count);
+      draw(view, vertices, count);
+    },
+    // One more drawing into part of the buffer (a model in a 2D box, or
+    // the Fish-Boy over the world): its rectangle, whether to clear its
+    // colour, and its own view values, laid out as the 2D numbers' `pass`
+    // says (crates/core/src/ui2d/mod.rs).
+    pass(P, values, vertices, count) {
+      const rect = values.subarray(...P.rect);
+      gl.enable(gl.SCISSOR_TEST);
+      gl.viewport(...rect);
+      gl.scissor(...rect);
+      if (values[P.clear]) {
+        const [r, g, b] = values.subarray(...P.colour);
+        gl.clearColor(r, g, b, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      } else {
+        gl.clear(gl.DEPTH_BUFFER_BIT);
+      }
+      draw(values.subarray(...P.view), vertices, count);
+      gl.disable(gl.SCISSOR_TEST);
+      gl.viewport(0, 0, canvas.width, canvas.height);
     },
   };
 }

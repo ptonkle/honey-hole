@@ -23,6 +23,7 @@ fn floats(v: &[i32]) -> Vec<f32> {
 pub struct Game {
     s: tool_core::api::Session,
     frame: (Vec<i32>, Vec<i32>),
+    ui2d: tool_core::ui2d::Built,
 }
 
 #[wasm_bindgen]
@@ -32,6 +33,7 @@ impl Game {
         Game {
             s: tool_core::api::Session::new(strings_json, notes_json),
             frame: Default::default(),
+            ui2d: Default::default(),
         }
     }
 
@@ -75,5 +77,48 @@ impl Game {
 
     pub fn vertex_count(&self) -> u32 {
         tool_core::gfx::render::vertex_count(&self.frame.1)
+    }
+
+    /// Builds this frame's 2D list and passes; read them with the
+    /// `ui2d_*` and `pass_*` methods.
+    pub fn build_ui2d(&mut self) {
+        self.ui2d = self.s.build_ui2d()
+    }
+
+    pub fn ui2d_numbers(&self) -> String {
+        self.s.ui2d_numbers()
+    }
+
+    pub fn ui2d_values(&self) -> Vec<f32> {
+        floats(&self.ui2d.list.nums)
+    }
+
+    /// The list's strings and status, as JSON.
+    pub fn ui2d_strings(&self) -> String {
+        self.ui2d.list.strings_json()
+    }
+
+    pub fn pass_count(&self) -> u32 {
+        self.ui2d.pass_count()
+    }
+
+    pub fn pass_values(&self, k: u32) -> Vec<f32> {
+        floats(&self.ui2d.pass_values(k))
+    }
+
+    pub fn pass_vertices(&self, k: u32) -> Vec<f32> {
+        floats(&self.ui2d.pass_vertices(k))
+    }
+
+    pub fn pass_vertex_count(&self, k: u32) -> u32 {
+        self.ui2d.pass_vertex_count(k)
+    }
+
+    pub fn bitmap_rgba(&self, id: &str) -> Vec<u8> {
+        self.s.bitmap_rgba(id)
+    }
+
+    pub fn bitmap_size(&self, id: &str) -> Vec<i32> {
+        self.s.bitmap_size(id)
     }
 }

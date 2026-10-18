@@ -348,6 +348,9 @@ impl App {
 
     /// This frame's view values and triangles (empty off the Gallery).
     pub fn frame(&self) -> (Vec<i32>, Vec<i32>) {
+        if self.screen == Screen::Play {
+            return self.standin_frame();
+        }
         let (Some(look), Some(m)) = (self.look.as_ref(), self.models.get(self.gallery.model)) else {
             return (Vec::new(), Vec::new());
         };

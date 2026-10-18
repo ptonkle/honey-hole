@@ -99,7 +99,8 @@ impl App {
             vec![Item::quiet_button("menu.pause", self.t("menu.pause"))],
         );
         play.sub = self.t("play.placeholder");
-        let mut panels = vec![play];
+        // the Fish-Boy up covers the placeholder
+        let mut panels = if self.fishboy.open { Vec::new() } else { vec![play] };
         if self.paused {
             panels.push(Panel::new(
                 "pause",
