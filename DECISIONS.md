@@ -82,3 +82,7 @@ The agent decided: the boat is approved as is. The angler is remodelled with tap
 > lakeside props look good too
 
 The agent decided: the fish's side views, the swims and the lakeside props are approved as they are. The model lengths already differ (bluegill 0.2 m to sturgeon 1.5 m), but the Gallery fits each model to the frame, so they look alike. The Gallery gets a to-scale line-up, base lengths are checked against real adults, and each fish gets its own exaggerated silhouette from above, with the side views and swims kept.
+
+> boat colors are are all good
+
+The agent decided: the four player colours in `data/look.json` stay as they are, yellow included (R1.54 answered).
