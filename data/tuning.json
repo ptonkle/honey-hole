@@ -264,7 +264,7 @@
       "_note": "A rival's motor heard from your boat. Silent beyond the distance a rival covers in hear_seconds at the boat's top speed (the brief: about 5 s), louder as it nears, full within full_within_mm. curve 1 rises evenly, 2 slowly at first and quickly near. The true Doppler shift of a 16 m/s boat is under a semitone, so doppler_scale exaggerates it; the pitch is kept between lowest_pitch and highest_pitch.",
       "hear_seconds": 5,
       "full_within_mm": 6000,
-      "loudest": 0.9,
+      "loudest": 0.6,
       "curve": 2,
       "sound_speed_mm_per_s": 343000,
       "doppler_scale": 3,
@@ -273,8 +273,8 @@
     },
     "own_motor": {
       "_note": "Your own motor: idle when still with no throttle, full at top speed with the throttle held. throttle_share is how much of the rise comes from holding W or S rather than from the speed.",
-      "idle_gain": 0.22,
-      "full_gain": 0.45,
+      "idle_gain": 0.12,
+      "full_gain": 0.26,
       "idle_pitch": 1,
       "full_pitch": 2.4,
       "throttle_share": 0.35

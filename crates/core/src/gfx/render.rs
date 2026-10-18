@@ -149,6 +149,9 @@ pub struct Air {
     pub water: [i32; 4],
     /// the sun's glint on the water: its colour and its sharpness
     pub spec: [i32; 4],
+    /// how fast the fog thickens from its start (Q16, k of the look's
+    /// `fog_thickness_pct`); 0 is an even S-curve
+    pub fog_curve: i32,
     /// the rest is the underwater camera's ([`Deep`]); above the water it
     /// is [`Deep::none`], which changes nothing
     pub deep: Deep,
@@ -216,6 +219,7 @@ impl Air {
             waves: [[0; 4]; 2],
             water: [ONE, ONE, ONE, 0],
             spec: [0, 0, 0, ONE],
+            fog_curve: 0,
             deep: Deep::none(rgb(light.fog)),
         }
     }
@@ -260,6 +264,7 @@ pub const UNIFORMS: &[(&str, usize)] = &[
     ("uWindow", 4),
     ("uSilhouette", 2),
     ("uShadow", 3),
+    ("uFogCurve", 1),
 ];
 
 /// The matrix's 16 values come first.
@@ -340,6 +345,7 @@ pub fn view_values(cam: &Camera, aspect: i32, fog: (i32, i32), light: &Light, ai
     put("uWindow", &d.window);
     put("uSilhouette", &d.silhouette);
     put("uShadow", &d.shadow);
+    put("uFogCurve", &[air.fog_curve]);
     v
 }
 
@@ -502,8 +508,10 @@ mod tests {
         assert_eq!(slice("uDeep"), vec![ONE, 0, 0]);
         assert_eq!(slice("uShaftLook")[0], 0);
         // the uniforms end where the values do
-        let (at, len) = uniform_in(&n, "uShadow");
+        let (at, len) = uniform_in(&n, "uFogCurve");
         assert_eq!(at + len, VIEW_VALUES);
+        // a plain sky's fog thickens evenly
+        assert_eq!(slice("uFogCurve"), vec![0]);
     }
 
     #[test]

@@ -18,7 +18,7 @@
     "turn_seconds": 24
   },
   "lake": {
-    "_note": "The lake's look (crates/core/src/scene/look.rs): an overcast northern lake. light.fog is the horizon and the fog; zenith the sky overhead; sky_band where the sky turns between them (hundredths of the view's height). The fog thickens from fog_start_pct of the map's sight distance (sight_mm) and is whole at fog_end_pct. Colours 0-255, lengths mm, shares percent. under: what lies under the surface takes on its colour with depth, so a fish just under shows through the water tinted. water.alpha_*: the surface's opacity looking straight down and at a grazing angle. props name the model for each thing the map places.",
+    "_note": "The lake's look (crates/core/src/scene/look.rs): an overcast northern lake. light.fog is the horizon and the fog; zenith the sky overhead; sky_band where the sky turns between them (hundredths of the view's height). The fog thickens from fog_start_pct of the map's sight distance (sight_mm) and is whole at fog_end_pct, quickly at first as real fog does: fog_thickness_pct is k in (1 - e^(-k t)) / (1 - e^(-k)), t the share of the way in (0 is an even S-curve; 250 is about half fog a quarter of the way in). Colours 0-255, lengths mm, shares percent. under: what lies under the surface takes on its colour with depth, so a fish just under shows through the water tinted. water.alpha_*: the surface's opacity looking straight down and at a grazing angle. props name the model for each thing the map places.",
     "light": {
       "fog": [188, 202, 206],
       "sun_dir": [-40, 70, 30],
@@ -29,8 +29,9 @@
     },
     "zenith": [138, 162, 186],
     "sky_band": [-4, 60],
-    "fog_start_pct": 22,
+    "fog_start_pct": 8,
     "fog_end_pct": 100,
+    "fog_thickness_pct": 250,
     "ground": {
       "grass": [98, 130, 68],
       "meadow": [114, 138, 72],

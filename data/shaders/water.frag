@@ -12,6 +12,7 @@ in vec3 vWorld;
 in vec3 vColour;
 uniform vec3 uEye;
 uniform vec2 uFog;
+uniform float uFogCurve;
 uniform vec3 uFogColour;
 uniform vec3 uZenith;
 uniform vec2 uSkyBand;
@@ -35,6 +36,14 @@ uniform vec2 uHemi;
 uniform vec4 uWater;
 uniform vec4 uSpec;
 out vec4 outColour;
+// The fog's share at distance d: from uFog.x to whole at uFog.y, quickly at
+// first by uFogCurve (k: (1 - e^(-k t)) / (1 - e^(-k))), or an even S-curve
+// when it is 0.
+float fogAt(float d) {
+  if (uFogCurve <= 0.0) return smoothstep(uFog.x, uFog.y, d);
+  float t = clamp((d - uFog.x) / (uFog.y - uFog.x), 0.0, 1.0);
+  return (1.0 - exp(-uFogCurve * t)) / (1.0 - exp(-uFogCurve));
+}
 vec3 murk(vec3 d) {
   vec3 c = mix(uFogColour, uZenith, smoothstep(uSkyBand.x, uSkyBand.y, d.y));
   c = mix(c, uDeep, smoothstep(uDeepBand.x, uDeepBand.y, -d.y));
@@ -53,7 +62,7 @@ float caustic(vec2 p) {
 void main() {
   vec3 ray = vWorld - uEye;
   vec3 view = normalize(-ray);
-  float f = smoothstep(uFog.x, uFog.y, length(ray));
+  float f = fogAt(length(ray));
   if (uEye.y < 0.0) {
     float up = clamp(-view.y, 0.0, 1.0);
     float window = smoothstep(uWindow.x, uWindow.y, up);
