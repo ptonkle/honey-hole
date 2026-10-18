@@ -27,6 +27,8 @@ What a new session gets wrong first.
 Every `SECOND-ORDER.md` row with status *person*, by number, with what the person has to decide or supply. `scripts/notebook_check.py` fails while one is missing.
 
 - R1.23: whether settings are kept between visits (browser storage, D17). Today they last for the visit.
+- R1.63: the fog's sight distance (120 m assumed), which the map validator's hiding rule depends on.
+- R1.69: the fish roster and how the example counts split over it.
 - R1.30: the game's name ("Fishing" is the working name), and a read of the menu strings and text size choices the agent wrote.
 
 ## Mistakes so far

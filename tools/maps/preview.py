@@ -52,7 +52,8 @@ FONT = {
     "6": "00110010001000011110100011000101110", "7": "11111000010001000100010000100001000",
     "8": "01110100011000101110100011000101110", "9": "01110100011000101111000010001001100",
     " ": "0" * 35, ".": "00000000000000000000000000110001100", ",": "00000000000000000110001000100000000",
-    ":": "00000011000110000000011000110000000", "%": "11000110010001000100010001001100011",
+    ":": "00000011000110000000011000110000000",
+    ";": "00000011000110000000011000010001000", "%": "11000110010001000100010001001100011",
     "-": "00000000000000011111000000000000000", "(": "00010001000100001000010000010000010",
     ")": "01000001000001000010000100010001000", "/": "00000000010001000100010001000000000",
     "²": "01100000100010001110000000000000000",
@@ -151,7 +152,7 @@ def to_px(m, p):
 def ground_layer(m, palette):
     n = m["n"]
     size = n * PX
-    cv = Canvas(size, size + 64, palette["panel"])
+    cv = Canvas(size, size + 92, palette["panel"])
     heights = [[0.0] * size for _ in range(size)]
     for py in range(size):
         fy = (size - 1 - py + 0.5) / PX - 0.5
@@ -240,10 +241,16 @@ def caption(cv, m, ink, bad):
     r = m["report"]
     x = cv.text(10, size + 8, f"SEED {m['seed']}", ink, 3)
     stats = (f"{r['water_m2'] // 1000}K M² WATER, CROSSING {r['span_mm'] // 1000} M "
-             f"({r['span_mm'] // 20000} S), {r['islands']} ISLANDS, COVER {r['cover'] / 10:.0f}%")
+             f"({m['crossing_s']} S AT TOP SPEED), {r['islands']} ISLANDS, COVER {r['cover'] / 10:.0f}%")
     cv.text(x + 20, size + 12, stats, ink, 1)
     if m["problems"]:
-        cv.text(10, size + 38, "REJECTED: " + "; ".join(m["problems"])[:110], bad, 2)
+        words, lines = ("REJECTED: " + "; ".join(m["problems"])).split(" "), [""]
+        for w in words:
+            if len(lines[-1]) + len(w) + 1 > 62:
+                lines.append("")
+            lines[-1] = (lines[-1] + " " + w).strip()
+        for k, line in enumerate(lines[:3]):
+            cv.text(10, size + 34 + k * 18, line, bad, 2)
     else:
         cv.text(10, size + 38, "ACCEPTED", (30, 130, 50), 2)
 

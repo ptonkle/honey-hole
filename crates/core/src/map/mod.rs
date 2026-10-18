@@ -156,6 +156,12 @@ pub struct Spawn {
     pub dock: P,
 }
 
+/// The boat's top speed the map size was chosen for: 16 m/s (58 km/h),
+/// so the usual 440 to 640 m crossing from the spawn takes 28 to 40 s and
+/// a 500 m one about 31 s. The boat's own rules will live with the boat;
+/// this is the figure the validator's [`Params::span_mm`] assumes.
+pub const BOAT_TOP_SPEED_MM_PER_S: i32 = 16_000;
+
 /// [`Map::shore`] is measured this far and no farther.
 pub const SHORE_REACH_MM: i32 = 120_000;
 

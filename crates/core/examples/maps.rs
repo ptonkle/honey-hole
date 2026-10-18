@@ -15,7 +15,7 @@ use std::path::Path;
 use std::time::Instant;
 
 use serde_json::json;
-use tool_core::map::{buoy, fish, generate, list, validate, Setting, P};
+use tool_core::map::{self, buoy, fish, generate, list, validate, Setting, P};
 
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -111,6 +111,7 @@ fn dump(setting: Setting, seed: u32) -> serde_json::Value {
         "trees": map.trees,
         "spawn": map.spawn,
         "report": verdict.report,
+        "crossing_s": verdict.report.span_mm / map::BOAT_TOP_SPEED_MM_PER_S,
         "problems": verdict.problems.iter().map(|p| p.describe()).collect::<Vec<_>>(),
         "fish": fish.as_ref().ok(),
         "fish_error": fish.as_ref().err(),
