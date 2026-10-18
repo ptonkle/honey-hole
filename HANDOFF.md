@@ -113,6 +113,8 @@ The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the 
 
 2026-10-18, the AI uses items (the buoy, each item's moment, a hand that plays the six minigames through the pointer), R4.11's fix (the reel holds while a minigame plays) and the playtests with items, merged with main's online items (branch `worktree-agent-abdb694ecf26104d8`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, with the new `ai_items` step); `count-tests.sh`: 455 passed, 0 failed, 0 ignored; `break_tests.py` caught all 11 new breaks.
 
+2026-10-18, the browser checks' fast mode and mute (`?fast`, `?mute`; SECOND-ORDER R6.90 to R6.94), merged with main through the launch-level mute (branch `worktree-agent-af21b47d2826cdbc9`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 210 s, was 330 s); the online match check passes with `?fast&mute`; `count-tests.sh`: 475 passed, 0 failed, 0 ignored; `scripts/break_tests.py "fast mode" "mute leaves"`: 5 of 5 caught.
+
 2026-10-18, the performance pass (one AI path search a tick, models out of view not posed, the frame's lists read in place, unchanged view model and 2D list not redrawn, the sky drawn last, no stray 404s), merged with main (branch `worktree-agent-a9dc849f7fd273052`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, now failing on any 404); `ONLINE CHECK PASSED`; `count-tests.sh`: 467 passed, 0 failed, 0 ignored; `scripts/break_tests.py R6.4 R6.5`: 2 of 2 breaks caught.
 
 ## The next action
