@@ -108,6 +108,19 @@ impl Game {
         floats(&self.frame.instances)
     }
 
+    /// The see-through triangles (a ghosted boat) and their view values.
+    pub fn ghost_vertices(&self) -> Vec<f32> {
+        floats(&self.frame.ghost)
+    }
+
+    pub fn ghost_vertex_count(&self) -> u32 {
+        tool_core::gfx::render::vertex_count(&self.frame.ghost)
+    }
+
+    pub fn ghost_view(&self) -> Vec<f32> {
+        floats(&self.frame.ghost_view)
+    }
+
     /// 0 for no static world; a new stamp means upload `world_vertices`.
     pub fn world_stamp(&self) -> u32 {
         self.s.world_stamp()

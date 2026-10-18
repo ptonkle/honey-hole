@@ -96,5 +96,12 @@
     "_note": "The Fish-Boy's radar (crates/core/src/fishboy/radar.rs). ping_cooldown_ms: from one ping's start to the next allowed, per player (BRIEF: 5 s). ping_sweep_ms: how long the sweep takes to cross the whole map from where the player pinged (BRIEF: about 3 s); it must end before the cooldown does.",
     "ping_cooldown_ms": 5000,
     "ping_sweep_ms": 3000
+  },
+  "flow": {
+    "_note": "The match's flow (crates/core/src/flow/). countdown_ms: the 3-2-1-Go before a match, the boats held still (0 to 3000: the beeps are cues for 3, 2 and 1). popup_ms: how long each popup stays up (round 1: about 2 s). end_hold_ms: at time 0 the horn sounds and 'Lines up' shows this long before the postgame. hints_ms: the HUD's key hints show for this much match time, then fade.",
+    "countdown_ms": 3000,
+    "popup_ms": 2000,
+    "end_hold_ms": 3000,
+    "hints_ms": 60000
   }
 }

@@ -188,6 +188,7 @@ pub const UNIFORMS: &[(&str, usize)] = &[
     ("uWave2", 4),
     ("uWater", 4),
     ("uSpec", 4),
+    ("uOpacity", 1),
     ("uGlow", 1),
 ];
 
@@ -251,6 +252,8 @@ pub fn view_values(cam: &Camera, aspect: i32, fog: (i32, i32), light: &Light, ai
     put("uWave2", &air.waves[1]);
     put("uWater", &air.water);
     put("uSpec", &air.spec);
+    // drawn whole; a ghosted boat's view says less (`Frame::ghost_view`)
+    put("uOpacity", &[ONE]);
     put("uGlow", &[light.glow_fog_pct * ONE / 100]);
     v
 }
@@ -267,6 +270,23 @@ pub struct Frame {
     pub groups: Vec<i32>,
     /// [`INSTANCE_VALUES`] per instance, in group order
     pub instances: Vec<i32>,
+    /// triangles drawn see-through after the rest (a ghosted boat), with
+    /// their own view values: the frame's, but for `uOpacity`
+    pub ghost: Vec<i32>,
+    pub ghost_view: Vec<i32>,
+}
+
+impl Frame {
+    /// See-through triangles, `opacity` (Q16) of the way solid.
+    pub fn set_ghost(&mut self, tris: Vec<i32>, opacity: i32) {
+        let mut v = self.view.clone();
+        let (at, _) = uniform_at("uOpacity");
+        if let Some(slot) = v.get_mut(at) {
+            *slot = opacity;
+        }
+        self.ghost = tris;
+        self.ghost_view = v;
+    }
 }
 
 impl Frame {
@@ -327,6 +347,7 @@ pub fn numbers_json() -> String {
         "matrix": [0, MATRIX_VALUES],
         "uniforms": uniforms,
         "fog_colour": [fog_at, fog_at + 3],
+        "opacity": uniform_at("uOpacity").0,
     })
     .to_string()
 }

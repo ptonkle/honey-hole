@@ -414,7 +414,10 @@ impl App {
         let boat = self.models.iter().find(|m| m.kind == Kind::Boat)?;
         let angler = self.models.iter().find(|m| m.kind == Kind::Figure);
         let mut instances = Vec::new();
+        // a ghosted boat (after a respawn) is drawn see-through, apart
+        let mut ghosts = Vec::new();
         for b in view.world.boats.iter().filter(|b| !b.wrecked) {
+            let into = if b.ghosted { &mut ghosts } else { &mut instances };
             let slot = crate::sim::SEAT_COLOURS
                 .iter()
                 .position(|c| *c == b.colour)
@@ -427,13 +430,13 @@ impl App {
                 ms,
                 colour,
             };
-            instances.push(on);
+            into.push(on);
             let (pose, turn) = match b.mode {
                 crate::sim::Mode::Driving => (Anim::Drive, 0),
                 crate::sim::Mode::Fishing => (Anim::Fish, b.cast_yaw),
             };
             if let (Some(a), Some(seat)) = (angler, scene::seat(&on, pose.key())) {
-                instances.push(Instance {
+                into.push(Instance {
                     model: a,
                     place: seat.then(&Affine::rot_y(turn)),
                     anim: Some(pose),
@@ -468,15 +471,20 @@ impl App {
                 view.cam_pitch - deg(cam_look.pitch_deg),
             ),
         };
+        // a wreck shakes its player's camera; the postgame turns slowly
+        // round the boat (`flow/`)
+        let cam = self.flow_camera(cam, lake, at);
         let clock_ms = (self.clock.max(0) / 1000) as u64;
-        Some(scene::frame(
+        let mut frame = scene::frame(
             lake,
             cam,
             render::aspect(self.size),
             self.sight_mm(),
             clock_ms,
             &instances,
-        ))
+        );
+        self.flow_world(&mut frame, &ghosts);
+        Some(frame)
     }
 }
 

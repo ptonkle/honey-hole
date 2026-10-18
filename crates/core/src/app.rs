@@ -39,6 +39,9 @@ pub enum Screen {
     Lobby,
     /// a match (`app/play.rs`)
     Play,
+    /// after a match: each player's catches revealed, then the ranking
+    /// (`flow/`)
+    Postgame,
     /// each model turning, for a look at the art (`app/gallery.rs`)
     Gallery,
     /// every sound, played on a click (`app/sounds.rs`)
@@ -87,6 +90,9 @@ pub struct Settings {
     pub notes_minor: bool,
     /// the person's name in matches; empty for the stand-in name
     pub name: String,
+    /// the map seed shows in the HUD's bottom-right corner (for reporting
+    /// a map with a problem)
+    pub show_seed: bool,
 }
 
 impl Default for Settings {
@@ -96,6 +102,7 @@ impl Default for Settings {
             text_size: TextSize::Medium,
             notes_minor: false,
             name: String::new(),
+            show_seed: false,
         }
     }
 }
@@ -165,6 +172,9 @@ pub struct App {
     /// the lake drawn now, built once per map (`scene::Lake`); the page
     /// uploads its static vertices when its stamp changes
     pub world: Option<crate::scene::Lake>,
+    /// the match's flow: the HUD, popups, bursts, the end and the
+    /// postgame (`flow/`)
+    pub flow: crate::flow::Flow,
 }
 
 impl App {
@@ -195,6 +205,7 @@ impl App {
             sounds: sounds::SoundsScreen::default(),
             preview: lake::Preview::default(),
             world: None,
+            flow: crate::flow::Flow::default(),
         })
     }
 
@@ -204,7 +215,7 @@ impl App {
 
     // ---- screens ----
 
-    fn go(&mut self, screen: Screen) {
+    pub(crate) fn go(&mut self, screen: Screen) {
         self.screen = screen;
     }
 
@@ -224,6 +235,9 @@ impl App {
     fn escape(&mut self) {
         match self.screen {
             Screen::Play => {}
+            // the reveal skips to the ranking; then Esc goes to the Title
+            Screen::Postgame if !self.postgame_ranked() => self.skip_reveal(),
+            Screen::Postgame => self.leave_match(),
             Screen::Settings
             | Screen::Notes
             | Screen::Gallery
@@ -254,6 +268,9 @@ impl App {
     fn key(&mut self, code: &str) {
         if code == "Escape" {
             self.escape();
+        }
+        if code == "Space" && self.screen == Screen::Postgame {
+            self.skip_reveal();
         }
     }
 
@@ -291,6 +308,9 @@ impl App {
             "menu.resume" => self.tap("menu", true),
             "notes.minor" => self.settings.notes_minor = value == "on",
             "settings.name" => self.set_name(value),
+            "settings.show_seed" => self.settings.show_seed = value == "on",
+            "data.flow" => self.flow_act(name, value)?,
+            _ if name.starts_with("postgame.") || name.starts_with("debug.") => self.flow_act(name, value)?,
             "data.ui2d" | "data.fish" => self.fishboy_act(name, value)?,
             _ if name.starts_with("data.") => self.data_act(name, value)?,
             _ if name.starts_with("lobby.") => self.lobby_act(name, value)?,
@@ -311,6 +331,7 @@ impl App {
         self.clock = self.clock.max(now);
         self.run_ticks(self.clock);
         self.fishboy_advance();
+        self.flow_advance();
     }
 
     /// The canvas's size in CSS pixels and the device's pixel ratio in
@@ -329,7 +350,7 @@ impl App {
         match self.screen {
             Screen::Gallery => self.gallery_frame(),
             Screen::Lake => self.lake_frame(),
-            Screen::Play => self.match_frame().unwrap_or_default(),
+            Screen::Play | Screen::Postgame => self.match_frame().unwrap_or_default(),
             _ => crate::gfx::render::Frame::default(),
         }
     }
@@ -347,6 +368,7 @@ impl App {
             Screen::Notes => self.notes_panels(),
             Screen::Lobby => self.lobby_panels(),
             Screen::Play => self.play_panels(),
+            Screen::Postgame => self.postgame_panels(),
             Screen::Gallery => self.gallery_panels(),
             Screen::Sounds => self.sounds_panels(),
             Screen::Lake => self.lake_panels(),
@@ -358,7 +380,10 @@ impl App {
             version_opens: self.version_opens_notes(),
             text_size: self.settings.text_size,
             volume: self.settings.volume,
-            scene: matches!(self.screen, Screen::Gallery | Screen::Play | Screen::Lake),
+            scene: matches!(
+                self.screen,
+                Screen::Gallery | Screen::Play | Screen::Postgame | Screen::Lake
+            ),
             fishboy: self.fishboy_shown(),
             pointer: self.fishboy_shown() != "",
             capture: self.screen == Screen::Play
@@ -366,7 +391,7 @@ impl App {
                     .play
                     .as_ref()
                     .is_some_and(|p| !p.menu_open() && !p.game.ended),
-            live: self.screen == Screen::Play && self.play.is_some(),
+            live: matches!(self.screen, Screen::Play | Screen::Postgame) && self.play.is_some(),
             panels,
         }
     }

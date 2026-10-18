@@ -22,6 +22,7 @@ uniform vec2 uHemi;
 uniform vec2 uUnder;
 uniform vec3 uUnderColour;
 uniform float uGlow;
+uniform float uOpacity;
 out vec4 outColour;
 void main() {
   vec3 n = normalize(vNormal);
@@ -35,5 +36,5 @@ void main() {
   vec3 ray = vWorld - uEye;
   vec3 sky = mix(uFogColour, uZenith, smoothstep(uSkyBand.x, uSkyBand.y, normalize(ray).y));
   float f = smoothstep(uFog.x, uFog.y, length(ray)) * mix(1.0, uGlow, vGlow);
-  outColour = vec4(mix(lit, sky, f), 1.0);
+  outColour = vec4(mix(lit, sky, f), uOpacity);
 }

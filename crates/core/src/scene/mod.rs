@@ -337,6 +337,7 @@ pub fn frame(
         statics: [lake.terrain[0], lake.terrain[1], lake.water[0], lake.water[1]],
         groups,
         instances: inst,
+        ..Frame::default()
     }
 }
 

@@ -388,7 +388,8 @@ function frame(now) {
       renderer.world(game.world_vertices());
       worldStamp = stamp;
     }
-    renderer.frame(game.view(), game.vertices(), game.vertex_count(), game.statics(), game.groups(), game.instances());
+    renderer.frame(game.view(), game.vertices(), game.vertex_count(), game.statics(), game.groups(), game.instances(),
+      game.ghost_view(), game.ghost_vertices(), game.ghost_vertex_count());
     // the 2D layer: its models and the Fish-Boy through the renderer,
     // then the draw list on the overlay
     game.build_ui2d();
@@ -414,6 +415,7 @@ async function main() {
   const look = await (await fetch("data/look.json")).text();
   const ui2dLook = await (await fetch("data/ui2d.json")).text();
   const fish = await (await fetch("data/fish.json")).text();
+  const flow = await (await fetch("data/flow.json")).text();
   const shaders = {
     vertex: await (await fetch("data/shaders/scene.vert")).text(),
     fragment: await (await fetch("data/shaders/scene.frag")).text(),
@@ -430,6 +432,7 @@ async function main() {
   draw(JSON.parse(game.load_models(models, look)));
   send("data.ui2d", ui2dLook);
   send("data.fish", fish);
+  send("data.flow", flow);
   const ui2dNumbers = JSON.parse(game.ui2d_numbers());
   passLayout = ui2dNumbers.pass;
   overlay = makeOverlay(el("overlay"), ui2dNumbers, (id) => bitmapFrom(game.bitmap_rgba(id), game.bitmap_size(id)));

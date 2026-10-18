@@ -118,7 +118,9 @@ export function makeRenderer(canvas, N, shaders) {
     // view: the core's view values; vertices: the posed triangles;
     // statics: the terrain's and the water's ranges; groups and instances:
     // the props to draw
-    frame(view, vertices, count, statics, groups, instances) {
+    // ghostView, ghostVertices and ghostCount: triangles drawn see-through
+    // after the rest (a ghosted boat), their opacity in their view values
+    frame(view, vertices, count, statics, groups, instances, ghostView, ghostVertices, ghostCount) {
       const [r, g, b] = view.subarray(...N.fog_colour);
       gl.clearColor(r, g, b, 1);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -156,6 +158,18 @@ export function makeRenderer(canvas, N, shaders) {
         gl.bindBuffer(gl.ARRAY_BUFFER, dynamic);
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STREAM_DRAW);
         gl.drawArrays(gl.TRIANGLES, 0, count);
+      }
+
+      if (ghostCount) {
+        scene.use(ghostView);
+        gl.bindVertexArray(dynamicVao);
+        gl.bindBuffer(gl.ARRAY_BUFFER, dynamic);
+        gl.bufferData(gl.ARRAY_BUFFER, ghostVertices, gl.STREAM_DRAW);
+        gl.enable(gl.BLEND);
+        gl.depthMask(false);
+        gl.drawArrays(gl.TRIANGLES, 0, ghostCount);
+        gl.depthMask(true);
+        gl.disable(gl.BLEND);
       }
 
       water.use(view);

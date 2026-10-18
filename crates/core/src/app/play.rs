@@ -282,6 +282,7 @@ impl App {
         s.length_ms = lobby.length_ms;
         s.buoy_interval_ms = lobby.buoy_interval_ms;
         s.offline = true;
+        s.countdown_ms = t.flow.countdown_ms;
         // the roster's starting counts (`data/fish.json`)
         s.fish = self
             .fishboy
@@ -307,13 +308,20 @@ impl App {
 
     fn start_match(&mut self) -> Result<(), String> {
         let list = self.need(&self.maps, "map list")?.clone();
-        let t = self.need(&self.tuning, "tuning")?.clone();
-        let controls = self.need(&self.controls, "controls")?.clone();
+        self.need(&self.controls, "controls")?;
         // the match seed comes from the page's clock: no two matches alike,
         // and the same clock gives the same match
         let match_seed = mix(self.clock as u64 ^ 0x6d61_7463_6800_0000);
         let map_seed = self.map_seed(&list, match_seed)?;
         let setup = self.setup(match_seed)?;
+        self.begin(setup, map_seed)
+    }
+
+    /// Starts a match with this setup on this checked layout (New match's
+    /// Start match, and the postgame's Rematch).
+    pub(crate) fn begin(&mut self, setup: Setup, map_seed: u32) -> Result<(), String> {
+        let t = self.need(&self.tuning, "tuning")?.clone();
+        let controls = self.need(&self.controls, "controls")?.clone();
         let map = generate(Setting::MichiganLake, map_seed);
         // the lake's world, uploaded once (`app/lake.rs`); without the
         // lake's look the match draws its stand-in
@@ -329,13 +337,15 @@ impl App {
             cam_pitch: deg(controls.mouse.pitch_start_deg),
             log: Vec::new(),
         });
+        self.flow.reset();
         self.go(Screen::Play);
         Ok(())
     }
 
     /// Leaves the match for the Title.
-    pub(super) fn leave_match(&mut self) {
+    pub(crate) fn leave_match(&mut self) {
         self.play = None;
+        self.flow.reset();
         self.settings_return = false;
         self.go(Screen::Title);
     }
@@ -422,6 +432,8 @@ impl App {
                 s.event(e, listener);
             }
         }
+        // popups, wrecks' bursts and the end (`flow/`)
+        self.flow_hear(&heard);
     }
 
     /// The match as a world renderer reads it.
@@ -551,29 +563,18 @@ impl App {
         };
         let p = self.play.as_ref().unwrap();
         let w = &view.world;
-        let mut lines = Vec::new();
-        if let Some(b) = w.boats.iter().find(|b| b.seat == p.seat) {
-            lines.push(self.t(if b.mode == sim::Mode::Driving {
-                "hud.driving"
-            } else {
-                "hud.fishing"
-            }));
-            // mm/s to km/h: × 3600 / 1 000 000
-            let kmh = (b.speed_mm_per_s as i64 * 36 / 10_000) as i32;
-            lines.push(self.t("hud.speed").replace("{speed}", &kmh.to_string()));
-            if b.wrecked {
-                lines.push(self.t("hud.wrecked"));
-            }
-        }
-        let mut hud = Panel::new(
+        // the HUD itself is on the 2D layer (`flow/hud.rs`); this panel
+        // holds only the Menu button, for the mouse
+        let hud = Panel::new(
             "hud",
-            self.t("hud.time").replace("{time}", &clock_text(w.remaining_ms)),
+            String::new(),
             vec![Item::quiet_button("menu.pause", self.t("menu.pause"))],
         );
-        hud.sub = lines.join(" · ");
-        // the Fish-Boy up covers the HUD's panel
+        // the Fish-Boy up covers it
         let mut panels = if self.fishboy.open { Vec::new() } else { vec![hud] };
-        if w.ended {
+        // at the end the postgame follows (`flow/`); without the flow's
+        // look, the match waits here to be left
+        if w.ended && self.flow.look.is_none() {
             panels.push(Panel::new(
                 "pause",
                 self.t("hud.ended"),

@@ -190,11 +190,13 @@ fn settings_from_the_match_menu_go_back_to_the_match_which_waits_offline() {
 }
 
 #[test]
-fn the_hud_shows_the_time_left_and_the_page_keeps_the_keys() {
+fn the_hud_panel_holds_the_menu_button_and_the_page_keeps_the_keys() {
     let a = started();
     let ui = a.ui();
     assert!(ui.scene && ui.capture && ui.live);
-    assert_eq!(ui.panels[0].heading, "HUD.TIME");
+    // the HUD itself is on the 2D layer (`flow/hud.rs`)
+    assert_eq!(ui.panels[0].kind, "hud");
+    assert_eq!(ui.panels[0].heading, "");
     assert_eq!(clock_text(480_000), "8:00");
     assert_eq!(clock_text(59_001), "1:00");
     assert_eq!(clock_text(59_000), "0:59");
