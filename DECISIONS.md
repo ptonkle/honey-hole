@@ -100,3 +100,20 @@ The person chose the giant bobber for the item buoy.
 > Ok. I'm going to go to bed, continue to build the game until it is finished and playable. Use your best judgement for any decisions you come across, and write the code in such a way that for the things that you think might need to be changed, they are easily updated. Do not stop working for anything. seek alternatives when you are blocked. Record decisions that you made and want me to validate and bring them up when I am able to inform you again in the morning. Any questions?
 
 Grant: the plan is approved in advance; the agent builds until the game is finished and playable, decides by its own judgement, and records decisions to validate in `PLAN.md` ("For the person to validate") and `SECOND-ORDER.md`. Values likely to change go in `data/tuning.json`. Scope: this run, until the person is back. Publishing stays local only (no GitHub).
+
+## 2026-10-17 (questions before the night)
+
+The person's answers:
+
+- **Line breaks:** a catch meter, as in Stardew Valley. It fills while the fish is in your zone and drains while it's out, and the line breaks only when it empties.
+- **Casting:** only when the boat is nearly stopped. A moving boat drags the bobber, and too fast snaps the line or reels it in.
+- **Minigames and the Fish-Boy:** the boat coasts (the throttle is released).
+- **Your own score:** you can see your own catch list, but no point totals for anyone until the postgame.
+- **Roster for Burt Lake:**
+  - Common: bluegill, yellow perch, pumpkinseed, rock bass.
+  - Uncommon: smallmouth bass, largemouth bass, walleye, black crappie.
+  - Rare: northern pike, channel catfish, lake trout.
+  - Legendary: muskellunge, lake sturgeon.
+- **Respawn:** caught fish don't respawn; the count is fixed per match.
+- **Names:** "Fishy names, but all conceivably real names, no nicknames like "reel deal ray"". You type your own name once, and it's kept in Settings.
+- **Fish sight:** "Close only, but you shouldn't need to get right over the legnedaries be a little more generous than that". The agent set it to about 40 m for shallow fish, fading with depth, so deep legendaries show from about 25 m. These are tuning values.
