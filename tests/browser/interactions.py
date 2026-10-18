@@ -44,8 +44,8 @@ def step_boot(page, check):
     check(page.inner_text(".panel.title h2") == STRINGS["title"], "the Title shows the game's name")
     menu = page.locator(".panel.menu .button").all_inner_texts()
     check(
-        menu == [STRINGS["menu.play"], STRINGS["menu.settings"], STRINGS["menu.notes"], STRINGS["menu.gallery"], STRINGS["menu.lake"]],
-        f"the Title's menu is Play, Settings, What's New, Gallery, Lake preview {menu}",
+        menu == [STRINGS["menu.play"], STRINGS["menu.settings"], STRINGS["menu.notes"], STRINGS["menu.gallery"], STRINGS["menu.lake"], STRINGS["menu.minigames"]],
+        f"the Title's menu is Play, Settings, What's New, Gallery, Lake preview, Minigames {menu}",
     )
     check(page.inner_text("#version") == "v0.1.0", "the version shows in the corner")
     check(page.inner_text("#message") == "", "no error message is shown")

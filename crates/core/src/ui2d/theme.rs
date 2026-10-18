@@ -27,6 +27,8 @@ pub struct Theme {
     pub tiers: Tiers,
     pub fishpedia: FishpediaLook,
     pub standin: Standin,
+    /// the item minigames' look (`minigame/look.rs`)
+    pub minigames: crate::minigame::look::Look,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
@@ -238,6 +240,7 @@ impl Theme {
         }
         f.light.check()?;
         self.standin.light.check()?;
+        self.minigames.check()?;
         Ok(())
     }
 
