@@ -30,6 +30,7 @@ scene = "the 3D world of a map: terrain, water, props, instancing, fog, cameras 
 lake = "the Lake preview screen that draws a map with a camera tour and the fog control (app/lake.rs)"
 sim = "the match core: the Match, boats, collisions, wrecks, the timer, events, the tuning and controls files and their readers (crates/core/src/sim/, tuning.rs, controls.rs, data/tuning.json, data/controls.json)"
 sound = "the sound engine: recipes, events to cues, motors and Doppler, the Sounds screen (crates/core/src/sound/, app/sounds.rs, data/sounds.json, the audio section of data/tuning.json, web/audio.js)"
+ai = "the AI players and the headless playtests: crates/core/src/ai/, crates/core/examples/playtest.rs, data/tuning.json's ai section; the match and fishing they play reach them too ([implies])"
 tooling = "scripts outside the check (serve, publish, audits, watch window): nothing beyond the always-run tests"
 
 # Hitting a tag also hits these, for a tag whose change reaches another's
@@ -39,6 +40,8 @@ gfx = ["models", "gallery", "scene", "fishboy"]
 models = ["gallery", "lake", "fishboy"]
 scene = ["lake"]
 maps = ["scene"]
+sim = ["ai"]
+fishing = ["ai"]
 
 # Tags whose tests always run in a quick check.
 [always]
@@ -82,7 +85,9 @@ tags = ["boundary"]
 "crates/core/src/app/sounds/**" = ["sound"]
 "crates/core/tests/sounds.rs" = ["sound"]
 "data/sounds.json" = ["sound", "copy"]
-"data/tuning.json" = ["sound", "sim", "fishboy", "fishing"]
+"data/tuning.json" = ["sound", "sim", "fishboy", "fishing", "ai"]
+"crates/core/src/ai/**" = ["ai"]
+"crates/core/examples/playtest.rs" = ["ai"]
 "web/audio.js" = ["page", "sound"]
 "data/models/**" = ["models", "copy"]
 "data/look.json" = ["gfx", "fishing"]
@@ -233,6 +238,9 @@ tags = ["boundary"]
 "lib:sim::fishing::" = ["sim", "fishing", "maps", "fishboy"]
 "lib:app::fishing::" = ["fishing", "menus", "sim", "copy", "models", "gfx", "scene", "lake", "fishboy"]
 "test:fish_models" = ["models"]
+"lib:ai::" = ["ai", "sim", "fishing", "maps"]
+"lib:app::play::tests::ai_seats_" = ["ai", "sim", "menus", "copy", "maps"]
+"lib:app::play::tests::watch_mode_" = ["ai", "sim", "menus", "copy", "maps"]
 
 # ---------------------------------------------------------------------------
 # Browser steps (tests/browser/interactions.py STEPS) -> tags. The load and
@@ -247,3 +255,4 @@ fishboy = ["fishboy", "models", "gfx", "menus", "copy", "page", "sim", "maps"]
 fishing = ["fishing", "sim", "models", "gfx", "menus", "copy", "page", "maps", "fishboy"]
 lake = ["lake", "scene", "maps", "models", "gfx", "menus", "copy", "page"]
 sounds = ["sound", "menus", "copy", "page"]
+ai = ["ai", "sim", "fishing", "menus", "copy", "page", "maps", "gfx"]

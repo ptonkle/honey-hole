@@ -101,12 +101,13 @@ fn the_ai_drives_from_the_spawn_to_the_far_end_without_grounding() {
     let map = generate(Setting::MichiganLake, 0);
     let mut m = Match::new(map, &t, setup(&t, &[Occupant::Ai(Difficulty::Normal)])).unwrap();
     let mut crew = Crew::new(&m);
-    // the open water farthest from the spawn
+    // the open water farthest from the spawn with land in the straight way
     let nav = &crew.nav;
     let spawn = m.map.spawn.at;
     let far = (0..nav.n * nav.n)
         .filter(|&c| nav.open[c])
         .map(|c| nav.centre(c))
+        .filter(|&p| super::nav::land_between(&m.map, spawn, p))
         .max_by_key(|p| p.dist2(spawn))
         .unwrap();
     assert!(far.dist(spawn) > 300_000, "the far point is {} m off", far.dist(spawn) / 1000);
@@ -329,4 +330,29 @@ fn the_ai_reads_only_what_its_seat_could_know() {
     let s = sense(&m, 0);
     assert_eq!(s.rivals.len(), 1);
     assert_eq!(s.rivals[0].seat, 1);
+}
+
+#[test]
+fn the_ai_slows_under_the_grounding_speed_near_land() {
+    // a goal past the small lake's east shore, straight ahead from 90 m
+    // back: at top speed the boat would hit the shore at 16 m/s and wreck
+    let t = sample();
+    let mut m = Match::new(small_lake(), &t, setup(&t, &[Occupant::Ai(Difficulty::Normal)])).unwrap();
+    let mut crew = Crew::new(&m);
+    let to = P::new(170_000, 80_000);
+    let mut fastest_near = 0;
+    for _ in 0..50 * 15 {
+        crew.brains[0].goal = Goal::Explore { to };
+        let i = crew.inputs(&m);
+        let e = m.step(&i).to_vec();
+        assert!(!e.iter().any(|e| matches!(e, MatchEvent::Wrecked { .. })), "wrecked at tick {}", m.tick);
+        let b = m.boat(0).unwrap();
+        if b.at().x > 148_000 {
+            fastest_near = fastest_near.max(b.speed_mm_per_s());
+        }
+    }
+    // within 8 m of the shore it keeps to its careful 40% (6.4 m/s), with
+    // the throttle's 0.3 m/s of slack: under half of top speed (8 m/s)
+    assert!(fastest_near > 0, "it never got near the shore");
+    assert!(fastest_near < 8000, "{fastest_near} mm/s by the shore");
 }

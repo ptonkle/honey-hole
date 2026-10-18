@@ -126,6 +126,9 @@ pub struct Ui {
     pub capture: bool,
     /// the page asks for the view model each frame (a match's clock moves)
     pub live: bool,
+    /// how many AI players' boats are under way now (the page marks it on
+    /// the body for the browser check)
+    pub ai_moving: u32,
     pub panels: Vec<Panel>,
 }
 
@@ -168,6 +171,9 @@ pub struct App {
     pub world: Option<crate::scene::Lake>,
     /// the page's `?debug=fishing`: a fish by every bobber (`app/fishing.rs`)
     pub debug_fishing: bool,
+    /// the page's `?debug=watch`: an AI plays the person's seat too, and the
+    /// camera follows it (`app/play.rs`)
+    pub debug_watch: bool,
 }
 
 impl App {
@@ -199,6 +205,7 @@ impl App {
             preview: lake::Preview::default(),
             world: None,
             debug_fishing: false,
+            debug_watch: false,
         })
     }
 
@@ -372,6 +379,13 @@ impl App {
                     .as_ref()
                     .is_some_and(|p| !p.menu_open() && !p.game.ended),
             live: self.screen == Screen::Play && self.play.is_some(),
+            ai_moving: self.play.as_ref().map_or(0, |p| {
+                p.ai.brains
+                    .iter()
+                    .filter_map(|b| p.game.boat(b.seat))
+                    .filter(|b| b.speed_mm_per_s() > 1000)
+                    .count() as u32
+            }),
             panels,
         }
     }

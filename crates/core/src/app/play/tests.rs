@@ -219,3 +219,20 @@ fn ai_seats_drive_their_own_boats_in_an_offline_match() {
     // the page is told how many are under way (the browser check reads it)
     assert!(a.ui().ai_moving >= 1);
 }
+
+#[test]
+fn watch_mode_hands_the_persons_seat_to_an_ai() {
+    let mut a = lobby();
+    a.act("debug.flags", "watch").unwrap();
+    a.act("lobby.start", "").unwrap();
+    a.advance(0);
+    assert_eq!(game(&a).setup.seats[0].occupant, Occupant::Ai(Difficulty::Hard));
+    let start = game(&a).boat(0).unwrap().at();
+    for _ in 0..500 {
+        tick(&mut a);
+    }
+    assert!(game(&a).boat(0).unwrap().at().dist(start) > 20_000, "the watched boat stayed put");
+    // Esc still opens the match menu
+    key(&mut a, "Escape");
+    assert!(a.play.as_ref().unwrap().menu_open());
+}

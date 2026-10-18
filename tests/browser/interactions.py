@@ -346,6 +346,25 @@ def step_fishing(page, check):
     page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
 
 
+def step_ai(page, check):
+    # A match with three AI players: at least one AI boat gets under way by
+    # itself (the core counts them in data-ai-moving).
+    page.click(by_id("menu.play"))
+    check(screen(page, "lobby"), "Play opens the match setup")
+    page.select_option(by_id("lobby.ai"), "3")
+    page.wait_for_selector(by_id("lobby.ai.3"), state="attached", timeout=5000)
+    check(page.locator(by_id("lobby.ai.3")).count() == 1, "three AI players each get a difficulty")
+    page.click(by_id("lobby.start"))
+    check(screen(page, "play"), "Start match opens Play")
+    page.wait_for_selector("body[data-drawn]", state="attached", timeout=10000)
+    page.wait_for_function("() => (document.body.dataset.aiMoving | 0) >= 1", timeout=20000)
+    check(True, "an AI boat drives off on its own")
+    page.keyboard.press("Escape")
+    page.wait_for_selector(".panel.pause", timeout=5000)
+    page.click(by_id("menu.quit"))
+    check(screen(page, "title"), "Leave match goes to the Title")
+
+
 STEPS = [
     ("boot", step_boot),
     ("settings", step_settings),
@@ -356,6 +375,7 @@ STEPS = [
     ("lake", step_lake),
     ("fishboy", step_fishboy),
     ("fishing", step_fishing),
+    ("ai", step_ai),
 ]
 
 

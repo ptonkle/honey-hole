@@ -96,6 +96,9 @@ pub struct Play {
     pub log: Vec<(u32, MatchEvent)>,
     /// the AI seats' brains (`ai/`), which make their inputs each tick
     pub ai: crate::ai::Crew,
+    /// an AI plays this browser's seat too (`?debug=watch`): the keys do
+    /// nothing to the boat
+    pub watch: bool,
 }
 
 impl Play {
@@ -315,7 +318,10 @@ impl App {
         // and the same clock gives the same match
         let match_seed = mix(self.clock as u64 ^ 0x6d61_7463_6800_0000);
         let map_seed = self.map_seed(&list, match_seed)?;
-        let setup = self.setup(match_seed)?;
+        let mut setup = self.setup(match_seed)?;
+        if self.debug_watch {
+            setup.seats[0].occupant = Occupant::Ai(Difficulty::Hard);
+        }
         let map = generate(Setting::MichiganLake, map_seed);
         // the lake's world, uploaded once (`app/lake.rs`); without the
         // lake's look the match draws its stand-in
@@ -337,6 +343,7 @@ impl App {
             cam_pitch: deg(controls.mouse.pitch_start_deg),
             log: Vec::new(),
             ai,
+            watch: self.debug_watch,
         });
         self.go(Screen::Play);
         Ok(())
@@ -412,7 +419,14 @@ impl App {
         while p.pending_us >= step_us && ran < MAX_CATCH_UP {
             // the AI seats play by the same inputs (`ai/`)
             let mut inputs = p.ai.inputs(&p.game);
-            inputs[p.seat] = p.gather.take();
+            let mine = p.gather.take();
+            if p.watch {
+                // the menu still answers the person
+                inputs[p.seat].pressed.cancel |= mine.pressed.cancel;
+                inputs[p.seat].pressed.menu |= mine.pressed.menu;
+            } else {
+                inputs[p.seat] = mine;
+            }
             let tick = p.game.tick;
             for e in p.game.step(&inputs) {
                 p.log.push((tick + 1, e.clone()));

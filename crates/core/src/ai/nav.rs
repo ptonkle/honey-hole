@@ -316,7 +316,7 @@ pub fn steer(map: &Map, r: &Rules, t: &AiTuning, b: &Boat, to: P, want: i32, rec
     let speed = b.forward_speed();
     if speed < want - 300 {
         out.held.forward = true;
-    } else if speed > want + 800 && speed > 0 {
+    } else if speed > want + 300 && speed > 0 {
         out.held.back = true;
     }
 }
