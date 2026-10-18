@@ -92,6 +92,7 @@ tags = ["boundary"]
 "GLOSSARY.md" = ["copy"]
 "TONE.md" = ["copy"]
 "notes/**" = ["notes"]
+"brief/**" = ["notes"]
 ".claude/**" = ["notes"]
 
 # ---------------------------------------------------------------------------
