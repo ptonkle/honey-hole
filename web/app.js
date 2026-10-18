@@ -334,6 +334,8 @@ function draw(result) {
   document.body.dataset.fishboy = ui.fishboy;
   // the Fish-Boy up takes the pointer: the page lets it go so it can point
   document.body.dataset.pointer = ui.pointer ? "on" : "";
+  // the 2D layer draws its own cursor (the camera's viewfinder)
+  document.body.dataset.cursor = ui.hide_cursor ? "none" : "";
   if (ui.pointer && document.pointerLockElement) document.exitPointerLock();
   document.documentElement.dataset.textSize = ui.text_size;
   const version = el("version");

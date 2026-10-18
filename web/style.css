@@ -263,6 +263,13 @@ body[data-pointer="on"] #overlay { pointer-events: auto; }
    panels do not */
 body[data-screen="play"] #menus { pointer-events: none; position: relative; }
 body[data-screen="play"] .panel { pointer-events: auto; }
+/* ---- the Minigames screen: its list over the scene, and a minigame on
+   the 2D layer, which draws its own cursor when the core says so ---- */
+body[data-screen="minigames"] #scene,
+body[data-screen="minigames"] #overlay { display: block; }
+body[data-screen="minigames"] #menus { position: relative; }
+.panel.minigames { background: color-mix(in srgb, var(--panel) 92%, transparent); }
+body[data-cursor="none"] #overlay { cursor: none; }
 /* ---- the Sounds screen: a grid of sound buttons, then the loops ---- */
 body[data-screen="sounds"] #menus { max-width: 60rem; }
 .panel.sounds {

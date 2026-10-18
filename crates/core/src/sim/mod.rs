@@ -587,7 +587,10 @@ impl Match {
             half_beam_mm: self.rules.half_beam,
             tick: self.tick,
         };
-        let all: Vec<SeatInput> = (0..self.seats.len()).map(input).collect();
+        // a remote seat's line is its own browser's (`fishing/shared.rs`)
+        let all: Vec<SeatInput> = (0..self.seats.len())
+            .map(|s| if self.is_remote(s) { none } else { input(s) })
+            .collect();
         self.fishing
             .step(&world, &all, &mut self.scores, &mut self.events);
         self.fishing_shared_after(from);

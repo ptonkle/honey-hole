@@ -39,6 +39,7 @@ impl App {
                     self.button("menu.notes"),
                     self.button("menu.gallery"),
                     self.button("menu.lake"),
+                    self.button("menu.minigames"),
                 ],
             ),
             self.controls_panel(),

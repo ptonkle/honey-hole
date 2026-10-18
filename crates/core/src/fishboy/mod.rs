@@ -472,6 +472,9 @@ impl App {
         let Some(theme) = self.fishboy.theme.as_ref() else {
             return built;
         };
+        if self.screen == Screen::Minigames {
+            return self.minigames_ui2d(theme);
+        }
         if self.screen != Screen::Play {
             return built;
         }

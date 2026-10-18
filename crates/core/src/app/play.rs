@@ -452,6 +452,7 @@ impl App {
             }
         }
         self.debug_fish(landed);
+        self.debug_move();
     }
 
     /// The match as a world renderer reads it.

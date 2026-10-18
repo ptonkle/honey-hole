@@ -257,6 +257,7 @@ impl Lake {
                 let g = render::rgb(w.glint);
                 [g[0], g[1], g[2], w.shine * ONE]
             },
+            deep: render::Deep::none(render::rgb(l.light.fog)),
         }
     }
 }

@@ -149,6 +149,61 @@ pub struct Air {
     pub water: [i32; 4],
     /// the sun's glint on the water: its colour and its sharpness
     pub spec: [i32; 4],
+    /// the rest is the underwater camera's ([`Deep`]); above the water it
+    /// is [`Deep::none`], which changes nothing
+    pub deep: Deep,
+}
+
+/// What the underwater camera adds to the air (Q16 unless named). Above
+/// the water every strength is 0 and the deep colour is the fog's.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Deep {
+    /// the murk's colour looking straight down, and the view direction's
+    /// depth (-y, -ONE..ONE) where it starts to turn to it and is whole
+    pub colour: Rgb,
+    pub band: [i32; 2],
+    /// light shafts round `shaft_dir`: two stripe counts per radian round
+    /// it and their phases; then their strength, sharpness (a power) and
+    /// the cosines from the light where they fade in and are whole
+    pub shaft: [i32; 4],
+    pub shaft_look: [i32; 4],
+    pub shaft_dir: [i32; 3],
+    /// the light's colour, for the shafts, the caustics and the sheen
+    pub sheen: Rgb,
+    /// three ripples (k along x, k along z, phase, 0) whose meeting lines
+    /// make the caustic net, its scale (one over the ripples' count),
+    /// sharpness, and strength on faces looking up and on the surface's
+    /// underside
+    pub ripples: [[i32; 4]; 3],
+    pub caustic: [i32; 4],
+    /// the surface seen from below: its colour outside the window, and the
+    /// window's start and end (how straight up one looks) and the opacity
+    /// in it and outside
+    pub underside: Rgb,
+    pub window: [i32; 4],
+    /// what floats above `silhouette[0]` (world y) is drawn this much
+    /// (silhouette[1]) toward the shadow colour
+    pub silhouette: [i32; 2],
+    pub shadow: Rgb,
+}
+
+impl Deep {
+    pub fn none(fog: Rgb) -> Deep {
+        Deep {
+            colour: fog,
+            band: [0, ONE],
+            shaft: [0; 4],
+            shaft_look: [0, ONE, 0, ONE],
+            shaft_dir: [0, ONE, 0],
+            sheen: [0; 3],
+            ripples: [[0; 4]; 3],
+            caustic: [0, ONE, 0, 0],
+            underside: fog,
+            window: [0, ONE, ONE, ONE],
+            silhouette: [0, 0],
+            shadow: fog,
+        }
+    }
 }
 
 impl Air {
@@ -161,6 +216,7 @@ impl Air {
             waves: [[0; 4]; 2],
             water: [ONE, ONE, ONE, 0],
             spec: [0, 0, 0, ONE],
+            deep: Deep::none(rgb(light.fog)),
         }
     }
 }
@@ -189,6 +245,20 @@ pub const UNIFORMS: &[(&str, usize)] = &[
     ("uWater", 4),
     ("uSpec", 4),
     ("uGlow", 1),
+    ("uDeep", 3),
+    ("uDeepBand", 2),
+    ("uShaft", 4),
+    ("uShaftLook", 4),
+    ("uShaftDir", 3),
+    ("uSheen", 3),
+    ("uRipple1", 4),
+    ("uRipple2", 4),
+    ("uRipple3", 4),
+    ("uCaustic", 4),
+    ("uUnderside", 3),
+    ("uWindow", 4),
+    ("uSilhouette", 2),
+    ("uShadow", 3),
 ];
 
 /// The matrix's 16 values come first.
@@ -252,6 +322,21 @@ pub fn view_values(cam: &Camera, aspect: i32, fog: (i32, i32), light: &Light, ai
     put("uWater", &air.water);
     put("uSpec", &air.spec);
     put("uGlow", &[light.glow_fog_pct * ONE / 100]);
+    let d = &air.deep;
+    put("uDeep", &d.colour);
+    put("uDeepBand", &d.band);
+    put("uShaft", &d.shaft);
+    put("uShaftLook", &d.shaft_look);
+    put("uShaftDir", &d.shaft_dir);
+    put("uSheen", &d.sheen);
+    put("uRipple1", &d.ripples[0]);
+    put("uRipple2", &d.ripples[1]);
+    put("uRipple3", &d.ripples[2]);
+    put("uCaustic", &d.caustic);
+    put("uUnderside", &d.underside);
+    put("uWindow", &d.window);
+    put("uSilhouette", &d.silhouette);
+    put("uShadow", &d.shadow);
     v
 }
 
@@ -392,8 +477,11 @@ mod tests {
         assert_eq!(slice("uUnder"), vec![0, 0]);
         assert_eq!(n["vertex"]["stride"], 40);
         assert_eq!(n["instance"]["stride"], 56);
+        // above the water the deep colour is the fog's and no shaft shows
+        assert_eq!(slice("uDeep"), vec![ONE, 0, 0]);
+        assert_eq!(slice("uShaftLook")[0], 0);
         // the uniforms end where the values do
-        let (at, len) = uniform_in(&n, "uGlow");
+        let (at, len) = uniform_in(&n, "uShadow");
         assert_eq!(at + len, VIEW_VALUES);
     }
 

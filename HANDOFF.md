@@ -46,8 +46,12 @@ Every `SECOND-ORDER.md` row with status *person*, by number, with what the perso
 - R2.116: the six more roster fish's look from the side and from above, in `notes/shots/models/fish-more/` (swims in `notes/shots/models/swims/`).
 - R2.117: a read of their six names (listed at the foot of `SECOND-ORDER.md`).
 - R2.136: all thirteen fish reshaped to their species from above, the side and 3/4, in `notes/shots/models/fish-v3/` (`before/` holds the same views before; side changes listed in R2.132).
+- R3.93: the six item minigames' numbers and looks: play each from the Title, Minigames (shots in `notes/shots/minigames/`); numbers in `data/tuning.json` `minigames`, colours in `data/ui2d.json` `minigames`.
 - R2.34: maples have no model; they draw as birches or tall spruces (`lake.props.maple` in `data/look.json`). A maple model, or keep it so.
 - R3.20: the fishing's look (bobber, lure, line, underwater murk, picture-in-picture, HUD meters and popups), in `notes/shots/fishing/`.
+- R4.97: the channel catfish v4 (broad flat head, thick body, short forward dorsal, forked tail), in `notes/shots/models/fish-v4/`.
+- R4.80: the lower chase camera, in `notes/shots/polish/` (3 to 5c).
+- R4.93: the underwater look, in `notes/shots/polish/` (1 to 2b).
 - R2.43: the boat camera's distance, height, pitch and field of view (`lake.camera` in `data/look.json`), and the lake's look in `notes/shots/world/`; the fog distance can be tried live in the Lake preview.
 
 ## Mistakes so far
@@ -81,3 +85,4 @@ The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the 
 One action.
 
 2026-10-17, map generation (branch `worktree-agent-a13a60c04e6220e7c`, after df1b4b7): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 82 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 53 of 53 breaks caught.
+2026-10-18, the six item minigames and the Minigames screen (branch `worktree-agent-a8a336c7d80722fb8`, merged with main's fishing): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 342 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 22 of 22 new breaks caught.
