@@ -64,6 +64,7 @@ Collected as the agent makes them; brought up in the morning. Each also has a ro
 - V30. Fish seen from the boat camera are drawn twice their size and at 45% of their depth so they read from 9 m back; under the water they are life size (R3.6).
 - V31. The underwater camera's murk (green-blue, 16 m), the picture-in-picture (26% of the screen's width, top left, white border), the HUD moved to the top right, and the fishing HUD as panels until the 2D layer draws it (R3.7, R3.9, R3.10, R3.11).
 - V32. The hook popup ends with a full stop, not "!", for the tone lint (R3.15).
+- V33. Online (decision 11, as built): other boats drawn 100 ms behind; boats meeting at ram speed pass through each other until the host's verdict, about a round trip later; the host leaving ends the match (no migration); claims settled 150 ms after they are made, in the order made; Play offers Offline and Online (SECOND-ORDER R3.41-R3.49).
 
 ## Status
 

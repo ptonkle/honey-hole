@@ -40,6 +40,8 @@ Every `SECOND-ORDER.md` row with status *person*, by number, with what the perso
 - R2.7: the boat's handling numbers the brief does not name (reverse, braking, coasting, slip, turning, swivel, nitrous), in `data/tuning.json`; try them by driving.
 - R2.11: the twelve draft AI names in `data/names.json`.
 - R2.21: the match setup's length choices (4, 8, 12 min) and buoy intervals (30 s to 2 min).
+- R3.44: whether two players both behind strict NATs must be able to connect (a TURN server: a server or a paid service, and a new origin).
+- R3.57: a try of online play by room code between two machines (the relay path no automatic check runs).
 - R1.160: the fish's new shapes from above and their new base lengths (R1.153, R1.154), in `notes/shots/models/fish-v2/`.
 - R2.116: the six more roster fish's look from the side and from above, in `notes/shots/models/fish-more/` (swims in `notes/shots/models/swims/`).
 - R2.117: a read of their six names (listed at the foot of `SECOND-ORDER.md`).
