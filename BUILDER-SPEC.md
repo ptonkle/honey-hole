@@ -62,4 +62,4 @@ These stay with the person and go in `BRIEF.md` or `PLAN.md`:
 
 | Default | Changed to | Reason | Recorded in |
 | --- | --- | --- | --- |
-| | | | |
+| D15 | `GLOSSARY.md` and its copy tests stay; the page shows no definitions on hover. | The person's choice (`DECISIONS.md`, 2026-10-17). | `SECOND-ORDER.md` R1.21 |

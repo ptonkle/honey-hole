@@ -1,6 +1,6 @@
 //! The glossary: `GLOSSARY.md` is the source of truth for what each word in
-//! the tool means. The core parses it, so the page (which shows a definition
-//! when a reader hovers a term) and the copy tests read it the same way.
+//! the game means. The core parses it, so the copy tests (the page shows no
+//! definitions on screen) read it the way the core does.
 //!
 //! Format, one entry per term:
 //!

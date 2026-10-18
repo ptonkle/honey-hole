@@ -8,15 +8,13 @@
        form-action 'none' blocks form posts. A meta policy cannot stop data
        leaving by navigation, so the browser check still watches requests. -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'">
-  <title>Builder tool</title>
+  <title>Fishing</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body data-ready="false">
-  <main>
-    <h1 id="title"></h1>
-    <div id="panels"></div>
-    <p id="message" role="status"></p>
-  </main>
+  <main id="menus"></main>
+  <p id="message" role="status"></p>
+  <button id="version" type="button"></button>
   <noscript><p>This page needs JavaScript and WebAssembly.</p></noscript>
   <script type="module" src="app.js"></script>
 </body>

@@ -1,4 +1,24 @@
 {
-  "title": "A new Builder tool",
-  "intro": "Replace this text in data/strings.json, and replace the placeholder rule in crates/core/src/page.rs with the rules your brief describes."
+  "_note": "The working name stands in as the title until the person names the game.",
+  "title": "Fishing",
+  "menu.play": "Play",
+  "menu.settings": "Settings",
+  "menu.notes": "What's New",
+  "menu.back": "Back",
+  "menu.pause": "Pause",
+  "menu.resume": "Resume",
+  "menu.quit": "Quit to Title",
+  "controls.heading": "Controls",
+  "controls.pause": "Pause",
+  "controls.pause_keys": "Esc",
+  "settings.heading": "Settings",
+  "settings.volume": "Volume",
+  "settings.text_size": "Text size",
+  "settings.text_size.small": "Small",
+  "settings.text_size.medium": "Medium",
+  "settings.text_size.large": "Large",
+  "notes.heading": "What's New",
+  "notes.minor": "Show minor versions",
+  "play.placeholder": "The game goes here once it is designed. Press Esc to pause.",
+  "pause.heading": "Paused"
 }
