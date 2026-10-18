@@ -143,6 +143,8 @@ pub struct FishingTuning {
     /// Space within this of the bite hooks the fish
     pub hook_window_ms: i32,
     pub reel: ReelTuning,
+    /// a fish at the lure, moving (`strike.rs`)
+    pub strike: super::strike::StrikeTuning,
     /// a catch's points: its kind's value (`data/fish.json`) times this
     /// percent for its tier, times its length over its kind's base length
     pub tier_value_pct: PerTier,
@@ -241,4 +243,5 @@ pub fn check(c: &mut Checker, f: &FishTuning, g: &FishingTuning) {
         .check(c, "fishing.reel.fish_speed_per_s", 1, 100_000);
     r.fish_turn_ms.check(c, "fishing.reel.fish_turn_ms", 20, 60_000);
     r.fish_dart_pct.check(c, "fishing.reel.fish_dart_pct", 0, 100);
+    super::strike::check(c, &g.strike);
 }

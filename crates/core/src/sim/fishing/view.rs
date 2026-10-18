@@ -52,6 +52,8 @@ pub struct LineView {
     pub lure_depth_mm: i32,
     /// a fish is nibbling or biting now (the bobber dips)
     pub tug: bool,
+    /// how long since the bite began, while the fish bites (the bite's cue)
+    pub bite_ms: Option<u32>,
 }
 
 /// The reel bar, in thousandths of the bar from the bottom.
@@ -170,6 +172,10 @@ impl Match {
                     tug: l
                         .interest
                         .is_some_and(|i| i.biting_until.is_some() || (i.arrived && self.tick + 5 >= i.next)),
+                    bite_ms: l.interest.and_then(|i| i.biting_until).map(|until| {
+                        let began = until.saturating_sub(crate::sim::ticks(fi.tuning.hook_window_ms));
+                        self.tick.saturating_sub(began) * TICK_MS as u32
+                    }),
                 }
             })
             .collect();

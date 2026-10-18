@@ -215,6 +215,34 @@
       "tall_pct": 60,
       "margin_pct": 1,
       "border_permille": 3
+    },
+    "bite": {
+      "_note": "The bite's cue, no words (crates/core/src/app/fishing/cue.rs; T4). The bobber is pulled plunge_mm under in plunge_in_ms; rings splash rings, ring_gap_ms apart, spread from ring_from_mm to ring_to_mm out from the bobber in ring_ms, thinning from ring_width_mm, ring_lift_mm over the water, in ring, ring_glow_pct unlit; splash drops splash_mm across fly out to splash_out_mm and up to splash_up_mm and back down in splash_ms, so the bite reads from the low boat camera too. The line snaps taut and its middle twitches twitch_mm side to side, once each way every twitch_period_ms, dying away over twitch_ms. Under the water bubbles bubbles bubble_mm across burst from the lure, spread over bubble_spread_mm, rising bubble_rise_mm_per_s for bubble_ms. All of it is over inside the 0.75 s hook window.",
+      "plunge_mm": 260,
+      "plunge_in_ms": 80,
+      "rings": 3,
+      "ring_gap_ms": 150,
+      "ring_ms": 450,
+      "ring_from_mm": 100,
+      "ring_to_mm": 2000,
+      "ring_width_mm": 280,
+      "ring_lift_mm": 20,
+      "ring": [250, 252, 255],
+      "ring_glow_pct": 90,
+      "splash": 14,
+      "splash_ms": 450,
+      "splash_mm": 150,
+      "splash_out_mm": 900,
+      "splash_up_mm": 1000,
+      "bubbles": 18,
+      "bubble_ms": 700,
+      "bubble_mm": 45,
+      "bubble_spread_mm": 160,
+      "bubble_rise_mm_per_s": 900,
+      "bubble": [222, 240, 246],
+      "twitch_ms": 450,
+      "twitch_mm": 150,
+      "twitch_period_ms": 120
     }
   }
 }

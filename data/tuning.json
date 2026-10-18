@@ -149,6 +149,11 @@
       "tick_ms": 90,
       "surface_depth_mm": 300
     },
+    "strike": {
+      "_note": "A fish at the lure, moving (crates/core/src/sim/fishing/strike.rs); motion only, the bite's timing is the rule above. On the bite it darts in at speed_mm_per_s until its mouth is bite_gap_mm from the lure (below 0: the lure in its mouth) and holds there through the hook window (T4).",
+      "speed_mm_per_s": 3000,
+      "bite_gap_mm": -20
+    },
     "tier_value_pct": {
       "common": 100,
       "uncommon": 200,

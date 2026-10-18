@@ -434,6 +434,10 @@ pub mod tests {
                 "tick_ms": 100,
                 "surface_depth_mm": 300
             },
+            "strike": {
+                "speed_mm_per_s": 3000,
+                "bite_gap_mm": -20
+            },
             "tier_value_pct": {"common": 100, "uncommon": 200, "rare": 300, "legendary": 500},
             "camera_value_pct": 150,
             "landed_ms": 2000
