@@ -121,3 +121,12 @@ The person's answers:
 > fish do not disappear if you fail the fishing game btw
 
 A fish that breaks the line (or is dropped with Esc, Q or a wreck) swims free and stays in the lake; the Fishpedia count is unchanged (F5 confirmed).
+
+> maybe they swim a bit away
+
+A fish that gets free swims a short way off (a tuning distance, about 10–15 m) before it settles back to its usual roaming.
+
+More answers:
+- **Esc with nothing to cancel:** opens a small menu (Settings, Leave match) while the match keeps running. Offline against AI it also pauses.
+- **Bite wait:** 2–6 s once the bobber is near fish, then 1–3 nibbles before the real bite (tuning values).
+- **Offline match setup:** AI count (0–3) and each AI's difficulty (Easy/Normal/Hard), match length (default 8 min), map seed (random, or typed), and the item buoy interval (default 1 min).
