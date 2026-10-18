@@ -173,5 +173,33 @@
     "find": "if entries.is_empty() {",
     "replace": "if false {",
     "test": "a_bad_version_date_or_empty_entry_is_refused_by_name"
+  },
+  {
+    "name": "the item buoy is an item",
+    "file": "data/models/item-buoy.json",
+    "find": "\"kind\": \"item\",",
+    "replace": "\"kind\": \"prop\",",
+    "test": "the_boat_angler_and_buoy_load_as_their_kinds_in_a_few_hundred_faces"
+  },
+  {
+    "name": "the seated angler's feet rest on the floor",
+    "file": "data/models/angler.json",
+    "find": "\"hips\": {\"move\": [0, -300, -300]}",
+    "replace": "\"hips\": {\"move\": [0, -200, -300]}",
+    "test": "the_angler_keeps_its_feet_on_the_anchor_seated_and_standing"
+  },
+  {
+    "name": "the angler fishes from the bow",
+    "file": "data/models/boat.json",
+    "find": "\"fish\": { \"part\": \"hull\", \"at\": [0, 370, 1200] }",
+    "replace": "\"fish\": { \"part\": \"hull\", \"at\": [0, 370, -1200] }",
+    "test": "the_boat_seats_the_driver_aft_and_the_angler_on_the_raised_bow_deck"
+  },
+  {
+    "name": "the item buoy bobs",
+    "file": "data/models/item-buoy.json",
+    "find": "\"bob\": { \"ms\": 3200,",
+    "replace": "\"sway\": { \"ms\": 3200,",
+    "test": "the_item_buoy_bobs"
   }
 ]
