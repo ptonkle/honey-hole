@@ -36,6 +36,10 @@ Collected as the agent makes them; brought up in the morning. Each also has a ro
 - V2. 50 ticks per second (decision 2).
 - V3. Fish base lengths trimmed so a 1.5× catch is a trophy, not past a record (muskie 0.95 m, pike 0.65 m, walleye 0.43 m, smallmouth 0.35 m, perch 0.2 m, bluegill 0.17 m); the sturgeon stays 1.5 m rather than the 1.8 m first suggested (SECOND-ORDER R1.150–R1.154).
 - V4. Angler brows made level and slightly raised (the person said they looked sad).
+- V5. The lake's look: overcast grey-blue sky, fog thickening from 22% of the sight distance, water 30% see-through looking down, cool greens (`notes/shots/world/`, `data/look.json` "lake"; SECOND-ORDER R2.35, R2.37, R2.39).
+- V6. Props the scene adds beyond the map: the dock behind the spawn, two cabins, lily pads, shore rocks, boulders, fallen logs; maples drawn as birches or tall spruces (R2.34, R2.40).
+- V7. The boat camera: 9 m behind, 3.8 m up, 10° down, 55° field of view (R2.43).
+- V8. Glowing colours take 45% of the fog on the lake, so the buoy's beacon and a cabin window read through it (R2.42).
 
 ## Status
 
