@@ -192,7 +192,7 @@ impl Match {
                 self.online.reports_out.push(event);
             }
         }
-        if self.online.role == Role::Host && self.tick % FISH_SYNC_TICKS == 0 {
+        if self.online.role == Role::Host && self.tick.is_multiple_of(FISH_SYNC_TICKS) {
             let moves: Vec<WorldEvent> = self
                 .fishing
                 .fish
