@@ -86,3 +86,7 @@ The agent decided: the fish's side views, the swims and the lakeside props are a
 > boat colors are are all good
 
 The agent decided: the four player colours in `data/look.json` stay as they are, yellow included (R1.54 answered).
+
+> item buoy is too much like mario. Good idea but just too mario.
+
+The agent decided: the item buoy keeps the idea (a floating mystery item that reads in fog and bobs) but drops the "?" block. Three fishing-themed alternatives (a giant bobber, a buoy with a glowing tackle box, a cluster of lures) for the person to choose from.
