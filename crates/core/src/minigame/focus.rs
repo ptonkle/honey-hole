@@ -20,9 +20,9 @@ pub const SLIDERS: usize = 3;
 
 /// The picture's frame and the sliders' tracks.
 const FRAME: Rect = Rect::new(60, 110, 1060, 690);
-const TRACK_X: [i32; SLIDERS] = [1250, 1380, 1510];
-const TRACK_TOP: i32 = 150;
-const TRACK_BOTTOM: i32 = 760;
+pub(super) const TRACK_X: [i32; SLIDERS] = [1250, 1380, 1510];
+pub(super) const TRACK_TOP: i32 = 150;
+pub(super) const TRACK_BOTTOM: i32 = 760;
 /// A press this far either side of a track takes its slider.
 const GRAB_HALF_W: i32 = 60;
 const KNOB: [i32; 2] = [96, 40];

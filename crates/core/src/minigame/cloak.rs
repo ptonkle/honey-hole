@@ -126,6 +126,15 @@ impl Cloak {
         )
     }
 
+    /// The middles of the boat's cells still drawn.
+    pub fn left_cells(&self) -> Vec<Pt> {
+        (0..self.t.rows)
+            .flat_map(|row| (0..self.t.cols).map(move |col| (col, row)))
+            .filter(|&(col, row)| self.cells[(row * self.t.cols + col) as usize] != NONE)
+            .map(|(col, row)| self.cell_mid(col, row))
+            .collect()
+    }
+
     pub fn erased_pct(&self) -> i32 {
         (self.total - self.left) * 100 / self.total.max(1)
     }

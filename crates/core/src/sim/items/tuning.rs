@@ -62,6 +62,10 @@ pub struct ItemsTuning {
     /// the camera's offer after a catch stays up this long, then the
     /// camera is kept for later
     pub camera_prompt_ms: i32,
+    /// a fish on the line waits while the seat plays an item's minigame or
+    /// picks a teleport's spot: the reel bar holds still (R4.11; false: it
+    /// fights on with no Space, and the line may break)
+    pub reel_holds_in_minigame: bool,
 }
 
 /// An hour, the longest time any value may name.

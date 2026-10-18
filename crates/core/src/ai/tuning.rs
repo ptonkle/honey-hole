@@ -103,6 +103,106 @@ pub struct AiTuning {
     /// how long a ping's sighting stays worth chasing
     pub sighting_keep_ms: i32,
     pub skill: Skills,
+    /// the buoy, the items and their minigames (`ai::items`, `ai::hand`)
+    pub items: ItemsAi,
+}
+
+/// A tier named in the tuning (`"rare"`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum TierName {
+    Common,
+    Uncommon,
+    Rare,
+    Legendary,
+}
+
+impl TierName {
+    pub fn tier(self) -> crate::map::fish::Tier {
+        use crate::map::fish::Tier;
+        match self {
+            TierName::Common => Tier::Common,
+            TierName::Uncommon => Tier::Uncommon,
+            TierName::Rare => Tier::Rare,
+            TierName::Legendary => Tier::Legendary,
+        }
+    }
+}
+
+/// How one difficulty's hand plays a minigame through the pointer.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Hand {
+    /// the pointer moves up to this fast, canvas units a second
+    pub speed_per_s: i32,
+    /// it waits this long after each grab, drop, click or photo, and
+    /// before its first move
+    pub pause_ms: i32,
+    /// its aim is off by up to this, canvas units
+    pub aim_noise: i32,
+    /// its click on a closing ring is early or late by up to this
+    pub timing_noise_ms: i32,
+    /// it circles the Power Reel this many thousandths of a turn a second
+    pub reel_permille_per_s: i32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Hands {
+    pub easy: Hand,
+    pub normal: Hand,
+    pub hard: Hand,
+}
+
+impl Hands {
+    pub fn get(&self, d: Difficulty) -> &Hand {
+        match d {
+            Difficulty::Easy => &self.easy,
+            Difficulty::Normal => &self.normal,
+            Difficulty::Hard => &self.hard,
+        }
+    }
+}
+
+/// When the AI goes for the buoy and uses each item.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ItemsAi {
+    #[serde(rename = "_note", default)]
+    pub note: String,
+    /// false: the AI never goes for a buoy nor uses an item (for playtests)
+    pub use_items: bool,
+    /// a buoy is worth a trip of up to this long with no item held, and of
+    /// up to `buoy_worth_held_ms` holding one (a new one replaces it)
+    pub buoy_worth_ms: i32,
+    pub buoy_worth_held_ms: i32,
+    /// Nitrous on a drive at least this far, or on a hunt at least this far
+    pub nitrous_min_mm: i32,
+    pub nitrous_hunt_min_mm: i32,
+    /// the Teleporter to a hunt's target or a marked fish at least this
+    /// far, when the rival's reel has `teleport_lead_ms` left (the
+    /// minigame and the charge); it lands `teleport_short_mm` short of a
+    /// hunted rival, for the run-in
+    pub teleport_min_mm: i32,
+    pub teleport_lead_ms: i32,
+    pub teleport_short_mm: i32,
+    /// held this long with no hunt or marked fish, it teleports to the far
+    /// water it means to explore
+    pub teleport_explore_after_ms: i32,
+    /// Cloaking Tech on a hunt, or on hooking a fish of this tier or rarer
+    pub cloak_min_tier: TierName,
+    /// the Power Reel on a fish of this tier or rarer: at the hook
+    /// (`power_reel_on_hook`, safe while the reel holds for the minigame),
+    /// else before the cast at one
+    pub power_reel_min_tier: TierName,
+    pub power_reel_on_hook: bool,
+    /// the camera's photo for a catch of this tier or rarer, or for any
+    /// catch with under `camera_any_left_ms` of the match left
+    pub camera_min_tier: TierName,
+    pub camera_any_left_ms: i32,
+    /// Enhanced Radar after this long exploring with no fish in sight
+    pub radar_blind_ms: i32,
+    pub hand: Hands,
 }
 
 fn check_skill(c: &mut Checker, key: &str, s: &Skill) {
@@ -149,6 +249,40 @@ pub fn check(c: &mut Checker, a: &AiTuning) {
         ("legendary", a.rival_reel_ms.legendary),
     ] {
         c.range(&format!("ai.rival_reel_ms.{name}"), v, 0, 600_000);
+    }
+    let i = &a.items;
+    c.range("ai.items.buoy_worth_ms", i.buoy_worth_ms, 0, 600_000)
+        .range("ai.items.buoy_worth_held_ms", i.buoy_worth_held_ms, 0, 600_000)
+        .range("ai.items.nitrous_min_mm", i.nitrous_min_mm, 0, 2_000_000)
+        .range(
+            "ai.items.nitrous_hunt_min_mm",
+            i.nitrous_hunt_min_mm,
+            0,
+            2_000_000,
+        )
+        .range("ai.items.teleport_min_mm", i.teleport_min_mm, 0, 2_000_000)
+        .range("ai.items.teleport_lead_ms", i.teleport_lead_ms, 0, 600_000)
+        .range("ai.items.teleport_short_mm", i.teleport_short_mm, 0, 200_000)
+        .range(
+            "ai.items.teleport_explore_after_ms",
+            i.teleport_explore_after_ms,
+            0,
+            3_600_000,
+        )
+        .range("ai.items.camera_any_left_ms", i.camera_any_left_ms, 0, 3_600_000)
+        .range("ai.items.radar_blind_ms", i.radar_blind_ms, 0, 600_000);
+    for (key, h) in [
+        ("easy", &i.hand.easy),
+        ("normal", &i.hand.normal),
+        ("hard", &i.hand.hard),
+    ] {
+        let k = |n: &str| format!("ai.items.hand.{key}.{n}");
+        c.range(&k("speed_per_s"), h.speed_per_s, 100, 50_000)
+            .range(&k("pause_ms"), h.pause_ms, 0, 5000)
+            .range(&k("aim_noise"), h.aim_noise, 0, 200)
+            .range(&k("timing_noise_ms"), h.timing_noise_ms, 0, 2000)
+            // under half a turn a tick, or the reel would read it backwards
+            .range(&k("reel_permille_per_s"), h.reel_permille_per_s, 100, 20_000);
     }
     check_skill(c, "easy", &a.skill.easy);
     check_skill(c, "normal", &a.skill.normal);

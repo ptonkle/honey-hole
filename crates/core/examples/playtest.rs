@@ -28,6 +28,7 @@ use tool_core::ai::{Activity, Crew};
 use tool_core::map::fish::Tier;
 use tool_core::map::{generate, list, Setting};
 use tool_core::roster::Roster;
+use tool_core::sim::items::Item;
 use tool_core::sim::{Difficulty, Match, MatchEvent, Occupant, Setup, WreckCause};
 use tool_core::tuning;
 
@@ -66,6 +67,16 @@ struct SeatStats {
     /// fish it knocked off a line and then landed itself, and their points
     steals: u32,
     stolen: i64,
+    /// items: picked up, used and wasted, by item (`Item::ALL`'s order)
+    picked: [u32; 6],
+    used: [u32; 6],
+    wasted: [u32; 6],
+    /// points the camera's photos added
+    photo_pts: i64,
+}
+
+fn item_ix(i: Item) -> usize {
+    Item::ALL.iter().position(|&x| x == i).unwrap_or(0)
 }
 
 #[derive(Default)]
@@ -87,6 +98,9 @@ struct Totals {
     step_ns: u128,
     ticks: u64,
     all: SeatStats,
+    /// each minigame's time from its start to its effect, by difficulty
+    /// and item: (ms, count)
+    mg_ms: [[(i64, u32); 6]; 3],
 }
 
 fn add(a: &mut SeatStats, b: &SeatStats) {
@@ -103,6 +117,12 @@ fn add(a: &mut SeatStats, b: &SeatStats) {
     a.denied += b.denied;
     a.steals += b.steals;
     a.stolen += b.stolen;
+    for k in 0..6 {
+        a.picked[k] += b.picked[k];
+        a.used[k] += b.used[k];
+        a.wasted[k] += b.wasted[k];
+    }
+    a.photo_pts += b.photo_pts;
 }
 
 fn lineup(k: u32) -> [Difficulty; 4] {
@@ -170,6 +190,7 @@ fn main() {
         let mut st = vec![SeatStats::default(); 4];
         let mut hooked_at = [None::<(u32, Tier)>; 4];
         let mut knocked: Vec<(u32, usize)> = Vec::new();
+        let mut mg_start = [None::<(u32, Item)>; 4];
         while !m.ended {
             let a = Instant::now();
             let inputs = crew.inputs(&m);
@@ -230,6 +251,23 @@ fn main() {
                 .collect();
             for e in &events {
                 match e {
+                    MatchEvent::ItemPicked { seat, item, .. } => st[*seat].picked[item_ix(*item)] += 1,
+                    MatchEvent::MinigameStarted { seat, item } => mg_start[*seat] = Some((m.tick, *item)),
+                    MatchEvent::ItemWasted { seat, item } => st[*seat].wasted[item_ix(*item)] += 1,
+                    MatchEvent::TeleportChoosing { seat } | MatchEvent::ItemUsed { seat, .. } => {
+                        if let Some((t0, item)) = mg_start[*seat].take() {
+                            let r = &mut tot.mg_ms[diff_ix(ups[*seat])][item_ix(item)];
+                            r.0 += (m.tick - t0) as i64 * 20;
+                            r.1 += 1;
+                        }
+                        if let MatchEvent::ItemUsed { item, .. } = e {
+                            st[*seat].used[item_ix(*item)] += 1;
+                            if *item == Item::Camera {
+                                let v = m.scores[*seat].catches.last().map_or(0, |c| c.value) as i64;
+                                st[*seat].photo_pts += v - v * 100 / t.fishing.camera_value_pct as i64;
+                            }
+                        }
+                    }
                     MatchEvent::Wrecked { seat, cause } => match cause {
                         WreckCause::Rammed { by } => {
                             st[*seat].was_rammed += 1;
@@ -449,6 +487,40 @@ fn report(tot: &Totals) {
         tot.ticks,
         tot.step_ns as f64 / tot.ticks.max(1) as f64 / 1e3,
         tot.ticks
+    );
+    println!();
+    println!("### Items (all matches)");
+    println!();
+    println!(
+        "| Item | Picked up / match | Used / match | Wasted | Minigame to effect, Easy / Normal / Hard |"
+    );
+    println!("| --- | --- | --- | --- | --- |");
+    for (k, item) in Item::ALL.iter().enumerate() {
+        let mg: Vec<String> = (0..3)
+            .map(|d| {
+                let (ms, n) = tot.mg_ms[d][k];
+                if n == 0 {
+                    "-".to_string()
+                } else {
+                    format!("{:.1} s", ms as f64 / n as f64 / 1000.0)
+                }
+            })
+            .collect();
+        println!(
+            "| {} | {:.2} | {:.2} | {} | {} |",
+            item.key(),
+            a.picked[k] as f64 / m,
+            a.used[k] as f64 / m,
+            a.wasted[k],
+            mg.join(" / ")
+        );
+    }
+    println!();
+    println!(
+        "ITEMS | pickups / match {:.2} | uses / match {:.2} | camera points added / photo {:.0}",
+        a.picked.iter().sum::<u32>() as f64 / m,
+        a.used.iter().sum::<u32>() as f64 / m,
+        a.photo_pts as f64 / a.used[item_ix(Item::Camera)].max(1) as f64
     );
     // one row for notes/balance-options.md
     let acts = a.acts.iter().sum::<u64>().max(1) as f64;

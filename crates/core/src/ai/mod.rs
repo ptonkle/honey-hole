@@ -25,12 +25,15 @@
 //! asks it for the AI seats' inputs each tick ([`Crew::inputs`]).
 
 pub mod fish;
+pub mod hand;
 pub mod hunt;
 pub mod items;
 pub mod nav;
 pub mod senses;
 pub mod tuning;
 
+#[cfg(test)]
+mod item_tests;
 #[cfg(test)]
 mod tests;
 
@@ -55,6 +58,8 @@ pub enum Goal {
     Hunt { seat: usize, until: u32 },
     /// away from a rival, until this tick
     Flee { to: P, until: u32 },
+    /// through the item buoy, there
+    Buoy { at: P },
 }
 
 /// How a brain spends a tick, for the playtests.
@@ -139,6 +144,8 @@ pub struct Brain {
     runup: Option<P>,
     /// when each 64 m square of the lake was last passed
     explored: Vec<u32>,
+    /// the items: its hand on the minigames, and its plans
+    pub items: items::Mind,
 }
 
 /// The explored squares' side.
@@ -179,6 +186,7 @@ impl Brain {
             reverse_until: 0,
             runup: None,
             explored: vec![0; side * side],
+            items: items::Mind::new(m.setup.seed, seat),
         }
     }
 
@@ -222,6 +230,11 @@ impl Brain {
             }
             return out;
         }
+        // a minigame, or a teleport's spot on the radar: the hand
+        if let Some(i) = items::during(self, s) {
+            self.activity = self.activity_now(s, b, &i);
+            return i;
+        }
         if s.fishboy_up {
             self.activity = if s.fishing.stage == Stage::Idle {
                 Activity::Idle
@@ -253,6 +266,14 @@ impl Brain {
                 }
             }
             Goal::Fish { fish } => fish::act(self, s, nav, b, fish, &mut out),
+            Goal::Buoy { at } => {
+                if b.mode == Mode::Fishing {
+                    // a quiet line comes in
+                    out.pressed.mode = true;
+                } else {
+                    self.drive_to(s, nav, b, at, s.rules.top, false, &mut out);
+                }
+            }
             Goal::Explore { to } => {
                 if b.mode == Mode::Fishing && s.fishing.stage == Stage::Idle {
                     out.pressed.mode = true;
@@ -264,7 +285,7 @@ impl Brain {
                 }
             }
         }
-        items::decide(s, &mut out);
+        items::decide(self, s, b, &mut out);
         self.activity = self.activity_now(s, b, &out);
         out
     }
@@ -414,6 +435,11 @@ impl Brain {
                 }
             }
             Goal::Flee { until, .. } if s.tick >= until => self.goal = Goal::Explore { to: at },
+            // taken, or moved to a new fair point
+            Goal::Buoy { at: buoy } if s.items.buoy != Some(buoy) => {
+                self.goal = Goal::Explore { to: at };
+                self.path.clear();
+            }
             _ => {}
         }
         // a rival bearing down while the line is out
@@ -480,6 +506,14 @@ impl Brain {
                 }
             }
         }
+        // the item buoy, when worth the trip
+        if let Some(buoy) = s.items.buoy {
+            if !matches!(self.goal, Goal::Buoy { .. }) && items::buoy_worth(self, s, b, buoy) {
+                self.goal = Goal::Buoy { at: buoy };
+                self.path.clear();
+                return;
+            }
+        }
         // fish in sight
         if matches!(self.goal, Goal::Explore { .. } | Goal::Fish { .. }) && stage == Stage::Idle {
             let current = match self.goal {
@@ -495,6 +529,14 @@ impl Brain {
                     self.goal = Goal::Fish { fish: f };
                 }
                 None => {
+                    // a fish an Enhanced Radar marked
+                    if let Some(to) = items::mark_to_visit(s, at) {
+                        if !matches!(self.goal, Goal::Explore { to: g } if g == to) {
+                            self.goal = Goal::Explore { to };
+                            self.path.clear();
+                        }
+                        return;
+                    }
                     if current.is_some()
                         || matches!(self.goal, Goal::Explore { to } if to.dist(at) < t.waypoint_mm as i64 * 2)
                     {
@@ -578,7 +620,12 @@ impl Brain {
             self.path.remove(0);
         }
         let next = self.path[0];
-        let mut want = want;
+        // nitrous: the boat's top speed is higher for its time
+        let mut want = if b.nitrous && want >= r.top {
+            nav::pct(r.top, r.nitrous_top_pct)
+        } else {
+            want
+        };
         if stop {
             let left: i64 = self.path.windows(2).map(|w| w[0].dist(w[1])).sum::<i64>() + at.dist(next);
             want = want.min(nav::stop_speed(left as i32 - 3000, nav::decel(r, t), 0));

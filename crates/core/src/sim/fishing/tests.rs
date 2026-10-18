@@ -1024,3 +1024,44 @@ fn an_anchored_reeling_boat_is_not_pushed_by_a_bump() {
     assert_eq!((b.vel(), b.pos_um), ([0, 0], at), "anchored");
     assert!(m.boat(1).unwrap().vel()[0] < 0, "the bumper takes the whole bump");
 }
+
+/// R4.11 (SECOND-ORDER R5.31): an item's minigame takes the keys, so the
+/// reel holds still while it plays; Esc ends it and the fight goes on.
+/// With `items.reel_holds_in_minigame` off, the reel fights on with no
+/// Space: the tamed marker sits at 900 of 1000 and the zone falls away
+/// under gravity, so the meter drains.
+#[test]
+fn a_minigame_holds_the_reel_still_until_it_ends() {
+    for hold in [true, false] {
+        let mut t = sample();
+        t.items.reel_holds_in_minigame = hold;
+        let mut m = fresh_with(1, &t);
+        hooked(&mut m, 0);
+        m.items.seats[0].held = Some(crate::sim::items::Item::PowerReel);
+        let before = m.fishing.lines[0].reel.clone().unwrap();
+        let e = step0(&mut m, tap("item"));
+        assert!(
+            e.iter()
+                .any(|e| matches!(e, MatchEvent::MinigameStarted { seat: 0, .. })),
+            "{e:?}"
+        );
+        for _ in 0..100 {
+            step0(&mut m, SeatInput::default());
+        }
+        if hold {
+            assert_eq!(m.fishing.lines[0].stage, Stage::Reeling);
+            assert_eq!(m.fishing.lines[0].reel.as_ref(), Some(&before), "the reel moved");
+            // Esc wastes the item, and the reel moves again
+            step0(&mut m, tap("cancel"));
+            step0(&mut m, SeatInput::default());
+            let after = m.fishing.lines[0].reel.clone().unwrap();
+            assert_ne!(after.ticks, before.ticks);
+        } else {
+            let r = m.fishing.lines[0].reel.as_ref();
+            assert!(
+                r.is_none_or(|r| r.meter != before.meter),
+                "the reel held with the hold off"
+            );
+        }
+    }
+}

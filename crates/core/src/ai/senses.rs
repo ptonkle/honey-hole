@@ -13,9 +13,11 @@
 use crate::fishboy::radar::PingState;
 use crate::map::fish::Tier;
 use crate::map::{Map, P};
+use crate::minigame::sight::Sight;
 use crate::roster::Roster;
 use crate::sim::fishing::view::FishingView;
 use crate::sim::fishing::Stage;
+use crate::sim::items::{Item, Mark};
 use crate::sim::{Boat, Match, MatchEvent, Rules, WreckCause};
 use crate::tuning::Tuning;
 
@@ -60,6 +62,33 @@ pub enum News {
     Caught,
 }
 
+/// The seat's items, as its HUD, its radar and its minigame show them.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct ItemsSeen {
+    /// the item in its slot
+    pub held: Option<Item>,
+    /// the minigame being played, and what is on its screen
+    pub playing: Option<(Item, Sight)>,
+    /// the radar is up for a teleport's spot
+    pub choosing: bool,
+    /// a teleport is charging
+    pub charging: bool,
+    /// the camera's offer is up
+    pub offer: bool,
+    /// effects running (the HUD's timers)
+    pub cloaked: bool,
+    pub power_reel: bool,
+    pub nitrous: bool,
+    /// the fish its last Enhanced Radar marked on its radar
+    pub marks: Vec<Mark>,
+    /// the item buoy, on every radar at all times
+    pub buoy: Option<P>,
+    /// the tier of its last catch (the camera's offer is for it)
+    pub last_catch: Option<Tier>,
+    /// the match's time left, ms (the HUD's clock)
+    pub left_ms: i32,
+}
+
 /// One seat's senses for one tick.
 pub struct Senses<'a> {
     pub seat: usize,
@@ -78,6 +107,7 @@ pub struct Senses<'a> {
     pub news: Vec<News>,
     /// the match has ended
     pub ended: bool,
+    pub items: ItemsSeen,
 }
 
 /// What `seat` senses of `m` now, after the last step.
@@ -174,5 +204,32 @@ pub fn sense<'a>(m: &'a Match, seat: usize) -> Senses<'a> {
         rivals,
         news,
         ended: m.ended,
+        items: items_seen(m, seat),
+    }
+}
+
+/// What the seat sees of its items and the buoy.
+fn items_seen(m: &Match, seat: usize) -> ItemsSeen {
+    let Some(it) = m.items.seats.get(seat) else {
+        return ItemsSeen::default();
+    };
+    let tick = m.tick;
+    ItemsSeen {
+        held: it.held,
+        playing: it.playing.as_ref().map(|p| (p.item, p.game.sight())),
+        choosing: it.choosing,
+        charging: it.charge.is_some(),
+        offer: it.offer_until.is_some(),
+        cloaked: tick < it.cloak_until,
+        power_reel: tick < it.reel_until,
+        nitrous: tick < it.nitrous_until,
+        marks: it.marks.clone(),
+        buoy: m.items.buoy,
+        last_catch: m.scores[seat]
+            .catches
+            .last()
+            .and_then(|c| m.fishing.roster.get(&c.kind))
+            .map(|k| k.tier),
+        left_ms: m.remaining_ms(),
     }
 }

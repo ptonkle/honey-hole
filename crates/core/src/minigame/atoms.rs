@@ -118,6 +118,11 @@ impl Atoms {
             .find(|&k| self.atoms[k].at == Where::Free && dist2(self.atoms[k].pos(), p) <= reach * reach)
     }
 
+    /// The atom held, if any (the AI's sight of it).
+    pub fn holding(&self) -> Option<usize> {
+        self.held.map(|(k, _)| k)
+    }
+
     /// A free atom a press on its own middle picks up, and whether it is
     /// nitrogen.
     pub fn pickable(&self) -> Option<(bool, Pt)> {
