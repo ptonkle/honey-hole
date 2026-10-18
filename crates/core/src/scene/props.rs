@@ -218,7 +218,14 @@ pub fn place(lake: &Lake, look: &LakeLook) -> Vec<Placed> {
                 scale,
                 k >> 28,
             );
-            stems(&mut out, lake, &p.reed_stems, *c, ((k >> 12) % TURN as u64) as i32, scale);
+            stems(
+                &mut out,
+                lake,
+                &p.reed_stems,
+                *c,
+                ((k >> 12) % TURN as u64) as i32,
+                scale,
+            );
         }
         // weeds on the bed round the reed bed
         let weeds = patch.clumps.len() as i32 * p.weeds_pct / 100;
@@ -259,7 +266,14 @@ pub fn place(lake: &Lake, look: &LakeLook) -> Vec<Placed> {
                 scale,
                 k >> 8,
             );
-            stems(&mut out, lake, &p.lily_stems, q, ((k >> 44) % TURN as u64) as i32, scale);
+            stems(
+                &mut out,
+                lake,
+                &p.lily_stems,
+                q,
+                ((k >> 44) % TURN as u64) as i32,
+                scale,
+            );
             placed += 1;
         }
     }
@@ -288,9 +302,26 @@ pub fn place(lake: &Lake, look: &LakeLook) -> Vec<Placed> {
             }
             if depth >= p.bed_min_mm && !p.bed_rocks.is_empty() && ((b % 1000) as i32) < p.bed_rock_permille {
                 let model = &p.bed_rocks[((b >> 40) % p.bed_rocks.len() as u64) as usize];
-                put(&mut out, model, q, lake.ground_mm(q) - 150, turn, scale * 3 / 4, b);
-            } else if depth >= p.bed_min_mm && ((b % 1000) as i32) < p.bed_rock_permille + p.bed_log_permille {
-                put(&mut out, &p.bed_log, q, lake.ground_mm(q) - 120, turn, scale.min(1100), b);
+                put(
+                    &mut out,
+                    model,
+                    q,
+                    lake.ground_mm(q) - 150,
+                    turn,
+                    scale * 3 / 4,
+                    b,
+                );
+            } else if depth >= p.bed_min_mm && ((b % 1000) as i32) < p.bed_rock_permille + p.bed_log_permille
+            {
+                put(
+                    &mut out,
+                    &p.bed_log,
+                    q,
+                    lake.ground_mm(q) - 120,
+                    turn,
+                    scale.min(1100),
+                    b,
+                );
             }
         }
         if !cell.water() && map.shore[i] <= map.cell_mm && roll < p.shore_rocks_permille {

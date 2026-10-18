@@ -472,7 +472,11 @@ impl App {
                 0,
                 // the mouse's tilt from where it starts; the look's pitch
                 // is the camera's own (SECOND-ORDER R4.80)
-                view.cam_pitch - self.controls.as_ref().map_or(deg(cam_look.pitch_deg), |c| deg(c.mouse.pitch_start_deg)),
+                view.cam_pitch
+                    - self
+                        .controls
+                        .as_ref()
+                        .map_or(deg(cam_look.pitch_deg), |c| deg(c.mouse.pitch_start_deg)),
             ),
         };
         // the fish, bobbers and lines, and the underwater camera (not with

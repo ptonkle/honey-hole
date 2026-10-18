@@ -80,7 +80,10 @@ fn a_line_in_the_water_turns_on_the_underwater_camera_and_the_picture_in_picture
         f.view[i..i + n].to_vec()
     };
     assert_eq!(value("uShaftLook")[0], 55 * ONE / 100);
-    assert_eq!(value("uDeep"), vec![18 * ONE / 255, 48 * ONE / 255, 52 * ONE / 255]);
+    assert_eq!(
+        value("uDeep"),
+        vec![18 * ONE / 255, 48 * ONE / 255, 52 * ONE / 255]
+    );
     assert_eq!(value("uCaustic")[3], 16 * ONE / 100);
     // and the boat camera has none of it
     let (_, _, boat) = a.inset_frame();

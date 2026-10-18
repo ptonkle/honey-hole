@@ -453,7 +453,11 @@ fn land_behind_the_boat_pulls_the_camera_in_and_it_stays_over_the_land() {
     assert!(back >= mm(c.min_back_mm) * 9 / 10, "{:?}", cam.eye);
     // and never inside the land under it
     let ground = l.ground_mm(l.map_point(cam.eye));
-    assert!(cam.eye.y >= mm(ground + c.clear_mm) - 2, "{:?} over {ground}", cam.eye);
+    assert!(
+        cam.eye.y >= mm(ground + c.clear_mm) - 2,
+        "{:?} over {ground}",
+        cam.eye
+    );
     // open water behind: no pull
     let open = camera::boat(&lake(), &c, v3(0, 0, 0), QUARTER, 0, 0);
     assert!(-open.eye.x > mm(6000));

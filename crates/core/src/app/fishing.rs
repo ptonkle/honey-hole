@@ -232,7 +232,8 @@ pub fn under_air(lake: &Lake, u: &UnderLook, eye: V3, clock_ms: u64) -> (Light, 
     };
     let hundredth = |v: i32| v * ONE / 100;
     // a phase going round once in `period` ms
-    let phase = |period: i32| (fx::TWO_PI * (clock_ms % period.max(1) as u64) as i64 / period.max(1) as i64) as i32;
+    let phase =
+        |period: i32| (fx::TWO_PI * (clock_ms % period.max(1) as u64) as i64 / period.max(1) as i64) as i32;
     let s = &u.shafts;
     let dir = v3(hundredth(s.dir[0]), hundredth(s.dir[1]), hundredth(s.dir[2])).norm();
     let c = &u.caustics;
@@ -240,7 +241,12 @@ pub fn under_air(lake: &Lake, u: &UnderLook, eye: V3, clock_ms: u64) -> (Light, 
         let r = &c.ripples[k.min(c.ripples.len().saturating_sub(1))];
         let kk = (fx::TWO_PI * 1000 / r.length_mm.max(1) as i64) as i32;
         let a = deg(r.toward_deg);
-        [fx::mul(kk, fx::cos(a)), -fx::mul(kk, fx::sin(a)), phase(r.period_ms), 0]
+        [
+            fx::mul(kk, fx::cos(a)),
+            -fx::mul(kk, fx::sin(a)),
+            phase(r.period_ms),
+            0,
+        ]
     };
     let f = &u.surface;
     let air = Air {
@@ -254,7 +260,12 @@ pub fn under_air(lake: &Lake, u: &UnderLook, eye: V3, clock_ms: u64) -> (Light, 
         deep: render::Deep {
             colour: rgb(u.down),
             band: [hundredth(u.down_band[0]), hundredth(u.down_band[1])],
-            shaft: [s.counts[0] * ONE, s.counts[1] * ONE, phase(s.drift_ms[0]), -phase(s.drift_ms[1])],
+            shaft: [
+                s.counts[0] * ONE,
+                s.counts[1] * ONE,
+                phase(s.drift_ms[0]),
+                -phase(s.drift_ms[1]),
+            ],
             shaft_look: [
                 hundredth(s.strength_pct),
                 hundredth(s.power_pct),
@@ -264,7 +275,12 @@ pub fn under_air(lake: &Lake, u: &UnderLook, eye: V3, clock_ms: u64) -> (Light, 
             shaft_dir: [dir.x, dir.y, dir.z],
             sheen: rgb(u.sheen),
             ripples: [ripple(0), ripple(1), ripple(2)],
-            caustic: [ONE / 3, c.power * ONE, hundredth(c.bed_pct), hundredth(c.surface_pct)],
+            caustic: [
+                ONE / 3,
+                c.power * ONE,
+                hundredth(c.bed_pct),
+                hundredth(c.surface_pct),
+            ],
             underside: rgb(f.underside),
             window: [
                 hundredth(f.window[0]),
@@ -286,7 +302,12 @@ pub fn under_air(lake: &Lake, u: &UnderLook, eye: V3, clock_ms: u64) -> (Light, 
 /// never run out; none is drawn over the surface or under the bed.
 pub fn motes(lake: &Lake, m: &MoteLook, cam: &Camera, clock_ms: u64, out: &mut Vec<i32>) {
     let b = m.box_mm.max(1) as i64;
-    let eye = [scene::to_mm(cam.eye.x), scene::to_mm(cam.eye.y), scene::to_mm(cam.eye.z)].map(|v| v as i64);
+    let eye = [
+        scene::to_mm(cam.eye.x),
+        scene::to_mm(cam.eye.y),
+        scene::to_mm(cam.eye.z),
+    ]
+    .map(|v| v as i64);
     let fwd = cam.fwd.norm();
     let right = crate::gfx::geom::right_of(fwd);
     let up = right.cross(fwd);
@@ -300,7 +321,11 @@ pub fn motes(lake: &Lake, m: &MoteLook, cam: &Camera, clock_ms: u64, out: &mut V
         let unit = |k: u64, span: i64| (k % (2 * span as u64 + 1)) as i64 - span;
         let d = m.drift_mm_per_s as i64;
         let v = if bubble {
-            [unit(h2 >> 8, d / 4), m.rise_mm_per_s as i64, unit(h2 >> 24, d / 4)]
+            [
+                unit(h2 >> 8, d / 4),
+                m.rise_mm_per_s as i64,
+                unit(h2 >> 24, d / 4),
+            ]
         } else {
             [unit(h2 >> 8, d), unit(h2 >> 40, d / 3), unit(h2 >> 24, d)]
         };
@@ -780,18 +805,22 @@ impl App {
         let turn = crate::map::trig::TURN;
         let spot = if place == "reeds" {
             map.reeds.iter().max_by_key(|r| r.clumps.len()).and_then(|r| {
-                (3..30).flat_map(|d| (0..16).map(move |k| (d * 1000, k * turn / 16))).find_map(|(d, a)| {
-                    let q = toward(r.at, a, d);
-                    let deep = (-3500..=-2000).contains(&ground(q));
-                    let clear = r.clumps.iter().all(|c| c.dist(q) > 4000);
-                    (deep && clear).then_some((q, a + turn / 2))
-                })
+                (3..30)
+                    .flat_map(|d| (0..16).map(move |k| (d * 1000, k * turn / 16)))
+                    .find_map(|(d, a)| {
+                        let q = toward(r.at, a, d);
+                        let deep = (-3500..=-2000).contains(&ground(q));
+                        let clear = r.clumps.iter().all(|c| c.dist(q) > 4000);
+                        (deep && clear).then_some((q, a + turn / 2))
+                    })
             })
         } else {
             map.islands.iter().max_by_key(|i| i.area_m2).and_then(|i| {
                 (0..16).find_map(|k| {
                     let a = k * turn / 16;
-                    let shore = (0..80).map(|d| toward(i.at, a, d * 1000)).find(|q| ground(*q) < -1200)?;
+                    let shore = (0..80)
+                        .map(|d| toward(i.at, a, d * 1000))
+                        .find(|q| ground(*q) < -1200)?;
                     let q = toward(shore, a, 2500);
                     (ground(q) < -1200).then_some((q, a))
                 })
