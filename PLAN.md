@@ -65,6 +65,8 @@ Collected as the agent makes them; brought up in the morning. Each also has a ro
 - V30. Fish seen from the boat camera are drawn twice their size and at 45% of their depth so they read from 9 m back; under the water they are life size (R3.6).
 - V31. The underwater camera's murk (green-blue, 16 m), the picture-in-picture (26% of the screen's width, top left, white border), the HUD moved to the top right, and the fishing HUD as panels until the 2D layer draws it (R3.7, R3.9, R3.10, R3.11).
 - V32. The hook popup ends with a full stop, not "!", for the tone lint (R3.15).
+- V33. The chase camera: a pivot 1.5 m over the boat, 7 m back, 11° down, aimed 4 m ahead and 0.3 m up, pulled in by land between it and the boat (SECOND-ORDER R4.80, R4.82; `notes/shots/polish/`).
+- V34. The underwater look: murk graded by depth and view, shafts, caustics, the surface's bright window and dark floating shapes, drifting specks and bubbles, weeds and stems by the reeds, rocks and logs on the bed, fish lifted 30% toward their own colours (R4.83 to R4.90; `notes/shots/polish/`).
 
 ## Status
 

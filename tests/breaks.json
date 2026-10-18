@@ -1764,6 +1764,34 @@
     "test": "a_hook_pops_up_for_every_player_in_its_tier_for_two_seconds"
   },
   {
+    "name": "land behind the boat pulls the camera in",
+    "file": "crates/core/src/scene/camera.rs",
+    "find": "if blocked(pivot.lerp(want, t)) {",
+    "replace": "if false {",
+    "test": "land_behind_the_boat_pulls_the_camera_in_and_it_stays_over_the_land"
+  },
+  {
+    "name": "the murk darkens with the camera's depth",
+    "file": "crates/core/src/app/fishing.rs",
+    "find": "(u.colour_deep[k] - u.colour[k]) * t / ONE",
+    "replace": "(u.colour_deep[k] - u.colour[k]) * 0 / ONE",
+    "test": "the_murk_darkens_with_the_cameras_depth"
+  },
+  {
+    "name": "no speck is drawn over the surface",
+    "file": "crates/core/src/app/fishing.rs",
+    "find": "if at[1] > -(size as i64) || (at[1] as i32) < ground + size {",
+    "replace": "if false {",
+    "test": "specks_drift_round_the_eye_under_the_surface_and_over_the_bed"
+  },
+  {
+    "name": "the underwater air turns on the shafts",
+    "file": "crates/core/src/app/fishing.rs",
+    "find": "                hundredth(s.strength_pct),",
+    "replace": "                0,",
+    "test": "a_line_in_the_water_turns_on_the_underwater_camera_and_the_picture_in_picture"
+  },
+  {
     "name": "anticlockwise winding counts for the reel",
     "file": "crates/core/src/minigame/reel.rs",
     "find": "self.swept = (self.swept + signed(a - l) as i64).max(self.banked);",

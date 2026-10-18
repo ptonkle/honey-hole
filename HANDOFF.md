@@ -47,6 +47,9 @@ Every `SECOND-ORDER.md` row with status *person*, by number, with what the perso
 - R3.93: the six item minigames' numbers and looks: play each from the Title, Minigames (shots in `notes/shots/minigames/`); numbers in `data/tuning.json` `minigames`, colours in `data/ui2d.json` `minigames`.
 - R2.34: maples have no model; they draw as birches or tall spruces (`lake.props.maple` in `data/look.json`). A maple model, or keep it so.
 - R3.20: the fishing's look (bobber, lure, line, underwater murk, picture-in-picture, HUD meters and popups), in `notes/shots/fishing/`.
+- R4.97: the channel catfish v4 (broad flat head, thick body, short forward dorsal, forked tail), in `notes/shots/models/fish-v4/`.
+- R4.80: the lower chase camera, in `notes/shots/polish/` (3 to 5c).
+- R4.93: the underwater look, in `notes/shots/polish/` (1 to 2b).
 - R2.43: the boat camera's distance, height, pitch and field of view (`lake.camera` in `data/look.json`), and the lake's look in `notes/shots/world/`; the fog distance can be tried live in the Lake preview.
 
 ## Mistakes so far
