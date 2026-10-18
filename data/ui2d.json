@@ -1,0 +1,57 @@
+{
+  "_note": "The 2D layer's look (crates/core/src/ui2d/theme.rs). Colours are 0-255. fonts: CSS families, a weight, and the glyph advance in percent of the size (the core lays labels out by it). fishboy: the screen's virtual canvas, the first-person field of view in degrees, the screen's share of the view (percent of width or height, whichever binds), and how long raising it takes. radar: the map picture in blocks of block_mm (2.5 m: the person's 80% fidelity), its colours, the fine grid, range rings, the ping's sweep band and the players' radar colours. tiers: each tier's colour and frame shape (double, notched, dashed, plain). standin: the plain lake drawn behind the Fish-Boy until the world renderer lands.",
+  "fonts": {
+    "mono": { "family": "ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace", "weight": "bold", "advance": 60 }
+  },
+  "hud": { "canvas": [1920, 1080], "ink": [240, 244, 236] },
+  "fishboy": {
+    "canvas": [1600, 900],
+    "fov_deg": 50,
+    "screen_pct": 80,
+    "raise_ms": 380,
+    "eye_mm": 1500,
+    "look_down_deg": 4,
+    "light": { "fog": [0, 0, 0], "sun_dir": [-30, 70, 80], "sun": [175, 170, 160], "sky": [175, 180, 186], "ground": [110, 112, 110] }
+  },
+  "screen": {
+    "background": [4, 16, 8],
+    "phosphor": [120, 255, 140],
+    "dim": [34, 120, 52],
+    "ink": [4, 22, 10],
+    "scanline_every": 4,
+    "scanline_pct": 22,
+    "warning": [255, 120, 100]
+  },
+  "radar": {
+    "panel": [4, 18, 8],
+    "land": [32, 104, 44],
+    "shallow": [14, 58, 24],
+    "deep": [8, 38, 16],
+    "shore": [120, 255, 140],
+    "deep_mm": 1800,
+    "block_mm": 2500,
+    "scan_pct": 82,
+    "grid": [20, 80, 30],
+    "grid_lines": 12,
+    "ring": [60, 180, 80],
+    "ring_m": 90,
+    "sweep": [120, 255, 140],
+    "sweep_band_m": 40,
+    "sweep_pct": 40,
+    "players": { "blue": [110, 160, 255], "red": [255, 96, 84], "green": [150, 240, 120], "yellow": [255, 220, 80] },
+    "label_back": [2, 12, 5]
+  },
+  "tiers": {
+    "legendary": { "colour": [255, 140, 26], "frame": "double" },
+    "rare": { "colour": [176, 112, 255], "frame": "notched" },
+    "uncommon": { "colour": [80, 150, 255], "frame": "dashed" },
+    "common": { "colour": [70, 210, 80], "frame": "plain" }
+  },
+  "fishpedia": { "box_colour": [16, 38, 84], "box_line": [60, 100, 170], "gone_pct": 35, "silhouette": [70, 110, 170] },
+  "standin": {
+    "water": [52, 102, 128],
+    "land": [78, 116, 62],
+    "light": { "fog": [184, 198, 204], "sun_dir": [-45, 80, 55], "sun": [150, 144, 132], "sky": [140, 150, 162], "ground": [86, 88, 84] },
+    "fog_m": [50, 240]
+  }
+}

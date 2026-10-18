@@ -14,6 +14,7 @@
 pub mod api;
 pub mod app;
 pub mod controls;
+pub mod fishboy;
 pub mod gfx;
 pub mod glossary;
 pub mod map;
@@ -25,4 +26,5 @@ pub mod sim;
 pub mod sound;
 pub mod strings;
 pub mod tuning;
+pub mod ui2d;
 pub mod view;

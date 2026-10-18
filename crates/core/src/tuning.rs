@@ -30,6 +30,8 @@ pub struct Tuning {
     /// the fish in the lake and the fishing (`sim::fishing::tuning`)
     pub fish: crate::sim::fishing::tuning::FishTuning,
     pub fishing: crate::sim::fishing::tuning::FishingTuning,
+    /// the Fish-Boy's radar: the ping (`fishboy/radar.rs`)
+    pub radar: RadarTuning,
     /// the sound engine's section, read and checked by `sound::Bank::parse`
     #[serde(default)]
     pub audio: serde_json::Value,
@@ -105,6 +107,18 @@ pub struct WreckTuning {
     pub bounce_pct: i32,
     pub scrape_keep_pct: i32,
     pub bump_pct: i32,
+}
+
+/// The radar's ping.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RadarTuning {
+    #[serde(rename = "_note", default)]
+    pub note: String,
+    /// from a ping's start to the next one allowed, per player
+    pub ping_cooldown_ms: i32,
+    /// a sweep's crossing of the whole map
+    pub ping_sweep_ms: i32,
 }
 
 /// Collects range checks; the first failure names its key.
@@ -215,6 +229,13 @@ impl Tuning {
             .range("wreck.scrape_keep_pct", w.scrape_keep_pct, 0, 100)
             .range("wreck.bump_pct", w.bump_pct, 0, 100);
         crate::sim::fishing::tuning::check(&mut c, &self.fish, &self.fishing);
+        let r = &self.radar;
+        c.range("radar.ping_sweep_ms", r.ping_sweep_ms, 20, 60_000)
+            .range("radar.ping_cooldown_ms", r.ping_cooldown_ms, 20, 600_000)
+            .rule(
+                r.ping_sweep_ms <= r.ping_cooldown_ms,
+                "radar.ping_sweep_ms must end before radar.ping_cooldown_ms.",
+            );
         c.done()
     }
 }
@@ -269,6 +290,10 @@ pub mod tests {
                 "bounce_pct": 30,
                 "scrape_keep_pct": 70,
                 "bump_pct": 50
+            },
+            "radar": {
+                "ping_cooldown_ms": 5000,
+                "ping_sweep_ms": 3000
             },
             "fish": fish_sample(),
             "fishing": fishing_sample()

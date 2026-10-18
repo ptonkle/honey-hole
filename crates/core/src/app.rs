@@ -116,6 +116,11 @@ pub struct Ui {
     pub volume: u32,
     /// whether the page draws the 3D scene (`frame`) behind the panels
     pub scene: bool,
+    /// the Fish-Boy's tab while it is up, else "" (`fishboy/`)
+    pub fishboy: String,
+    /// the 2D layer takes the pointer (the Fish-Boy is up): the page lets
+    /// the pointer go and sends its place over the layer (`pointer.*`)
+    pub pointer: bool,
     /// the page keeps keys and the mouse from the browser (Tab moves no
     /// focus; a click locks the pointer) and sends them all here
     pub capture: bool,
@@ -151,6 +156,8 @@ pub struct App {
     pub size: [i32; 2],
     /// the page could not start WebGL 2
     pub scene_unavailable: bool,
+    /// the Fish-Boy, its data and the demo match behind it (`fishboy/`)
+    pub fishboy: crate::fishboy::FishBoy,
     /// the sound recipes and the cues waiting for the page (`load_sounds`)
     pub sound: Option<crate::sound::Sound>,
     pub sounds: sounds::SoundsScreen,
@@ -159,8 +166,6 @@ pub struct App {
     /// the lake drawn now, built once per map (`scene::Lake`); the page
     /// uploads its static vertices when its stamp changes
     pub world: Option<crate::scene::Lake>,
-    /// the fish roster (`data/fish.json`), for stocking a match
-    pub roster: Option<crate::roster::Roster>,
     /// the page's `?debug=fishing`: a fish by every bobber (`app/fishing.rs`)
     pub debug_fishing: bool,
 }
@@ -188,11 +193,11 @@ impl App {
             clock: 0,
             size: [1, 1],
             scene_unavailable: false,
+            fishboy: crate::fishboy::FishBoy::default(),
             sound: None,
             sounds: sounds::SoundsScreen::default(),
             preview: lake::Preview::default(),
             world: None,
-            roster: None,
             debug_fishing: false,
         })
     }
@@ -262,6 +267,9 @@ impl App {
         if name.starts_with("menu.") {
             self.click();
         }
+        if name == "key" && self.fishboy_key(value) {
+            return Ok(());
+        }
         if self.match_input(name, value)? {
             return Ok(());
         }
@@ -288,10 +296,14 @@ impl App {
             "notes.minor" => self.settings.notes_minor = value == "on",
             "settings.name" => self.set_name(value),
             "debug.flags" => self.debug_act(value),
+            "data.ui2d" | "data.fish" => self.fishboy_act(name, value)?,
             _ if name.starts_with("data.") => self.data_act(name, value)?,
             _ if name.starts_with("lobby.") => self.lobby_act(name, value)?,
             _ if name.starts_with("settings.") => self.settings_act(name, value)?,
             _ if name.starts_with("gallery.") => self.gallery_act(name, value)?,
+            _ if name.starts_with("fishboy.") || name.starts_with("pointer.") => {
+                self.fishboy_act(name, value)?
+            }
             _ if name.starts_with("sounds.") => self.sounds_act(name, value)?,
             _ if name.starts_with("lake.") => self.lake_act(name, value)?,
             other => return Err(format!("Unknown action \"{other}\".")),
@@ -303,12 +315,14 @@ impl App {
     pub fn advance(&mut self, now: i64) {
         self.clock = self.clock.max(now);
         self.run_ticks(self.clock);
+        self.fishboy_advance();
     }
 
     /// The canvas's size in CSS pixels and the device's pixel ratio in
     /// hundredths; returns the drawing buffer's size.
     pub fn resize(&mut self, css_w: i32, css_h: i32, dpr_pct: i32) -> [i32; 2] {
         self.size = crate::gfx::render::buffer_size(css_w, css_h, dpr_pct);
+        self.fishboy.dpr_pct = dpr_pct;
         self.size
     }
 
@@ -320,14 +334,7 @@ impl App {
         match self.screen {
             Screen::Gallery => self.gallery_frame(),
             Screen::Lake => self.lake_frame(),
-            Screen::Play => self.match_frame().unwrap_or_else(|| {
-                let (view, tris) = self.play_frame();
-                crate::gfx::render::Frame {
-                    view,
-                    tris,
-                    ..Default::default()
-                }
-            }),
+            Screen::Play => self.match_frame().unwrap_or_default(),
             _ => crate::gfx::render::Frame::default(),
         }
     }
@@ -357,6 +364,8 @@ impl App {
             text_size: self.settings.text_size,
             volume: self.settings.volume,
             scene: matches!(self.screen, Screen::Gallery | Screen::Play | Screen::Lake),
+            fishboy: self.fishboy_shown(),
+            pointer: self.fishboy_shown() != "",
             capture: self.screen == Screen::Play
                 && self
                     .play

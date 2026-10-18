@@ -403,7 +403,7 @@ impl App {
     /// angler in the pose its mode calls for, the boat camera on this
     /// browser's boat turned and tilted by the mouse, and the fog at
     /// [`App::sight_mm`]. `None` when the match's world is not built (no
-    /// lake look), and the match draws its stand-in.
+    /// lake look), and Play draws nothing.
     pub fn match_frame(&self) -> Option<Frame> {
         self.match_frame_as(self.underwater(), render::aspect(self.size))
     }
@@ -452,15 +452,31 @@ impl App {
         let at = me.map_or(lake.map.spawn.at, |b| P::new(b.x_mm, b.y_mm));
         // the match's pitch is the whole tilt; the look's is the camera's own
         let cam_look = &lake.look.camera;
-        let cam = camera::boat(
-            lake,
-            cam_look,
-            lake.world(at, 0),
-            yaw_of_heading(view.cam_yaw),
-            0,
-            view.cam_pitch - deg(cam_look.pitch_deg),
-        );
-        // the fish, bobbers and lines, and the underwater camera
+        let cam = match self.fishboy_eye() {
+            // the Fish-Boy up: first person from the angler's eye, along
+            // the camera's heading, level but for a slight look down
+            Some((eye_mm, fov, down)) => {
+                let fwd = crate::gfx::geom::facing(yaw_of_heading(view.cam_yaw), -down);
+                crate::gfx::render::Camera {
+                    eye: lake.world(at, eye_mm),
+                    fwd,
+                    fov,
+                    near: scene::mm(cam_look.near_mm),
+                    far: scene::mm(cam_look.far_mm),
+                }
+            }
+            None => camera::boat(
+                lake,
+                cam_look,
+                lake.world(at, 0),
+                yaw_of_heading(view.cam_yaw),
+                0,
+                view.cam_pitch - deg(cam_look.pitch_deg),
+            ),
+        };
+        // the fish, bobbers and lines, and the underwater camera (not with
+        // the Fish-Boy up)
+        let under = under && self.fishboy_eye().is_none();
         Some(self.fishing_frame(lake, &view, cam, aspect, under, instances))
     }
 }

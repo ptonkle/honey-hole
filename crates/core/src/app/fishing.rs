@@ -378,9 +378,9 @@ impl App {
     }
 
     fn fish_name(&self, kind: &str) -> String {
-        self.roster
-            .as_ref()
-            .and_then(|r| r.get(kind))
+        self.fishboy
+            .roster
+            .get(kind)
             .map_or(kind.to_string(), |k| k.name.clone())
     }
 

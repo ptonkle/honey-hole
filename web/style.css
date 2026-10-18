@@ -245,6 +245,24 @@ body[data-screen="lake"] #menus {
 .panel.notice { color: var(--error); }
 .field.text input { font: inherit; padding: 0.35rem 0.5rem; }
 
+/* ---- Play: the world, and the 2D layer over it (the HUD, the Fish-Boy) ---- */
+body[data-screen="play"] #scene { display: block; }
+#overlay {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+}
+body[data-screen="play"] #overlay { display: block; }
+/* the 2D layer takes the pointer only while the Fish-Boy is up; otherwise
+   a click reaches the 3D canvas (which locks the pointer for the camera) */
+#overlay { pointer-events: none; }
+body[data-pointer="on"] #overlay { pointer-events: auto; }
+/* the menus' column lets the pointer through to the 2D layer, their
+   panels do not */
+body[data-screen="play"] #menus { pointer-events: none; position: relative; }
+body[data-screen="play"] .panel { pointer-events: auto; }
 /* ---- the Sounds screen: a grid of sound buttons, then the loops ---- */
 body[data-screen="sounds"] #menus { max-width: 60rem; }
 .panel.sounds {

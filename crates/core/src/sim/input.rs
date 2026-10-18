@@ -41,11 +41,14 @@ pub struct Actions {
     /// opens or closes the in-match menu directly (its on-screen button;
     /// no key is bound to it)
     pub menu: bool,
+    /// a radar ping, with the Fish-Boy up (the app taps it for Space on
+    /// the Radar tab or a click on the ping; no key is bound to it)
+    pub ping: bool,
 }
 
 impl Actions {
     /// Every action name, in field order.
-    pub const NAMES: [&'static str; 12] = [
+    pub const NAMES: [&'static str; 13] = [
         "forward",
         "back",
         "left",
@@ -58,6 +61,7 @@ impl Actions {
         "click",
         "alt_click",
         "menu",
+        "ping",
     ];
 
     fn slot(&mut self, name: &str) -> Option<&mut bool> {
@@ -74,6 +78,7 @@ impl Actions {
             "click" => &mut self.click,
             "alt_click" => &mut self.alt_click,
             "menu" => &mut self.menu,
+            "ping" => &mut self.ping,
             _ => return None,
         })
     }
