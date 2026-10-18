@@ -416,6 +416,12 @@ def step_items(page, check):
     page.keyboard.up("KeyW")
     page.keyboard.press("ShiftLeft")
     check(ui2d_has(page, "effects=cloak", timeout=5000), "the cloak runs, with its timer on the HUD")
+    page.keyboard.press("Escape")
+    page.wait_for_selector(".panel.pause", timeout=5000)
+    page.click(by_id("menu.quit"))
+    check(screen(page, "title"), "Leave match goes to the Title")
+    page.goto(base)
+    page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
 
 
 def step_ai(page, check):
