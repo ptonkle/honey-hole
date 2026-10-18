@@ -90,7 +90,7 @@ Not: level, stage, round
 
 The colour a player's lobby slot gives them: blue, red, green or yellow. It marks their boat and their name, and the name is always shown with it.
 
-Not: team colour, skin
+Not: team colour
 
 ### Settings
 
