@@ -62,6 +62,8 @@ By system, from `SECOND-ORDER.md`, with the rule each one produced.
 
 The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the date and commit.
 
+2026-10-18, online play, both halves (transport, lobby, boats, wrecks, timer; fishing shared by claims; branch `online`, worktree `.claude/worktrees/online-redo`, after d5a813b, merged with main at dad627e): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `./scripts/check-online.sh`: `ONLINE CHECK PASSED` (chromium, firefox, webkit); `count-tests.sh`: 369 passed, 0 failed, 0 ignored; `scripts/break_tests.py online boundary:`: every new break caught (24 + 5 for shared fishing).
+
 2026-10-17, the menu machinery port (branch `worktree-agent-aaf1b7a85a5536b76`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 58 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 25 of 25 breaks caught.
 
 2026-10-17, the model format, renderer, Gallery and the seven draft fish, merged with main (maps, boat, angler, buoy) (branch `worktree-agent-ae7232570ef10b3c9`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 129 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 82 of 82 breaks caught.
