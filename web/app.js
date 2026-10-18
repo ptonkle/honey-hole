@@ -7,6 +7,7 @@
 // answers with the next view model. No state lives here: what is drawn is
 // what the core last returned.
 import init, { Game } from "./pkg/tool_shim.js";
+import { makeRenderer } from "./gl.js";
 
 const el = (id) => document.getElementById(id);
 const make = (tag, cls, text) => {
@@ -283,6 +284,8 @@ function draw(result) {
   version.disabled = !ui.version_opens;
   el("message").textContent = "";
   drawMenus();
+  // the canvas has its size only while it shows
+  if (ui.scene && renderer) resize();
 }
 
 // ---- input ----
@@ -304,13 +307,44 @@ function bindInput() {
   watchSelects();
 }
 
+// ---- the 3D scene ----
+
+let renderer = null;
+
+// The canvas's size goes to the core, which says how many pixels to draw.
+function resize() {
+  const canvas = el("scene");
+  const [w, h] = game.resize(canvas.clientWidth, canvas.clientHeight, window.devicePixelRatio);
+  if (canvas.width !== w || canvas.height !== h) renderer.resize(w, h);
+}
+
+// Each frame: the clock to the core, and, when the core says the screen
+// has a scene, its view and triangles to the renderer.
+function frame(now) {
+  if (renderer && ui && ui.scene) {
+    game.advance(now);
+    game.build_frame();
+    renderer.frame(game.view(), game.vertices(), game.vertex_count());
+    document.body.dataset.drawn = ui.panels[0].heading;
+  }
+  requestAnimationFrame(frame);
+}
+
 async function main() {
   await init();
   const strings = await (await fetch("data/strings.json")).text();
   const notes = await (await fetch("data/patch-notes.json")).text();
+  const models = await (await fetch("data/models.json")).text();
+  const look = await (await fetch("data/look.json")).text();
+  const vertex = await (await fetch("data/shaders/scene.vert")).text();
+  const fragment = await (await fetch("data/shaders/scene.frag")).text();
   game = new Game(strings, notes);
   bindInput();
-  draw(JSON.parse(game.ui()));
+  draw(JSON.parse(game.load_models(models, look)));
+  renderer = makeRenderer(el("scene"), JSON.parse(game.numbers()), { vertex, fragment });
+  if (!renderer) send("scene.unavailable", "");
+  window.addEventListener("resize", () => renderer && resize());
+  requestAnimationFrame(frame);
   document.body.dataset.ready = "true";
 }
 

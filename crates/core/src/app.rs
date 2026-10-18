@@ -11,10 +11,12 @@
 
 use serde::Serialize;
 
+use crate::model::Model;
 use crate::patch_notes::{self, Entry};
 use crate::strings::{self, Strings};
 use crate::view::{Item, Panel};
 
+pub mod gallery;
 mod menus;
 mod notes;
 #[cfg(test)]
@@ -33,6 +35,8 @@ pub enum Screen {
     Notes,
     /// the game; a placeholder until the game is designed
     Play,
+    /// each model turning, for a look at the art (`app/gallery.rs`)
+    Gallery,
 }
 
 /// How large the menus' text is drawn. The page scales its text by it.
@@ -98,6 +102,8 @@ pub struct Ui {
     pub text_size: TextSize,
     /// for the sounds the game will play, 0 to `VOLUME_MAX`
     pub volume: u32,
+    /// whether the page draws the 3D scene (`frame`) behind the panels
+    pub scene: bool,
     pub panels: Vec<Panel>,
 }
 
@@ -109,6 +115,17 @@ pub struct App {
     /// the pause menu is open over Play. Whether the game stops under it
     /// is the sync model's to decide, once there is a game.
     pub paused: bool,
+    /// the models, in gallery order, and the look they are drawn in
+    /// (`load_models`)
+    pub models: Vec<Model>,
+    pub look: Option<gallery::Look>,
+    pub gallery: gallery::Gallery,
+    /// the page's clock, in microseconds (`advance`)
+    pub clock: i64,
+    /// the drawing buffer's size, in pixels (`resize`)
+    pub size: [i32; 2],
+    /// the page could not start WebGL 2
+    pub scene_unavailable: bool,
 }
 
 impl App {
@@ -122,6 +139,12 @@ impl App {
             settings: Settings::default(),
             screen: Screen::Title,
             paused: false,
+            models: Vec::new(),
+            look: None,
+            gallery: gallery::Gallery::default(),
+            clock: 0,
+            size: [1, 1],
+            scene_unavailable: false,
         })
     }
 
@@ -141,7 +164,7 @@ impl App {
     fn escape(&mut self) {
         match self.screen {
             Screen::Play => self.paused = !self.paused,
-            Screen::Settings | Screen::Notes => self.go(Screen::Title),
+            Screen::Settings | Screen::Notes | Screen::Gallery => self.go(Screen::Title),
             Screen::Title => {}
         }
     }
@@ -149,7 +172,10 @@ impl App {
     /// The version in the corner opens What's New from the menus, not
     /// from Play.
     pub fn version_opens_notes(&self) -> bool {
-        matches!(self.screen, Screen::Title | Screen::Settings | Screen::Notes)
+        matches!(
+            self.screen,
+            Screen::Title | Screen::Settings | Screen::Notes | Screen::Gallery
+        )
     }
 
     /// A key went down (`KeyboardEvent.code`). The core decides what each
@@ -168,6 +194,8 @@ impl App {
             "menu.play" => self.go(Screen::Play),
             "menu.settings" => self.go(Screen::Settings),
             "menu.notes" => self.go(Screen::Notes),
+            "menu.gallery" => self.go(Screen::Gallery),
+            "scene.unavailable" => self.scene_unavailable = true,
             "version" if self.version_opens_notes() => self.go(Screen::Notes),
             "version" => {}
             "menu.back" | "menu.quit" => self.go(Screen::Title),
@@ -176,9 +204,22 @@ impl App {
             "menu.resume" => self.paused = false,
             "notes.minor" => self.settings.notes_minor = value == "on",
             _ if name.starts_with("settings.") => self.settings_act(name, value)?,
+            _ if name.starts_with("gallery.") => self.gallery_act(name, value)?,
             other => return Err(format!("Unknown action \"{other}\".")),
         }
         Ok(())
+    }
+
+    /// The page's clock, in microseconds. It only goes forward.
+    pub fn advance(&mut self, now: i64) {
+        self.clock = self.clock.max(now);
+    }
+
+    /// The canvas's size in CSS pixels and the device's pixel ratio in
+    /// hundredths; returns the drawing buffer's size.
+    pub fn resize(&mut self, css_w: i32, css_h: i32, dpr_pct: i32) -> [i32; 2] {
+        self.size = crate::gfx::render::buffer_size(css_w, css_h, dpr_pct);
+        self.size
     }
 
     // ---- what the page shows ----
@@ -189,6 +230,7 @@ impl App {
             Screen::Settings => self.settings_panels(),
             Screen::Notes => self.notes_panels(),
             Screen::Play => self.play_panels(),
+            Screen::Gallery => self.gallery_panels(),
         };
         Ui {
             screen: self.screen,
@@ -197,6 +239,7 @@ impl App {
             version_opens: self.version_opens_notes(),
             text_size: self.settings.text_size,
             volume: self.settings.volume,
+            scene: self.screen == Screen::Gallery,
             panels,
         }
     }

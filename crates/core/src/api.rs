@@ -53,6 +53,47 @@ impl Session {
             Err(e) => error(e),
         }
     }
+
+    /// Takes the model files (one `{id: model}` object) and the look file,
+    /// and returns what the page draws, or why they were refused.
+    pub fn load_models(&mut self, models_json: &str, look_json: &str) -> String {
+        match &mut self.app {
+            Ok(app) => match app.load_models(models_json, look_json) {
+                Ok(()) => ok(&app.ui()),
+                Err(e) => error(&e),
+            },
+            Err(e) => error(e),
+        }
+    }
+
+    /// The page's clock, in microseconds.
+    pub fn advance(&mut self, now: i64) {
+        if let Ok(app) = &mut self.app {
+            app.advance(now);
+        }
+    }
+
+    /// The canvas's CSS size and pixel ratio (hundredths) in; the drawing
+    /// buffer's size out.
+    pub fn resize(&mut self, css_w: i32, css_h: i32, dpr_pct: i32) -> Vec<i32> {
+        match &mut self.app {
+            Ok(app) => app.resize(css_w, css_h, dpr_pct).to_vec(),
+            Err(_) => vec![1, 1],
+        }
+    }
+
+    /// This frame's view values and triangles (`gfx::render`).
+    pub fn frame(&self) -> (Vec<i32>, Vec<i32>) {
+        match &self.app {
+            Ok(app) => app.frame(),
+            Err(_) => (Vec::new(), Vec::new()),
+        }
+    }
+
+    /// Every number the renderer needs (`gfx::render::numbers_json`).
+    pub fn numbers(&self) -> String {
+        crate::gfx::render::numbers_json()
+    }
 }
 
 #[cfg(test)]

@@ -1,0 +1,20 @@
+{
+  "_note": "Presentation colours (0-255) the core draws with. players: the four lobby slots' colours. gallery: the Gallery's light, floor and turntable. sun_dir points toward the sun, in hundredths.",
+  "players": {
+    "blue": [38, 104, 214],
+    "red": [210, 48, 44],
+    "green": [52, 160, 72],
+    "yellow": [238, 196, 40]
+  },
+  "gallery": {
+    "light": {
+      "fog": [196, 210, 214],
+      "sun_dir": [-45, 80, 55],
+      "sun": [150, 144, 132],
+      "sky": [140, 150, 162],
+      "ground": [86, 88, 84]
+    },
+    "floor": [150, 164, 168],
+    "turn_seconds": 24
+  }
+}
