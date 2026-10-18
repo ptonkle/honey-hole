@@ -117,6 +117,8 @@ pub struct Brain {
     path: Vec<P>,
     path_goal: P,
     path_tick: u32,
+    /// a path search waits for the crew's next tick (`nav::Nav::search`)
+    path_due: bool,
     // fishing
     /// the cast's Space is let go on this tick
     cast_release: Option<u32>,
@@ -170,6 +172,7 @@ impl Brain {
             path: Vec::new(),
             path_goal: P::new(i32::MIN / 2, 0),
             path_tick: 0,
+            path_due: false,
             cast_release: None,
             aim: None,
             lure_depth: 0,
@@ -607,10 +610,23 @@ impl Brain {
                 .path
                 .first()
                 .is_some_and(|&w| !nav::clear_line(s.map, at, w, 0));
-        if moved || self.path.is_empty() || stale {
-            self.path = nav.path(s.map, at, to).unwrap_or_else(|| vec![to]);
-            self.path_goal = to;
-            self.path_tick = s.tick;
+        if moved || self.path.is_empty() || stale || self.path_due {
+            match nav.search(s.map, at, to) {
+                Some(found) => {
+                    self.path = found.unwrap_or_else(|| vec![to]);
+                    self.path_goal = to;
+                    self.path_tick = s.tick;
+                    self.path_due = false;
+                }
+                // the crew's searches are spent this tick: the old path for
+                // now (or straight for the goal), and a search next tick
+                None => {
+                    self.path_due = true;
+                    if self.path.is_empty() {
+                        self.path = vec![to];
+                    }
+                }
+            }
         }
         while self.path.len() > 1 && self.path[0].dist(at) < t.waypoint_mm as i64 {
             self.path.remove(0);
@@ -689,9 +705,16 @@ impl Crew {
 
     /// One input per seat for the next step: the AI seats' own, and none
     /// for the rest (the app puts in the people's).
+    ///
+    /// The players think in turn from a seat that moves on each tick, so
+    /// each gets the tick's first path search as often (`nav`'s budget).
     pub fn inputs(&mut self, m: &Match) -> Vec<SeatInput> {
         let mut out = vec![SeatInput::default(); m.seats.len()];
-        for b in self.brains.iter_mut() {
+        self.nav.new_tick();
+        let n = self.brains.len().max(1);
+        let first = m.tick as usize % n;
+        for k in 0..self.brains.len() {
+            let b = &mut self.brains[(first + k) % n];
             let s = senses::sense(m, b.seat);
             out[b.seat] = b.think(&s, &self.nav);
         }

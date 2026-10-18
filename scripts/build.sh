@@ -49,6 +49,17 @@ wasm-bindgen --target web --no-typescript --out-dir dist/pkg \
 cp -R web/. dist/
 cp -R data/. dist/data/
 
+# The vendored Trystero bundle ends by naming a source map that is not
+# shipped (nostr.bundle.mjs.map): a browser with its developer tools open
+# asks for it when online play loads the bundle, a 404 in the console. The
+# copy served leaves that comment off; web/vendor keeps the file exactly as
+# pinned (checked above), and the pins stay with it (SECOND-ORDER R6.10).
+for f in dist/vendor/*.js; do
+  [ -e "$f" ] || continue
+  sed -i '/^\/\/# sourceMappingURL=/d' "$f"
+done
+rm -f dist/vendor/SHA256SUMS
+
 # The model files (data/models/<id>.json, each the source of truth) go out
 # as one object by id, so the page fetches them in one request; the core
 # checks every one (crates/core/src/model.rs).

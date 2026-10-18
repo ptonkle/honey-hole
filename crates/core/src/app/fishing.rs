@@ -453,15 +453,22 @@ impl App {
     }
 
     /// The fish, bobbers and lures to draw this frame, and the lines as
-    /// triangles seen from `eye`.
+    /// triangles seen from `cam`. Under the water a fish is posed here, and
+    /// one out of the camera's picture (`scene::in_view`) is left out.
     pub(super) fn fishing_instances<'a>(
         &'a self,
         lake: &Lake,
         view: &PlayView,
         under: bool,
-        eye: V3,
+        cam: &Camera,
         instances: &mut Vec<Instance<'a>>,
     ) -> Vec<i32> {
+        let eye = cam.eye;
+        // the underwater frame's far plane (`fishing_frame`)
+        let reach = Camera {
+            far: cam.far.saturating_add(cam.far / 8),
+            ..*cam
+        };
         let mut tris = Vec::new();
         let (Some(look), Some(fv)) = (self.fishing_look(), self.my_fishing()) else {
             return tris;
@@ -472,6 +479,9 @@ impl App {
                 continue;
             };
             if under {
+                if !scene::in_view(&fish, &reach) {
+                    continue;
+                }
                 // lifted toward their own colours so they read against the murk
                 let lift = look.under.fish_lift_pct * ONE / 100;
                 let mut posed = scene::pose(&[fish]);
@@ -602,7 +612,7 @@ impl App {
             Some(c) => (c, true),
             None => (cam, false),
         };
-        let lines = self.fishing_instances(lake, view, under, cam.eye, &mut instances);
+        let lines = self.fishing_instances(lake, view, under, &cam, &mut instances);
         let sight = if under {
             look.map_or(self.sight_mm(), |l| Some(l.under.fog_mm))
         } else {

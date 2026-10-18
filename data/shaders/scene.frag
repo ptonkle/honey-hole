@@ -73,7 +73,8 @@ void main() {
     lit = mix(lit, uShadow, uSilhouette.y);
   }
   vec3 ray = vWorld - uEye;
-  vec3 sky = murk(normalize(ray));
   float f = smoothstep(uFog.x, uFog.y, length(ray)) * mix(1.0, uGlow, vGlow);
+  // the sky only where the fog has begun: mixing in none of it is the same
+  vec3 sky = f > 0.0 ? murk(normalize(ray)) : lit;
   outColour = vec4(mix(lit, sky, f), uOpacity);
 }

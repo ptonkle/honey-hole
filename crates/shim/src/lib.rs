@@ -8,6 +8,12 @@
 //! hundredths. `crates/core/tests/boundary.rs` fails if a branch, a loop or
 //! the `?` operator appears here; if a feature seems to need one, the rule
 //! belongs in the core.
+//!
+//! The frame's big lists (the posed triangles, the props' instances) are
+//! not handed over as fresh arrays, which would make the page allocate and
+//! collect megabytes a second: `load_frame`, `load_inset` and `load_pass`
+//! convert them into two buffers kept here, and the page reads them in
+//! place through `buf_at` and `buf_len` (SECOND-ORDER R6.7).
 
 use tool_core::gfx::fx;
 use wasm_bindgen::prelude::*;
@@ -18,6 +24,12 @@ fn floats(v: &[i32]) -> Vec<f32> {
     v.iter().map(|x| *x as f32 / ONE).collect()
 }
 
+/// `v` as floats into `into`, keeping its room.
+fn fill(into: &mut Vec<f32>, v: &[i32]) {
+    into.clear();
+    into.extend(v.iter().map(|x| *x as f32 / ONE));
+}
+
 /// The page's one session with the core.
 #[wasm_bindgen]
 pub struct Game {
@@ -26,6 +38,8 @@ pub struct Game {
     /// the picture-in-picture's rectangle, its border's, and its frame
     inset: (Vec<i32>, Vec<i32>, tool_core::gfx::render::Frame),
     ui2d: tool_core::ui2d::Built,
+    /// the lists the page reads in place (`buf_at`, `buf_len`)
+    bufs: [Vec<f32>; 2],
 }
 
 #[wasm_bindgen]
@@ -37,6 +51,7 @@ impl Game {
             frame: Default::default(),
             inset: Default::default(),
             ui2d: Default::default(),
+            bufs: Default::default(),
         }
     }
 
@@ -116,10 +131,6 @@ impl Game {
         floats(&self.inset.2.view)
     }
 
-    pub fn inset_vertices(&self) -> Vec<f32> {
-        floats(&self.inset.2.tris)
-    }
-
     pub fn inset_vertex_count(&self) -> u32 {
         tool_core::gfx::render::vertex_count(&self.inset.2.tris)
     }
@@ -132,16 +143,8 @@ impl Game {
         self.inset.2.groups.clone()
     }
 
-    pub fn inset_instances(&self) -> Vec<f32> {
-        floats(&self.inset.2.instances)
-    }
-
     pub fn view(&self) -> Vec<f32> {
         floats(&self.frame.view)
-    }
-
-    pub fn vertices(&self) -> Vec<f32> {
-        floats(&self.frame.tris)
     }
 
     pub fn vertex_count(&self) -> u32 {
@@ -158,8 +161,32 @@ impl Game {
         self.frame.groups.clone()
     }
 
-    pub fn instances(&self) -> Vec<f32> {
-        floats(&self.frame.instances)
+    /// Buffer 0 to the frame's posed triangles, 1 to its props' instances.
+    pub fn load_frame(&mut self) {
+        fill(&mut self.bufs[0], &self.frame.tris);
+        fill(&mut self.bufs[1], &self.frame.instances);
+    }
+
+    /// The same for the picture-in-picture.
+    pub fn load_inset(&mut self) {
+        fill(&mut self.bufs[0], &self.inset.2.tris);
+        fill(&mut self.bufs[1], &self.inset.2.instances);
+    }
+
+    /// Buffer 0 to pass `k`'s triangles.
+    pub fn load_pass(&mut self, k: u32) {
+        fill(&mut self.bufs[0], &self.ui2d.pass_vertices(k));
+    }
+
+    /// Where buffer `i` starts in the module's memory, and its length in
+    /// floats: the page views it there until its next call that can
+    /// allocate.
+    pub fn buf_at(&self, i: usize) -> usize {
+        self.bufs[i].as_ptr() as usize
+    }
+
+    pub fn buf_len(&self, i: usize) -> usize {
+        self.bufs[i].len()
     }
 
     /// The see-through triangles (a ghosted boat) and their view values.
@@ -209,10 +236,6 @@ impl Game {
 
     pub fn pass_values(&self, k: u32) -> Vec<f32> {
         floats(&self.ui2d.pass_values(k))
-    }
-
-    pub fn pass_vertices(&self, k: u32) -> Vec<f32> {
-        floats(&self.ui2d.pass_vertices(k))
     }
 
     pub fn pass_vertex_count(&self, k: u32) -> u32 {
