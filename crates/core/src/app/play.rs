@@ -17,20 +17,17 @@
 //!   between ticks.
 //! - **Drawing.** [`App::play_view`] is the plain data a world renderer
 //!   reads: the interpolated boats, the camera's yaw and pitch, the time
-//!   left. Until the lake renderer lands, [`App::play_frame`] draws a stand-in
-//!   world with the Gallery's renderer: flat water, flat land, the boats.
+//!   left. `app/lake.rs` (`App::match_frame`) draws the match on the
+//!   lake's world.
 
 use serde::{Deserialize, Serialize};
 
 use super::*;
 use crate::controls::{self, Gather};
-use crate::gfx::fx::{self, ONE, QUARTER, TURN};
-use crate::gfx::geom::{facing, v3, Affine, V3};
-use crate::gfx::render::{self, Camera, Rgb};
+use crate::gfx::fx::{self, ONE, TURN};
 use crate::map::list::{self, MapList};
 use crate::map::rng::mix;
-use crate::map::{generate, Cell, Setting};
-use crate::model::Anim;
+use crate::map::{generate, Setting};
 use crate::sim::view::WorldView;
 use crate::sim::{self, Difficulty, Match, MatchEvent, Occupant, Setup, TICK_MS};
 use crate::tuning::{self, Tuning};
@@ -318,6 +315,9 @@ impl App {
         let map_seed = self.map_seed(&list, match_seed)?;
         let setup = self.setup(match_seed)?;
         let map = generate(Setting::MichiganLake, map_seed);
+        // the lake's world, uploaded once (`app/lake.rs`); without the
+        // lake's look the match draws its stand-in
+        let _ = self.show_world(&map);
         let game = Match::new(map, &t, setup)?;
         self.play = Some(Play {
             game,
@@ -592,119 +592,5 @@ impl App {
             ));
         }
         panels
-    }
-
-    // ---- the stand-in world ----
-
-    /// This frame's view values and triangles for Play: flat water and land
-    /// round the player, and every boat afloat with its angler. A stand-in
-    /// until the lake renderer draws the world.
-    pub fn play_frame(&self) -> (Vec<i32>, Vec<i32>) {
-        let (Some(view), Some(look)) = (self.play_view(), self.look.as_ref()) else {
-            return (Vec::new(), Vec::new());
-        };
-        let p = self.play.as_ref().unwrap();
-        let map = &p.game.map;
-        let me = view.world.boats.iter().find(|b| b.seat == p.seat);
-        let (cx, cy) = me.map_or((map.spawn.at.x, map.spawn.at.y), |b| (b.x_mm, b.y_mm));
-        let mut tris = Vec::new();
-        stand_in_ground(map, (cx, cy), &mut tris);
-
-        let boat = self.models.iter().find(|m| m.id == "boat");
-        let angler = self.models.iter().find(|m| m.id == "angler");
-        let ms = ((self.clock / 1000) % crate::model::MAX_MS as i64) as u32;
-        if let Some(bm) = boat {
-            let bt = bm.transforms(&bm.poses(None, ms));
-            for b in view.world.boats.iter().filter(|b| !b.wrecked) {
-                let slot = sim::SEAT_COLOURS.iter().position(|c| *c == b.colour).unwrap_or(0);
-                let colour = look.player(slot);
-                let place =
-                    Affine::translate(world(b.x_mm, b.y_mm, 0)).then(&Affine::rot_y(QUARTER + b.heading));
-                bm.draw(&bt, &place, &bm.colours(colour), &mut tris);
-                let (anim, cast) = match b.mode {
-                    sim::Mode::Driving => (Anim::Drive, 0),
-                    sim::Mode::Fishing => (Anim::Fish, b.cast_yaw),
-                };
-                if let (Some(am), Some(at)) = (angler, bm.anchor(anim.key())) {
-                    let seat = place.then(&bm.anchor_frame(at, &bt)).then(&Affine::rot_y(cast));
-                    let rt = am.transforms(&am.poses(Some(anim), ms));
-                    am.draw(&rt, &seat, &am.colours(colour), &mut tris);
-                }
-            }
-        }
-
-        // the chase camera: behind the boat, turned and tilted by the mouse
-        let target = world(cx, cy, 1200);
-        let fwd = facing(QUARTER + view.cam_yaw, -view.cam_pitch);
-        let mut eye = target.sub(fwd.scale(CHASE_M));
-        eye.y = eye.y.max(ONE / 2);
-        let cam = Camera {
-            eye,
-            fwd: target.sub(eye).norm(),
-            fov: fx::deg(60),
-            near: ONE / 5,
-            far: mm_to_q16(map.setting.params().sight_mm) * 2,
-        };
-        let sight = mm_to_q16(map.setting.params().sight_mm);
-        let fog = (sight / 3, sight);
-        let aspect = render::aspect(self.size);
-        (render::view_values(&cam, aspect, fog, &look.gallery.light), tris)
-    }
-}
-
-/// The chase camera's distance behind the boat (Q16 metres).
-const CHASE_M: i32 = 9 * ONE;
-/// The stand-in's colours (0-255) and land height.
-const WATER: [i32; 3] = [52, 108, 140];
-const SHALLOW: [i32; 3] = [78, 140, 150];
-const LAND: [i32; 3] = [86, 128, 70];
-const ISLAND: [i32; 3] = [104, 140, 78];
-const LAND_MM: i32 = 500;
-
-fn mm_to_q16(mm: i32) -> i32 {
-    (mm as i64 * ONE as i64 / 1000) as i32
-}
-
-/// A map point (mm east, mm north, mm up) in the renderer's space: metres,
-/// x east, y up, z south.
-pub fn world(x: i32, y: i32, up: i32) -> V3 {
-    v3(mm_to_q16(x), mm_to_q16(up), -mm_to_q16(y))
-}
-
-/// The cells within sight of `at`, as flat runs of one kind a row.
-fn stand_in_ground(map: &crate::map::Map, at: (i32, i32), out: &mut Vec<i32>) {
-    let reach = map.setting.params().sight_mm + 2 * map.cell_mm;
-    let n = map.n as i32;
-    let cell = map.cell_mm;
-    let lo = |c: i32| ((c - reach) / cell).clamp(0, n - 1);
-    let hi = |c: i32| ((c + reach) / cell).clamp(0, n - 1);
-    let (x0, x1, y0, y1) = (lo(at.0), hi(at.0), lo(at.1), hi(at.1));
-    let colour = |c: Cell| -> (Rgb, i32) {
-        match c {
-            Cell::Deep => (render::rgb(WATER), 0),
-            Cell::Shallow => (render::rgb(SHALLOW), 0),
-            Cell::Land => (render::rgb(LAND), LAND_MM),
-            Cell::Island => (render::rgb(ISLAND), LAND_MM),
-        }
-    };
-    for y in y0..=y1 {
-        let mut x = x0;
-        while x <= x1 {
-            let kind = map.cells[(y * n + x) as usize];
-            let start = x;
-            while x <= x1 && map.cells[(y * n + x) as usize] == kind {
-                x += 1;
-            }
-            let (c, h) = colour(kind);
-            let (ax, bx, ay, by) = (start * cell, x * cell, y * cell, (y + 1) * cell);
-            let q = [
-                world(ax, ay, h),
-                world(bx, ay, h),
-                world(bx, by, h),
-                world(ax, by, h),
-            ];
-            render::push_tri(out, [q[0], q[1], q[2]], V3::UP, c);
-            render::push_tri(out, [q[0], q[2], q[3]], V3::UP, c);
-        }
     }
 }

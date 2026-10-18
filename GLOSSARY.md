@@ -79,6 +79,12 @@ The boat's mode for fishing: the angler stands at the bow, the motor is off so t
 
 Not: angling mode, cast mode
 
+### Fog distance
+
+How far a player can see across the lake before the fog hides everything. The fog thickens from part of the way out and is whole at this distance.
+
+Not: draw distance, visibility, view range
+
 ### Gallery
 
 The screen, opened from the Title, that shows each model turning on a plain floor, in its animations and in each player colour. It can also show every model of one kind side by side at true size, with the boat for scale.
@@ -90,6 +96,12 @@ Not: showcase, viewer, model viewer
 The giant floating fishing bobber, glowing at its seam and topped by a beacon, that holds a hidden item. A player who drives through it takes the item.
 
 Not: crate, loot box
+
+### Lake preview
+
+A debug screen, opened from the Title, that draws one checked map of the lake with a camera tour or a fixed view. Its fog distance can be changed live.
+
+Not: level editor, map viewer, flyover
 
 ### Map seed
 
@@ -127,7 +139,6 @@ The Fish-Boy's tab that lists your own catches this match, newest first: each fi
 
 Not: inventory, bag, haul
 
-### Pause menu
 ### New match
 
 The screen Play opens, where an offline match is set up: how many AI players and how hard each plays, the match length, the item buoy interval and the map seed. Start match begins it.

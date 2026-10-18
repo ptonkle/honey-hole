@@ -257,6 +257,18 @@ impl App {
         self.fishboy.raised(self.clock, self.size, self.screen_size())
     }
 
+    /// While the device is up (or on its way), the world is seen first
+    /// person: the eye's height (mm), the field of view and the look down
+    /// (angle units), for `App::match_frame`.
+    pub fn fishboy_eye(&self) -> Option<(i32, i32, i32)> {
+        let theme = self.fishboy.theme.as_ref()?;
+        if self.screen != Screen::Play || self.fishboy.amount(self.clock) <= 0 {
+            return None;
+        }
+        let f = &theme.fishboy;
+        Some((f.eye_mm, deg(f.fov_deg), deg(f.look_down_deg)))
+    }
+
     /// The screen layer's transform now.
     fn screen_transform(&self) -> Option<Transform> {
         let theme = self.fishboy.theme.as_ref()?;
@@ -283,9 +295,7 @@ impl App {
 
     /// Whether this browser's seat has its Fish-Boy up in the match.
     fn seat_up(&self) -> bool {
-        self.play
-            .as_ref()
-            .is_some_and(|p| p.game.seats[p.seat].fishboy)
+        self.play.as_ref().is_some_and(|p| p.game.seats[p.seat].fishboy)
     }
 
     /// Each frame, after the match's ticks: the device follows the seat
@@ -319,7 +329,8 @@ impl App {
     /// does nothing while it is up). Returns whether the key is used up
     /// here. Tab and Esc are the match's (`controls.json`).
     pub(crate) fn fishboy_key(&mut self, code: &str) -> bool {
-        if self.screen != Screen::Play || !self.seat_up() || self.play.as_ref().is_some_and(|p| p.menu_open()) {
+        if self.screen != Screen::Play || !self.seat_up() || self.play.as_ref().is_some_and(|p| p.menu_open())
+        {
             return false;
         }
         if let Some(t) = Tab::ALL.into_iter().find(|t| t.digit() == code) {
@@ -682,6 +693,7 @@ impl App {
             render::aspect(self.size),
             (far, far * 2),
             &theme.fishboy.light,
+            &render::Air::plain(&theme.fishboy.light),
         );
         Some(Pass {
             gl_rect: [0, 0, self.size[0], self.size[1]],
@@ -723,8 +735,15 @@ impl App {
             sun: dim(l.sun),
             sky: dim(l.sky),
             ground: dim(l.ground),
+            glow_fog_pct: l.glow_fog_pct,
         };
-        let view = render::view_values(&cam, aspect, (cam.far * 2, cam.far * 3), &light);
+        let view = render::view_values(
+            &cam,
+            aspect,
+            (cam.far * 2, cam.far * 3),
+            &light,
+            &render::Air::plain(&light),
+        );
         Some(Pass {
             gl_rect: Pass::gl(shot.px, self.size),
             clear: Some(render::rgb(shot.background)),

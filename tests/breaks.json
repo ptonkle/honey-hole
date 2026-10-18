@@ -37,8 +37,8 @@
   {
     "name": "escape on a sub-screen goes to the title",
     "file": "crates/core/src/app.rs",
-    "find": "Screen::Settings | Screen::Notes | Screen::Gallery | Screen::Lobby | Screen::Sounds => self.back(),",
-    "replace": "Screen::Settings | Screen::Gallery | Screen::Lobby | Screen::Sounds => self.back(), Screen::Notes => {}",
+    "find": "            Screen::Settings\n            | Screen::Notes\n",
+    "replace": "            Screen::Notes => {}\n            Screen::Settings\n",
     "test": "escape_on_a_sub_screen_goes_back_to_the_title"
   },
   {
@@ -868,11 +868,11 @@
     "test": "settings_from_the_match_menu"
   },
   {
-    "name": "the pause button works in play only",
+    "name": "the menu button works in play only",
     "file": "crates/core/src/app.rs",
     "find": "\"menu.pause\" if self.screen == Screen::Play =>",
     "replace": "\"menu.pause\" if true =>",
-    "test": "the_pause_button_does_nothing_off_play"
+    "test": "the_menu_button_does_nothing_off_play"
   },
   {
     "name": "the line-up stands models end to end at their lengths",
@@ -1085,6 +1085,132 @@
     "test": "the_gallery_leads_to_sounds_which_lists_every_cue_then_back"
   },
   {
+    "name": "escape closes the match menu",
+    "file": "crates/core/src/sim/mod.rs",
+    "find": "if self.seats[seat].menu_open || !self.cancel_layers(seat) {",
+    "replace": "if !self.seats[seat].menu_open && !self.cancel_layers(seat) {",
+    "test": "escape_in_play_opens_and_closes_the_match_menu"
+  },
+  {
+    "name": "props past the fog are left out",
+    "file": "crates/core/src/scene/mod.rs",
+    "find": "if off.flat().longer_than(r + p.radius) {",
+    "replace": "if false {",
+    "test": "props_past_the_fog_or_behind_the_camera_are_left_out"
+  },
+  {
+    "name": "props behind the camera are left out",
+    "file": "crates/core/src/scene/mod.rs",
+    "find": "if off.dot(fwd) < -p.radius {",
+    "replace": "if false {",
+    "test": "props_past_the_fog_or_behind_the_camera_are_left_out"
+  },
+  {
+    "name": "each prop sways from its own phase",
+    "file": "crates/core/src/scene/props.rs",
+    "find": "phase_ms: (p.hash % mesh.ms as u64) as u32,",
+    "replace": "phase_ms: 0,",
+    "test": "copies_of_one_model_sway_from_their_own_phases"
+  },
+  {
+    "name": "a map heading turns a model's front that way",
+    "file": "crates/core/src/scene/mod.rs",
+    "find": "fx::wrap(QUARTER + heading)",
+    "replace": "fx::wrap(heading)",
+    "test": "a_map_point_lands_where_the_axes_say"
+  },
+  {
+    "name": "the ground is read on the drawn triangles",
+    "file": "crates/core/src/scene/terrain.rs",
+    "find": "h00 + (h10 - h00) * fx / c + (h01 - h00) * fy / c",
+    "replace": "h00",
+    "test": "the_ground_under_a_point_is_on_the_drawn_triangles"
+  },
+  {
+    "name": "the water covers only low ground",
+    "file": "crates/core/src/scene/terrain.rs",
+    "find": ">= w.shore_overlap_mm {",
+    "replace": ">= i32::MAX {",
+    "test": "the_terrain_and_water_fill_the_grid_and_the_water_only_where_it_is_low"
+  },
+  {
+    "name": "the camera keeps clear of the ground",
+    "file": "crates/core/src/scene/camera.rs",
+    "find": "v3(eye.x, eye.y.max(lowest), eye.z)",
+    "replace": "eye",
+    "test": "the_boat_camera_stands_behind_and_above_and_keeps_clear_of_the_ground"
+  },
+  {
+    "name": "the waves travel with the clock",
+    "file": "crates/core/src/scene/mod.rs",
+    "find": "let phase = -(fx::TWO_PI * t / v.period_ms as i64) as i32;",
+    "replace": "let phase = 0;",
+    "test": "the_waves_travel_with_the_clock"
+  },
+  {
+    "name": "a look naming a missing model is refused",
+    "file": "crates/core/src/scene/mod.rs",
+    "find": "if !models.iter().any(|m| m.id == id) {",
+    "replace": "if false {",
+    "test": "a_look_naming_a_model_that_is_not_loaded_is_refused_by_name"
+  },
+  {
+    "name": "the fog slider keeps to its range",
+    "file": "crates/core/src/app/lake.rs",
+    "find": "let m = m.clamp(FOG_MIN_M, FOG_MAX_M);",
+    "replace": "let m = m.max(FOG_MIN_M);",
+    "test": "the_fog_slider_keeps_to_its_range_and_steps_and_the_toggle_turns_it_off"
+  },
+  {
+    "name": "the fog toggle turns the fog off",
+    "file": "crates/core/src/app/lake.rs",
+    "find": "if !self.preview.fog_on {",
+    "replace": "if false {",
+    "test": "the_fog_slider_keeps_to_its_range_and_steps_and_the_toggle_turns_it_off"
+  },
+  {
+    "name": "a seed outside the list is refused",
+    "file": "crates/core/src/app/lake.rs",
+    "find": ".is_some_and(|l| l.maps.iter().any(|m| m.seed == *s))",
+    "replace": ".is_some()",
+    "test": "a_seed_from_the_list_builds_its_map_and_another_is_refused"
+  },
+  {
+    "name": "a glowing colour is drawn unlit",
+    "file": "crates/core/src/model.rs",
+    "find": "let glow = if self.glows[face.paint] { ONE } else { 0 };",
+    "replace": "let glow = 0;",
+    "test": "a_colour_marked_glow_is_drawn_unlit_and_a_plain_one_lit"
+  },
+  {
+    "name": "a moving mesh's motion follows its pose",
+    "file": "crates/core/src/scene/mod.rs",
+    "find": "if m.moving { k * m.verts } else { 0 }",
+    "replace": "0",
+    "test": "groups_point_inside_the_static_buffer_at_a_pose_and_its_motion"
+  },
+  {
+    "name": "a sway is baked as its pose and its motion",
+    "file": "crates/core/src/scene/props.rs",
+    "find": "out[2 * len + v] = (2 * s / (k * ONE as i64)) as i32;",
+    "replace": "out[2 * len + v] = 0;",
+    "test": "a_swaying_model_is_baked_as_its_pose_and_its_motion_and_a_still_one_once"
+  },
+  {
+    "name": "each copy's place in its loop comes from its phase",
+    "file": "crates/core/src/scene/mod.rs",
+    "find": "let t = (clock_ms + p.phase_ms as u64) % m.ms as u64;",
+    "replace": "let t = clock_ms % m.ms as u64;",
+    "test": "copies_of_one_model_sway_from_their_own_phases"
+  },
+  {
+    "name": "a match builds its lake's world",
+    "file": "crates/core/src/app/play.rs",
+    "find": "let _ = self.show_world(&map);",
+    "replace": "",
+    "test": "a_match_draws_its_boats_on_the_lakes_world_and_without_the_look_nothing"
+  },
+  {
     "name": "an op carries its code then its arguments",
     "file": "crates/core/src/ui2d/mod.rs",
     "find": "self.nums.extend(v.iter().map(|&x| int(x)));",
@@ -1177,15 +1303,15 @@
   },
   {
     "name": "tab raises the fish-boy",
-    "file": "crates/core/src/fishboy/mod.rs",
-    "find": "        if code == \"Tab\" {\n            self.fishboy.toggle(self.clock);",
-    "replace": "        if code == \"KeyT\" {\n            self.fishboy.toggle(self.clock);",
+    "file": "crates/core/src/sim/mod.rs",
+    "find": "            if i.pressed.fishboy && self.boats[seat].is_some() {",
+    "replace": "            if false {",
     "test": "tab_raises_esc_lowers_and_it_opens_again_on_the_last_tab"
   },
   {
     "name": "esc lowers the fish-boy",
-    "file": "crates/core/src/fishboy/mod.rs",
-    "find": "        if code == \"Escape\" {\n            self.fishboy.toggle(self.clock);\n            return true;\n        }",
+    "file": "crates/core/src/sim/mod.rs",
+    "find": "        if self.seats[seat].fishboy {\n            self.set_fishboy(seat, false);\n            return true;\n        }\n",
     "replace": "",
     "test": "tab_raises_esc_lowers_and_it_opens_again_on_the_last_tab"
   },
@@ -1236,7 +1362,7 @@
     "file": "crates/core/src/fishboy/mod.rs",
     "find": "        if code == \"Space\" && self.fishboy.tab == Tab::Radar {\n            self.fishboy_ping();",
     "replace": "        if code == \"Space\" && self.fishboy.tab == Tab::Radar {",
-    "test": "space_pings_on_the_radar_and_the_cooldown_holds_the_next"
+    "test": "space_pings_on_the_radar_through_the_match_and_the_cooldown_holds"
   },
   {
     "name": "space pings on the radar only",
@@ -1275,9 +1401,9 @@
   },
   {
     "name": "a sweep must end before its cooldown",
-    "file": "crates/core/src/fishboy/radar.rs",
-    "find": "if t.ping_sweep_ms < TICK_MS || t.ping_cooldown_ms < t.ping_sweep_ms {",
-    "replace": "if t.ping_sweep_ms < TICK_MS {",
+    "file": "crates/core/src/tuning.rs",
+    "find": "r.ping_sweep_ms <= r.ping_cooldown_ms,",
+    "replace": "true,",
     "test": "the_tuning_file_gives_the_ping_its_numbers_and_refuses_a_stray_key"
   },
   {
@@ -1327,7 +1453,7 @@
     "file": "crates/core/src/fishboy/fishpedia.rs",
     "find": ".replace(\"{feet}\", &crate::app::gallery::feet(row.length_mm));",
     "replace": ".clone();",
-    "test": "the_catch_list_gives_each_catch_its_length_in_feet"
+    "test": "the_catch_list_gives_your_catches_their_length_in_feet"
   },
   {
     "name": "a theme names every radar colour",
@@ -1349,5 +1475,54 @@
     "find": "\"ping_cooldown_ms\": 5000",
     "replace": "\"ping_cooldown_ms\": 6000",
     "test": "the_shipped_theme_roster_and_tuning_are_accepted"
+  },
+  {
+    "name": "a raised fish-boy makes the boat coast",
+    "file": "crates/core/src/sim/mod.rs",
+    "find": "            b.captured = up;",
+    "replace": "            b.captured = false;",
+    "test": "raised_the_boat_coasts_and_lowered_it_drives_again"
+  },
+  {
+    "name": "a ping needs the fish-boy up",
+    "file": "crates/core/src/sim/mod.rs",
+    "find": "if i.pressed.ping && self.seats[seat].fishboy {",
+    "replace": "if i.pressed.ping {",
+    "test": "the_ping_is_a_seat_input_and_needs_the_fishboy_up"
+  },
+  {
+    "name": "every seat's sweep moves on each tick",
+    "file": "crates/core/src/sim/mod.rs",
+    "find": "            self.seats[seat].ping.step(tick, &view, &tuning);\n",
+    "replace": "",
+    "test": "the_ping_is_a_seat_input_and_needs_the_fishboy_up"
+  },
+  {
+    "name": "the radar view names each seat",
+    "file": "crates/core/src/sim/mod.rs",
+    "find": "                name: self.setup.seats[b.seat].name.clone(),",
+    "replace": "                name: String::new(),",
+    "test": "the_radar_view_names_each_seat_and_hides_no_one_yet"
+  },
+  {
+    "name": "a catch lowers the fish left",
+    "file": "crates/core/src/sim/mod.rs",
+    "find": "(kind.clone(), n.saturating_sub(caught))",
+    "replace": "(kind.clone(), *n)",
+    "test": "the_fishpedia_shows_each_tier_its_fish_and_how_many_are_left"
+  },
+  {
+    "name": "the catch list is your seat's",
+    "file": "crates/core/src/fishboy/mod.rs",
+    "find": "        p.game.scores[p.seat]\n",
+    "replace": "        p.game.scores[1]\n",
+    "test": "the_catch_list_gives_your_catches_their_length_in_feet"
+  },
+  {
+    "name": "the radar draws the seats' names",
+    "file": "crates/core/src/fishboy/radar.rs",
+    "find": "            list.text(colour, font, 34, Align::Left, (x + 40, y), &b.name);",
+    "replace": "",
+    "test": "the_radar_draws_the_match_seats_by_name"
   }
 ]

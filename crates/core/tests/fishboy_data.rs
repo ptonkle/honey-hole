@@ -5,7 +5,6 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use tool_core::fishboy::radar::RadarTuning;
 use tool_core::roster::{tier_key, Roster};
 use tool_core::ui2d::theme::Theme;
 
@@ -20,9 +19,9 @@ fn data(name: &str) -> String {
 fn the_shipped_theme_roster_and_tuning_are_accepted() {
     Theme::parse(&data("ui2d.json")).unwrap();
     Roster::parse(&data("fish.json")).unwrap();
-    let t = RadarTuning::parse(&data("tuning.json")).unwrap();
+    let t = tool_core::tuning::parse(&data("tuning.json")).unwrap();
     // the brief: a 5 s cooldown and a sweep of about 3 s
-    assert_eq!((t.ping_cooldown_ms, t.ping_sweep_ms), (5000, 3000));
+    assert_eq!((t.radar.ping_cooldown_ms, t.radar.ping_sweep_ms), (5000, 3000));
 }
 
 #[test]

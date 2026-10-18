@@ -9,6 +9,8 @@
     "fov_deg": 50,
     "screen_pct": 80,
     "raise_ms": 380,
+    "eye_mm": 1500,
+    "look_down_deg": 4,
     "light": { "fog": [0, 0, 0], "sun_dir": [-30, 70, 80], "sun": [175, 170, 160], "sky": [175, 180, 186], "ground": [110, 112, 110] }
   },
   "screen": {

@@ -289,7 +289,9 @@ pub struct Rules {
 
 /// One input per seat: the ones given, then none.
 fn inputs_or(inputs: &[SeatInput], n: usize) -> Vec<SeatInput> {
-    (0..n).map(|k| inputs.get(k).copied().unwrap_or_default()).collect()
+    (0..n)
+        .map(|k| inputs.get(k).copied().unwrap_or_default())
+        .collect()
 }
 
 /// Milliseconds to whole ticks, rounded to the nearest.
@@ -527,8 +529,7 @@ impl Match {
         let view = self.radar_view(0);
         let size = self.map.size_mm();
         let tuning = self.tuning.radar.clone();
-        for seat in 0..self.seats.len() {
-            let i = inputs[seat];
+        for (seat, i) in inputs.iter().enumerate() {
             if i.pressed.fishboy && self.boats[seat].is_some() {
                 let up = !self.seats[seat].fishboy;
                 self.set_fishboy(seat, up);

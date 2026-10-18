@@ -1,20 +1,31 @@
-//! The Fish-Boy: raising and lowering, its tabs, the radar's ping and map
-//! picture, the Fishpedia and the catch list. Expected values are worked
-//! out by hand from the brief and the rules in these files.
+//! The Fish-Boy in a match: raising and lowering through the match's input,
+//! the boat coasting, its tabs, the radar's ping as a seat input and its
+//! map picture, the Fishpedia and the catch list read from the match.
+//! Expected values are worked out by hand from the brief, the sample tuning
+//! (`tuning::tests::sample`: a 5 s cooldown, a 3 s sweep) and the rules in
+//! these files.
 
 use super::radar::*;
 use super::*;
 use crate::map::{Setting, Spawn, P};
+use crate::sim::{Catch, Match, Occupant, SeatInput, Setup};
 use serde_json::{json, Value};
 
 const NOTES: &str = r#"[{"version": "0.1.0", "date": "2026-10-17", "notes": ["A."]}]"#;
 const THEME: &str = include_str!("../../../../data/ui2d.json");
-const TUNING: &str = include_str!("../../../../data/tuning.json");
-/// Three fish: one with a model, two without.
+/// Three fish: one with a model, two without; 3, 2 and 4 of them.
 const FISH: &str = r#"{"fish": [
-    {"id": "muskellunge", "name": "Muskellunge", "tier": "legendary", "model": "muskellunge", "base_length_mm": 1100, "value": 55},
-    {"id": "pumpkinseed", "name": "Pumpkinseed", "tier": "common", "model": "pumpkinseed", "base_length_mm": 180, "value": 9},
-    {"id": "bluegill", "name": "Bluegill", "tier": "common", "model": "bluegill", "base_length_mm": 200, "value": 10}]}"#;
+    {"id": "muskellunge", "name": "Muskellunge", "tier": "legendary", "model": "muskellunge", "base_length_mm": 1100, "value": 55, "count": 3},
+    {"id": "pumpkinseed", "name": "Pumpkinseed", "tier": "common", "model": "pumpkinseed", "base_length_mm": 180, "value": 9, "count": 2},
+    {"id": "bluegill", "name": "Bluegill", "tier": "common", "model": "bluegill", "base_length_mm": 200, "value": 10, "count": 4}]}"#;
+const CONTROLS: &str = r#"{
+    "bindings": {"forward": ["KeyW"], "fishboy": ["Tab"], "cancel": ["Escape"], "cast": ["Space"]},
+    "mouse": {"yaw_deg_per_100px": 25, "pitch_deg_per_100px": 18,
+              "pitch_min_deg": -10, "pitch_max_deg": 60, "pitch_start_deg": 15}
+}"#;
+const MAPS: &str =
+    r#"{"setting": "michigan-lake", "from": 0, "scanned": 1, "maps": [{"seed": 0, "stamp": "-"}]}"#;
+const NAMES: &str = r#"{"ai": ["Gil Waters", "Rod Fisher", "Bob Pike", "Wade Rivers"]}"#;
 
 fn look() -> Value {
     json!({
@@ -73,24 +84,57 @@ fn strings() -> String {
 /// One second of the page's clock, in µs.
 const S: i64 = 1_000_000;
 
+/// A match with you and three AI players, its clock at 10 s.
 fn app() -> App {
     let mut a = App::new(&strings(), NOTES).unwrap();
     a.load_models(&models().to_string(), &look().to_string()).unwrap();
     a.act("data.ui2d", THEME).unwrap();
     a.act("data.fish", FISH).unwrap();
-    a.act("data.tuning", TUNING).unwrap();
+    a.act("data.tuning", &crate::tuning::tests::sample_json().to_string())
+        .unwrap();
+    a.act("data.controls", CONTROLS).unwrap();
+    a.act("data.maps", MAPS).unwrap();
+    a.act("data.names", NAMES).unwrap();
     a.resize(1600, 900, 100);
-    a.advance(10 * S);
     a.act("menu.play", "").unwrap();
+    a.act("lobby.ai", "3").unwrap();
+    a.advance(10 * S);
+    a.act("lobby.start", "").unwrap();
+    a.advance(10 * S);
     a
+}
+
+/// One tick of page time (20 ms).
+fn tick(a: &mut App) {
+    a.advance(a.clock + 20_000);
+}
+
+/// A key pressed and let go, a tick each.
+fn key(a: &mut App, code: &str) {
+    a.act("key", code).unwrap();
+    tick(a);
+    a.act("key.up", code).unwrap();
+    tick(a);
+}
+
+/// Whole seconds of match time, a tick at a time (a page frame runs at
+/// most a few ticks).
+fn run(a: &mut App, secs: i32) {
+    for _ in 0..secs * 50 {
+        tick(a);
+    }
 }
 
 /// Raised and settled.
 fn raised() -> App {
     let mut a = app();
-    a.act("key", "Tab").unwrap();
+    key(&mut a, "Tab");
     a.advance(a.clock + S);
     a
+}
+
+fn game(a: &App) -> &Match {
+    &a.play.as_ref().unwrap().game
 }
 
 fn near(a: i32, b: i32) -> bool {
@@ -103,19 +147,51 @@ fn near(a: i32, b: i32) -> bool {
 fn tab_raises_esc_lowers_and_it_opens_again_on_the_last_tab() {
     let mut a = app();
     assert_eq!(a.ui().fishboy, "");
-    a.act("key", "Tab").unwrap();
+    key(&mut a, "Tab");
     assert_eq!(a.ui().fishboy, "radar", "it opens on the radar the first time");
+    assert!(game(&a).seats[0].fishboy, "the match holds it up");
     a.act("key", "Digit2").unwrap();
     assert_eq!(a.ui().fishboy, "fishpedia");
-    a.act("key", "Escape").unwrap();
+    key(&mut a, "Escape");
     assert_eq!(a.ui().fishboy, "", "Esc puts it down");
-    assert!(!a.paused, "Esc with the Fish-Boy up does not pause");
-    a.act("key", "Tab").unwrap();
+    assert!(
+        !game(&a).seats[0].menu_open,
+        "Esc with the Fish-Boy up does not open the menu"
+    );
+    key(&mut a, "Tab");
     assert_eq!(a.ui().fishboy, "fishpedia", "it opens on the last tab viewed");
-    a.act("key", "Tab").unwrap();
+    key(&mut a, "Tab");
     assert_eq!(a.ui().fishboy, "");
-    a.act("key", "Escape").unwrap();
-    assert!(a.paused, "with it down, Esc pauses as before");
+    key(&mut a, "Escape");
+    assert!(
+        game(&a).seats[0].menu_open,
+        "with it down, Esc opens the match menu"
+    );
+}
+
+#[test]
+fn raised_the_boat_coasts_and_lowered_it_drives_again() {
+    let mut a = app();
+    key(&mut a, "Tab");
+    assert!(game(&a).boat(0).unwrap().captured);
+    a.act("key", "KeyW").unwrap();
+    for _ in 0..10 {
+        tick(&mut a);
+    }
+    assert_eq!(
+        game(&a).boat(0).unwrap().speed_mm_per_s(),
+        0,
+        "W does nothing while it is up"
+    );
+    a.act("key.up", "KeyW").unwrap();
+    key(&mut a, "Tab");
+    assert!(!game(&a).boat(0).unwrap().captured);
+    a.act("key", "KeyW").unwrap();
+    tick(&mut a);
+    assert!(
+        game(&a).boat(0).unwrap().speed_mm_per_s() > 0,
+        "down again, W drives"
+    );
 }
 
 #[test]
@@ -148,9 +224,13 @@ fn on_a_tall_view_the_width_binds() {
 fn raising_slides_the_screen_up_from_below_the_view() {
     let mut a = app();
     a.act("key", "Tab").unwrap();
-    assert!(a.fishboy_raised().is_none(), "nothing shows at the first instant");
-    let raise = 380 * 1000;
-    a.advance(a.clock + raise / 2);
+    assert!(
+        a.fishboy_raised().is_none(),
+        "nothing shows before the match's tick"
+    );
+    tick(&mut a);
+    // raised at this tick: 190 ms is half of the 380 ms raise
+    a.advance(a.clock + 190_000);
     let mid = a.fishboy_raised().unwrap();
     assert!(
         mid.px.y > 90 + 100,
@@ -158,19 +238,28 @@ fn raising_slides_the_screen_up_from_below_the_view() {
         mid.px
     );
     assert!(near(mid.px.h, 720), "it does not change size on the way");
-    a.advance(a.clock + raise / 2);
+    a.advance(a.clock + 190_000);
     assert!(near(a.fishboy_raised().unwrap().px.y, 90));
 }
 
 #[test]
 fn lowering_halfway_up_goes_back_down_from_where_it_is() {
     let mut a = app();
-    a.act("key", "Tab").unwrap();
-    a.advance(a.clock + 190_000);
+    key(&mut a, "Tab");
+    a.advance(a.clock + 150_000);
     let up = a.fishboy.amount(a.clock);
     a.act("key", "Tab").unwrap();
-    assert!((a.fishboy.amount(a.clock) - up).abs() < ONE / 100, "no jump");
-    a.advance(a.clock + 190_000);
+    tick(&mut a);
+    // it turns at the match's tick, 20 ms (of 380) after it was measured:
+    // within a tick's travel of where it was
+    let now = a.fishboy.amount(a.clock);
+    assert!(
+        (up - now).abs() <= ONE * 20 / 380 + ONE / 100,
+        "no jump: {up} to {now}"
+    );
+    tick(&mut a);
+    assert!(a.fishboy.amount(a.clock) < now, "and on its way down");
+    a.advance(a.clock + 380_000);
     assert_eq!(a.fishboy.amount(a.clock), 0);
 }
 
@@ -190,52 +279,95 @@ fn clicking_a_tab_switches_to_it() {
 }
 
 #[test]
-fn space_pings_on_the_radar_and_the_cooldown_holds_the_next() {
+fn space_pings_on_the_radar_through_the_match_and_the_cooldown_holds() {
     let mut a = raised();
-    a.act("key", "Space").unwrap();
-    let first = a.fishboy.demo.as_ref().unwrap().ping.started;
-    assert!(first.is_some());
-    a.advance(a.clock + 2 * S);
-    a.act("key", "Space").unwrap();
+    key(&mut a, "Space");
+    let first = game(&a).seats[0].ping.started;
+    assert!(first.is_some(), "the ping reached the match");
+    run(&mut a, 2);
+    key(&mut a, "Space");
     assert_eq!(
-        a.fishboy.demo.as_ref().unwrap().ping.started,
+        game(&a).seats[0].ping.started,
         first,
         "2 s in, the cooldown holds"
     );
-    a.advance(a.clock + 3 * S);
-    a.act("key", "Space").unwrap();
-    assert_ne!(
-        a.fishboy.demo.as_ref().unwrap().ping.started,
-        first,
-        "5 s on, it pings again"
-    );
+    run(&mut a, 3);
+    key(&mut a, "Space");
+    assert_ne!(game(&a).seats[0].ping.started, first, "5 s on, it pings again");
 }
 
 #[test]
 fn space_on_another_tab_does_not_ping() {
     let mut a = raised();
     a.act("key", "Digit2").unwrap();
-    a.act("key", "Space").unwrap();
-    assert_eq!(a.fishboy.demo.as_ref().unwrap().ping.started, None);
+    key(&mut a, "Space");
+    assert_eq!(game(&a).seats[0].ping.started, None);
 }
 
-// ---- the ping ----
+// ---- the match's side ----
 
-fn tuning() -> RadarTuning {
-    RadarTuning {
-        ping_cooldown_ms: 5000,
-        ping_sweep_ms: 3000,
-    }
-}
-
-fn boat(x: i32, y: i32, cloaked: bool) -> BoatView {
-    BoatView {
-        at: P::new(x, y),
+fn small_lake() -> crate::map::Map {
+    // 30 cells of 4 m: open water inside a one-cell shore, the spawn in
+    // the middle of the west side
+    let n = 30;
+    let water: Vec<bool> = (0..n * n)
+        .map(|i| {
+            let (x, y) = (i % n, i / n);
+            x > 0 && y > 0 && x < n - 1 && y < n - 1
+        })
+        .collect();
+    let spawn = Spawn {
+        at: P::new(20_000, 60_000),
         heading: 0,
-        slot: 0,
-        name: "A".into(),
-        cloaked,
+        dock: P::new(0, 60_000),
+    };
+    crate::map::Map::from_water(Setting::MichiganLake, 0, n, 4000, &water, spawn)
+}
+
+fn two_seats() -> Match {
+    let t = crate::tuning::tests::sample();
+    let setup = Setup::new(&t).with(0, Occupant::Human, "Rosie").with(
+        1,
+        Occupant::Ai(crate::sim::Difficulty::Normal),
+        "Gil",
+    );
+    Match::new(small_lake(), &t, setup).unwrap()
+}
+
+fn press(f: impl Fn(&mut SeatInput)) -> Vec<SeatInput> {
+    let mut i = SeatInput::default();
+    f(&mut i);
+    vec![i, SeatInput::default()]
+}
+
+#[test]
+fn the_ping_is_a_seat_input_and_needs_the_fishboy_up() {
+    let mut m = two_seats();
+    m.step(&press(|i| i.pressed.ping = true));
+    assert_eq!(m.seats[0].ping.started, None, "with the Fish-Boy down, no ping");
+    m.step(&press(|i| i.pressed.fishboy = true));
+    assert!(m.seats[0].fishboy);
+    let events = m.step(&press(|i| i.pressed.ping = true)).to_vec();
+    assert_eq!(m.seats[0].ping.started, Some(3));
+    assert!(events.contains(&crate::sim::MatchEvent::Pinged { seat: 0 }));
+    // the AI's seat is found by the sweep: 5 m apart at the spawn, and
+    // the sweep reaches about 0.8 m further a tick (117 m in 150 ticks)
+    for _ in 0..10 {
+        m.step(&[]);
     }
+    assert!(m.seats[0].ping.sightings[1].is_some());
+    assert_eq!(m.seats[1].ping.started, None, "each seat pings for itself");
+}
+
+#[test]
+fn the_radar_view_names_each_seat_and_hides_no_one_yet() {
+    let m = two_seats();
+    let v = m.radar_view(1);
+    assert_eq!(v.me, 1);
+    let names: Vec<&str> = v.boats.iter().map(|b| b.name.as_str()).collect();
+    assert_eq!(names, ["Rosie", "Gil"]);
+    assert!(v.boats.iter().all(|b| !b.cloaked));
+    assert_eq!(v.buoy, None);
 }
 
 #[test]
@@ -247,11 +379,29 @@ fn a_ping_waits_out_its_five_second_cooldown() {
     };
     let mut p = Ping::default();
     assert!(p.start(0, &view, 100_000, &tuning()));
-    // 5000 ms at 20 ms a tick is 250 ticks
+    // 3000 ms of sweep at 20 ms a tick is 150 ticks, 5000 ms is 250
     assert_eq!(p.state(100, &tuning()), PingState::Sweeping(666));
     assert_eq!(p.state(200, &tuning()), PingState::Cooling(50, 800));
     assert!(!p.start(249, &view, 100_000, &tuning()));
     assert!(p.start(250, &view, 100_000, &tuning()));
+}
+
+fn tuning() -> RadarTuning {
+    RadarTuning {
+        note: String::new(),
+        ping_cooldown_ms: 5000,
+        ping_sweep_ms: 3000,
+    }
+}
+
+fn boat(x: i32, y: i32, cloaked: bool) -> radar::BoatView {
+    radar::BoatView {
+        at: P::new(x, y),
+        heading: 0,
+        slot: 0,
+        name: "A".into(),
+        cloaked,
+    }
 }
 
 #[test]
@@ -298,13 +448,17 @@ fn a_cloaked_boat_is_not_seen_and_its_old_blip_is_wiped() {
 
 #[test]
 fn the_tuning_file_gives_the_ping_its_numbers_and_refuses_a_stray_key() {
-    let t = RadarTuning::parse(TUNING).unwrap();
-    assert_eq!((t.cooldown_ticks(), t.sweep_ticks()), (250, 150));
-    let bad = r#"{"radar": {"ping_cooldown_ms": 5000, "ping_sweep_ms": 3000, "ping_range": 9}}"#;
-    assert!(RadarTuning::parse(bad).unwrap_err().contains("ping_range"));
-    let slow = r#"{"radar": {"ping_cooldown_ms": 2000, "ping_sweep_ms": 3000}}"#;
+    let t = crate::tuning::tests::sample();
+    assert_eq!((t.radar.cooldown_ticks(), t.radar.sweep_ticks()), (250, 150));
+    let mut v = crate::tuning::tests::sample_json();
+    v["radar"]["ping_range"] = 9.into();
+    assert!(crate::tuning::parse(&v.to_string())
+        .unwrap_err()
+        .contains("ping_range"));
+    let mut v = crate::tuning::tests::sample_json();
+    v["radar"]["ping_cooldown_ms"] = 2000.into();
     assert!(
-        RadarTuning::parse(slow).is_err(),
+        crate::tuning::parse(&v.to_string()).is_err(),
         "a sweep longer than the cooldown"
     );
 }
@@ -375,20 +529,25 @@ fn up_the_device_is_drawn_over_the_world_without_clearing_it() {
 fn the_fishpedia_shows_each_tier_its_fish_and_how_many_are_left() {
     let mut a = raised();
     a.act("key", "Digit2").unwrap();
+    // one bluegill landed by an AI player: 4 - 1 = 3 left
+    a.play.as_mut().unwrap().game.scores[1].catches.push(Catch {
+        kind: "bluegill".into(),
+        length_mm: 210,
+        value: 10,
+    });
     let b = a.build_ui2d();
     let t = texts(&b);
-    // the demo starts the three fish at 3, 2 and 4
-    // each row's total: 3 legendary, 2 + 4 common
+    // each row's total: 3 legendary, 2 + 3 common; 8 in all
     let wants = [
         "LEGENDARY",
         "COMMON",
         "MUSKELLUNGE",
         "BLUEGILL",
         "3 LEFT",
-        "4 LEFT",
-        "9 FISH LEFT",
+        "2 LEFT",
+        "8 FISH LEFT",
         "3 left",
-        "6 left",
+        "5 left",
     ];
     for want in wants {
         assert!(t.iter().any(|s| s == want), "{want} in {t:?}");
@@ -402,17 +561,37 @@ fn the_fishpedia_shows_each_tier_its_fish_and_how_many_are_left() {
 }
 
 #[test]
-fn the_catch_list_gives_each_catch_its_length_in_feet() {
+fn the_catch_list_gives_your_catches_their_length_in_feet() {
     let mut a = raised();
     a.act("key", "Digit3").unwrap();
     assert!(a.build_ui2d().list.status.contains("catches=0"));
-    // the demo lands a fish every 12 s, every other one yours
-    a.advance(a.clock + 40 * S);
-    let rows = a.fishboy.demo.as_ref().unwrap().my_catches(&a.fishboy.roster);
-    assert_eq!(rows.len(), 2);
+    let scores = &mut a.play.as_mut().unwrap().game.scores;
+    // 914 mm is 3 ft to the hundredth; another seat's catch is not yours
+    scores[0].catches.push(Catch {
+        kind: "muskellunge".into(),
+        length_mm: 914,
+        value: 55,
+    });
+    scores[1].catches.push(Catch {
+        kind: "bluegill".into(),
+        length_mm: 200,
+        value: 10,
+    });
     let b = a.build_ui2d();
-    let want = format!("{} ft", crate::app::gallery::feet(rows[0].length_mm));
-    assert!(texts(&b).contains(&want), "{want}");
+    assert!(b.list.status.contains("catches=1"));
+    assert!(texts(&b).contains(&"3.00 ft".to_string()));
+    assert!(!texts(&b).iter().any(|s| s == "55"), "no values");
+}
+
+#[test]
+fn the_radar_draws_the_match_seats_by_name() {
+    let a = raised();
+    let b = a.build_ui2d();
+    let names = &game(&a).setup.seats;
+    for s in names.iter().filter(|s| s.occupant != Occupant::Empty) {
+        assert!(texts(&b).contains(&s.name), "{}", s.name);
+    }
+    assert!(b.list.status.contains("ping=ready"));
 }
 
 #[test]

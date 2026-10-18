@@ -21,6 +21,7 @@ pub mod map;
 pub mod model;
 pub mod patch_notes;
 pub mod roster;
+pub mod scene;
 pub mod sim;
 pub mod sound;
 pub mod strings;

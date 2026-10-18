@@ -44,8 +44,8 @@ def step_boot(page, check):
     check(page.inner_text(".panel.title h2") == STRINGS["title"], "the Title shows the game's name")
     menu = page.locator(".panel.menu .button").all_inner_texts()
     check(
-        menu == [STRINGS["menu.play"], STRINGS["menu.settings"], STRINGS["menu.notes"], STRINGS["menu.gallery"]],
-        f"the Title's menu is Play, Settings, What's New, Gallery {menu}",
+        menu == [STRINGS["menu.play"], STRINGS["menu.settings"], STRINGS["menu.notes"], STRINGS["menu.gallery"], STRINGS["menu.lake"]],
+        f"the Title's menu is Play, Settings, What's New, Gallery, Lake preview {menu}",
     )
     check(page.inner_text("#version") == "v0.1.0", "the version shows in the corner")
     check(page.inner_text("#message") == "", "no error message is shown")
@@ -197,9 +197,14 @@ def ui2d_value(page, key):
 
 
 def step_fishboy(page, check):
-    # the Fish-Boy over Play: Tab, the radar's ping, the tabs, Esc
+    # the Fish-Boy in a match with three AI players: Tab, the radar's
+    # ping, the tabs, Esc
     page.click(by_id("menu.play"))
-    check(screen(page, "play"), "Play opens from the Title")
+    screen(page, "lobby")
+    page.select_option(by_id("lobby.ai"), "3")
+    page.wait_for_selector(f"{by_id('lobby.ai')} option[value='3']:checked", state="attached", timeout=5000)
+    page.click(by_id("lobby.start"))
+    check(screen(page, "play"), "a match starts from the setup")
     check(ui2d_has(page, "fishboy=", "raised=0"), "Play opens with the Fish-Boy down")
     page.keyboard.press("Tab")
     page.wait_for_selector("body[data-fishboy='radar']", state="attached", timeout=5000)
@@ -220,7 +225,7 @@ def step_fishboy(page, check):
     check(True, "clicking the Radar tab switches back to it")
     page.keyboard.press("Escape")
     page.wait_for_selector("body[data-fishboy='']", state="attached", timeout=5000)
-    check(page.locator(".panel.pause").count() == 0, "Esc puts the Fish-Boy down without pausing")
+    check(page.locator(".panel.pause").count() == 0, "Esc puts the Fish-Boy down without opening the menu")
     page.keyboard.press("Tab")
     page.wait_for_selector("body[data-fishboy='radar']", state="attached", timeout=5000)
     check(True, "it opens again on the last tab viewed")
@@ -229,8 +234,34 @@ def step_fishboy(page, check):
     page.keyboard.press("Escape")
     page.wait_for_selector(".panel.pause", timeout=5000)
     page.click(by_id("menu.quit"))
-    check(screen(page, "title"), "Quit to Title goes to the Title")
+    check(screen(page, "title"), "Leave match goes to the Title")
     check(page.inner_text("#message") == "", "no error message after the Fish-Boy")
+def step_lake(page, check):
+    # the Lake preview: the first checked map drawn, a view, the fog slider
+    page.click(by_id("menu.lake"))
+    check(screen(page, "lake"), "the Lake preview opens from the Title")
+    check(drawn(page, STRINGS["lake.heading"]), "the Lake preview draws its first frame")
+    check(page.is_visible("#scene"), "the 3D scene shows behind the preview's panel")
+    check(page.inner_text("#message") == "", "the map list and the lake's look load without a refusal")
+    check(page.inner_text(".panel.lake .sub") == STRINGS["map.burt_lake"], "the panel names the map, Burt Lake")
+    # the map's own fog distance is 120 m (DECISIONS.md, 2026-10-17); one
+    # step of the slider is 10 m
+    fog = by_id("lake.fog.text")
+    check(page.inner_text(fog) == "120 m", f"the fog starts at the map's 120 m ({page.inner_text(fog)})")
+    page.locator(by_id("lake.fog")).focus()
+    page.keyboard.press("ArrowRight")
+    page.wait_for_function("() => document.getElementById('lake.fog.text').textContent === '130 m'", timeout=5000)
+    check(page.inner_text(fog) == "130 m", "one step up on the fog slider sets 130 m")
+    page.select_option(by_id("lake.view"), "above")
+    page.wait_for_selector(f"{by_id('lake.view')} option[value='above']:checked", state="attached", timeout=5000)
+    page.click(by_id("lake.fog_on"))
+    page.wait_for_selector(f"{by_id('lake.fog_on')}:not(:checked)", state="attached", timeout=5000)
+    check(not page.is_checked(by_id("lake.fog_on")), "the fog can be turned off for the overview")
+    check(page.inner_text("#message") == "", "no refusal after the changes")
+    page.evaluate("() => document.activeElement.blur()")
+    page.keyboard.press("Escape")
+    check(screen(page, "title"), "Escape in the Lake preview goes to the Title")
+    check(page.is_hidden("#scene"), "the scene hides off the preview")
 
 
 def step_sounds(page, check):
@@ -274,6 +305,7 @@ STEPS = [
     ("play", step_play),
     ("gallery", step_gallery),
     ("sounds", step_sounds),
+    ("lake", step_lake),
     ("fishboy", step_fishboy),
 ]
 

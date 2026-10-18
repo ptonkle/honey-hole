@@ -14,7 +14,8 @@
 //!   "view":   { "yaw": 30, "pitch": 12 }, the gallery's opening angle, degrees
 //!   "colours": {                          flat colours by name, 0-255 each,
 //!     "back": [52, 84, 60],               or a slot the game fills at draw time:
-//!     "hull": { "slot": "player", "shade": 80 }   (shade: percent, default 100)
+//!     "hull": { "slot": "player", "shade": 80 },  (shade: percent, default 100)
+//!     "lamp": { "rgb": [255, 220, 120], "glow": true }  unlit: see below
 //!   },
 //!   "parts": [                            rigid pieces, parents before children
 //!     { "name": "body", "pivot": [0, 0, 0], "vertices": [[x, y, z], ...] },
@@ -42,7 +43,11 @@
 //! keys the pose eases in and out (`"ease": "smooth"`, the default: right
 //! for a swing between two keys) or moves straight (`"linear"`: right for
 //! a wave sampled at many keys); after the last key it goes back to the
-//! first, which is at 0. An anchor is a point on a part where another
+//! first, which is at 0. A colour marked `"glow": true` (written as
+//! `{ "rgb": [...], "glow": true }`, or on a slot) is unlit: it is drawn
+//! at full brightness whatever the sun and shade, and the fog takes it
+//! less (`glow_fog_pct` in the light, `data/look.json`), so a lamp reads
+//! through the fog. A plain `[r, g, b]` colour is lit, as before. An anchor is a point on a part where another
 //! model stands: a boat's `drive` and `fish` anchors are where the angler
 //! goes in those poses.
 //!
@@ -197,11 +202,23 @@ impl Default for FileView {
 #[serde(untagged)]
 enum FileColour {
     Rgb([i32; 3]),
+    Lit(FileLit),
     Slot {
         slot: String,
         #[serde(default = "hundred")]
         shade: i32,
+        #[serde(default)]
+        glow: bool,
     },
+}
+
+/// A fixed colour written as an object, so it can carry `glow`.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct FileLit {
+    rgb: [i32; 3],
+    #[serde(default)]
+    glow: bool,
 }
 
 #[derive(Deserialize)]
@@ -341,6 +358,8 @@ pub struct Model {
     pub yaw: i32,
     pub pitch: i32,
     pub paints: Vec<Paint>,
+    /// by paint: drawn unlit, at full brightness (`"glow": true`)
+    pub glows: Vec<bool>,
     pub parts: Vec<Part>,
     /// every vertex (metres, Q16) and the part it moves with
     pub verts: Vec<(V3, usize)>,
@@ -385,15 +404,22 @@ fn check(id: &str, f: FileModel) -> Result<Model, String> {
     // colours, by name
     let colour_names: Vec<&String> = f.colours.keys().collect();
     let mut paints = Vec::new();
+    let mut glows = Vec::new();
     for (name, c) in &f.colours {
-        paints.push(match c {
-            FileColour::Rgb(c) => {
+        let (rgb, glow) = match c {
+            FileColour::Rgb(c) => (Some(*c), false),
+            FileColour::Lit(l) => (Some(l.rgb), l.glow),
+            FileColour::Slot { glow, .. } => (None, *glow),
+        };
+        glows.push(glow);
+        paints.push(match (c, rgb) {
+            (_, Some(c)) => {
                 if c.iter().any(|v| !(0..=255).contains(v)) {
                     return Err(format!("the colour \"{name}\" is outside 0 to 255."));
                 }
-                Paint::Rgb(render::rgb(*c))
+                Paint::Rgb(render::rgb(c))
             }
-            FileColour::Slot { slot, shade } => {
+            (FileColour::Slot { slot, shade, .. }, None) => {
                 let s = SLOTS
                     .iter()
                     .position(|k| k == slot)
@@ -403,6 +429,7 @@ fn check(id: &str, f: FileModel) -> Result<Model, String> {
                 }
                 Paint::Slot(s, *shade)
             }
+            (_, None) => unreachable!("only a slot has no rgb"),
         });
     }
 
@@ -576,6 +603,7 @@ fn check(id: &str, f: FileModel) -> Result<Model, String> {
         yaw: deg(f.view.yaw),
         pitch: deg(f.view.pitch),
         paints,
+        glows,
         parts,
         verts: verts.into_iter().map(|(v, p)| (mm(v), p)).collect(),
         faces,
@@ -711,7 +739,8 @@ impl Model {
             let p: Vec<V3> = face.v.iter().map(|&i| at[i]).collect();
             let n = newell(&p);
             for k in 1..p.len() - 1 {
-                render::push_tri(out, [p[0], p[k], p[k + 1]], n, colours[face.paint]);
+                let glow = if self.glows[face.paint] { ONE } else { 0 };
+                render::push_tri_glow(out, [p[0], p[k], p[k + 1]], n, colours[face.paint], glow);
             }
         }
     }

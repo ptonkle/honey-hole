@@ -153,7 +153,10 @@ export function makeOverlay(canvas, N, fetchBitmap) {
   });
 
   return {
+    // a canvas given a size is cleared, so only a new size is set (the
+    // page asks to resize on every view model)
     resize(width, height) {
+      if (canvas.width === width && canvas.height === height) return;
       canvas.width = width;
       canvas.height = height;
     },

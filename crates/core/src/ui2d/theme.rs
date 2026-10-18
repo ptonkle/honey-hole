@@ -49,6 +49,10 @@ pub struct FishBoyLook {
     pub screen_pct: i32,
     /// raising or lowering the device takes this long
     pub raise_ms: i32,
+    /// the first-person eye's height over the water, mm, and how far it
+    /// looks down, degrees
+    pub eye_mm: i32,
+    pub look_down_deg: i32,
     /// the light on the device and in the Fishpedia's boxes
     pub light: Light,
 }
