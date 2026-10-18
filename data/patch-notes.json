@@ -1,5 +1,22 @@
 [
   {
+    "version": "0.2.0",
+    "date": "2026-10-18",
+    "notes": [
+      "Play a whole match on Burt Lake against up to three AI players, each Easy, Normal or Hard.",
+      "Online play: host a match and share its room code, or type a room code to join. Up to four players.",
+      "Fishing: cast, stop the lure at a depth, wait out the nibbles and hook the bite. Then hold the fish in the catch zone until the catch meter fills.",
+      "Thirteen Midwest fish in four tiers, from bluegill to lake sturgeon. Every hook is announced to everyone, and a legendary is announced late.",
+      "Ram a rival at speed to wreck their boat. They lose the fish on their line and start again from the spawn point.",
+      "Item buoys: six items, each used after a short minigame. Try the minigames from the Workshop.",
+      "The Fish-Boy comes up with Tab: the radar and its ping, the Fishpedia and My catch.",
+      "A countdown, the HUD, popups for hooks, landings and wrecks, and a postgame that shows each catch before the ranking.",
+      "Sounds for casting, hooking, reeling, pings, items and wrecks, and a rival motor that grows louder as it comes.",
+      "The underwater camera: light from the surface, weeds, rocks and logs on the bed.",
+      "New menus over a live view of Burt Lake. Settings now keep your name, the volume, the text size and the mouse between visits."
+    ]
+  },
+  {
     "version": "0.1.0",
     "date": "2026-10-17",
     "notes": [

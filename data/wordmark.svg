@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-44 -40 990 280" role="img" aria-label="Honey Hole">
+  <!-- The Title's wordmark (web/style.css draws it over the heading's
+       text). Drawn by the agent for this game: no font file. Each letter is
+       a centre line stroked thick with round ends, in four layers: a soft
+       shadow, the dark outline, the honey fill and a thin shine. The "y"
+       ends in a fish hook. The ink,
+       cream and shadow match the HUD's cards (data/flow.json "card"). -->
+  <defs>
+    <linearGradient id="honey" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#ffd860"/>
+      <stop offset="0.55" stop-color="#ffb838"/>
+      <stop offset="1" stop-color="#ec8e1a"/>
+    </linearGradient>
+    <!-- the letters' centre lines, each in its own place -->
+    <g id="H"><path d="M0 10V130M60 10V130M0 72H60"/></g>
+    <g id="o"><ellipse cx="32" cy="96" rx="30" ry="34"/></g>
+    <g id="n"><path d="M0 62V130M0 98Q0 62 30 62Q60 62 60 98V130"/></g>
+    <g id="e"><path d="M4 96H62Q62 62 33 62Q2 62 2 96Q2 130 35 130Q52 130 61 119"/></g>
+    <g id="y"><path d="M0 62V94Q0 126 30 126Q60 126 60 94M60 62V164Q60 194 32 194Q10 194 6 174L20 168"/></g>
+    <g id="l"><path d="M0 10V110Q0 132 22 130"/></g>
+    <g id="word">
+      <use href="#H" transform="translate(0 4) rotate(-4 30 70)"/>
+      <use href="#o" transform="translate(104 -4) rotate(3 32 96)"/>
+      <use href="#n" transform="translate(208 2) rotate(-2 30 96)"/>
+      <use href="#e" transform="translate(308 -6) rotate(4 32 96)"/>
+      <use href="#y" transform="translate(414 0) rotate(-3 30 110)"/>
+      <use href="#H" transform="translate(566 -2) rotate(3 30 70)"/>
+      <use href="#o" transform="translate(670 4) rotate(-5 32 96)"/>
+      <use href="#l" transform="translate(774 -4) rotate(4 10 70)"/>
+      <use href="#e" transform="translate(836 2) rotate(-3 32 96)"/>
+    </g>
+  </defs>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- shadow -->
+    <g stroke="#222634" stroke-opacity="0.3" stroke-width="44" transform="translate(8 10)">
+      <use href="#word"/>
+    </g>
+    <!-- outline -->
+    <g stroke="#222634" stroke-width="44">
+      <use href="#word"/>
+    </g>
+    <!-- honey -->
+    <g stroke="url(#honey)" stroke-width="26">
+      <use href="#word"/>
+    </g>
+    <!-- shine -->
+    <g stroke="#fffaec" stroke-opacity="0.7" stroke-width="6" transform="translate(-4 -5)">
+      <use href="#word"/>
+    </g>
+  </g>
+</svg>

@@ -257,6 +257,12 @@ pub const KEYS: &[&str] = &[
     "postgame.rematch",
     "postgame.title",
     "menu.minigames",
+    // the Title's Workshop and the Settings kept between visits
+    // (`app/menus.rs`, `app/settings.rs`)
+    "workshop.heading",
+    "settings.mouse",
+    "settings.invert_y",
+    "settings.kept",
     "minigames.heading",
     "minigames.sub",
     "minigames.play.cloak",

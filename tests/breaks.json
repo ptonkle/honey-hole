@@ -2646,6 +2646,69 @@
     "test": "a_reeling_threshold_under_the_ram_speed_is_refused"
   },
   {
+    "name": "menus: a bad kept save is refused whole",
+    "file": "crates/core/src/app/settings.rs",
+    "find": "        if applied.is_err() {\n            self.settings = before;",
+    "replace": "        if false {\n            self.settings = before;",
+    "test": "an_unreadable_or_out_of_range_save_is_treated_as_none"
+  },
+  {
+    "name": "menus: invert-Y flips the mouse up and down",
+    "file": "crates/core/src/controls.rs",
+    "find": "(scale(dx), if invert_y { -dy } else { dy })",
+    "replace": "(scale(dx), dy)",
+    "test": "sensitivity_scales_the_mouse_and_invert_flips_only_up_and_down"
+  },
+  {
+    "name": "menus: the match camera reads the mouse settings",
+    "file": "crates/core/src/app/play.rs",
+    "find": "let (dx, dy) = crate::controls::feel(dx, dy, self.settings.mouse_pct, self.settings.invert_y);",
+    "replace": "",
+    "test": "sensitivity_and_invert_reach_the_match_camera"
+  },
+  {
+    "name": "menus: the fog distance in Settings needs the debug flag",
+    "file": "crates/core/src/app/settings.rs",
+    "find": "\"settings.fog\" if self.debug_fog() =>",
+    "replace": "\"settings.fog\" =>",
+    "test": "the_fog_distance_shows_in_settings_only_under_the_debug_flag"
+  },
+  {
+    "name": "menus: a seat row carries its player colour",
+    "file": "crates/core/src/app/play.rs",
+    "find": "tone: sim::SEAT_COLOURS[k].into(),",
+    "replace": "tone: String::new(),",
+    "test": "each_seat_row_of_the_new_match_carries_its_player_colour"
+  },
+  {
+    "name": "menus: the title look refuses a drift past the tour",
+    "file": "crates/core/src/app/title.rs",
+    "find": "if !(0..=100).contains(&self.drift_pct) {",
+    "replace": "if false {",
+    "test": "the_title_look_refuses_a_drift_past_the_tour_or_a_fifth_colour"
+  },
+  {
+    "name": "menus: Settings is drawn over the lake backdrop",
+    "file": "crates/core/src/app/title.rs",
+    "find": "                | Screen::Settings\n",
+    "replace": "",
+    "test": "the_menus_have_the_backdrop_and_the_debug_screens_their_own_scene"
+  },
+  {
+    "name": "menus: the Workshop buttons are drawn smaller",
+    "file": "crates/core/src/app/menus.rs",
+    "find": ".map(|id| Item::quiet_button(id, self.t(id)))",
+    "replace": ".map(|id| self.button(id))",
+    "test": "the_app_opens_on_the_title_with_its_menu"
+  },
+  {
+    "name": "page: only the settings store may name localStorage",
+    "file": "crates/core/tests/no_storage.rs",
+    "find": ".filter(|name| !(file == SETTINGS_STORE && *name == SETTINGS_STORE_MAY_NAME))",
+    "replace": ".filter(|_| false)",
+    "test": "the_scanner_sees_storage"
+  },
+  {
     "name": "online items: a joiner waits for the host's buoy",
     "file": "crates/core/src/sim/items/online.rs",
     "find": "        self.online.role != Role::Client\n",

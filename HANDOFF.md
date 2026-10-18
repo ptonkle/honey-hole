@@ -26,7 +26,7 @@ What a new session gets wrong first.
 
 Every `SECOND-ORDER.md` row with status *person*, by number, with what the person has to decide or supply. `scripts/notebook_check.py` fails while one is missing.
 
-- R1.23: whether settings are kept between visits (browser storage, D17). Today they last for the visit.
+- R5.78: the menus' look (cream cards, the drawn "Honey Hole" wordmark, the lake backdrop's camera and boats), in `notes/shots/menus/`.
 - R1.63: the fog's sight distance (120 m assumed), which the map validator's hiding rule depends on.
 - R2.100: the sound labels on the Sounds screen (`label` in `data/sounds.json`), a generated list a reader sees.
 - R1.69: the fish roster and how the example counts split over it.
@@ -97,6 +97,8 @@ The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the 
 2026-10-18, fishing (fish in the lake, the cast, nibbles, the hook window, the reel, catches, the underwater camera and picture-in-picture, the fishing HUD), merged with main (branch `worktree-agent-a619c0b6bfe7ceb22`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 291 checks, with the new `fishing` step); `count-tests.sh`: 300 passed, 0 failed, 0 ignored; `scripts/break_tests.py` on the 34 new breaks: 34 of 34 caught (and the map row "one schooling fish is refused" repaired).
 
 2026-10-18, the match flow (countdown, the 2D HUD with the fishing's meters, data-driven popups, wreck burst and shake, ghosting, the end, the postgame reveal and ranking, Rematch), merged with main (fishing, item minigames) (branch `worktree-agent-a9be3869944870630`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 357 checks, with the new `match_flow` step); `count-tests.sh`: 367 passed, 0 failed, 0 ignored; `scripts/break_tests.py` on the 23 new and changed breaks: 23 of 23 caught.
+
+2026-10-18, the menus in the HUD's family (wordmark, the lake backdrop, the Workshop, cream cards, settings kept between visits, mouse sensitivity and invert-Y, What's New 0.2.0), merged with main through 19e263d (branch `worktree-agent-acc344f60edb47916`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 420 checks); `count-tests.sh`: 454 passed, 0 failed, 0 ignored; `scripts/break_tests.py` on the 9 new breaks: 9 of 9 caught.
 
 2026-10-18, the AI players and headless playtests (`crates/core/src/ai/`, `examples/playtest.rs`, `notes/playtests.md`), merged with main (match flow, minigames, polish) (branch `ai`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 372 checks, with the new `ai` step); `count-tests.sh`: 380 passed, 0 failed, 0 ignored; `scripts/break_tests.py` on the 10 new breaks and the restored cue delay: 11 of 11 caught.
 

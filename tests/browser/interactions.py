@@ -45,10 +45,17 @@ def step_boot(page, check):
     check(page.inner_text(".panel.title h2") == STRINGS["title"], "the Title shows the game's name")
     menu = page.locator(".panel.menu .button").all_inner_texts()
     check(
-        menu == [STRINGS["menu.play"], STRINGS["menu.settings"], STRINGS["menu.notes"], STRINGS["menu.gallery"], STRINGS["menu.lake"], STRINGS["menu.minigames"]],
-        f"the Title's menu is Play, Settings, What's New, Gallery, Lake preview, Minigames {menu}",
+        menu == [STRINGS["menu.play"], STRINGS["menu.settings"], STRINGS["menu.notes"]],
+        f"the Title's menu is Play, Settings, What's New {menu}",
     )
-    check(page.inner_text("#version") == "v0.1.0", "the version shows in the corner")
+    workshop = page.locator(".panel.workshop .button.quiet").all_inner_texts()
+    check(
+        workshop == [STRINGS["menu.gallery"], STRINGS["menu.lake"], STRINGS["menu.sounds"], STRINGS["menu.minigames"]],
+        f"the Workshop holds Gallery, Lake preview, Sounds, Minigames, drawn smaller {workshop}",
+    )
+    page.wait_for_selector("body[data-backdrop='on']", state="attached", timeout=5000)
+    check(page.is_visible("#scene"), "Burt Lake is drawn behind the Title")
+    check(page.inner_text("#version") == "v0.2.0", "the version shows in the corner")
     check(page.inner_text("#message") == "", "no error message is shown")
 
 
@@ -82,13 +89,36 @@ def step_settings(page, check):
     page.keyboard.press("Escape")
     check(screen(page, "title"), "Escape on Settings goes to the Title")
 
+    # by keyboard alone: Tab reaches Play, Down moves to Settings, Enter
+    # opens it
+    page.locator(by_id("menu.play")).focus()
+    page.keyboard.press("ArrowDown")
+    check(focused(page) == "menu.settings", "Down moves the focus from Play to Settings")
+    page.keyboard.press("Escape")
+
+    # the settings are kept for the next visit (web/settings-store.js), and
+    # put back as they were for the steps after this one
+    page.reload()
+    page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
+    page.click(by_id("menu.settings"))
+    screen(page, "settings")
+    check(page.inner_text(by_id("settings.volume.text")) == "75%", "the volume set before a reload is kept")
+    check(page.get_attribute("html", "data-text-size") == "large", "and the text size")
+    page.select_option(by_id("settings.text_size"), "medium")
+    page.wait_for_selector("html[data-text-size='medium']", state="attached", timeout=5000)
+    page.locator(by_id("settings.volume")).focus()
+    page.keyboard.press("ArrowRight")
+    page.wait_for_function("() => document.getElementById('settings.volume.text').textContent === '80%'", timeout=5000)
+    page.click(by_id("menu.back"))
+    screen(page, "title")
+
 
 def step_notes(page, check):
     # What's New, from its button and from the version
     page.click(by_id("menu.notes"))
     check(screen(page, "notes"), "What's New opens from the Title")
     versions = page.locator(".note-version").all_inner_texts()
-    check(versions == ["v0.1.0"], f"What's New lists version 0.1.0 {versions}")
+    check(versions == ["v0.2.0", "v0.1.0"], f"What's New lists versions 0.2.0 and 0.1.0 {versions}")
     page.click(by_id("notes.minor"))
     page.wait_for_selector(f"{by_id('notes.minor')}:checked", state="attached", timeout=5000)
     check(page.is_checked(by_id("notes.minor")), "the minor versions toggle ticks")
@@ -175,7 +205,7 @@ def step_gallery(page, check):
     page.evaluate("() => document.activeElement.blur()")
     page.keyboard.press("Escape")
     check(screen(page, "title"), "Escape in the Gallery goes to the Title")
-    check(page.is_hidden("#scene"), "the scene hides off the Gallery")
+    check(page.get_attribute("body", "data-backdrop") == "on", "off the Gallery the scene is the menus' lake backdrop")
 
 
 def ui2d_has(page, *words, timeout=10000):
@@ -269,7 +299,7 @@ def step_lake(page, check):
     page.evaluate("() => document.activeElement.blur()")
     page.keyboard.press("Escape")
     check(screen(page, "title"), "Escape in the Lake preview goes to the Title")
-    check(page.is_hidden("#scene"), "the scene hides off the preview")
+    check(page.get_attribute("body", "data-backdrop") == "on", "off the preview the scene is the menus' lake backdrop")
 
 
 def step_sounds(page, check):

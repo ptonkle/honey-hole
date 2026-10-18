@@ -10,7 +10,7 @@ const NOTES: &str = r#"[
     {"version": "0.1.0", "date": "2026-10-17", "notes": ["The menus."]}
 ]"#;
 
-fn app() -> App {
+pub(crate) fn app() -> App {
     App::new(&crate::strings::tests::complete(), NOTES).unwrap()
 }
 
@@ -53,15 +53,21 @@ fn the_app_opens_on_the_title_with_its_menu() {
             "menu.notes",
             "menu.gallery",
             "menu.lake",
+            "menu.sounds",
             "menu.minigames"
         ]
     );
     let v = ui(&a);
     assert_eq!(v["screen"], "title");
-    assert_eq!(v["version"], "v0.1.0");
+    assert_eq!(v["version"], "v0.2.0");
     assert_eq!(v["panels"][0]["heading"], "TITLE");
+    // the main three, then the Workshop's debug screens drawn smaller
+    assert_eq!(v["panels"][1]["items"].as_array().unwrap().len(), 3);
+    assert_eq!(v["panels"][2]["kind"], "workshop");
+    assert_eq!(v["panels"][2]["heading"], "WORKSHOP.HEADING");
+    assert_eq!(v["panels"][2]["items"][0]["quiet"], true);
     assert_eq!(
-        v["panels"][2]["items"][0]["rows"],
+        v["panels"][3]["items"][0]["rows"],
         json!([
             ["CONTROLS.DRIVE", "CONTROLS.DRIVE_KEYS"],
             ["CONTROLS.STEER", "CONTROLS.STEER_KEYS"],

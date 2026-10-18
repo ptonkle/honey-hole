@@ -491,6 +491,7 @@ impl App {
                 TableRow {
                     cells: vec![colour, name, state, ping],
                     marked: mine,
+                    tone: sim::SEAT_COLOURS[k.min(3)].into(),
                 }
             })
             .collect();

@@ -24,13 +24,15 @@ pub mod minigames;
 mod notes;
 pub mod online_play;
 pub mod play;
+pub mod settings;
 pub mod sounds;
 #[cfg(test)]
 mod tests;
+pub mod title;
 
 /// The game's version: major.minor.patch. The newest entry of
 /// `data/patch-notes.json` must be this one (`tests/data_files.rs`).
-pub const VERSION: &str = "0.1.0";
+pub const VERSION: &str = "0.2.0";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -91,8 +93,10 @@ impl TextSize {
 pub const VOLUME_MAX: u32 = 100;
 pub const VOLUME_STEP: u32 = 5;
 
-/// The reader's settings. They last for this visit: the page keeps no
-/// browser storage (BUILDER-SPEC D17).
+/// The reader's settings. The page keeps them between visits in browser
+/// storage, as the core writes them (`Ui::settings`), and hands them back
+/// through `settings.load`, which checks every value (`app/settings.rs`;
+/// BUILDER-SPEC, the D17 change).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Settings {
     /// 0 to `VOLUME_MAX`, a multiple of `VOLUME_STEP`
@@ -105,6 +109,11 @@ pub struct Settings {
     /// the map seed shows in the HUD's bottom-right corner (for reporting
     /// a map with a problem)
     pub show_seed: bool,
+    /// how far the mouse turns the camera, in percent of the controls
+    /// file's turn (`controls::MOUSE_PCT_*`)
+    pub mouse_pct: u32,
+    /// moving the mouse up tips the camera up instead of down
+    pub invert_y: bool,
 }
 
 impl Default for Settings {
@@ -115,6 +124,8 @@ impl Default for Settings {
             notes_minor: false,
             name: String::new(),
             show_seed: false,
+            mouse_pct: crate::controls::MOUSE_PCT_DEFAULT,
+            invert_y: false,
         }
     }
 }
@@ -150,6 +161,12 @@ pub struct Ui {
     /// the page hides its cursor over the 2D layer, which draws its own
     /// (the camera minigame's viewfinder)
     pub hide_cursor: bool,
+    /// the scene is the menus' lake backdrop (`app/title.rs`), not a
+    /// screen's own
+    pub backdrop: bool,
+    /// the settings as the page keeps them between visits (JSON, written
+    /// by the core; the page stores it as it is: `web/settings-store.js`)
+    pub settings: String,
     pub panels: Vec<Panel>,
 }
 
@@ -209,6 +226,8 @@ pub struct App {
     /// the page's `?debug=` flags, each (`items`, `item.nitrous`, `quick`:
     /// `app/items.rs`)
     pub debug_flags: Vec<String>,
+    /// the menus' lake backdrop (`app/title.rs`)
+    pub title_backdrop: title::Backdrop,
 }
 
 impl App {
@@ -246,6 +265,7 @@ impl App {
             debug_watch: false,
             debug_place: None,
             debug_flags: Vec::new(),
+            title_backdrop: title::Backdrop::default(),
         })
     }
 
@@ -325,6 +345,13 @@ impl App {
     /// The one door for buttons, settings, keys and screens. `name` is a
     /// dotted action name, `value` the control's new value.
     pub fn act(&mut self, name: &str, value: &str) -> Result<(), String> {
+        let done = self.act_once(name, value);
+        // a menu screen up with no lake yet: the backdrop's (`app/title.rs`)
+        self.ensure_backdrop();
+        done
+    }
+
+    fn act_once(&mut self, name: &str, value: &str) -> Result<(), String> {
         if name.starts_with("menu.") {
             self.click();
         }
@@ -414,6 +441,7 @@ impl App {
             Screen::Gallery => self.gallery_frame(),
             Screen::Lake => self.lake_frame(),
             Screen::Play | Screen::Postgame => self.match_frame().unwrap_or_default(),
+            _ if self.backdrop() => self.title_frame(),
             _ => crate::gfx::render::Frame::default(),
         }
     }
@@ -450,7 +478,7 @@ impl App {
             scene: matches!(
                 self.screen,
                 Screen::Gallery | Screen::Play | Screen::Postgame | Screen::Lake | Screen::Minigames
-            ),
+            ) || self.backdrop(),
             fishboy: self.fishboy_shown(),
             pointer: self.fishboy_shown() != ""
                 || self.items_take_pointer()
@@ -470,6 +498,8 @@ impl App {
             live: (matches!(self.screen, Screen::Play | Screen::Postgame) && self.play.is_some())
                 || self.screen == Screen::Minigames,
             hide_cursor: self.minigames_hide_cursor() || self.my_minigame().is_some_and(|m| m.hides_cursor()),
+            backdrop: self.backdrop(),
+            settings: self.stored_settings(),
             panels,
         }
     }

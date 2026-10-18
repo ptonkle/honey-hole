@@ -56,6 +56,10 @@ pub struct TableRow {
     pub cells: Vec<String>,
     #[serde(skip_serializing_if = "is_false")]
     pub marked: bool,
+    /// a player colour's name ("blue") the stylesheet tints the row with;
+    /// the row also names it in text (`colour.*`)
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub tone: String,
 }
 
 /// One version on the What's New screen.
@@ -186,6 +190,7 @@ mod tests {
             rows: vec![TableRow {
                 cells: vec!["1".into()],
                 marked: true,
+                tone: String::new(),
             }],
         };
         assert_eq!(

@@ -101,7 +101,9 @@ fn ids(a: &App) -> Vec<String> {
 #[test]
 fn the_lake_preview_opens_from_the_title_on_the_first_checked_map() {
     let mut a = app();
-    assert_eq!(a.world_stamp(), 0, "no world before the preview opens");
+    // the Title's backdrop (`app/title.rs`) has drawn the look's map, the
+    // first in the list, before the preview opens
+    assert_eq!(a.world.as_ref().map(|w| w.map.seed), Some(0));
     a.act("menu.lake", "").unwrap();
     assert_eq!(a.screen, Screen::Lake);
     assert!(a.ui().scene, "the preview draws the 3D scene");
