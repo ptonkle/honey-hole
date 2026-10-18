@@ -93,7 +93,7 @@ The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the 
 
 2026-10-18, the AI players and headless playtests (`crates/core/src/ai/`, `examples/playtest.rs`, `notes/playtests.md`), merged with main (match flow, minigames, polish) (branch `ai`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 372 checks, with the new `ai` step); `count-tests.sh`: 380 passed, 0 failed, 0 ignored; `scripts/break_tests.py` on the 10 new breaks and the restored cue delay: 11 of 11 caught.
 
-2026-10-18, items (the buoy's clock, warning, beats and fair point; pickups; Shift and the six minigames; the six effects; claim functions; HUD, icons, popups, world effects; `?debug=items`), merged with main (branch `items`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, with the new `items` step); `count-tests.sh`: 404 passed before the online merge; `scripts/break_tests.py items:`: 29 of 29 caught.
+2026-10-18, items (the buoy's clock, warning, beats and fair point; pickups; Shift and the six minigames; the six effects; claim functions; HUD, icons, popups, world effects; `?debug=items`), merged with main through dc644e7 (online play) (branch `items`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 405 checks, with the new `items` step); `count-tests.sh`: 431 passed, 0 failed, 0 ignored; `scripts/break_tests.py items:`: 29 of 29 caught.
 
 ## The next action
 
