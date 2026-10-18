@@ -4,10 +4,9 @@
 //! alone: no state lives in the page, and nothing here reads a clock or
 //! draws a random number.
 //!
-//! The screens and the pause menu belong to the person at this screen.
-//! The game itself is not designed yet; Play is a placeholder screen with
-//! the pause menu over it, and holds no player of its own, so nothing
-//! assumes there is one player.
+//! The screens belong to the person at this screen. The match itself is
+//! `sim::Match`, which knows nothing of screens; `app/play.rs` sets one up
+//! (the Lobby screen), feeds it this browser's input and draws it (Play).
 
 use serde::Serialize;
 
@@ -19,6 +18,7 @@ use crate::view::{Item, Panel};
 pub mod gallery;
 mod menus;
 mod notes;
+pub mod play;
 pub mod sounds;
 #[cfg(test)]
 mod tests;
@@ -34,7 +34,9 @@ pub enum Screen {
     Settings,
     /// What's New: each version's notes (`patch_notes.rs`)
     Notes,
-    /// the game; a placeholder until the game is designed
+    /// the offline match setup, "New match" (`app/play.rs`)
+    Lobby,
+    /// a match (`app/play.rs`)
     Play,
     /// each model turning, for a look at the art (`app/gallery.rs`)
     Gallery,
@@ -80,6 +82,8 @@ pub struct Settings {
     pub text_size: TextSize,
     /// What's New lists minor versions too
     pub notes_minor: bool,
+    /// the person's name in matches; empty for the stand-in name
+    pub name: String,
 }
 
 impl Default for Settings {
@@ -88,6 +92,7 @@ impl Default for Settings {
             volume: 80,
             text_size: TextSize::Medium,
             notes_minor: false,
+            name: String::new(),
         }
     }
 }
@@ -107,6 +112,11 @@ pub struct Ui {
     pub volume: u32,
     /// whether the page draws the 3D scene (`frame`) behind the panels
     pub scene: bool,
+    /// the page keeps keys and the mouse from the browser (Tab moves no
+    /// focus; a click locks the pointer) and sends them all here
+    pub capture: bool,
+    /// the page asks for the view model each frame (a match's clock moves)
+    pub live: bool,
     pub panels: Vec<Panel>,
 }
 
@@ -115,9 +125,17 @@ pub struct App {
     notes: Vec<Entry>,
     pub settings: Settings,
     pub screen: Screen,
-    /// the pause menu is open over Play. Whether the game stops under it
-    /// is the sync model's to decide, once there is a game.
-    pub paused: bool,
+    /// Settings was opened from the in-match menu: Back returns to Play
+    pub settings_return: bool,
+    /// the match files from the page (`data_act`)
+    pub tuning: Option<crate::tuning::Tuning>,
+    pub controls: Option<crate::controls::Controls>,
+    pub maps: Option<crate::map::list::MapList>,
+    pub names: Vec<String>,
+    /// the match setup being chosen, once the tuning is in
+    pub lobby: Option<play::Lobby>,
+    /// the match being played
+    pub play: Option<play::Play>,
     /// the models, in gallery order, and the look they are drawn in
     /// (`load_models`)
     pub models: Vec<Model>,
@@ -144,7 +162,13 @@ impl App {
             notes,
             settings: Settings::default(),
             screen: Screen::Title,
-            paused: false,
+            settings_return: false,
+            tuning: None,
+            controls: None,
+            maps: None,
+            names: Vec::new(),
+            lobby: None,
+            play: None,
             models: Vec::new(),
             look: None,
             gallery: gallery::Gallery::default(),
@@ -164,15 +188,27 @@ impl App {
 
     fn go(&mut self, screen: Screen) {
         self.screen = screen;
-        self.paused = false;
     }
 
-    /// Escape opens and closes the pause menu in Play, and goes back to
-    /// the Title from any other screen.
+    /// Back, and Escape off Play: to the Title, or from Settings opened in
+    /// a match back to the match. (In Play, Escape is the match's own
+    /// "cancel", `controls.json`.)
+    fn back(&mut self) {
+        if self.screen == Screen::Settings && self.settings_return && self.play.is_some() {
+            self.settings_return = false;
+            self.go(Screen::Play);
+        } else {
+            self.settings_return = false;
+            self.go(Screen::Title);
+        }
+    }
+
     fn escape(&mut self) {
         match self.screen {
-            Screen::Play => self.paused = !self.paused,
-            Screen::Settings | Screen::Notes | Screen::Gallery | Screen::Sounds => self.go(Screen::Title),
+            Screen::Play => {}
+            Screen::Settings | Screen::Notes | Screen::Gallery | Screen::Lobby | Screen::Sounds => {
+                self.back()
+            }
             Screen::Title => {}
         }
     }
@@ -182,7 +218,12 @@ impl App {
     pub fn version_opens_notes(&self) -> bool {
         matches!(
             self.screen,
-            Screen::Title | Screen::Settings | Screen::Notes | Screen::Gallery | Screen::Sounds
+            Screen::Title
+                | Screen::Settings
+                | Screen::Notes
+                | Screen::Gallery
+                | Screen::Lobby
+                | Screen::Sounds
         )
     }
 
@@ -200,21 +241,32 @@ impl App {
         if name.starts_with("menu.") {
             self.click();
         }
+        if self.match_input(name, value)? {
+            return Ok(());
+        }
         match name {
             "key" => self.key(value),
-            "menu.play" => self.go(Screen::Play),
-            "menu.settings" => self.go(Screen::Settings),
+            "key.up" | "keys.release" | "mouse.down" | "mouse.up" | "mouse.move" => {}
+            "menu.play" => self.go(Screen::Lobby),
+            "menu.settings" => {
+                self.settings_return = self.screen == Screen::Play;
+                self.go(Screen::Settings);
+            }
             "menu.notes" => self.go(Screen::Notes),
             "menu.gallery" => self.go(Screen::Gallery),
             "menu.sounds" => self.go(Screen::Sounds),
             "scene.unavailable" => self.scene_unavailable = true,
             "version" if self.version_opens_notes() => self.go(Screen::Notes),
             "version" => {}
-            "menu.back" | "menu.quit" => self.go(Screen::Title),
-            "menu.pause" if self.screen == Screen::Play => self.paused = true,
+            "menu.back" => self.back(),
+            "menu.quit" => self.leave_match(),
+            "menu.pause" if self.screen == Screen::Play => self.tap("menu", false),
             "menu.pause" => {}
-            "menu.resume" => self.paused = false,
+            "menu.resume" => self.tap("menu", true),
             "notes.minor" => self.settings.notes_minor = value == "on",
+            "settings.name" => self.set_name(value),
+            _ if name.starts_with("data.") => self.data_act(name, value)?,
+            _ if name.starts_with("lobby.") => self.lobby_act(name, value)?,
             _ if name.starts_with("settings.") => self.settings_act(name, value)?,
             _ if name.starts_with("gallery.") => self.gallery_act(name, value)?,
             _ if name.starts_with("sounds.") => self.sounds_act(name, value)?,
@@ -226,6 +278,7 @@ impl App {
     /// The page's clock, in microseconds. It only goes forward.
     pub fn advance(&mut self, now: i64) {
         self.clock = self.clock.max(now);
+        self.run_ticks(self.clock);
     }
 
     /// The canvas's size in CSS pixels and the device's pixel ratio in
@@ -242,6 +295,7 @@ impl App {
             Screen::Title => self.title_panels(),
             Screen::Settings => self.settings_panels(),
             Screen::Notes => self.notes_panels(),
+            Screen::Lobby => self.lobby_panels(),
             Screen::Play => self.play_panels(),
             Screen::Gallery => self.gallery_panels(),
             Screen::Sounds => self.sounds_panels(),
@@ -253,7 +307,13 @@ impl App {
             version_opens: self.version_opens_notes(),
             text_size: self.settings.text_size,
             volume: self.settings.volume,
-            scene: self.screen == Screen::Gallery,
+            scene: matches!(self.screen, Screen::Gallery | Screen::Play),
+            capture: self.screen == Screen::Play
+                && self
+                    .play
+                    .as_ref()
+                    .is_some_and(|p| !p.menu_open() && !p.game.ended),
+            live: self.screen == Screen::Play && self.play.is_some(),
             panels,
         }
     }

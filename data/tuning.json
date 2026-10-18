@@ -1,5 +1,56 @@
 {
-  "_note": "Gameplay and feel numbers likely to change (PLAN.md decision 6). Each section belongs to one system and is read and checked by it.",
+  "_note": "Every gameplay number that may change, read and checked by crates/core/src/tuning.rs when the page starts. Units are in each key's name: _ms milliseconds, _mm millimetres, _mm_per_s millimetres a second, _deg degrees, _deg_per_s degrees a second, _pct percent. A missing, unknown or out-of-range key is refused by name. Other systems (fishing, items, radar, fish) add their own section here and its struct in tuning.rs.",
+  "match": {
+    "_note": "length_ms: 8 minutes (BRIEF), the default the match setup offers among length_choices_ms. buoy_interval_ms: an item buoy every minute (BRIEF), the default among buoy_interval_choices_ms; the items system reads the match's own value (Match::setup). seats: lobby slots, coloured blue, red, green, yellow. spawn_spread_mm: the gap between neighbouring boats at the spawn, side by side across the heading.",
+    "length_ms": 480000,
+    "length_choices_ms": [
+      240000,
+      480000,
+      720000
+    ],
+    "buoy_interval_ms": 60000,
+    "buoy_interval_choices_ms": [
+      30000,
+      60000,
+      90000,
+      120000
+    ],
+    "seats": 4,
+    "spawn_spread_mm": 5000
+  },
+  "boat": {
+    "_note": "top_speed 16 m/s is the speed the map size was chosen for (map/mod.rs BOAT_TOP_SPEED_MM_PER_S). accel_ms: W from rest to top speed (BRIEF: about 5 s). With no throttle the boat slows from top speed to rest in coast_ms; S while moving forward brakes from top to rest in brake_ms; sideways slip dies from top speed in side_drag_ms. Turning: turn_deg_per_s once the boat moves at turn_full_at_pct of top speed or faster, turn_at_rest_pct of it at rest, and in between in proportion. In fishing mode A and D swivel the cast at swivel_deg_per_s, up to swivel_limit_deg either side of the bow. The hull for collisions: a rounded box half_length_mm plus half_beam_mm from the middle to the bow, half_beam_mm to each side. nitrous: the items system turns it on; each figure is a percent of the plain one.",
+    "top_speed_mm_per_s": 16000,
+    "accel_ms": 5000,
+    "reverse_speed_mm_per_s": 4000,
+    "reverse_accel_ms": 2000,
+    "brake_ms": 2000,
+    "coast_ms": 6000,
+    "side_drag_ms": 800,
+    "turn_deg_per_s": 100,
+    "turn_at_rest_pct": 30,
+    "turn_full_at_pct": 40,
+    "swivel_deg_per_s": 120,
+    "swivel_limit_deg": 135,
+    "half_length_mm": 1000,
+    "half_beam_mm": 850,
+    "nitrous": {
+      "accel_pct": 200,
+      "top_speed_pct": 150,
+      "turn_pct": 150
+    }
+  },
+  "wreck": {
+    "_note": "A boat wrecks another when its speed toward it is ram_wreck_pct of top speed or more (BRIEF: 80%, judged without nitrous), and its own motor stalls for stall_ms (round 1, B1). A boat wrecks on land when its speed toward the land is land_wreck_pct of top speed or more (BRIEF: 50%); slower, it bounces back at bounce_pct of that speed and keeps scrape_keep_pct of its speed along the shore. Slower boat hits bump both boats apart at bump_pct. A wrecked boat comes back at the spawn after respawn_ms (BRIEF: 2 s), ghosted for ghost_ms (round 1, B3): it passes through boats and cannot wreck or be wrecked by one.",
+    "ram_wreck_pct": 80,
+    "land_wreck_pct": 50,
+    "stall_ms": 3000,
+    "respawn_ms": 2000,
+    "ghost_ms": 3000,
+    "bounce_pct": 30,
+    "scrape_keep_pct": 70,
+    "bump_pct": 50
+  },
   "audio": {
     "_note": "Read by crates/core/src/sound/motor.rs. Gains run 0 to 1 and pitches are multiples of the recipe's own (1 is as written, 2 an octave up). Times in seconds unless the key says ms; distances in mm.",
     "rival_motor": {

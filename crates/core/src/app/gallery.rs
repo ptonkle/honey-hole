@@ -87,7 +87,7 @@ impl Look {
         Ok(look)
     }
 
-    fn player(&self, slot: usize) -> Rgb {
+    pub(crate) fn player(&self, slot: usize) -> Rgb {
         render::rgb(self.players[PLAYER_COLOURS[slot]])
     }
 }
@@ -388,8 +388,12 @@ impl App {
         )
     }
 
-    /// This frame's view values and triangles (empty off the Gallery).
+    /// This frame's view values and triangles: Play's (`app/play.rs`) or the
+    /// Gallery's (empty on other screens).
     pub fn frame(&self) -> (Vec<i32>, Vec<i32>) {
+        if self.screen == Screen::Play {
+            return self.play_frame();
+        }
         let (Some(look), Some(m)) = (self.look.as_ref(), self.models.get(self.gallery.model)) else {
             return (Vec::new(), Vec::new());
         };

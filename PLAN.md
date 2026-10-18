@@ -34,6 +34,11 @@ Collected as the agent makes them; brought up in the morning. Each also has a ro
 
 - V1. Online sync model (decision 11).
 - V2. 50 ticks per second (decision 2).
+- V3. Rams and grounding are judged on the speed *toward* the other boat or the land, not the boat's whole speed: a fast glancing scrape bounces (SECOND-ORDER R2.3).
+- V4. The boat's handling numbers the brief leaves open: reverse 4 m/s, braking 2 s, coasting 6 s, turning 100°/s, the cast swivelling 135° either side, nitrous 200/150/150% (`data/tuning.json`, R2.7).
+- V5. Two boats ramming each other head-on, both fast enough, are both wrecked (R2.4).
+- V6. The draft AI names (`data/names.json`, R2.11).
+- V7. The match menu has Resume as well as Settings and Leave match (R2.9).
 - V3. Fish base lengths trimmed so a 1.5× catch is a trophy, not past a record (muskie 0.95 m, pike 0.65 m, walleye 0.43 m, smallmouth 0.35 m, perch 0.2 m, bluegill 0.17 m); the sturgeon stays 1.5 m rather than the 1.8 m first suggested (SECOND-ORDER R1.150–R1.154).
 - V4. Angler brows made level and slightly raised (the person said they looked sad).
 - V5. Sound: a rival's motor is heard from 5 s at top speed (80 m), rising with the square of the nearness to full within 6 m, and its Doppler shift is exaggerated 3 times (about +16% closing, -12% leaving) because the true shift of a boat is under a semitone (SECOND-ORDER R2.93, R2.94). Every sound's recipe is the agent's: audition them on the Sounds screen (Gallery, Sounds) and say which to change.

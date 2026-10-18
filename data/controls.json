@@ -1,0 +1,23 @@
+{
+  "_note": "Which key or mouse button does what, read by crates/core/src/controls.rs. Keys are KeyboardEvent.code names; Mouse0 is the main button and Mouse2 the other. An action may have several keys; a key may serve one action only. mouse: how far the camera turns for 100 pixels of mouse movement, and how far it may tip up or down.",
+  "bindings": {
+    "forward": ["KeyW"],
+    "back": ["KeyS"],
+    "left": ["KeyA"],
+    "right": ["KeyD"],
+    "mode": ["KeyQ"],
+    "fishboy": ["Tab"],
+    "cancel": ["Escape"],
+    "item": ["ShiftLeft", "ShiftRight"],
+    "cast": ["Space"],
+    "click": ["Mouse0"],
+    "alt_click": ["Mouse2"]
+  },
+  "mouse": {
+    "yaw_deg_per_100px": 25,
+    "pitch_deg_per_100px": 18,
+    "pitch_min_deg": -10,
+    "pitch_max_deg": 60,
+    "pitch_start_deg": 15
+  }
+}
