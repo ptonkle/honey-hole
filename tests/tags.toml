@@ -86,6 +86,7 @@ tags = ["boundary"]
 "crates/core/tests/angler_boat_buoy.rs" = ["models"]
 "crates/core/tests/props.rs" = ["models"]
 "crates/core/tests/fishboy.rs" = ["models"]
+"crates/core/tests/fish_models.rs" = ["models"]
 "crates/shim/**" = ["all"]
 "web/**" = ["page"]
 "data/strings.json" = ["copy"]
@@ -188,6 +189,7 @@ tags = ["boundary"]
 "test:angler_boat_buoy" = ["models"]
 "test:props" = ["models"]
 "test:fishboy" = ["models"]
+"test:fish_models" = ["models"]
 
 # ---------------------------------------------------------------------------
 # Browser steps (tests/browser/interactions.py STEPS) -> tags. The load and

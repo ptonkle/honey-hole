@@ -658,6 +658,27 @@
     "test": "the_line_up_is_the_same_whichever_fish_is_chosen"
   },
   {
+    "name": "a roster fish file is a fish",
+    "file": "data/models/rock-bass.json",
+    "find": "\"kind\": \"fish\",",
+    "replace": "\"kind\": \"prop\",",
+    "test": "every_roster_fish_is_a_low_poly_fish_at_its_base_length"
+  },
+  {
+    "name": "a panic swim runs about three times as fast as the idle swim",
+    "file": "data/models/lake-trout.json",
+    "find": "\"panic\": { \"ms\": 560,",
+    "replace": "\"panic\": { \"ms\": 1800,",
+    "test": "every_roster_fish_swims_at_ease_and_in_a_panic"
+  },
+  {
+    "name": "a sampled swim plays linear",
+    "file": "data/models/lake-trout.json",
+    "find": "\"panic\": { \"ms\": 560, \"ease\": \"linear\"",
+    "replace": "\"panic\": { \"ms\": 560, \"ease\": \"smooth\"",
+    "test": "every_roster_fish_swims_at_ease_and_in_a_panic"
+  },
+  {
     "name": "a rival is silent beyond 5 s at top speed",
     "file": "crates/core/src/sound/motor.rs",
     "find": "if d >= hear {",
