@@ -205,7 +205,7 @@ def step_gallery(page, check):
     page.evaluate("() => document.activeElement.blur()")
     page.keyboard.press("Escape")
     check(screen(page, "title"), "Escape in the Gallery goes to the Title")
-    check(page.is_hidden("#scene"), "the scene hides off the Gallery")
+    check(page.get_attribute("body", "data-backdrop") == "on", "off the Gallery the scene is the menus' lake backdrop")
 
 
 def ui2d_has(page, *words, timeout=10000):
@@ -299,7 +299,7 @@ def step_lake(page, check):
     page.evaluate("() => document.activeElement.blur()")
     page.keyboard.press("Escape")
     check(screen(page, "title"), "Escape in the Lake preview goes to the Title")
-    check(page.is_hidden("#scene"), "the scene hides off the preview")
+    check(page.get_attribute("body", "data-backdrop") == "on", "off the preview the scene is the menus' lake backdrop")
 
 
 def step_sounds(page, check):
