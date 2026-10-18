@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Honey Hole's tab icon, drawn by the agent in the magazine palette
+       (web/style.css :root): a tall red-and-white bobber, pegs top and
+       bottom, tipped as it floats, on a mustard roundel in an ink ring.
+       Bold shapes only, so it reads at 16 px. -->
+  <circle cx="32" cy="32" r="30" fill="#d9a21e" stroke="#2b2118" stroke-width="4"/>
+  <g transform="rotate(20 32 33)">
+    <!-- the pegs -->
+    <rect x="29.5" y="5" width="5" height="12" rx="2" fill="#2b2118"/>
+    <rect x="30" y="49" width="4" height="10" rx="2" fill="#2b2118"/>
+    <!-- the bobber: red over white -->
+    <path d="M21 31A11 17 0 0 1 43 31Z" fill="#c8371f"/>
+    <path d="M21 31A11 17 0 0 0 43 31Z" fill="#f8efdc"/>
+    <ellipse cx="32" cy="31" rx="11" ry="17" fill="none" stroke="#2b2118" stroke-width="3.5"/>
+  </g>
+</svg>
