@@ -18,6 +18,7 @@ pub mod fishboy;
 pub mod gfx;
 pub mod glossary;
 pub mod map;
+pub mod minigame;
 pub mod model;
 pub mod patch_notes;
 pub mod roster;

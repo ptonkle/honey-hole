@@ -29,6 +29,8 @@ pub struct Tuning {
     pub wreck: WreckTuning,
     /// the Fish-Boy's radar: the ping (`fishboy/radar.rs`)
     pub radar: RadarTuning,
+    /// the item minigames (`minigame/tuning.rs`)
+    pub minigames: crate::minigame::tuning::MinigameTuning,
     /// the sound engine's section, read and checked by `sound::Bank::parse`
     #[serde(default)]
     pub audio: serde_json::Value,
@@ -232,6 +234,7 @@ impl Tuning {
                 r.ping_sweep_ms <= r.ping_cooldown_ms,
                 "radar.ping_sweep_ms must end before radar.ping_cooldown_ms.",
             );
+        self.minigames.check(&mut c);
         c.done()
     }
 }
@@ -290,7 +293,8 @@ pub mod tests {
             "radar": {
                 "ping_cooldown_ms": 5000,
                 "ping_sweep_ms": 3000
-            }
+            },
+            "minigames": crate::minigame::tuning::tests::sample_json()
         })
     }
 

@@ -52,7 +52,8 @@ fn the_app_opens_on_the_title_with_its_menu() {
             "menu.settings",
             "menu.notes",
             "menu.gallery",
-            "menu.lake"
+            "menu.lake",
+            "menu.minigames"
         ]
     );
     let v = ui(&a);
