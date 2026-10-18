@@ -91,5 +91,10 @@
       "side_mm": 5000,
       "overrun": 0.15
     }
+  },
+  "radar": {
+    "_note": "The Fish-Boy's radar (crates/core/src/fishboy/radar.rs). ping_cooldown_ms: from one ping's start to the next allowed, per player (BRIEF: 5 s). ping_sweep_ms: how long the sweep takes to cross the whole map from where the player pinged (BRIEF: about 3 s); it must end before the cooldown does.",
+    "ping_cooldown_ms": 5000,
+    "ping_sweep_ms": 3000
   }
 }

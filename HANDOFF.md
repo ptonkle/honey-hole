@@ -34,6 +34,8 @@ Every `SECOND-ORDER.md` row with status *person*, by number, with what the perso
 - R1.107: a read of the eleven lake prop names the Gallery shows (listed at the foot of `SECOND-ORDER.md`), and the props' look (`notes/shots/models/props/`).
 - R1.48: the draft fish roster and their names (seven fish, Midwest lakes), shown in the Gallery.
 - R1.54: the four player colours and the Gallery's light in `data/look.json`.
+- R2.69: the fish's base lengths and values in `data/fish.json` (the 13 names and tiers are the person's).
+- R2.75: the radar's brighter player colours in `data/ui2d.json` (`radar.players`).
 - R1.149: the remodelled angler's look (tapered limbs, round head, no boxes), in `notes/shots/models/angler-v2/`.
 - R2.7: the boat's handling numbers the brief does not name (reverse, braking, coasting, slip, turning, swivel, nitrous), in `data/tuning.json`; try them by driving.
 - R2.11: the twelve draft AI names in `data/names.json`.
@@ -64,7 +66,10 @@ The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the 
 2026-10-18, all thirteen fish reshaped to their species (branch `worktree-agent-a224ab628fd9e4a46`, after 87c3d87, merged with main): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 222 checks); `count-tests.sh`: 231 passed, 0 failed, 0 ignored; no new behaviour tests (model data only).
 2026-10-17, the match core (Match, boats, collisions, wrecks, respawn, timer, tuning.json, controls.json, New match, Play with a stand-in lake) (branch `worktree-agent-a0098b4853bad3d19`, after 650e51e): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 208 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 124 of 124 breaks caught before the merge with the sound engine.
 
+2026-10-17, the screen 2D layer and the live Fish-Boy (radar, Fishpedia, My catch), merged with main (branch `worktree-agent-a0af07e03570f7fa8`, after 843a370): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 207 checks); `count-tests.sh`: 203 passed, 0 failed, 0 ignored; `scripts/break_tests.py` on the 38 new breaks: 38 of 38 caught.
 2026-10-17, the 3D world of Burt Lake (terrain, water, fog, props, instancing, cameras, the Lake preview, a match drawn on the lake, glowing colours), merged with main (branch `worktree-agent-a2ff84d9ac75f0c6e`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 231 passed, 0 failed, 0 ignored; `scripts/break_tests.py` on the world's 18 breaks: all caught.
+
+2026-10-18, the Fish-Boy integrated with the match core and the lake world, merged with main (branch `worktree-agent-a0af07e03570f7fa8`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 265 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 218 of 218 breaks caught.
 
 ## The next action
 

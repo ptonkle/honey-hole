@@ -171,7 +171,7 @@ fn without_the_lakes_look_the_preview_says_why_and_draws_nothing() {
 }
 
 #[test]
-fn a_match_draws_its_boats_on_the_lakes_world_and_without_the_look_its_stand_in() {
+fn a_match_draws_its_boats_on_the_lakes_world_and_without_the_look_nothing() {
     let mut a = crate::app::play::tests::lobby();
     a.load_models(&models(), LOOK).unwrap();
     a.act("lobby.start", "").unwrap();
@@ -194,14 +194,12 @@ fn a_match_draws_its_boats_on_the_lakes_world_and_without_the_look_its_stand_in(
     let (at, _) = render::uniform_at("uFog");
     assert_eq!(f.view[at + 1], crate::scene::mm(120_000));
 
-    // a look file with no lake: the match draws its stand-in, no world
+    // a look file with no lake: no world, and no stand-in (SECOND-ORDER R2.66)
     let mut b = crate::app::play::tests::lobby();
     let mut look: Value = serde_json::from_str(LOOK).unwrap();
     look.as_object_mut().unwrap().remove("lake");
     b.load_models(&models(), &look.to_string()).unwrap();
     b.act("lobby.start", "").unwrap();
     assert!(b.world.is_none());
-    let f = b.frame();
-    assert_eq!(f.statics, [0; 4]);
-    assert!(!f.tris.is_empty());
+    assert_eq!(b.frame(), Frame::default());
 }

@@ -38,6 +38,7 @@ mod tests;
 
 use serde::Serialize;
 
+use crate::fishboy::radar::{self, Ping, RadarView};
 use crate::map::rng::Rng;
 use crate::map::{Map, P};
 use crate::tuning::Tuning;
@@ -107,6 +108,10 @@ pub struct Setup {
     /// the match's own seed, for every chance a later system draws
     /// ([`Match::rng`]); the map has its own seed
     pub seed: u64,
+    /// how many of each kind of fish (its id in `data/fish.json`) the
+    /// match starts with; the Fishpedia counts down from these
+    /// ([`Match::fish_left`]). The fishing system places them.
+    pub fish: Vec<(String, u32)>,
 }
 
 impl Setup {
@@ -123,6 +128,7 @@ impl Setup {
             buoy_interval_ms: tuning.game.buoy_interval_ms,
             offline: true,
             seed: 0,
+            fish: Vec::new(),
         }
     }
 
@@ -219,7 +225,7 @@ pub enum MatchEvent {
 /// One landed fish, for the postgame (the fishing system fills it).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Catch {
-    /// the fish's model id, e.g. "bluegill"
+    /// the fish's id in `data/fish.json`, e.g. "bluegill"
     pub kind: String,
     pub length_mm: i32,
     /// its points
@@ -237,6 +243,10 @@ pub struct Score {
 pub struct SeatState {
     /// the in-match menu (Settings, Leave match) is open
     pub menu_open: bool,
+    /// the Fish-Boy is raised: the boat coasts ([`Boat::captured`])
+    pub fishboy: bool,
+    /// the seat's radar ping and what it has seen
+    pub ping: Ping,
 }
 
 /// The tuning in the units the match uses: ticks, mm/s a tick, angle
@@ -275,6 +285,13 @@ pub struct Rules {
     pub scrape_keep_pct: i32,
     pub bump_pct: i32,
     pub spawn_spread: i32,
+}
+
+/// One input per seat: the ones given, then none.
+fn inputs_or(inputs: &[SeatInput], n: usize) -> Vec<SeatInput> {
+    (0..n)
+        .map(|k| inputs.get(k).copied().unwrap_or_default())
+        .collect()
 }
 
 /// Milliseconds to whole ticks, rounded to the nearest.
@@ -466,6 +483,7 @@ impl Match {
                 b.throttle(&self.rules, &i, self.tick);
             }
         }
+        self.fishboy_and_radar(&inputs_or(inputs, self.seats.len()));
         if self.tick >= self.rules.length_ticks {
             self.ended = true;
             self.events.push(MatchEvent::MatchEnded);
@@ -484,10 +502,78 @@ impl Match {
 
     /// **Hook for the fishing, items and Fish-Boy systems.** Cancel this
     /// seat's current thing, top layer first, and return true; return false
-    /// when there is nothing to cancel (Esc then opens the menu). Nothing
-    /// cancels yet.
-    pub fn cancel_layers(&mut self, _seat: usize) -> bool {
+    /// when there is nothing to cancel (Esc then opens the menu). The
+    /// Fish-Boy is the only layer yet: a raised one is put down.
+    pub fn cancel_layers(&mut self, seat: usize) -> bool {
+        if self.seats[seat].fishboy {
+            self.set_fishboy(seat, false);
+            return true;
+        }
         false
+    }
+
+    /// Raises or lowers a seat's Fish-Boy. Raised, the boat coasts: its
+    /// keys do nothing (the person's answer, DECISIONS.md).
+    pub fn set_fishboy(&mut self, seat: usize, up: bool) {
+        self.seats[seat].fishboy = up;
+        if let Some(b) = self.boats[seat].as_mut() {
+            b.captured = up;
+        }
+    }
+
+    /// The Fish-Boy's key and the radar: Tab raises or lowers it, a ping
+    /// (with it raised) starts if its cooldown allows, and every seat's
+    /// sweep moves on.
+    fn fishboy_and_radar(&mut self, inputs: &[SeatInput]) {
+        let tick = self.tick as i64;
+        let view = self.radar_view(0);
+        let size = self.map.size_mm();
+        let tuning = self.tuning.radar.clone();
+        for (seat, i) in inputs.iter().enumerate() {
+            if i.pressed.fishboy && self.boats[seat].is_some() {
+                let up = !self.seats[seat].fishboy;
+                self.set_fishboy(seat, up);
+            }
+            let Some(me) = self.radar_index(seat) else {
+                continue;
+            };
+            if i.pressed.ping && self.seats[seat].fishboy {
+                let mine = RadarView { me, ..view.clone() };
+                if self.seats[seat].ping.start(tick, &mine, size, &tuning) {
+                    self.events.push(MatchEvent::Pinged { seat });
+                }
+            }
+            self.seats[seat].ping.step(tick, &view, &tuning);
+        }
+    }
+
+    /// A seat's place in [`Match::radar_view`]'s boats.
+    fn radar_index(&self, seat: usize) -> Option<usize> {
+        self.boats.iter().flatten().position(|b| b.seat == seat)
+    }
+
+    /// The boats and the buoy as the radar knows them, for `seat`: every
+    /// taken seat's boat in seat order (its pings' sightings are kept by
+    /// this order), named and coloured by its seat. No one is cloaked
+    /// until the items system sets it; there is no buoy until it spawns.
+    pub fn radar_view(&self, seat: usize) -> RadarView {
+        let boats = self
+            .boats
+            .iter()
+            .flatten()
+            .map(|b| radar::BoatView {
+                at: b.at(),
+                heading: b.heading,
+                slot: b.seat,
+                name: self.setup.seats[b.seat].name.clone(),
+                cloaked: false,
+            })
+            .collect();
+        RadarView {
+            me: self.radar_index(seat).unwrap_or(0),
+            boats,
+            buoy: None,
+        }
     }
 
     fn toggle_menu(&mut self, seat: usize) {
@@ -556,6 +642,25 @@ impl Match {
     /// reeling in a fish"); landed fish in [`Score`] stay. Nothing is on a
     /// line yet.
     pub fn wreck_drops_fish(&mut self, _seat: usize) {}
+
+    /// **Hook for the fishing system.** How many of each kind are left in
+    /// the lake (public knowledge): the starting count less every seat's
+    /// catches of that kind. A fish that gets away stays in the lake.
+    pub fn fish_left(&self) -> Vec<(String, u32)> {
+        self.setup
+            .fish
+            .iter()
+            .map(|(kind, n)| {
+                let caught = self
+                    .scores
+                    .iter()
+                    .flat_map(|s| &s.catches)
+                    .filter(|c| &c.kind == kind)
+                    .count() as u32;
+                (kind.clone(), n.saturating_sub(caught))
+            })
+            .collect()
+    }
 
     /// The boat in a seat, if the seat is taken.
     pub fn boat(&self, seat: usize) -> Option<&Boat> {
