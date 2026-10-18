@@ -720,8 +720,13 @@ fn schools_roam_together_and_slowly() {
     m.map = map;
     m.stock(&roster()).unwrap();
     let start: Vec<P> = m.fishing.fish.iter().map(|f| f.at).collect();
+    let middles: Vec<P> = m.fishing.schools.iter().map(|s| s.at).collect();
     for _ in 0..500 {
         step0(&mut m, SeatInput::default());
+    }
+    // a school's middle wanders at 0.4 m/s: 4 m in 10 s at most
+    for (s, was) in m.fishing.schools.iter().zip(&middles) {
+        assert!(s.at.dist(*was) <= 4_000, "{} mm", s.at.dist(*was));
     }
     for (f, was) in m.fishing.fish.iter().zip(&start) {
         // 10 s at 0.8 m/s at most, and never far from home

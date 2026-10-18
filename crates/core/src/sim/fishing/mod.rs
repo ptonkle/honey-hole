@@ -341,7 +341,7 @@ impl Fishing {
         let line = &mut self.lines[seat];
         match line.stage {
             Stage::Idle => {
-                if press && b.mode == Mode::Fishing {
+                if press {
                     if speed > t.cast_max_speed_mm_per_s {
                         events.push(MatchEvent::CastRefused {
                             seat,

@@ -160,7 +160,7 @@ body[data-screen="play"] #menus {
 .panel.hud { background: color-mix(in srgb, var(--panel) 80%, transparent); }
 /* the HUD keeps to the right: the fishing's picture-in-picture of the boat
    takes the top-left corner */
-body[data-screen="play"] #menus { left: auto; right: 1rem; }
+body[data-screen="play"] .panel.hud { position: fixed; top: 1rem; right: 1rem; width: 16rem; }
 
 /* ---- fishing (app/fishing.rs): the line's state and its meters at the
    right, popups across the top in the tier's colour, always with its name */

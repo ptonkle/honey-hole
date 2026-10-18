@@ -557,3 +557,6 @@ impl App {
         Some(r.tension as i64)
     }
 }
+
+#[cfg(test)]
+mod tests;

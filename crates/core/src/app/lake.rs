@@ -482,7 +482,7 @@ impl App {
 }
 
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;
 
 /// A map point `d` mm from `p` toward a map heading.
 fn scene_ahead(p: P, heading: i32, d: i32) -> P {
