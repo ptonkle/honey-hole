@@ -63,7 +63,11 @@ Collected as the agent makes them; brought up in the morning. Each also has a ro
 - V29. Each kind's count moves up to 20% either way per match; a freed fish swims 12 m off and roams alone from there; schools wander within 10 m of where they were placed (R3.2, R3.4).
 - V30. Fish seen from the boat camera are drawn twice their size and at 45% of their depth so they read from 9 m back; under the water they are life size (R3.6).
 - V31. The underwater camera's murk (green-blue, 16 m), the picture-in-picture (26% of the screen's width, top left, white border), the HUD moved to the top right, and the fishing HUD as panels until the 2D layer draws it (R3.7, R3.9, R3.10, R3.11).
-- V32. The hook popup ends with a full stop, not "!", for the tone lint (R3.15).
+- V32. The hook popup ends with a full stop, not "!", for the tone lint (R3.15). Superseded by V33.
+- V33. The hook popup ends with "!" as the person wrote it: popup strings may end with one "!" (a narrow tone exemption, TONE.md; SECOND-ORDER R3.112).
+- V34. The match flow: a 3 s countdown with the boats held still; popups up to 4 at once for 2 s each, landings announced too; the HUD's layout (time top right, gauge and mode badge bottom left, ping and item bottom right, key hints along the bottom fading after a minute); "Lines up" for 3 s before the postgame (R3.110, R3.113, R3.121, R3.122).
+- V35. The postgame: players revealed in seat order, a card every 0.75 s, ties sharing a place; Rematch keeps the setup but draws a new map layout (R3.118, R3.119).
+- V36. The wreck: a lumpy fireball with shards, a short camera shake and an orange flash for the victim; a respawned boat drawn 45% solid while ghosted (R3.116, R3.117). The look: `notes/shots/match-flow/`.
 
 ## Status
 

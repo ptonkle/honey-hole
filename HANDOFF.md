@@ -46,6 +46,7 @@ Every `SECOND-ORDER.md` row with status *person*, by number, with what the perso
 - R2.136: all thirteen fish reshaped to their species from above, the side and 3/4, in `notes/shots/models/fish-v3/` (`before/` holds the same views before; side changes listed in R2.132).
 - R2.34: maples have no model; they draw as birches or tall spruces (`lake.props.maple` in `data/look.json`). A maple model, or keep it so.
 - R3.20: the fishing's look (bobber, lure, line, underwater murk, picture-in-picture, HUD meters and popups), in `notes/shots/fishing/`.
+- R3.123: the match flow's look (the HUD, popups, countdown, wreck burst, ghosted boat, postgame reveal and ranking), in `notes/shots/match-flow/`; every colour and timing is in `data/flow.json`.
 - R2.43: the boat camera's distance, height, pitch and field of view (`lake.camera` in `data/look.json`), and the lake's look in `notes/shots/world/`; the fog distance can be tried live in the Lake preview.
 
 ## Mistakes so far
