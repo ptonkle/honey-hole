@@ -464,7 +464,9 @@ impl App {
             }
             // the AI seats play by the same inputs (`ai/`)
             let mut inputs = p.ai.inputs(&p.game);
-            let mine = p.gather.take();
+            let mut mine = p.gather.take();
+            // a cast with the swivel centred goes where the camera looks
+            mine.look = p.cam_yaw;
             if p.watch {
                 // the menu still answers the person
                 inputs[p.seat].pressed.cancel |= mine.pressed.cancel;

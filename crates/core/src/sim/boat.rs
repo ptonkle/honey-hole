@@ -9,8 +9,10 @@
 //! bounce) dies away in `side_drag_ms`.
 //!
 //! **Fishing mode.** Q switches instantly and keeps the boat's momentum; the
-//! throttle is off, so it coasts to rest, and A and D swivel the casting
-//! direction (`cast_yaw`, from the bow) instead of steering.
+//! throttle is off, so it coasts to rest, and A and D swivel the cast
+//! (`swivel`) instead of steering. The cast goes the way the seat's camera
+//! looks (`SeatInput::look`) turned by the swivel, at most `swivel_limit`
+//! either side of the bow (`cast_yaw`, SECOND-ORDER R7.74).
 //!
 //! Each tick runs `steer` (heading, or the cast's swivel), then the move and
 //! its collisions (`collide`), then `throttle` (the speed for the next tick).
@@ -62,8 +64,11 @@ pub struct Boat {
     /// where the bow points
     pub heading: i32,
     pub mode: Mode,
-    /// the casting direction, from the bow (left positive)
+    /// the casting direction, from the bow (left positive): the camera's
+    /// look turned by the swivel, set each tick in fishing mode
     pub cast_yaw: i32,
+    /// A and D's turn of the cast from the camera's look (fishing mode)
+    pub swivel: i32,
     /// wrecked; comes back at the spawn on this tick
     pub wrecked_until: Option<u32>,
     /// ghosted before this tick: passes through boats, cannot wreck or be
@@ -95,6 +100,7 @@ impl Boat {
             heading,
             mode: Mode::Driving,
             cast_yaw: 0,
+            swivel: 0,
             wrecked_until: None,
             ghost_until: 0,
             stall_until: 0,
@@ -199,6 +205,14 @@ impl Boat {
             return;
         }
         let way = i.down("left") as i32 - i.down("right") as i32;
+        if self.mode == Mode::Fishing {
+            let limit = r.swivel_limit;
+            self.swivel = (self.swivel + way * r.swivel).clamp(-limit, limit);
+            // the camera's look as an angle either side of the bow
+            let look = fx::wrap(i.look);
+            self.cast_yaw = (look + self.swivel).clamp(-limit, limit);
+            return;
+        }
         if way == 0 {
             return;
         }
@@ -214,9 +228,7 @@ impl Boat {
                 }
                 self.heading = crate::map::trig::wrap(self.heading + way * rate);
             }
-            Mode::Fishing => {
-                self.cast_yaw = (self.cast_yaw + way * r.swivel).clamp(-r.swivel_limit, r.swivel_limit);
-            }
+            Mode::Fishing => {}
         }
     }
 

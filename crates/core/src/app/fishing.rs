@@ -52,6 +52,8 @@ pub struct FishingLook {
     pub fish_float_pct: i32,
     /// the aim marker (`aim.rs`)
     pub aim: aim::AimLook,
+    /// the boat camera looks this much further down in fishing mode
+    pub camera_tilt_deg: i32,
     pub bobber_scale_pct: i32,
     pub lure_scale_pct: i32,
     /// the line's width drawn from the boat camera and under the water
