@@ -918,7 +918,6 @@ impl Match {
         if let Some(b) = self.boats[seat].as_mut() {
             b.wreck(respawn);
         }
-        self.wreck_drops_fish(seat);
         self.items_wrecked(seat);
         if let WreckCause::Rammed { .. } = cause {
             // a rammed-off fish swims `balance.rammed_swim_mm` off
