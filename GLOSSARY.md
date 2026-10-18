@@ -20,6 +20,12 @@ Where slush comes out. Each line has up to {line.spouts} spouts.
 Not: tap, dispenser, nozzle
 -->
 
+### Animation
+
+A model's movement, played in a loop: a fish's idle swim and panic swim, the angler's driving and fishing poses, a plant's sway. Still shows the model at rest.
+
+Not: clip, motion, tween
+
 ### Angler
 
 The figure each player plays: it sits on the boat's back bench to drive and stands at the bow to fish. Its shirt and hat band wear the player's colour.
@@ -49,6 +55,11 @@ Not: keybindings, hotkeys, bindings
 The angler's computer, strapped to the left forearm. Raised to the face, its screen fills most of the view and shows the game's tabs, with the lake still in sight round its edge.
 
 Not: Pip-Boy, pipboy, fishboy, PDA
+### Gallery
+
+The screen, opened from the Title, that shows each model turning on a plain floor, in its animations and in each player colour.
+
+Not: showcase, viewer, model viewer
 
 ### Item buoy
 
@@ -62,6 +73,12 @@ A version whose last number is not zero. It holds fixes only, and What's New lis
 
 Not: hotfix, point release
 
+### Model
+
+One fish, boat, figure, item or piece of scenery, kept as its own file of flat-coloured faces.
+
+Not: mesh, asset, sprite
+
 ### Pause menu
 
 The menu over Play that Esc opens and closes. It offers Resume and Quit to Title.
@@ -73,6 +90,12 @@ Not: freeze, halt
 The screen where the game runs. It is a stand-in until the game is designed.
 
 Not: level, stage, round
+
+### Player colour
+
+The colour a player's lobby slot gives them: blue, red, green or yellow. It marks their boat and their name, and the name is always shown with it.
+
+Not: team colour
 
 ### Settings
 

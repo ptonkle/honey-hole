@@ -446,5 +446,173 @@
     "find": "[94, 61, 3]",
     "replace": "[94, 66, 3]",
     "test": "nothing_covers_the_screen_and_the_bezel_frames_it_at_nine_eighths"
+  },
+  {
+    "name": "a model file in another unit is refused",
+    "file": "crates/core/src/model.rs",
+    "find": "if f.unit != UNIT {",
+    "replace": "if f.unit.is_empty() {",
+    "test": "a_file_in_another_unit_or_kind_or_with_no_name_is_refused"
+  },
+  {
+    "name": "a model colour outside 0-255 is refused",
+    "file": "crates/core/src/model.rs",
+    "find": "                if c.iter().any(|v| !(0..=255).contains(v)) {\n                    return Err(format!(\"the colour",
+    "replace": "                if c.iter().any(|v| *v > 256) {\n                    return Err(format!(\"the colour",
+    "test": "a_bad_colour_is_refused_by_name"
+  },
+  {
+    "name": "a slot shade past 200 is refused",
+    "file": "crates/core/src/model.rs",
+    "find": "if !(0..=200).contains(shade) {",
+    "replace": "if *shade < 0 {",
+    "test": "a_bad_colour_is_refused_by_name"
+  },
+  {
+    "name": "a face with fewer than 3 corners is refused",
+    "file": "crates/core/src/model.rs",
+    "find": "if face.v.len() < 3 {",
+    "replace": "if face.v.len() < 2 {",
+    "test": "a_bad_face_is_refused_by_number"
+  },
+  {
+    "name": "a face naming a vertex twice is refused",
+    "file": "crates/core/src/model.rs",
+    "find": "if face.v[..i].contains(&v) {",
+    "replace": "if false {",
+    "test": "a_bad_face_is_refused_by_number"
+  },
+  {
+    "name": "a vertex in no face is refused",
+    "file": "crates/core/src/model.rs",
+    "find": "if let Some(v) = used.iter().position(|u| !u) {",
+    "replace": "if let Some(v) = used.iter().position(|_| false) {",
+    "test": "a_bad_face_is_refused_by_number"
+  },
+  {
+    "name": "a colour on no face is refused",
+    "file": "crates/core/src/model.rs",
+    "find": "if let Some(c) = painted.iter().position(|p| !p) {",
+    "replace": "if let Some(c) = painted.iter().position(|_| false) {",
+    "test": "a_bad_colour_is_refused_by_name"
+  },
+  {
+    "name": "a fish needs its swims",
+    "file": "crates/core/src/model.rs",
+    "find": "Kind::Fish => &[Anim::Idle, Anim::Panic],",
+    "replace": "Kind::Fish => &[Anim::Idle],",
+    "test": "a_fish_needs_its_swims_and_a_figure_its_poses"
+  },
+  {
+    "name": "a figure needs its poses",
+    "file": "crates/core/src/model.rs",
+    "find": "Kind::Figure => &[Anim::Drive, Anim::Fish],",
+    "replace": "Kind::Figure => &[],",
+    "test": "a_fish_needs_its_swims_and_a_figure_its_poses"
+  },
+  {
+    "name": "keys ease in and out",
+    "file": "crates/core/src/model.rs",
+    "find": "3 * t2 - 2 * fx::mul(t2, t)",
+    "replace": "t",
+    "test": "a_part_turns_about_its_pivot_easing_between_keys"
+  },
+  {
+    "name": "a linear animation plays straight",
+    "file": "crates/core/src/model.rs",
+    "find": "let s = if a.smooth { ease(s) } else { s };",
+    "replace": "let s = ease(s);",
+    "test": "a_part_turns_about_its_pivot_easing_between_keys"
+  },
+  {
+    "name": "a child part moves with its parent",
+    "file": "crates/core/src/model.rs",
+    "find": "Some(p) => out[p].then(&local),",
+    "replace": "Some(_) => local,",
+    "test": "a_child_moves_with_its_parent_and_scale_zero_hides_it"
+  },
+  {
+    "name": "the player slot takes its shade",
+    "file": "crates/core/src/model.rs",
+    "find": "Paint::Slot(_, shade) => player.map(|v| (v * shade / 100).clamp(0, ONE)),",
+    "replace": "Paint::Slot(_, _) => player,",
+    "test": "the_player_slot_takes_the_players_colour_at_its_shade"
+  },
+  {
+    "name": "models come in gallery order",
+    "file": "crates/core/src/model.rs",
+    "find": "models.sort_by_key(|m| (m.kind, m.length_mm(), m.id.clone()));",
+    "replace": "models.sort_by_key(|m| m.id.clone());",
+    "test": "models_come_in_gallery_order"
+  },
+  {
+    "name": "the turntable stops where it is",
+    "file": "crates/core/src/app/gallery.rs",
+    "find": "        if !g.turning {\n            return g.yaw;",
+    "replace": "        if false {\n            return g.yaw;",
+    "test": "the_turntable_turns_once_a_cycle_and_stops_where_it_is"
+  },
+  {
+    "name": "all four colours draw four copies",
+    "file": "crates/core/src/app/gallery.rs",
+    "find": "None => (0..PLAYER_COLOURS.len()).collect(),",
+    "replace": "None => vec![0],",
+    "test": "the_colour_choice_shows_for_a_slot_and_all_four_draws_four"
+  },
+  {
+    "name": "the colour choice shows only for a slot",
+    "file": "crates/core/src/app/gallery.rs",
+    "find": "if self.shows_colour() {",
+    "replace": "if true {",
+    "test": "the_colour_choice_shows_for_a_slot_and_all_four_draws_four"
+  },
+  {
+    "name": "a figure carries no rider",
+    "file": "crates/core/src/app/gallery.rs",
+    "find": "if m.kind != Kind::Figure && m.anchor(a.anim.key()).is_some() {",
+    "replace": "if m.anchor(a.anim.key()).is_some() {",
+    "test": "each_model_shows_its_own_animations_and_a_boat_its_rider"
+  },
+  {
+    "name": "a prop shows its height",
+    "file": "crates/core/src/app/gallery.rs",
+    "find": "Kind::Figure | Kind::Prop => (\"gallery.tall\", m.height_mm()),",
+    "replace": "Kind::Figure => (\"gallery.tall\", m.height_mm()),",
+    "test": "lengths_show_in_feet_to_two_places"
+  },
+  {
+    "name": "feet round to the nearest hundredth",
+    "file": "crates/core/src/app/gallery.rs",
+    "find": "(mm as i64 * 1000 + 1524) / 3048",
+    "replace": "(mm as i64 * 1000) / 3048",
+    "test": "lengths_show_in_feet_to_two_places"
+  },
+  {
+    "name": "a turn of no seconds is refused",
+    "file": "crates/core/src/app/gallery.rs",
+    "find": "if look.gallery.turn_seconds <= 0 {",
+    "replace": "if look.gallery.turn_seconds < 0 {",
+    "test": "a_bad_look_file_is_refused_by_name"
+  },
+  {
+    "name": "the view from above looks down",
+    "file": "crates/core/src/app/gallery.rs",
+    "find": "\"above\" => true,",
+    "replace": "\"above\" => false,",
+    "test": "the_view_from_above_looks_nearly_straight_down"
+  },
+  {
+    "name": "the clock only goes forward",
+    "file": "crates/core/src/app.rs",
+    "find": "self.clock = self.clock.max(now);",
+    "replace": "self.clock = now;",
+    "test": "the_turntable_turns_once_a_cycle_and_stops_where_it_is"
+  },
+  {
+    "name": "the drawing buffer is never empty",
+    "file": "crates/core/src/gfx/render.rs",
+    "find": "[(css_w * dpr_pct / 100).max(1), (css_h * dpr_pct / 100).max(1)]",
+    "replace": "[css_w * dpr_pct / 100, css_h * dpr_pct / 100]",
+    "test": "the_buffer_is_the_css_size_at_the_pixel_ratio_and_never_empty"
   }
 ]

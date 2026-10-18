@@ -45,6 +45,8 @@ fn models() -> Value {
     fish["animations"] = anims(&["idle", "panic"]);
     let mut angler = tri("figure", "Angler", true);
     angler["animations"] = anims(&["drive", "fish"]);
+    // an anchor of its own, which a figure never uses to carry a rider
+    angler["anchors"] = json!({ "drive": { "part": "p", "at": [0, 0, 0] } });
     let mut boat = tri("boat", "Boat", true);
     boat["anchors"] =
         json!({ "drive": { "part": "p", "at": [0, 0, 0] }, "fish": { "part": "p", "at": [0, 0, 500] } });
@@ -188,6 +190,7 @@ fn the_colour_choice_shows_for_a_slot_and_all_four_draws_four() {
             "gallery.model",
             "gallery.show",
             "gallery.colour",
+            "gallery.view",
             "gallery.turn",
             "menu.back"
         ]
@@ -231,6 +234,33 @@ fn the_turntable_turns_once_a_cycle_and_stops_where_it_is() {
     // the clock does not go back
     a.advance(1);
     assert_eq!(a.clock, 15_000_000);
+}
+
+#[test]
+fn the_view_from_above_looks_nearly_straight_down() {
+    let mut a = app();
+    let centre = a.models[a.gallery.model].ball().0;
+    // the eye's height over the model's middle, and how far off to the side
+    let eye = |a: &App| {
+        let v = a.frame().0;
+        let e = v3(v[16], v[17], v[18]).sub(centre);
+        (e.y, v3(e.x, 0, e.z).len())
+    };
+    a.act("gallery.view", "above").unwrap();
+    // 88° down: up 28.6 for every 1 across (tan 88°)
+    let (up, across) = eye(&a);
+    assert!(up > across * 28 && up < across * 29, "{up} {across}");
+    a.act("gallery.view", "model").unwrap();
+    // the perch's own 10°: up 0.176 for every 1 across (tan 10°)
+    let (up, across) = eye(&a);
+    assert!(
+        up * 1000 > across * 170 && up * 1000 < across * 183,
+        "{up} {across}"
+    );
+    assert_eq!(
+        a.act("gallery.view", "below"),
+        Err("There is no view \"below\".".into())
+    );
 }
 
 #[test]
