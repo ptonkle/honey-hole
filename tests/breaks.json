@@ -3117,8 +3117,8 @@
   {
     "name": "online: the lobby offers the room code to copy",
     "file": "crates/core/src/app/online_play.rs",
-    "find": "let mut items = self.room_items();",
-    "replace": "let mut items: Vec<Item> = Vec::new();",
+    "find": "let mut items = self.room_items();\n        items.push(self.name_field());",
+    "replace": "let mut items: Vec<Item> = Vec::new();\n        items.push(self.name_field());",
     "test": "the_lobby_offers_the_room_code_and_its_link_to_copy"
   },
   {
@@ -3134,5 +3134,47 @@
     "find": "self.online_act(\"online.join\", \"\")?;",
     "replace": "",
     "test": "opening_a_room_link_joins_that_room"
+  },
+  {
+    "name": "online: an AI seat keeps no ping a player left (T11)",
+    "file": "crates/core/src/online/session.rs",
+    "find": "            if !matches!(s.who, Who::Player) {\n                s.ping_ms = None;\n            }",
+    "replace": "",
+    "test": "a_seat_a_player_left_shows_no_ping_once_an_ai_player_has_it"
+  },
+  {
+    "name": "online: after a rematch a joiner stays Ready",
+    "file": "crates/core/src/online/session.rs",
+    "find": "                self.want_ready = true;",
+    "replace": "                self.want_ready = false;",
+    "test": "the_hosts_rematch_takes_everyone_back_to_the_lobby_for_the_next_match"
+  },
+  {
+    "name": "online: a joiner waits with the room alone",
+    "file": "crates/core/src/app/online_play.rs",
+    "find": "if !s.is_host() && s.seat().is_none() {",
+    "replace": "if false {",
+    "test": "a_joiner_waits_with_the_room_alone_and_names_itself_in_the_lobby"
+  },
+  {
+    "name": "online: the name is in the Lobby",
+    "file": "crates/core/src/app/online_play.rs",
+    "find": "        items.push(self.name_field());\n",
+    "replace": "",
+    "test": "a_joiner_waits_with_the_room_alone_and_names_itself_in_the_lobby"
+  },
+  {
+    "name": "online: a joiner's address keeps its room",
+    "file": "crates/core/src/app/online_play.rs",
+    "find": "                format!(\"#room={}\", self.online.room)",
+    "replace": "                String::new()",
+    "test": "a_joiner_waits_with_the_room_alone_and_names_itself_in_the_lobby"
+  },
+  {
+    "name": "online: an ended lobby goes back to the Online screen",
+    "file": "crates/core/src/app/online_play.rs",
+    "find": "        self.lobby_ended();\n",
+    "replace": "",
+    "test": "a_lobby_the_host_leaves_goes_back_to_the_online_screen_and_says_so"
   }
 ]

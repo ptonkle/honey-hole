@@ -348,6 +348,11 @@ impl Session {
                 s.who = Who::Open;
                 s.name.clear();
             }
+            // an open or AI seat has no ping, even one a player left
+            // (TRIAGE T11)
+            if !matches!(s.who, Who::Player) {
+                s.ping_ms = None;
+            }
         }
         for s in self.roster.seats.iter_mut() {
             if s.who == Who::Open && k < setup.ai {
@@ -752,7 +757,7 @@ impl Session {
             Msg::Lobby => {
                 self.reset_match();
                 self.status = Status::Lobby;
-                self.want_ready = false;
+                self.want_ready = true;
                 self.gone.clear();
                 self.back = true;
             }
@@ -783,7 +788,10 @@ impl Session {
                     .filter_map(|p| p.seat.map(|s| (s, p.rtt_ms)))
                     .collect();
                 for (s, rtt) in rtts {
-                    self.roster.seats[s].ping_ms = rtt;
+                    let seat = &mut self.roster.seats[s];
+                    if seat.who == Who::Player {
+                        seat.ping_ms = rtt;
+                    }
                 }
             } else if let Some(h) = self.host_peer.clone() {
                 self.send(&h, &ping);
@@ -1048,8 +1056,9 @@ impl Session {
     }
 
     /// The host's Rematch: everyone back to the Lobby, with the same seats
-    /// (a player who left mid-match leaves an open seat); the joiners mark
-    /// themselves Ready again, and the host starts the next match.
+    /// (a player who left mid-match leaves an open seat); the players of
+    /// the last match start Ready (Ape Race's T56) and may take it back,
+    /// and the host starts the next match.
     pub fn back_to_lobby(&mut self) {
         if !self.host || self.start.is_none() {
             return;
@@ -1063,7 +1072,7 @@ impl Session {
         }
         for s in self.roster.seats.iter_mut() {
             if s.who == Who::Player {
-                s.ready = false;
+                s.ready = true;
             }
         }
         self.fill_ai();

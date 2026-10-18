@@ -621,15 +621,12 @@ async function main() {
   // `?codes`: the pasted-code path to online play, for the automated
   // online check (scripts/check-online.sh); players use room codes
   if (new URLSearchParams(location.search).has("codes")) send("flag.codes", "on");
-  startNet(game, draw);
   // room links: the page's own address, and the room to join when opened
-  // from one (`#room=CODE`, cleared from the address bar once read)
+  // from one (`#room=CODE`; the core puts it back while the room lasts)
   send("flag.page_url", location.origin + location.pathname);
   const linked = new URLSearchParams(location.hash.slice(1)).get("room");
-  if (linked) {
-    history.replaceState(null, "", location.pathname + location.search);
-    send("flag.room_link", linked);
-  }
+  if (linked) send("flag.room_link", linked);
+  startNet(game, draw);
   renderer = makeRenderer(el("scene"), JSON.parse(game.numbers()), shaders);
   if (!renderer) send("scene.unavailable", "");
   // the Title's backdrop draws before any action: its canvas's size now
