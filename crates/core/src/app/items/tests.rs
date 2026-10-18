@@ -35,6 +35,8 @@ fn the_debug_flag_puts_a_buoy_ahead_and_driving_onto_it_fills_the_slot() {
     let g = &a.play.as_ref().unwrap().game;
     let b = g.items.buoy.expect("a buoy ahead");
     let me = g.boat(0).unwrap();
+    let along = ahead(me.at(), me.heading, 40_000);
+    assert!(b.dist(along) <= 100, "straight ahead: {b:?} {along:?}");
     let d = b.dist(me.at());
     assert!((39_900..=40_000).contains(&d), "40 m ahead, less rounding: {d}");
     assert!(has(&a, "buoy=1") && has(&a, "item=none"));

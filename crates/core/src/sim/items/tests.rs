@@ -383,6 +383,8 @@ fn a_teleport_lands_in_open_water_after_its_five_second_charge() {
     assert!(m.map.cells[i].water() && m.map.shore[i] >= 6000, "{to:?}");
     idle(&mut m, 249);
     assert_ne!(m.boat(0).unwrap().at(), to);
+    // still moving as it goes
+    m.boats[0].as_mut().unwrap().set_vel([3000, 0]);
     assert!(
         m.boat(0).unwrap().at().dist(start) > 0,
         "it can still move while charging"

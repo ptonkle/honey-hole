@@ -1916,5 +1916,208 @@
     "find": "                    self.button(\"menu.minigames\"),\n",
     "replace": "",
     "test": "the_app_opens_on_the_title_with_its_menu"
+  },
+  {
+    "name": "items: the warning comes 5 s before the buoy",
+    "file": "crates/core/src/sim/items/mod.rs",
+    "find": "if tick == it.warn_tick() {",
+    "replace": "if tick == it.warn_tick() + 1 {",
+    "test": "the_buoy_spawns_at_the_interval_after_its_warning_and_five_beats"
+  },
+  {
+    "name": "items: the beats are a second apart, the last as it spawns",
+    "file": "crates/core/src/sim/items/mod.rs",
+    "find": ".saturating_sub(ticks((left - 1).max(0) * self.tuning.beat_ms))",
+    "replace": ".saturating_sub(ticks(left * self.tuning.beat_ms))",
+    "test": "the_buoy_spawns_at_the_interval_after_its_warning_and_five_beats"
+  },
+  {
+    "name": "items: the buoy is fair to where the boats are",
+    "file": "crates/core/src/sim/items/mod.rs",
+    "find": "Some(if b.wrecked() { self.spawn_slot(s).0 } else { b.at() })",
+    "replace": "Some(self.spawn_slot(s).0)",
+    "test": "the_buoy_lies_a_fair_trip_from_every_player"
+  },
+  {
+    "name": "items: a new pickup replaces the held item",
+    "file": "crates/core/src/sim/items/mod.rs",
+    "find": "let dropped = self.items.seats[seat].held.replace(item);",
+    "replace": "let dropped = *self.items.seats[seat].held.get_or_insert(item);",
+    "test": "driving_through_the_buoy_gives_an_item_and_a_new_one_replaces_it"
+  },
+  {
+    "name": "items: the pickup radius",
+    "file": "crates/core/src/sim/items/claims.rs",
+    "find": ".filter(|&(d2, _)| d2 <= r2)",
+    "replace": ".filter(|&(d2, _)| d2 <= r2 * 2)",
+    "test": "driving_through_the_buoy_gives_an_item_and_a_new_one_replaces_it"
+  },
+  {
+    "name": "items: the nearest boat takes the buoy, the lower seat on a tie",
+    "file": "crates/core/src/sim/items/claims.rs",
+    "find": "        .min()\n        .map(|(_, seat)| seat)",
+    "replace": "        .max()\n        .map(|(_, seat)| seat)",
+    "test": "the_pickup_claim_goes_to_the_nearest_boat_and_the_lower_seat_on_a_tie"
+  },
+  {
+    "name": "items: the draw follows the weights",
+    "file": "crates/core/src/sim/items/claims.rs",
+    "find": "        if r < w {",
+    "replace": "        if r <= w {",
+    "test": "items_are_drawn_by_their_weights"
+  },
+  {
+    "name": "items: Esc quits the minigame and wastes the item",
+    "file": "crates/core/src/sim/items/mod.rs",
+    "find": "        if s.playing.is_some() || s.choosing {\n            self.waste_item(seat);",
+    "replace": "        if s.choosing {\n            self.waste_item(seat);",
+    "test": "shift_starts_the_minigame_the_boat_coasts_and_esc_wastes_the_item"
+  },
+  {
+    "name": "items: the boat coasts while a minigame plays",
+    "file": "crates/core/src/sim/items/mod.rs",
+    "find": "        let up = self.seats[seat].fishboy || self.items.seats[seat].captures();",
+    "replace": "        let up = self.seats[seat].fishboy;",
+    "test": "shift_starts_the_minigame_the_boat_coasts_and_esc_wastes_the_item"
+  },
+  {
+    "name": "items: Tab cannot put the Fish-Boy down under a minigame",
+    "file": "crates/core/src/sim/mod.rs",
+    "find": "            if i.pressed.fishboy && self.boats[seat].is_some() && !held {",
+    "replace": "            if i.pressed.fishboy && self.boats[seat].is_some() {",
+    "test": "a_fishboy_minigame_raises_the_fishboy_and_tab_cannot_lower_it"
+  },
+  {
+    "name": "items: the cloak lasts its minute",
+    "file": "crates/core/src/sim/items/mod.rs",
+    "find": "self.items.seats[seat].cloak_until = tick + ticks(t.cloak_ms);",
+    "replace": "self.items.seats[seat].cloak_until = tick + ticks(t.cloak_ms) + 1;",
+    "test": "the_cloak_lasts_a_minute_and_wipes_its_blip"
+  },
+  {
+    "name": "items: the cloak wipes the old blip",
+    "file": "crates/core/src/sim/items/mod.rs",
+    "find": "                *blip = None;",
+    "replace": "                let _ = blip;",
+    "test": "the_cloak_lasts_a_minute_and_wipes_its_blip"
+  },
+  {
+    "name": "items: a cloaked boat is cloaked on the radar",
+    "file": "crates/core/src/sim/mod.rs",
+    "find": "cloaked: self.items.cloaked(b.seat, self.tick),",
+    "replace": "cloaked: false,",
+    "test": "a_cloaked_seat_does_not_show_on_another_seats_ping"
+  },
+  {
+    "name": "items: the Power Reel sets the reel's power",
+    "file": "crates/core/src/sim/items/mod.rs",
+    "find": "self.fishing.reel_power_pct[seat] = t.power_reel_pct;",
+    "replace": "self.fishing.reel_power_pct[seat] = 150;",
+    "test": "the_power_reel_doubles_the_reel_for_twenty_seconds"
+  },
+  {
+    "name": "items: the Power Reel ends after 20 s",
+    "file": "crates/core/src/sim/items/mod.rs",
+    "find": "Item::PowerReel => self.fishing.reel_power_pct[seat] = 100,",
+    "replace": "Item::PowerReel => {}",
+    "test": "the_power_reel_doubles_the_reel_for_twenty_seconds"
+  },
+  {
+    "name": "items: nitrous lasts 15 s",
+    "file": "crates/core/src/sim/items/mod.rs",
+    "find": "self.items.seats[seat].nitrous_until = tick + ticks(t.nitrous_ms);",
+    "replace": "self.items.seats[seat].nitrous_until = tick + ticks(t.nitrous_ms) + 1;",
+    "test": "nitrous_lasts_fifteen_seconds_and_raises_top_speed_to_150_percent"
+  },
+  {
+    "name": "items: a ram is judged on the plain top speed, nitrous or not",
+    "file": "crates/core/src/sim/collide.rs",
+    "find": "let (a_rams, b_rams) = (a_toward >= r.ram_wreck, b_toward >= r.ram_wreck);",
+    "replace": "let (a_rams, b_rams) = (a_toward >= r.ram_wreck * r.nitrous_top_pct / 100, b_toward >= r.ram_wreck);",
+    "test": "nitrous_does_not_change_the_ram_threshold"
+  },
+  {
+    "name": "items: the teleport charges 5 s",
+    "file": "crates/core/src/sim/items/mod.rs",
+    "find": "until: tick + ticks(self.items.tuning.teleport_charge_ms).max(1),",
+    "replace": "until: tick + 1,",
+    "test": "a_teleport_lands_in_open_water_after_its_five_second_charge"
+  },
+  {
+    "name": "items: a teleport lands clear of land",
+    "file": "crates/core/src/sim/items/claims.rs",
+    "find": "let open = |i: usize| map.cells[i].water() && map.shore[i] >= clear_mm;",
+    "replace": "let open = |i: usize| map.cells[i].water();",
+    "test": "a_click_on_land_snaps_to_the_nearest_open_water"
+  },
+  {
+    "name": "items: a teleport arrives at rest",
+    "file": "crates/core/src/sim/items/mod.rs",
+    "find": "                    b.set_vel([0, 0]);\n",
+    "replace": "",
+    "test": "a_teleport_lands_in_open_water_after_its_five_second_charge"
+  },
+  {
+    "name": "items: the camera is offered only with one held",
+    "file": "crates/core/src/sim/items/mod.rs",
+    "find": "if s.held == Some(Item::Camera) && s.playing.is_none() && !s.choosing {",
+    "replace": "if s.playing.is_none() && !s.choosing {",
+    "test": "the_camera_is_offered_after_a_catch_only_with_one_held"
+  },
+  {
+    "name": "items: the camera's offer times out and keeps it",
+    "file": "crates/core/src/sim/items/mod.rs",
+    "find": "            } else if tick >= until {",
+    "replace": "            } else if tick > until + 1 {",
+    "test": "the_camera_offer_times_out_and_keeps_the_camera"
+  },
+  {
+    "name": "items: Enhanced Radar marks the nearest of each tier",
+    "file": "crates/core/src/sim/items/claims.rs",
+    "find": "                .min_by_key(|(k, f)| (f.at.dist2(from), *k))",
+    "replace": "                .max_by_key(|(k, f)| (f.at.dist2(from), *k))",
+    "test": "enhanced_radar_pings_and_marks_the_nearest_fish_of_each_tier"
+  },
+  {
+    "name": "items: the next ping clears the marks",
+    "file": "crates/core/src/sim/items/mod.rs",
+    "find": "            self.items.seats[seat].marks.clear();",
+    "replace": "            let _ = seat;",
+    "test": "enhanced_radar_pings_and_marks_the_nearest_fish_of_each_tier"
+  },
+  {
+    "name": "items: a wreck loses the teleport's charge",
+    "file": "crates/core/src/sim/items/mod.rs",
+    "find": "        if s.charge.take().is_some() {",
+    "replace": "        if s.charge.is_some() {",
+    "test": "a_wreck_loses_the_teleports_charge"
+  },
+  {
+    "name": "items: only your own cloaked boat is tinted",
+    "file": "crates/core/src/app/items.rs",
+    "find": "Some(l) if b.cloaked && b.seat == me => {",
+    "replace": "Some(l) if b.cloaked => {",
+    "test": "your_own_cloaked_boat_is_tinted_and_others_are_not"
+  },
+  {
+    "name": "items: a minigame's pointer is in its own canvas",
+    "file": "crates/core/src/fishboy/mod.rs",
+    "find": "let t = self.items_pointer_transform().or_else(|| self.screen_transform());",
+    "replace": "let t = self.screen_transform();",
+    "test": "a_full_screen_minigame_takes_the_pointer_and_esc_loses_the_item"
+  },
+  {
+    "name": "items: the debug buoy lies ahead",
+    "file": "crates/core/src/app/items.rs",
+    "find": "            .map(|&d| ahead(from, heading, d))",
+    "replace": "            .map(|&d| ahead(from, heading + 9000, d))",
+    "test": "the_debug_flag_puts_a_buoy_ahead_and_driving_onto_it_fills_the_slot"
+  },
+  {
+    "name": "items: a radar click picks the teleport's place",
+    "file": "crates/core/src/sim/items/mod.rs",
+    "find": "            if i.pressed.click {\n                self.choose_teleport(seat, i.pointer);",
+    "replace": "            if i.pressed.click {\n                self.choose_teleport(seat, None);",
+    "test": "a_click_on_the_radar_picks_the_teleports_destination"
   }
 ]
