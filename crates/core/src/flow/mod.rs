@@ -75,6 +75,10 @@ pub struct Postgame {
     pub started_us: i64,
     /// the ms into the reveal already heard (tally ticks, the fanfare)
     pub heard_ms: i64,
+    /// once ranked: the ranking card put away to show every player's
+    /// catches and total (the person, 2026-10-18: "there is still an
+    /// option to close that popup and see what summed up to that total")
+    pub breakdown: bool,
 }
 
 impl Postgame {
@@ -131,6 +135,8 @@ impl App {
         match name {
             "data.flow" => self.flow.look = Some(FlowLook::parse(value)?),
             "postgame.skip" => self.skip_reveal(),
+            "postgame.catches" => self.show_breakdown(true),
+            "postgame.ranking" => self.show_breakdown(false),
             // online, the host's Rematch goes back to the Lobby (`app/online_play.rs`)
             "postgame.rematch" if self.online_rematch().is_some() => {}
             "postgame.rematch" => self.rematch()?,
@@ -293,6 +299,7 @@ impl App {
             reveal,
             started_us: self.clock,
             heard_ms: -1,
+            breakdown: false,
         });
         self.flow.popups = Popups::default();
         self.go(Screen::Postgame);
@@ -334,6 +341,20 @@ impl App {
                 pg.heard_ms = pg.reveal.rank_ms - 1;
             }
         }
+    }
+
+    /// Once ranked: the catches behind the ranking (`true`), or the
+    /// ranking again. Before the ranking it does nothing.
+    pub(crate) fn show_breakdown(&mut self, on: bool) {
+        let ranked = self.postgame_ranked();
+        if let Some(pg) = self.flow.postgame.as_mut().filter(|_| ranked) {
+            pg.breakdown = on;
+        }
+    }
+
+    /// Whether the catches behind the ranking are showing.
+    pub fn postgame_breakdown(&self) -> bool {
+        self.postgame_ranked() && self.flow.postgame.as_ref().is_some_and(|pg| pg.breakdown)
     }
 
     /// Whether the reveal has reached the ranking.

@@ -55,13 +55,14 @@ fn the_gallery_leads_to_sounds_which_lists_every_cue_then_back() {
     a.act("menu.sounds", "").unwrap();
     assert_eq!(a.screen, Screen::Sounds);
     let ids = ids(&a);
-    // the five cues in file order; the alias is not a sound of its own
+    // the six cues in file order; the alias is not a sound of its own
     assert_eq!(
-        ids[..5],
+        ids[..6],
         [
             "sounds.play.click",
             "sounds.play.beep",
             "sounds.play.hum",
+            "sounds.play.line_drag",
             "sounds.play.catch_common",
             "sounds.play.catch_legendary"
         ]
@@ -165,8 +166,13 @@ fn your_motor_and_the_line_play_at_their_sliders() {
     assert_eq!(v[0]["key"], "own");
     assert_eq!(v[0]["layers"][0]["freq"], j("300.0"));
     assert_eq!(v[0]["layers"][0]["gain"], j("0.3"));
-    // the line at 0.75: halfway from its start, gain 0.2, pitch 1.5
-    assert_eq!(v[1]["key"], "tension");
-    assert_eq!(v[1]["layers"][0]["freq"], j("1500.0"));
-    assert_eq!(v[1]["layers"][0]["gain"], j("0.1"));
+    // the line is no loop: it ticks, at 0.75 halfway from its start, 12 a
+    // second (4 to 20)
+    assert_eq!(v.len(), 1);
+    let mut drag = 0;
+    for _ in 0..50 {
+        a.advance(a.clock + 20_000);
+        drag += played(&mut a).iter().filter(|id| *id == "line_drag").count();
+    }
+    assert_eq!(drag, 12);
 }

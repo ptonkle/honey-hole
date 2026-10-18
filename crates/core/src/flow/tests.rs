@@ -358,12 +358,70 @@ fn the_end_holds_then_opens_the_postgame_with_its_buttons() {
     assert!(a.ui().scene && a.ui().live && !a.ui().capture);
     a.act("postgame.skip", "").unwrap();
     assert!(a.postgame_ranked());
-    assert_eq!(ids(&a), ["postgame.rematch", "postgame.title"]);
+    assert_eq!(
+        ids(&a),
+        ["postgame.catches", "postgame.rematch", "postgame.title"]
+    );
     let b = a.build_ui2d();
     assert!(b.list.status.contains("postgame=ranking"), "{}", b.list.status);
     a.act("postgame.title", "").unwrap();
     assert_eq!(a.screen, Screen::Title);
     assert!(a.play.is_none());
+}
+
+#[test]
+fn the_ranking_closes_to_show_every_catch_and_total_then_comes_back() {
+    let mut a = match_app();
+    a.act("debug.catches", "").unwrap();
+    to_postgame(&mut a);
+    let status = |a: &App| a.build_ui2d().list.status;
+    // before the ranking, Catches does nothing
+    a.act("postgame.catches", "").unwrap();
+    assert!(!a.postgame_breakdown());
+    a.act("postgame.skip", "").unwrap();
+    let ranked = status(&a);
+    assert!(
+        ranked.contains("postgame=ranking") && ranked.contains("places="),
+        "{ranked}"
+    );
+    let ids = |a: &App| -> Vec<String> {
+        a.ui().panels[0]
+            .items
+            .iter()
+            .map(|i| {
+                serde_json::to_value(i).unwrap()["id"]
+                    .as_str()
+                    .unwrap_or("")
+                    .to_string()
+            })
+            .collect()
+    };
+    // the button puts the ranking card away: every card up, each total
+    a.act("postgame.catches", "").unwrap();
+    let s = status(&a);
+    assert!(s.contains("postgame=catches") && !s.contains("places="), "{s}");
+    let pg = a.flow.postgame.as_ref().unwrap();
+    let cards: Vec<String> = pg
+        .reveal
+        .columns
+        .iter()
+        .map(|c| c.catches.len().to_string())
+        .collect();
+    let totals: Vec<String> = pg.reveal.columns.iter().map(|c| c.total().to_string()).collect();
+    assert!(s.contains(&format!("cards={}", cards.join(","))), "{s}");
+    assert!(s.contains(&format!("totals={}", totals.join(","))), "{s}");
+    assert_eq!(
+        ids(&a),
+        ["postgame.ranking", "postgame.rematch", "postgame.title"]
+    );
+    // Esc and Space swap back and forth; neither leaves
+    a.act("key", "Escape").unwrap();
+    assert!(status(&a).contains("postgame=ranking"));
+    a.act("key", "Space").unwrap();
+    assert!(status(&a).contains("postgame=catches"));
+    a.act("postgame.ranking", "").unwrap();
+    assert!(status(&a).contains("postgame=ranking"));
+    assert_eq!(a.screen, Screen::Postgame);
 }
 
 #[test]

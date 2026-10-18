@@ -233,6 +233,83 @@ fn no_text_uses_a_phrase_the_tone_file_rules_out() {
     assert!(problems.is_empty(), "tone:\n{}", problems.join("\n"));
 }
 
+// ---- KISS (TONE.md "Project decisions"): short calls, no controls ----
+
+/// The longest a popup may be, and a minigame's call, in characters as
+/// written (placeholders counted as written). The person, 2026-10-18:
+/// "Keep it simple, stupid - KISS".
+const POPUP_MAX: usize = 40;
+const CALL_MAX: usize = 24;
+/// The fishing line's words, HUD words and the radar ping's status.
+const LABEL_MAX: usize = 20;
+
+/// (key, text) of data/strings.json.
+fn strings_json() -> Vec<(String, String)> {
+    let v: serde_json::Value = serde_json::from_str(&read("data/strings.json")).expect("strings.json");
+    v.as_object()
+        .expect("an object")
+        .iter()
+        .filter(|(k, _)| !k.starts_with('_'))
+        .map(|(k, t)| (k.clone(), t.as_str().unwrap_or_default().to_string()))
+        .collect()
+}
+
+/// A minigame's call: `minigame.<kind>`, not its sub-labels (`minigame.nitrous.n`).
+fn is_call(key: &str) -> bool {
+    key.strip_prefix("minigame.").is_some_and(|k| !k.contains('.'))
+}
+
+#[test]
+fn popups_minigame_calls_and_hud_words_stay_short() {
+    let mut problems = Vec::new();
+    for (key, text) in strings_json() {
+        let n = text.chars().count();
+        let max = if key.starts_with("popup.") {
+            POPUP_MAX
+        } else if is_call(&key) {
+            CALL_MAX
+        } else if key.starts_with("fishing.") || key.starts_with("hud.") || key.starts_with("radar.ping.") {
+            LABEL_MAX
+        } else {
+            continue;
+        };
+        if n > max {
+            problems.push(format!("{key} is {n} characters, over {max}: {text}"));
+        }
+    }
+    assert!(
+        problems.is_empty(),
+        "too long (TONE.md, KISS):\n{}",
+        problems.join("\n")
+    );
+}
+
+#[test]
+fn no_minigame_or_match_string_names_a_key() {
+    // a call says what to do, never which key quits or what is lost
+    let mut problems = Vec::new();
+    for (key, text) in strings_json() {
+        let shown_in_play = key.starts_with("minigame")
+            || key.starts_with("popup.")
+            || key.starts_with("fishing.")
+            || key.starts_with("hud.")
+            || key.starts_with("teleport.");
+        if !shown_in_play {
+            continue;
+        }
+        for word in ["Esc", "Tab", "Shift", "Space"] {
+            if contains_phrase(&text, word) {
+                problems.push(format!("{key} names {word}: {text}"));
+            }
+        }
+    }
+    assert!(
+        problems.is_empty(),
+        "keys on screen (TONE.md, KISS):\n{}",
+        problems.join("\n")
+    );
+}
+
 // ---- The lint is a test too: each listed phrase must be caught. ----
 
 #[test]

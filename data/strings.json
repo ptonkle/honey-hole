@@ -210,6 +210,8 @@
   "postgame.skip": "Skip",
   "postgame.rematch": "Rematch",
   "postgame.title": "Back to Title",
+  "postgame.catches": "Catches",
+  "postgame.ranking": "Ranking",
   "menu.minigames": "Minigames",
   "minigames.heading": "Minigames",
   "minigames.play.cloak": "Cloaking Tech",

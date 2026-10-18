@@ -271,11 +271,13 @@
       "throttle_share": 0.35
     },
     "line_tension": {
-      "_note": "The line's whine during the reel: silent below starts_at tension (0 to 1, where 1 snaps the line), then louder and higher.",
+      "_note": "The line's drag during the reel (it replaced a whine): silent below starts_at tension (0 to 1, where 1 snaps the line), then the line_drag cue ticks slow_ticks_per_s just past it up to fast_ticks_per_s at full, from low_pitch to high_pitch, each tick at gain (of the cue as written).",
       "starts_at": 0.35,
-      "loudest": 0.35,
-      "low_pitch": 1,
-      "high_pitch": 2.2
+      "slow_ticks_per_s": 3,
+      "fast_ticks_per_s": 16,
+      "gain": 0.8,
+      "low_pitch": 0.85,
+      "high_pitch": 1.25
     },
     "ratchet": {
       "_note": "The reel's ratchet clicks: clicks a second at the slowest reel and at full speed, and the click's pitch at each.",

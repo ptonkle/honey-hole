@@ -13,7 +13,7 @@ use super::*;
 use crate::sound::decimal::MILLI;
 use crate::sound::motor::{self, Body, Heard};
 use crate::sound::recipe::Params;
-use crate::sound::{Bank, Sound, LINE_TENSION, OWN_MOTOR, RIVAL_MOTOR};
+use crate::sound::{Bank, Sound, OWN_MOTOR, RIVAL_MOTOR};
 
 /// The sliders' range and step, in percent.
 const SLIDER_MAX: u32 = 100;
@@ -86,14 +86,6 @@ impl App {
                 let heard = motor::rival_motor(&t.rival_motor, top, &body(me), &body(b));
                 voices.extend(s.voice(&format!("rival.{}", b.seat), RIVAL_MOTOR, heard));
             }
-        }
-        // the line's whine while reeling (0 to 1000, as MILLI)
-        if let Some(level) = self.line_tension() {
-            voices.extend(s.voice(
-                "tension",
-                LINE_TENSION,
-                motor::line_tension(&t.line_tension, level),
-            ));
         }
         voices
     }
@@ -211,19 +203,22 @@ impl App {
                 let push = sc.throttle as i64 * MILLI / SLIDER_MAX as i64;
                 voices.extend(s.voice("own", OWN_MOTOR, motor::own_motor(&t.own_motor, push, push)));
             }
-            if sc.tension {
-                let level = sc.tension_level as i64 * MILLI / SLIDER_MAX as i64;
-                voices.extend(s.voice(
-                    "tension",
-                    LINE_TENSION,
-                    motor::line_tension(&t.line_tension, level),
-                ));
-            }
             if sc.rival || sc.pass_from.is_some() {
                 voices.extend(s.voice("rival.debug", RIVAL_MOTOR, self.rival_heard(&s.bank)));
             }
         }
+        // the line's drag while this seat reels (0 to 1000, as MILLI), or
+        // at the Sounds screen's slider
+        let level = if on_screen && self.sounds.tension {
+            Some(self.sounds.tension_level as i64 * MILLI / SLIDER_MAX as i64)
+        } else if self.screen == Screen::Play {
+            self.line_tension()
+        } else {
+            None
+        };
+        let clock = self.clock;
         let s = self.sound.as_mut().expect("checked above");
+        s.drag(clock, level);
         let mut frame = s.frame(volume, voices);
         // `?mute`: the page builds the sounds but sends them nowhere
         frame["muted"] = Value::Bool(self.mute);
