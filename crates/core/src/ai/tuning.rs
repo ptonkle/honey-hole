@@ -105,6 +105,9 @@ pub struct AiTuning {
     pub fishing_rate_per_min: i32,
     /// how long a ping's sighting stays worth chasing
     pub sighting_keep_ms: i32,
+    /// its usual ping also while it drives about (the boat coasts for the
+    /// sweep); false: only while its lure waits, and on a rival's hook
+    pub ping_driving: bool,
     pub skill: Skills,
     /// the buoy, the items and their minigames (`ai::items`, `ai::hand`)
     pub items: ItemsAi,
