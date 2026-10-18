@@ -1102,22 +1102,34 @@ fn a_player_a_fifth_of_a_second_late_still_lands_every_tier() {
 
 // ---- the bite seen (T4): the strike (strike.rs) and the view's clock ----
 
-/// The sample's strike: 3000 mm/s (60 mm a tick) to a mouth gap of -20 mm.
-/// The 300 mm fish waits with its middle at most 250 mm from the lure, its
-/// mouth (150 mm ahead of its middle) at most 100 mm off; 120 mm in at 60
-/// a tick, it has the lure in its mouth two ticks after the bite, and keeps
-/// it there, facing it, until the window closes.
+/// The mouth gap of fish `f` to seat 0's lure each tick until `want`
+/// comes; the gaps, the last the tick it came.
+fn gaps_until(m: &mut Match, f: usize, want: impl Fn(&MatchEvent) -> bool) -> Vec<i32> {
+    let mut gaps = Vec::new();
+    for _ in 0..2000 {
+        let e = step0(m, SeatInput::default());
+        gaps.push(strike::mouth_gap(&m.fishing.fish[f], m.fishing.lines[0].bobber));
+        if e.iter().any(&want) {
+            return gaps;
+        }
+    }
+    panic!("it never came");
+}
+
+/// The sample's strike: in at 3000 mm/s (60 mm a tick), 200 ms (10 ticks)
+/// ahead of each nibble and the bite, to touch the lure (gap 0); on the
+/// bite to a gap of -20 mm, the lure in its mouth, which it reaches on the
+/// bite's tick (20 mm at 60 a tick) and keeps, facing the lure, until the
+/// window closes.
 #[test]
 fn on_the_bite_the_fish_strikes_the_lure_and_holds_it() {
     let mut m = fresh(1);
     let f = lure_set_by_fish(&mut m, 0);
-    until(&mut m, 1000, is_bite);
+    let gaps = gaps_until(&mut m, f, is_bite);
     let lure = m.fishing.lines[0].bobber;
     let gap = |m: &Match| strike::mouth_gap(&m.fishing.fish[f], lure);
-    assert!(gap(&m) > -20, "{}", gap(&m));
-    for _ in 0..2 {
-        step0(&mut m, SeatInput::default());
-    }
+    // touching the tick before, the lure in its mouth on the bite's
+    assert!((-1..=1).contains(&gaps[gaps.len() - 2]), "{gaps:?}");
     assert!((-21..=-19).contains(&gap(&m)), "{}", gap(&m));
     for _ in 0..30 {
         step0(&mut m, SeatInput::default());
@@ -1129,6 +1141,37 @@ fn on_the_bite_the_fish_strikes_the_lure_and_holds_it() {
     let to = crate::map::trig::atan2((lure.y - fish.at.y) as i64, (lure.x - fish.at.x) as i64);
     let off = crate::map::trig::wrap(fish.heading - to + 182);
     assert!(off <= 364, "heading {} toward {to}", fish.heading);
+}
+
+/// T1: "fish should hit and back off of bait when biting". The sample's
+/// fish waits with its mouth 300 mm off the lure; 10 ticks before a
+/// nibble it darts in at 60 mm a tick (5 ticks), so it touches the lure up
+/// to the nibble; on the nibble's tick it backs off at 1000 mm/s (20 mm a
+/// tick), back to 300 mm 15 ticks on, well before it darts in again
+/// (nibbles are at least 600 ms, 30 ticks, apart). The nibbles' timing is
+/// untouched (the tests above).
+#[test]
+fn a_nibble_moves_the_fish_to_the_lure_and_back() {
+    let mut m = fresh(1);
+    let f = lure_set_by_fish(&mut m, 0);
+    let is_nibble = |e: &MatchEvent| matches!(e, MatchEvent::Nibble { seat: 0 });
+    let gaps = gaps_until(&mut m, f, is_nibble);
+    let n = gaps.len();
+    // waiting off the lure, in to touch it, and backing off on the nibble
+    let last = &gaps[n - 15..];
+    assert!((299..=301).contains(&gaps[n - 12]), "{last:?}");
+    assert!((-1..=1).contains(&gaps[n - 2]), "{last:?}");
+    assert!((19..=21).contains(&gaps[n - 1]), "{last:?}");
+    let after: Vec<i32> = (0..15)
+        .map(|_| {
+            step0(&mut m, SeatInput::default());
+            strike::mouth_gap(&m.fishing.fish[f], m.fishing.lines[0].bobber)
+        })
+        .collect();
+    // backing off 20 mm a tick, and off the lure again
+    assert!((39..=41).contains(&after[0]), "{after:?}");
+    assert!((299..=301).contains(&after[13]), "{after:?}");
+    assert_eq!(m.fishing_view(0).lines[0].nibble_ms, Some(300));
 }
 
 /// The line's `bite_ms` counts from the bite's tick: 0 then, 20 a tick

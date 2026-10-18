@@ -536,8 +536,8 @@ impl App {
                     look.bite.splash(&mut tris, float, cam, b);
                     -mm(look.bite.plunge_mm(b))
                 }
-                None if l.tug => -mm(40),
-                None => 0,
+                // a nibble (T1): a small dip as the fish touches the lure
+                None => -mm(look.bite.nibble_dip_mm(l.nibble_ms)),
             };
             let float = float.add(v3(0, dip, 0));
             if let Some(b) = bobber {

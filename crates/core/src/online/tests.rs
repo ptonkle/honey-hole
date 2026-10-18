@@ -457,6 +457,7 @@ fn bite(l: &mut Loop, k: usize, fish: usize, press_at: u32) {
         next: u32::MAX,
         nibbles_left: 0,
         biting_until: Some(press_at + 1000),
+        nibbled: None,
     });
     let f = &mut m.fishing.fish[fish];
     f.at = at;
