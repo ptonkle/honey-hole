@@ -172,6 +172,9 @@ pub struct ItemsAi {
     pub note: String,
     /// false: the AI never goes for a buoy nor uses an item (for playtests)
     pub use_items: bool,
+    /// false: it fetches buoys but never uses what they give (to measure
+    /// what the trips cost)
+    pub use_held: bool,
     /// a buoy is worth a trip of up to this long with no item held, and of
     /// up to `buoy_worth_held_ms` holding one (a new one replaces it)
     pub buoy_worth_ms: i32,
@@ -189,8 +192,12 @@ pub struct ItemsAi {
     /// held this long with no hunt or marked fish, it teleports to the far
     /// water it means to explore
     pub teleport_explore_after_ms: i32,
-    /// Cloaking Tech on a hunt, or on hooking a fish of this tier or rarer
+    /// Cloaking Tech on a hunt `cloak_hunt_min_mm` off or more, and for a
+    /// fish of `cloak_min_tier` or rarer: before the cast at it
+    /// (`cloak_before_cast`), else on hooking it
+    pub cloak_hunt_min_mm: i32,
     pub cloak_min_tier: TierName,
+    pub cloak_before_cast: bool,
     /// the Power Reel on a fish of this tier or rarer: at the hook
     /// (`power_reel_on_hook`, safe while the reel holds for the minigame),
     /// else before the cast at one
@@ -261,6 +268,7 @@ pub fn check(c: &mut Checker, a: &AiTuning) {
             2_000_000,
         )
         .range("ai.items.teleport_min_mm", i.teleport_min_mm, 0, 2_000_000)
+        .range("ai.items.cloak_hunt_min_mm", i.cloak_hunt_min_mm, 0, 2_000_000)
         .range("ai.items.teleport_lead_ms", i.teleport_lead_ms, 0, 600_000)
         .range("ai.items.teleport_short_mm", i.teleport_short_mm, 0, 200_000)
         .range(

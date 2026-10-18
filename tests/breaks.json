@@ -2644,5 +2644,82 @@
     "find": "        b.reeling_ram_wreck_pct,\n        ram_wreck_pct,",
     "replace": "        b.reeling_ram_wreck_pct,\n        0,",
     "test": "a_reeling_threshold_under_the_ram_speed_is_refused"
+  },
+  {
+    "name": "the AI's hand circles the Power Reel at one speed for every difficulty",
+    "file": "crates/core/src/ai/hand.rs",
+    "find": "(trig::TURN as i64 * skill.reel_permille_per_s as i64",
+    "replace": "(trig::TURN as i64 * 1600",
+    "test": "the_hand_finishes_every_minigame_and_hard_is_quicker_than_easy"
+  },
+  {
+    "name": "an AI holding an item values a buoy as if its slot were empty",
+    "file": "crates/core/src/ai/items.rs",
+    "find": "        t.buoy_worth_held_ms\n",
+    "replace": "        t.buoy_worth_ms\n",
+    "test": "the_ai_drives_through_a_near_buoy_but_not_a_far_one_holding_an_item"
+  },
+  {
+    "name": "an AI with a fish on leaves for the buoy",
+    "file": "crates/core/src/ai/items.rs",
+    "find": "    if !(stage == Stage::Idle || quiet_lure) {",
+    "replace": "    if false {",
+    "test": "a_seat_with_a_fish_on_does_not_leave_for_the_buoy"
+  },
+  {
+    "name": "an AI photographs every catch",
+    "file": "crates/core/src/ai/items.rs",
+    "find": "    let rare = s.items.last_catch.is_some_and(|c| c >= t.camera_min_tier.tier());",
+    "replace": "    let rare = true;",
+    "test": "the_camera_photographs_a_rare_catch_and_saves_itself_for_a_common_one"
+  },
+  {
+    "name": "an AI uses the Power Reel on any hook",
+    "file": "crates/core/src/ai/items.rs",
+    "find": "                return rare_on(min);",
+    "replace": "                return reeling_tier.is_some();",
+    "test": "the_power_reel_goes_on_at_the_hook_of_a_rare_fish_and_not_a_common_one"
+  },
+  {
+    "name": "an AI uses nitrous on any drive",
+    "file": "crates/core/src/ai/items.rs",
+    "find": "Goal::Explore { to } | Goal::Buoy { at: to } => to.dist(at) >= t.nitrous_min_mm as i64,",
+    "replace": "Goal::Explore { to: _ } | Goal::Buoy { at: _ } => true,",
+    "test": "nitrous_and_the_teleporter_are_for_far_trips_and_hunts"
+  },
+  {
+    "name": "an AI cloaks for any hunt, however near",
+    "file": "crates/core/src/ai/items.rs",
+    "find": "hunted_at(brain, s, seat).is_some_and(|p| p.dist(at) >= t.cloak_hunt_min_mm as i64)",
+    "replace": "hunted_at(brain, s, seat).is_some()",
+    "test": "cloaking_tech_goes_on_for_a_hunt_and_not_for_exploring"
+  },
+  {
+    "name": "an AI never cloaks before a cast",
+    "file": "crates/core/src/ai/items.rs",
+    "find": "Goal::Fish { fish } if t.cloak_before_cast => at_cast_spot(s, b, fish, min),",
+    "replace": "Goal::Fish { fish: _ } if t.cloak_before_cast => false,",
+    "test": "cloaking_tech_goes_on_before_the_cast_at_a_rare_fish"
+  },
+  {
+    "name": "an AI ignores the fish an Enhanced Radar marked",
+    "file": "crates/core/src/ai/mod.rs",
+    "find": "if let Some(to) = items::mark_to_visit(s, at) {",
+    "replace": "if let Some(to) = None::<P> {",
+    "test": "enhanced_radar_goes_on_with_no_fish_in_sight_and_the_ai_heads_for_a_marked_fish"
+  },
+  {
+    "name": "an AI teleports onto its hunted rival, with no room for the run-in",
+    "file": "crates/core/src/ai/items.rs",
+    "find": ".map(|p| ahead(p, bearing(p, at), t.teleport_short_mm))",
+    "replace": ".map(|p| ahead(p, bearing(p, at), 0))",
+    "test": "the_ai_teleports_toward_a_far_hunted_rival"
+  },
+  {
+    "name": "a minigame does not hold the reel (R4.11)",
+    "file": "crates/core/src/sim/fishing/mod.rs",
+    "find": "if self.reel_held.get(seat).copied().unwrap_or(false) {",
+    "replace": "if false {",
+    "test": "a_minigame_holds_the_reel_still_until_it_ends"
   }
 ]

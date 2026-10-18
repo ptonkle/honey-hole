@@ -2,8 +2,8 @@
 //! minigames. Expected values are worked by hand from the shipped
 //! `ai.items` tuning (`data/tuning.json`, read by `tuning::tests::ai_sample`)
 //! and the sample match tuning: top speed 16 m/s, so a buoy trip is
-//! 1.3 x d / 12.8 m/s + 1.5 s; a buoy is worth 25 s with no item and 6 s
-//! with one; Nitrous from 200 m (120 m on a hunt), the Teleporter from
+//! 1.3 x d / 12.8 m/s + 1.5 s; a buoy is worth 15 s with no item and 6 s
+//! with one; Nitrous from 400 m (120 m on a hunt), the Teleporter from
 //! 180 m with 14 s of the rival's reel left.
 
 use super::senses::sense;
@@ -153,7 +153,7 @@ fn the_hand_finishes_every_minigame_and_hard_is_quicker_than_easy() {
 
 #[test]
 fn the_ai_drives_through_a_near_buoy_but_not_a_far_one_holding_an_item() {
-    // 30 m off: 1.3 x 30 / 12.8 + 1.5 = 4.5 s, under 25 s
+    // 30 m off: 1.3 x 30 / 12.8 + 1.5 = 4.5 s, under 15 s
     let (mut m, mut crew) = one_ai(Difficulty::Normal, &[]);
     let at = m.boat(0).unwrap().at();
     m.items.force_next = Some(Item::Camera);
@@ -380,9 +380,9 @@ fn nitrous_and_the_teleporter_are_for_far_trips_and_hunts() {
     let at = m.boat(0).map_or(m.map.spawn.at, |b| b.at());
     let off = |d: i32| P::new(at.x + d, at.y);
     let until = 1000 + 50 * 20;
-    // a drive 250 m off: yes; 150 m: no (200 m)
-    assert!(wants(Item::Nitrous, Goal::Explore { to: off(250_000) }, None));
-    assert!(!wants(Item::Nitrous, Goal::Explore { to: off(150_000) }, None));
+    // a drive 450 m off: yes; 350 m: no (400 m)
+    assert!(wants(Item::Nitrous, Goal::Explore { to: off(450_000) }, None));
+    assert!(!wants(Item::Nitrous, Goal::Explore { to: off(350_000) }, None));
     // a hunt 150 m off: yes (120 m); 100 m: no
     let hunt = Goal::Hunt { seat: 1, until };
     assert!(wants(Item::Nitrous, hunt, Some(off(150_000))));
@@ -406,7 +406,9 @@ fn cloaking_tech_goes_on_for_a_hunt_and_not_for_exploring() {
     let m = Match::new(generate(Setting::MichiganLake, 0), &t, Setup::new(&t)).unwrap();
     let at = m.boat(0).map_or(m.map.spawn.at, |b| b.at());
     let hunt = Goal::Hunt { seat: 1, until: 3000 };
-    assert!(wants(Item::Cloak, hunt, Some(P::new(at.x + 50_000, at.y))));
+    // a hunt 150 m off: yes; 50 m: no (100 m)
+    assert!(wants(Item::Cloak, hunt, Some(P::new(at.x + 150_000, at.y))));
+    assert!(!wants(Item::Cloak, hunt, Some(P::new(at.x + 50_000, at.y))));
     assert!(!wants(
         Item::Cloak,
         Goal::Explore {
@@ -417,7 +419,7 @@ fn cloaking_tech_goes_on_for_a_hunt_and_not_for_exploring() {
 }
 
 #[test]
-fn cloaking_tech_goes_on_at_the_hook_of_a_rare_fish() {
+fn cloaking_tech_goes_on_before_the_cast_at_a_rare_fish() {
     let (mut m, mut crew) = one_ai(Difficulty::Hard, &[]);
     m.items.seats[0].held = Some(Item::Cloak);
     let at = m.boat(0).unwrap().at();
@@ -426,9 +428,9 @@ fn cloaking_tech_goes_on_at_the_hook_of_a_rare_fish() {
     let seen = run(&mut m, &mut crew, 50 * 90, |e| {
         matches!(e, MatchEvent::Caught { .. })
     });
-    let hooked = seen
+    let cast = seen
         .iter()
-        .find(|(_, e)| matches!(e, MatchEvent::Hooked { .. }))
+        .find(|(_, e)| matches!(e, MatchEvent::Cast { .. }))
         .map(|x| x.0);
     let cloaked = seen
         .iter()
@@ -443,8 +445,8 @@ fn cloaking_tech_goes_on_at_the_hook_of_a_rare_fish() {
         })
         .map(|x| x.0);
     assert!(
-        hooked.is_some() && cloaked.is_some() && hooked <= cloaked,
-        "hook {hooked:?}, cloak {cloaked:?}"
+        cast.is_some() && cloaked.is_some() && cloaked < cast,
+        "cast {cast:?}, cloak {cloaked:?}"
     );
     assert!(
         has(&seen, |e| matches!(e, MatchEvent::Caught { seat: 0, .. })),

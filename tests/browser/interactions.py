@@ -450,6 +450,28 @@ def step_ai(page, check):
     check(screen(page, "title"), "Leave match goes to the Title")
 
 
+def step_ai_items(page, check):
+    # An AI picks up a buoy: under `?debug=watch,items,item.camera` a Hard AI
+    # plays this browser's seat and a buoy waits 40 m ahead with the
+    # High-Quality Camera in it. The AI drives through it by itself (the
+    # trip is worth it), and keeps the camera for a rare catch.
+    base = page.url.split("?")[0]
+    page.goto(base + "?debug=watch,items,item.camera")
+    page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
+    page.click(by_id("menu.play"))
+    page.click(by_id("menu.offline"))
+    page.click(by_id("lobby.start"))
+    check(screen(page, "play"), "a match starts with an AI in this seat")
+    check(ui2d_has(page, "buoy=1", "item=none"), "a buoy is in the lake and the AI's slot is empty")
+    check(ui2d_has(page, "item=camera", timeout=40000), "the AI drives through the buoy and holds the camera")
+    page.keyboard.press("Escape")
+    page.wait_for_selector(".panel.pause", timeout=5000)
+    page.click(by_id("menu.quit"))
+    check(screen(page, "title"), "Leave match goes to the Title")
+    page.goto(base)
+    page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
+
+
 def step_match_flow(page, check):
     # A 4-minute match under `?debug=flow`: the countdown, the HUD, the map
     # seed shown from Settings, F8 to the last seconds (with made-up
@@ -510,6 +532,7 @@ STEPS = [
     ("fishing", step_fishing),
     ("items", step_items),
     ("ai", step_ai),
+    ("ai_items", step_ai_items),
     ("match_flow", step_match_flow),
 ]
 

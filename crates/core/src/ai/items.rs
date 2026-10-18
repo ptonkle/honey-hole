@@ -16,7 +16,9 @@
 //!     short, for the run-in), or a rare or legendary fish an Enhanced
 //!     Radar marked that far; held `teleport_explore_after_ms` with neither,
 //!     the far water it means to explore;
-//!   - Cloaking Tech: on a hunt, or on hooking a fish of `cloak_min_tier`;
+//!   - Cloaking Tech: on a hunt `cloak_hunt_min_mm` off, and before the
+//!     cast at a fish of `cloak_min_tier` (`cloak_before_cast`; else on
+//!     hooking one);
 //!   - Power Reel: on hooking a fish of `power_reel_min_tier` (the reel
 //!     holds while its minigame plays, SECOND-ORDER R5.31), or with
 //!     `power_reel_on_hook` false before the cast at one (R4.11);
@@ -134,7 +136,7 @@ pub fn during(brain: &mut Brain, s: &Senses) -> Option<SeatInput> {
     }
     mind.on = None;
     // the camera's offer: a photo for a rare catch, else keep it
-    if !s.items.offer || !s.tuning.ai.items.use_items {
+    if !s.items.offer || !s.tuning.ai.items.use_items || !s.tuning.ai.items.use_held {
         mind.offer_seen = None;
         return None;
     }
@@ -182,7 +184,7 @@ pub fn mark_to_visit(s: &Senses, at: P) -> Option<P> {
 /// camera offer's answer.
 pub fn decide(brain: &mut Brain, s: &Senses, b: &Boat, out: &mut SeatInput) {
     let t = &s.tuning.ai.items;
-    if !t.use_items {
+    if !t.use_items || !t.use_held {
         return;
     }
     let tick = s.tick;
@@ -286,7 +288,17 @@ pub fn want_use(brain: &mut Brain, s: &Senses, b: &Boat, item: Item, since: u32)
             to.is_some()
         }
         Item::Cloak => {
-            !s.items.cloaked && (matches!(brain.goal, Goal::Hunt { .. }) || rare_on(t.cloak_min_tier.tier()))
+            if s.items.cloaked {
+                return false;
+            }
+            let min = t.cloak_min_tier.tier();
+            match brain.goal {
+                Goal::Hunt { seat, .. } => {
+                    hunted_at(brain, s, seat).is_some_and(|p| p.dist(at) >= t.cloak_hunt_min_mm as i64)
+                }
+                Goal::Fish { fish } if t.cloak_before_cast => at_cast_spot(s, b, fish, min),
+                _ => !t.cloak_before_cast && rare_on(min),
+            }
         }
         Item::PowerReel => {
             if s.items.power_reel {
@@ -298,11 +310,7 @@ pub fn want_use(brain: &mut Brain, s: &Senses, b: &Boat, item: Item, since: u32)
             }
             // before the cast at a rare fish, at the spot
             match brain.goal {
-                Goal::Fish { fish } => {
-                    b.mode == Mode::Fishing
-                        && stage == Stage::Idle
-                        && s.fishing.fish.iter().any(|f| f.id == fish && f.tier >= min)
-                }
+                Goal::Fish { fish } => at_cast_spot(s, b, fish, min),
                 _ => false,
             }
         }
@@ -317,4 +325,12 @@ pub fn want_use(brain: &mut Brain, s: &Senses, b: &Boat, item: Item, since: u32)
                     .is_some_and(|t0| ms(s.tick.saturating_sub(t0)) >= t.radar_blind_ms as i64)
         }
     }
+}
+
+/// At the spot to cast at `fish`, of `min` tier or rarer: stopped in
+/// fishing mode with the line in.
+fn at_cast_spot(s: &Senses, b: &Boat, fish: u32, min: Tier) -> bool {
+    b.mode == Mode::Fishing
+        && s.fishing.stage == Stage::Idle
+        && s.fishing.fish.iter().any(|f| f.id == fish && f.tier >= min)
 }

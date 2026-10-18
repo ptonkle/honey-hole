@@ -14,7 +14,9 @@
 //! 3. **acts**: drives a path over the map's grid ([`nav`]), casts, stops
 //!    the lure at the fish's depth, hooks after a reaction delay, plays the
 //!    reel bar ([`fish`]), rams at speed ([`hunt`]), raises the Fish-Boy now
-//!    and then to ping, and leaves a hook for items ([`items::decide`]).
+//!    and then to ping, goes for the item buoy when the trip is worth it,
+//!    uses its item at its moment and plays the item's minigame with its
+//!    hand on the pointer ([`items`], [`hand`]).
 //!
 //! The difficulty (`data/tuning.json` `ai.skill`) sets the reaction, the
 //! reel's lag and noise, the cast's aim, the aggression, the evasion and
