@@ -27,6 +27,9 @@ pub struct Tuning {
     pub game: MatchTuning,
     pub boat: BoatTuning,
     pub wreck: WreckTuning,
+    /// the fish in the lake and the fishing (`sim::fishing::tuning`)
+    pub fish: crate::sim::fishing::tuning::FishTuning,
+    pub fishing: crate::sim::fishing::tuning::FishingTuning,
     /// the sound engine's section, read and checked by `sound::Bank::parse`
     #[serde(default)]
     pub audio: serde_json::Value,
@@ -211,6 +214,7 @@ impl Tuning {
             .range("wreck.bounce_pct", w.bounce_pct, 0, 100)
             .range("wreck.scrape_keep_pct", w.scrape_keep_pct, 0, 100)
             .range("wreck.bump_pct", w.bump_pct, 0, 100);
+        crate::sim::fishing::tuning::check(&mut c, &self.fish, &self.fishing);
         c.done()
     }
 }
@@ -265,7 +269,74 @@ pub mod tests {
                 "bounce_pct": 30,
                 "scrape_keep_pct": 70,
                 "bump_pct": 50
-            }
+            },
+            "fish": fish_sample(),
+            "fishing": fishing_sample()
+        })
+    }
+
+    /// The fish section, round numbers for tests.
+    pub fn fish_sample() -> serde_json::Value {
+        serde_json::json!({
+            "count_variance_pct": 20,
+            "length_min_pct": 100,
+            "length_max_pct": 150,
+            "roam_radius_mm": 10000,
+            "roam_speed_mm_per_s": 400,
+            "roam_rest_min_ms": 1000,
+            "roam_rest_max_ms": 4000,
+            "follow_speed_mm_per_s": 800,
+            "freed_swim_mm": 12000,
+            "freed_speed_mm_per_s": 3000,
+            "sight_shallow_mm": 40000,
+            "sight_deep_mm": 25000,
+            "sight_shallow_depth_mm": 1000,
+            "sight_deep_depth_mm": 12000,
+            "sight_lure_mm": 15000
+        })
+    }
+
+    /// The fishing section, round numbers for tests: a 1 s full charge
+    /// (50 ticks) from 4 m to 24 m, a 1 s flight, a 1 m/s sink.
+    pub fn fishing_sample() -> serde_json::Value {
+        serde_json::json!({
+            "cast_max_speed_mm_per_s": 1000,
+            "charge_full_ms": 1000,
+            "cast_min_mm": 4000,
+            "cast_max_mm": 24000,
+            "cast_flight_ms": 1000,
+            "sink_mm_per_s": 1000,
+            "bed_clear_mm": 200,
+            "drag_reel_in_mm_per_s": 3000,
+            "drag_snap_mm_per_s": 5000,
+            "attract_radius_mm": 6000,
+            "attract_depth_mm": 3000,
+            "attract_far_pct": 30,
+            "approach_speed_mm_per_s": 1000,
+            "wait_min_ms": 2000,
+            "wait_max_ms": 6000,
+            "nibbles_min": 1,
+            "nibbles_max": 3,
+            "nibble_gap_min_ms": 600,
+            "nibble_gap_max_ms": 1400,
+            "hook_window_ms": 760,
+            "reel": {
+                "zone_permille": 280,
+                "gravity_per_s2": 2500,
+                "lift_per_s2": 2500,
+                "zone_top_speed_per_s": 1400,
+                "start_pct": 30,
+                "perfect_ms": {"common": 3000, "uncommon": 5000, "rare": 10000, "legendary": 20000},
+                "drain_ms": {"common": 5000, "uncommon": 4500, "rare": 4000, "legendary": 3500},
+                "fish_speed_per_s": {"common": 400, "uncommon": 600, "rare": 800, "legendary": 1000},
+                "fish_turn_ms": {"common": 1400, "uncommon": 1100, "rare": 900, "legendary": 700},
+                "fish_dart_pct": {"common": 5, "uncommon": 15, "rare": 25, "legendary": 40},
+                "tick_ms": 100,
+                "surface_depth_mm": 300
+            },
+            "tier_value_pct": {"common": 100, "uncommon": 200, "rare": 300, "legendary": 500},
+            "camera_value_pct": 150,
+            "landed_ms": 2000
         })
     }
 
