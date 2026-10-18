@@ -208,7 +208,7 @@ Not: options
 
 ### Minigame
 
-The short game an item plays before it takes effect, opened by a one-line instruction. It cannot be lost: playing it badly only takes longer. Esc quits it, and the item is wasted.
+The short game an item plays before it takes effect, opened by a short call such as "Wind the reel". It cannot be lost: playing it badly only takes longer. Esc quits it, and the item is wasted (not said on screen).
 
 Not: mini-game, microgame, puzzle, challenge
 

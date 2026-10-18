@@ -1421,11 +1421,11 @@
     "test": "the_map_picture_draws_the_shore_where_land_meets_water"
   },
   {
-    "name": "down the hud says how to raise it",
+    "name": "down no hint names the Fish-Boy's key",
     "file": "crates/core/src/fishboy/mod.rs",
-    "find": "&self.t(\"hud.fishboy\"),",
-    "replace": "&self.t(\"hud.fishboy\").to_lowercase(),",
-    "test": "down_the_hud_says_how_to_raise_it_and_no_device_is_drawn"
+    "find": "                if !self.play.as_ref().is_some_and(|p| p.menu_open()) {\n                    // the items'",
+    "replace": "                if !self.play.as_ref().is_some_and(|p| p.menu_open()) {\n                    list.text(c(theme.hud.ink), theme.mono(), 30, Align::Centre, (hud[0] / 2, hud[1] - 48), \"Tab\");\n                    // the items'",
+    "test": "down_no_device_is_drawn_and_no_hint_names_its_key"
   },
   {
     "name": "the device does not clear the world",
@@ -1869,11 +1869,11 @@
     "test": "the_map_seed_shows_only_with_the_option_on"
   },
   {
-    "name": "the hints fade",
+    "name": "the HUD draws no words of its own",
     "file": "crates/core/src/flow/hud.rs",
-    "find": "(100 - (into - after) * 100 / fade).max(0) as i32",
-    "replace": "100",
-    "test": "the_hud_shows_the_time_speed_mode_and_ping_and_its_hints_fade_after_a_minute"
+    "find": "PingState::Ready => list.circle(rgb(h.gauge_tick), Rgba::NONE, 0, c, 6),",
+    "replace": "PingState::Ready => list.text(rgb(l.card.ink), l.body(), 20, Align::Centre, c, \"Ready\"),",
+    "test": "the_hud_shows_the_clock_and_the_ping_and_no_words"
   },
   {
     "name": "Go shows after the countdown",
@@ -2653,18 +2653,18 @@
     "test": "an_unreadable_or_out_of_range_save_is_treated_as_none"
   },
   {
-    "name": "menus: invert-Y flips the mouse up and down",
+    "name": "menus: the sensitivity scales the mouse up and down",
     "file": "crates/core/src/controls.rs",
-    "find": "(scale(dx), if invert_y { -dy } else { dy })",
+    "find": "(scale(dx), scale(dy))",
     "replace": "(scale(dx), dy)",
-    "test": "sensitivity_scales_the_mouse_and_invert_flips_only_up_and_down"
+    "test": "sensitivity_scales_the_mouse"
   },
   {
     "name": "menus: the match camera reads the mouse settings",
     "file": "crates/core/src/app/play.rs",
-    "find": "let (dx, dy) = crate::controls::feel(dx, dy, self.settings.mouse_pct, self.settings.invert_y);",
+    "find": "let (dx, dy) = crate::controls::feel(dx, dy, self.settings.mouse_pct);",
     "replace": "",
-    "test": "sensitivity_and_invert_reach_the_match_camera"
+    "test": "sensitivity_reaches_the_match_camera"
   },
   {
     "name": "menus: the fog distance in Settings needs the debug flag",

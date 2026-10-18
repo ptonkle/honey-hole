@@ -108,7 +108,8 @@ fn holding_space_charges_a_meter() {
         tick(&mut a);
     }
     let h = hud(&a);
-    assert_eq!((h.key, h.prompt.clone()), ("charging", a.t("fishing.charging")));
+    // no words while charging: the bar says it (KISS)
+    assert_eq!((h.key, h.prompt.clone()), ("charging", None));
     // 15 ticks of the sample's 50: 30%
     let fill = h.charge.unwrap();
     assert!((28..=32).contains(&fill), "{fill}");
@@ -124,7 +125,7 @@ fn the_reel_bar_shows_the_zone_the_fish_and_the_catch_meter() {
     line.fish = Some(0);
     line.reel = Some(Reel::new(crate::map::fish::Tier::Common, &t, false));
     let h = hud(&a);
-    assert_eq!(h.prompt, a.t("fishing.reeling"));
+    assert_eq!(h.prompt, None, "the reel bar needs no words");
     // the zone is 280 thousandths, centred: 36% to 64%; the fish at 50%;
     // the meter starts at 30%
     let r = h.reel.unwrap();

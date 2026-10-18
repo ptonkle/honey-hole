@@ -501,7 +501,8 @@ impl App {
         let mut status = vec![format!("fishboy={}", self.fishboy_shown())];
         match self.fishboy_raised() {
             None => {
-                // the HUD (`flow/hud.rs`), or without its look the hint
+                // the HUD (`flow/hud.rs`); no hint names Tab (KISS: the
+                // Title lists the controls)
                 let hud = theme.hud.canvas;
                 list.layer(Transform::letterbox(
                     hud,
@@ -509,16 +510,6 @@ impl App {
                 ));
                 let flow = self.flow_hud(list, &mut status);
                 if !self.play.as_ref().is_some_and(|p| p.menu_open()) {
-                    if !flow {
-                        list.text(
-                            c(theme.hud.ink),
-                            theme.mono(),
-                            30,
-                            Align::Centre,
-                            (hud[0] / 2, hud[1] - 48),
-                            &self.t("hud.fishboy"),
-                        );
-                    }
                     // the items' timers, the camera's offer, a minigame;
                     // their own slot only where the flow's HUD has none
                     self.draw_items_hud(list, theme, &mut status, !flow);
@@ -592,7 +583,6 @@ impl App {
 
         match self.fishboy.tab {
             Tab::Radar => {
-                self.corner_hint(list, theme);
                 if let (Some(p), Some(b), Some(view)) = (
                     self.play.as_ref(),
                     self.fishboy.radar_map.as_ref(),
@@ -681,7 +671,6 @@ impl App {
                 status.push(format!("fish_left={total}"));
             }
             Tab::Catch => {
-                self.corner_hint(list, theme);
                 let rows = self.catch_rows();
                 let words = fishpedia::CatchWords {
                     heading: self.t("catch.heading"),
@@ -703,17 +692,6 @@ impl App {
             list.fill_rect(dark, Rect::new(0, y, w, every / 2));
             y += every;
         }
-    }
-
-    fn corner_hint(&self, list: &mut List, theme: &Theme) {
-        list.text(
-            c(theme.screen.dim).shade(170),
-            theme.mono(),
-            22,
-            Align::Right,
-            (theme.fishboy.canvas[0] - 50, TAB_Y + TAB_H / 2),
-            &self.t("fishboy.keys"),
-        );
     }
 
     fn tier_names(&self) -> Vec<(crate::map::fish::Tier, String)> {

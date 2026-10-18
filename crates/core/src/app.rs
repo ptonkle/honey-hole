@@ -112,8 +112,6 @@ pub struct Settings {
     /// how far the mouse turns the camera, in percent of the controls
     /// file's turn (`controls::MOUSE_PCT_*`)
     pub mouse_pct: u32,
-    /// moving the mouse up tips the camera up instead of down
-    pub invert_y: bool,
 }
 
 impl Default for Settings {
@@ -125,7 +123,6 @@ impl Default for Settings {
             name: String::new(),
             show_seed: false,
             mouse_pct: crate::controls::MOUSE_PCT_DEFAULT,
-            invert_y: false,
         }
     }
 }

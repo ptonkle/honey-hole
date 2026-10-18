@@ -32,8 +32,6 @@ struct Kept {
     show_seed: bool,
     #[serde(default = "default_mouse")]
     mouse_pct: u32,
-    #[serde(default)]
-    invert_y: bool,
 }
 
 fn default_volume() -> u32 {
@@ -59,7 +57,6 @@ impl App {
             name: s.name.clone(),
             show_seed: s.show_seed,
             mouse_pct: s.mouse_pct,
-            invert_y: s.invert_y,
         };
         serde_json::to_string(&kept).unwrap_or_default()
     }
@@ -88,7 +85,6 @@ impl App {
             self.settings.notes_minor = kept.notes_minor;
             self.settings.show_seed = kept.show_seed;
             self.settings.mouse_pct = kept.mouse_pct;
-            self.settings.invert_y = kept.invert_y;
             Ok(())
         })();
         if applied.is_err() {
@@ -107,7 +103,6 @@ impl App {
                     .map_err(|_| format!("The mouse sensitivity \"{value}\" is not a whole number."))?;
                 self.settings.mouse_pct = controls::mouse_pct(pct);
             }
-            "settings.invert_y" => self.settings.invert_y = value == "on",
             // under `?debug=fog`: the fog distance, as the Lake preview's
             // slider sets it
             "settings.fog" if self.debug_fog() => self.lake_act("lake.fog", value)?,
@@ -125,22 +120,15 @@ impl App {
     /// the fog distance under `?debug=fog`.
     pub(super) fn more_settings_items(&self) -> Vec<Item> {
         let s = &self.settings;
-        let mut items = vec![
-            Item::Slider {
-                id: "settings.mouse".into(),
-                label: self.t("settings.mouse"),
-                min: MOUSE_PCT_MIN,
-                max: MOUSE_PCT_MAX,
-                step: MOUSE_PCT_STEP,
-                value: s.mouse_pct,
-                text: format!("{}%", s.mouse_pct),
-            },
-            Item::Toggle {
-                id: "settings.invert_y".into(),
-                label: self.t("settings.invert_y"),
-                value: s.invert_y,
-            },
-        ];
+        let mut items = vec![Item::Slider {
+            id: "settings.mouse".into(),
+            label: self.t("settings.mouse"),
+            min: MOUSE_PCT_MIN,
+            max: MOUSE_PCT_MAX,
+            step: MOUSE_PCT_STEP,
+            value: s.mouse_pct,
+            text: format!("{}%", s.mouse_pct),
+        }];
         if self.debug_fog() {
             let metres = (self.sight_mm().unwrap_or(0) / 1000) as u32;
             items.push(Item::Slider {
@@ -172,7 +160,6 @@ mod tests {
         a.act("settings.text_size", "large").unwrap();
         a.act("settings.name", "Marta").unwrap();
         a.act("settings.mouse", "150").unwrap();
-        a.act("settings.invert_y", "on").unwrap();
         a.act("settings.show_seed", "on").unwrap();
         let kept = a.ui().settings;
         let mut next = app();
@@ -182,7 +169,7 @@ mod tests {
             (s.volume, s.text_size, s.name.as_str()),
             (35, TextSize::Large, "Marta")
         );
-        assert_eq!((s.mouse_pct, s.invert_y, s.show_seed), (150, true, true));
+        assert_eq!((s.mouse_pct, s.show_seed), (150, true));
     }
 
     #[test]
@@ -201,30 +188,30 @@ mod tests {
         assert!(a.act("settings.load", r#"{"mouse_pct": 1000}"#).is_err());
         assert_eq!(a.settings, fresh);
         // an older save without the newer fields keeps their defaults; a
-        // name is cleaned as the field cleans it
+        // name is cleaned as the field cleans it; a field this version no
+        // longer has (invert_y, removed) is ignored
         a.act(
             "settings.load",
-            r#"{"volume": 60, "name": "  Ann  ", "future": 1}"#,
+            r#"{"volume": 60, "name": "  Ann  ", "future": 1, "invert_y": true}"#,
         )
         .unwrap();
         assert_eq!((a.settings.volume, a.settings.name.as_str()), (60, "Ann"));
-        assert_eq!((a.settings.mouse_pct, a.settings.invert_y), (100, false));
+        assert_eq!(a.settings.mouse_pct, 100);
     }
 
     #[test]
-    fn sensitivity_and_invert_reach_the_match_camera() {
+    fn sensitivity_reaches_the_match_camera() {
         use crate::gfx::fx::{self, deg};
         let mut a = crate::app::play::tests::started();
         a.act("settings.mouse", "200").unwrap();
-        a.act("settings.invert_y", "on").unwrap();
         let p0 = a.play.as_ref().unwrap().cam_pitch;
         // 100 px right at 200%: 2 x 25° clockwise from above
         a.act("mouse.move", "100,0").unwrap();
         assert_eq!(a.play.as_ref().unwrap().cam_yaw, fx::wrap(-deg(50)));
-        // 10 px down, inverted, at 200%: 20 px up, 18° per 100 px
+        // 10 px down at 200%: 20 px down, 18° per 100 px
         a.act("mouse.move", "0,10").unwrap();
         let p1 = a.play.as_ref().unwrap().cam_pitch;
-        assert_eq!(p1, p0 - (20 * deg(18) as i64 / 100) as i32);
+        assert_eq!(p1, p0 + (20 * deg(18) as i64 / 100) as i32);
     }
 
     #[test]

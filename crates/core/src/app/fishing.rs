@@ -198,7 +198,9 @@ pub struct FishingHud {
     /// the stage's key: ready, too_fast, charging, flying, sinking,
     /// waiting, nibble, bite, reeling or landed
     pub key: &'static str,
-    pub prompt: String,
+    /// one short word for the stages that need one (too fast, the bite,
+    /// the catch); the rest show only their bars and the depth
+    pub prompt: Option<String>,
     /// the lure's depth, while it sinks or waits
     pub depth: Option<String>,
     /// the cast's charge, percent, while Space is held
@@ -680,13 +682,18 @@ impl App {
             Stage::Reeling => "reeling",
             Stage::Landed => "landed",
         };
+        // KISS (the person, 2026-10-18): no instructions; how to cast, hook
+        // and reel is the player's to learn. Only what can't be seen gets a
+        // word: the boat too fast to cast, the bite, and what was landed.
         let prompt = match (fv.stage, fv.on_line.as_ref()) {
-            (Stage::Landed, Some(f)) => self
-                .t("fishing.landed")
-                .replace("{feet}", &gallery::feet(f.length_mm))
-                .replace("{fish}", &self.fish_name(&f.kind)),
+            (Stage::Landed, Some(f)) => Some(
+                self.t("fishing.landed")
+                    .replace("{feet}", &gallery::feet(f.length_mm))
+                    .replace("{fish}", &self.fish_name(&f.kind)),
+            ),
             (Stage::Landed, None) => return None,
-            _ => self.t(&format!("fishing.{key}")),
+            _ if matches!(key, "too_fast" | "bite") => Some(self.t(&format!("fishing.{key}"))),
+            _ => None,
         };
         let depth = mine
             .filter(|_| matches!(fv.stage, Stage::Sinking | Stage::Set))

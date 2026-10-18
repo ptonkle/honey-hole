@@ -46,11 +46,10 @@ pub fn mouse_pct(pct: u32) -> u32 {
 }
 
 /// A mouse movement as the reader's settings make it: scaled by the
-/// sensitivity (percent) and, with `invert_y`, up and down swapped.
-pub fn feel(dx: i32, dy: i32, pct: u32, invert_y: bool) -> (i32, i32) {
+/// sensitivity (percent).
+pub fn feel(dx: i32, dy: i32, pct: u32) -> (i32, i32) {
     let scale = |d: i32| (d as i64 * pct as i64 / 100) as i32;
-    let dy = scale(dy);
-    (scale(dx), if invert_y { -dy } else { dy })
+    (scale(dx), scale(dy))
 }
 
 /// The checked controls.
@@ -220,12 +219,12 @@ mod tests {
     }
 
     #[test]
-    fn sensitivity_scales_the_mouse_and_invert_flips_only_up_and_down() {
+    fn sensitivity_scales_the_mouse() {
         // 200%: 10 px right and 4 px down turn as 20 and 8
-        assert_eq!(feel(10, 4, 200, false), (20, 8));
-        // 50% and inverted: 10 right, 4 down -> 5 right, 2 up
-        assert_eq!(feel(10, 4, 50, true), (5, -2));
-        assert_eq!(feel(-7, 0, 100, true), (-7, 0));
+        assert_eq!(feel(10, 4, 200), (20, 8));
+        // 50%: 10 right, 4 down -> 5 right, 2 down
+        assert_eq!(feel(10, 4, 50), (5, 2));
+        assert_eq!(feel(-7, 0, 100), (-7, 0));
         // the slider's own steps: 25 to 300 by 25
         assert_eq!(mouse_pct(0), 25);
         assert_eq!(mouse_pct(130), 125);

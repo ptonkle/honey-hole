@@ -265,8 +265,7 @@ impl App {
             .iter()
             .map(|c| Item::button(&format!("sounds.play.{}", c.id), c.label.clone()))
             .collect();
-        let mut list = Panel::new("sounds", self.t("sounds.heading"), cues);
-        list.sub = self.t("sounds.sub");
+        let list = Panel::new("sounds", self.t("sounds.heading"), cues);
 
         let sc = &self.sounds;
         let rival = self.rival_body(&s.bank);

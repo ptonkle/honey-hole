@@ -5,8 +5,14 @@
 //!
 //! - A minigame cannot be failed: playing badly only makes it take longer.
 //! - Esc ([`Input::quit`]) quits it; the caller wastes the item.
-//! - It opens with a one-line instruction banner (`minigames.banner_ms`),
-//!   then play. Input during the banner is ignored, except Esc.
+//! - It opens with a one-line call in a banner (`minigames.banner_ms`),
+//!   then play. Input during the banner is ignored, except Esc. The call
+//!   is the person's short wording ("Wind the reel", "Sync the
+//!   teleporter!"): no rules, counts, controls or consequences (TONE.md,
+//!   "Project decisions"). After the banner it stays as a small line at
+//!   the top, and a bar at the bottom shows how far along play is (none
+//!   for the Power Reel, whose pips show it, or the Enhanced Radar, whose
+//!   picture does).
 //! - Randomness comes only from the seed passed in.
 //! - Its numbers are `data/tuning.json`'s `minigames` ([`tuning`]); its
 //!   look is `data/ui2d.json`'s `minigames` ([`look`]).
@@ -429,14 +435,6 @@ impl Minigame {
             );
             self.draw_progress(&mut p);
         }
-        p.list.text(
-            c(look.hint),
-            p.font,
-            look.hint_size,
-            Align::Left,
-            (24, h - BOTTOM_LINE),
-            &t("minigame.quit_hint"),
-        );
         // the camera's viewfinder over everything
         if let Game::Camera(g) = &self.game {
             if self.state == State::Playing {
@@ -446,28 +444,21 @@ impl Minigame {
         p.list.unclip();
     }
 
-    /// The instruction, with its count filled in.
+    /// The call: one short line, the same every time it is played.
     pub fn instruction(&self, t: &dyn Fn(&str) -> String) -> String {
-        let (_, total) = self.progress();
-        let count = match self.kind {
-            Kind::Cloak => 0,
-            _ => total,
-        };
-        t(&format!("minigame.{}", self.kind.key())).replace("{count}", &count.to_string())
+        t(&format!("minigame.{}", self.kind.key()))
     }
 
+    /// A bar of how far along play is, without words or a count. The
+    /// Power Reel's pips under the reel and the Enhanced Radar's picture
+    /// already show it.
     fn draw_progress(&self, p: &mut Paint) {
         let look = p.look;
         let [w, h] = p.canvas;
+        if matches!(self.kind, Kind::Radar | Kind::PowerReel) {
+            return;
+        }
         let (done, total) = self.progress();
-        let text = match self.kind {
-            Kind::Cloak => (p.t)("minigame.erased").replace("{percent}", &done.to_string()),
-            Kind::Radar => return,
-            _ => (p.t)("minigame.progress")
-                .replace("{done}", &done.to_string())
-                .replace("{total}", &total.to_string()),
-        };
-        // a bar, then the words
         let bar = Rect::new(w / 2 - 200, h - BOTTOM_LINE - 10, 400, 20);
         p.list
             .round_rect(c(look.bar_back), crate::ui2d::Rgba::NONE, 0, bar, 10);
@@ -481,14 +472,6 @@ impl Minigame {
                 10,
             );
         }
-        p.list.text(
-            c(look.text),
-            p.font,
-            look.progress_size,
-            Align::Left,
-            (bar.right() + 24, h - BOTTOM_LINE),
-            &text,
-        );
     }
 
     fn draw_banner(&self, p: &mut Paint, font: &Font, text: &str) {
