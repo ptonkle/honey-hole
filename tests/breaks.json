@@ -2847,5 +2847,12 @@
     "find": "!off.longer_than(cam.far.saturating_add(r)) && off.dot64(cam.fwd) >= -(r as i64) * ONE as i64",
     "replace": "true",
     "test": "a_model_past_the_far_plane_or_behind_the_camera_is_not_posed"
+  },
+  {
+    "name": "a dot corner reaches past its triangle",
+    "file": "crates/core/src/flow/magazine.rs",
+    "find": "let near = 100 - (dx * 100",
+    "replace": "let near = 200 - (dx * 100",
+    "test": "a_dot_corner_fills_only_the_corner_triangle_with_dots_shrinking_inward"
   }
 ]

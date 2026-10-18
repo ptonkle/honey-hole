@@ -28,7 +28,7 @@
     "stripe_h": 3,
     "stripe_at": 7,
     "dots": [201, 88, 31],
-    "dots_pct": 30,
+    "dots_pct": 0,
     "dot_step": 12,
     "dots_w_pct": 55,
     "dots_h_pct": 70

@@ -79,7 +79,7 @@ impl App {
                 rgb(l.card.outline),
                 Rect::new(x0 - 3, 80 - band / 2 - 3, x1 - x0 + 6, band + 6),
             );
-            super::print::stripes(list, &l.card.stripes, x0, 80 - band / 2, x1 - x0, each);
+            super::magazine::stripes(list, &l.card.stripes, x0, 80 - band / 2, x1 - x0, each);
         }
         let cols = &pg.reveal.columns;
         let n = cols.len().max(1) as i32;
@@ -176,7 +176,8 @@ impl App {
             (head_r.x + 58, head_r.y + 38),
             &c.name,
         );
-        let mono = self.fishboy.theme.as_ref().map_or(l.display(), |t| t.mono());
+        // numbers in the magazine's slab, not the Fish-Boy's monospace
+        let mono = l.display();
         list.text(
             rgb(l.card.ink),
             mono,
@@ -246,7 +247,8 @@ impl App {
             ((r.h * 45 / 100).min(26), (r.h * 38 / 100).min(20))
         };
         // the points at the right; the words shrink to fit beside them
-        let mono = self.fishboy.theme.as_ref().map_or(l.display(), |t| t.mono());
+        // numbers in the magazine's slab, not the Fish-Boy's monospace
+        let mono = l.display();
         let value = format!("+{}", f.value);
         let value_w = mono.width(&value, size + 4);
         list.text(
@@ -314,7 +316,8 @@ impl App {
             (W / 2, r.y + 64),
             &heading,
         );
-        let mono = self.fishboy.theme.as_ref().map_or(l.display(), |t| t.mono());
+        // numbers in the magazine's slab, not the Fish-Boy's monospace
+        let mono = l.display();
         for (i, (place, c)) in order.iter().enumerate() {
             let y = r.y + 130 + i as i32 * 92;
             let row = Rect::new(r.x + 30, y, w - 60, 78);

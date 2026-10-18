@@ -405,7 +405,11 @@ impl Minigame {
         let mut p = Paint {
             list,
             look,
-            font: theme.mono(),
+            // the device keeps its monospace; full screen, the magazine's slab
+            font: match self.layer() {
+                Layer::FishBoy => theme.mono(),
+                Layer::Hud => theme.fonts.get("banner").unwrap_or(theme.mono()),
+            },
             t,
             canvas: self.canvas,
             pointer: self.pointer,
@@ -433,6 +437,18 @@ impl Minigame {
                 None => theme.fonts.get("banner").unwrap_or(theme.mono()),
             };
             self.draw_banner(&mut p, font, &instruction, device);
+        } else if self.layer() == Layer::Hud {
+            // full screen: the call on a paper label hung from the frame
+            let font = theme.fonts.get("banner").unwrap_or(theme.mono());
+            frame::label(
+                p.list,
+                &look.frame,
+                font,
+                look.text_size,
+                (w / 2, TOP_LINE),
+                &instruction,
+            );
+            self.draw_progress(&mut p);
         } else {
             p.list.text(
                 c(look.text),
@@ -514,7 +530,7 @@ impl Minigame {
             // the magazine's triple stripe in an ink keyline, above and
             // below; plain phosphor bars on the device
             if device.is_none() {
-                crate::flow::print::stripes(p.list, &f.stripes, 0, y, w, f.stripe_h);
+                crate::flow::magazine::stripes(p.list, &f.stripes, 0, y, w, f.stripe_h);
             }
         }
         let shadow = size / 16;

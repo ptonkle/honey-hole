@@ -655,8 +655,13 @@ fn files_under(dir: &Path) -> Vec<PathBuf> {
     out
 }
 
+/// The page's text files. Images (the tab icon's PNGs) hold no code and
+/// are not text, so they are not scanned; an SVG is text and is.
 fn web_files() -> Vec<PathBuf> {
     files_under(&repo_root().join("web"))
+        .into_iter()
+        .filter(|f| f.extension().is_none_or(|x| x != "png"))
+        .collect()
 }
 
 /// Scans a shader for numeric literals other than 0 and 1 (and 0.0, 1.0).

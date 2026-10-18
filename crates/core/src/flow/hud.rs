@@ -39,12 +39,12 @@ pub fn rgb(c: [i32; 3]) -> Rgba {
 
 /// A HUD card, a box from the magazine: its offset shadow, its paper
 /// and keyline, the triple stripe across its top and a dot screen fading
-/// into its bottom-right corner (`flow/print.rs`).
+/// into its bottom-right corner (`flow/magazine.rs`).
 pub fn card(list: &mut List, k: &CardLook, r: Rect) {
     card_in(list, k, r, k.fill, k.outline);
     // clear of the rounded corners at the stripe's depth
     let inset = k.outline_w / 2 + k.radius / 3;
-    super::print::stripes(
+    super::magazine::stripes(
         list,
         &k.stripes,
         r.x + inset,
@@ -52,14 +52,16 @@ pub fn card(list: &mut List, k: &CardLook, r: Rect) {
         r.w - 2 * inset,
         k.stripe_h,
     );
-    super::print::dot_corner(
-        list,
-        rgb(k.dots).alpha(k.dots_pct),
-        r.inset(k.outline_w + 4),
-        r.w * k.dots_w_pct / 100,
-        r.h * k.dots_h_pct / 100,
-        k.dot_step,
-    );
+    if k.dots_pct > 0 {
+        super::magazine::dot_corner(
+            list,
+            rgb(k.dots).alpha(k.dots_pct),
+            r.inset(k.outline_w + 4),
+            r.w * k.dots_w_pct / 100,
+            r.h * k.dots_h_pct / 100,
+            k.dot_step,
+        );
+    }
 }
 
 /// A plain box in `fill`: the offset shadow, the fill and the keyline.
@@ -324,7 +326,8 @@ impl App {
         } else {
             l.card.ink
         };
-        let mono = self.fishboy.theme.as_ref().map_or(l.display(), |t| t.mono());
+        // numbers in the magazine's slab, not the Fish-Boy's monospace
+        let mono = l.display();
         list.text(
             rgb(ink),
             mono,
@@ -443,7 +446,8 @@ impl App {
             PingState::Sweeping(_) => list.line(rgb(colour), 5, c, polar(c, 44, to)),
             PingState::Cooling(left, _) => {
                 let secs = ((left * TICK_MS as i64 + 999) / 1000).to_string();
-                let mono = self.fishboy.theme.as_ref().map_or(l.display(), |t| t.mono());
+                // numbers in the magazine's slab, not the Fish-Boy's monospace
+                let mono = l.display();
                 list.text(rgb(l.card.ink), mono, 34, Align::Centre, c, &secs);
             }
             PingState::Ready => list.circle(rgb(h.gauge_tick), Rgba::NONE, 0, c, 6),
@@ -533,7 +537,7 @@ fn popup(list: &mut List, l: &FlowLook, theme: &Theme, pop: &Popup, y: i32, tier
     let size = 36;
     let h = 78;
     let badge = tier.filter(|_| tier_look.is_some());
-    let badge_w = badge.as_ref().map_or(0, |w| l.display().width(w, 24) + 34);
+    let badge_w = badge.as_ref().map_or(0, |w| l.body().width(w, 26) + 44);
     let icon_w = if style.icon == "none" { 0 } else { 70 };
     let w = icon_w + font.width(&pop.text, size) + 60 + badge_w;
     let r = Rect::new((W - w) / 2, y, w, h);
@@ -579,8 +583,8 @@ fn popup(list: &mut List, l: &FlowLook, theme: &Theme, pop: &Popup, y: i32, tier
         list.round_rect(rgb(c), rgb(k.outline), 3, b, 8);
         list.text(
             rgb(k.outline),
-            l.display(),
-            24,
+            l.body(),
+            26,
             Align::Centre,
             (b.x + b.w / 2, mid + 1),
             &word,

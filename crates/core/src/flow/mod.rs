@@ -29,9 +29,9 @@
 pub mod burst;
 pub mod hud;
 pub mod look;
+pub mod magazine;
 pub mod popups;
 pub mod postgame;
-pub mod print;
 pub mod screens;
 #[cfg(test)]
 mod tests;
