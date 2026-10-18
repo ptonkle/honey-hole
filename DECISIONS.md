@@ -134,3 +134,24 @@ More answers:
 > eyebrows on the fisherman look sad. otherwise looks good
 
 The agent levelled the brows and raised them slightly; the rest of the angler is approved.
+
+## 2026-10-18 (morning feedback)
+
+> The UI is overexplaining right now. YOu do not need a speed meter, you do not need a thing that tells you when you're driving (you can clearly tell based on where the guy is sitting). you do not need a popup that tells you when that you lose your item when you pick up a second one.
+> Also I don't like the color scheme and other things baout the menus. where did you get this style from? Did you fall back to teh guidance in builder to use tikz with the colorblind-friendly color scheme? This makes it look very samesy. It should be quick to fix though I hope.
+> there is no reason they wouyld want to invert mouse up and down, remove this.
+> another overexplaination "the item buoy is on the radar", why not just say "an item has spawned". This is a game, there should be skill expression, you do'nt need to tell the players exactly what is happening and what to do at all times.
+> you don't ned all screens to say that you can raise the fish-boy
+> minigames are oberexplained too, "wind it clockwise 5 times" should just be "wind the reel"
+> don't need to tell them "esc quits and the item is lost"
+> there's also effectively 2 progress bars in the reel winding mini game too
+> tleeport should be "sync the teleporter!", nitrous should be "create nitrous!". photopgraph one doesn't need to tell you how many photographs you need to take.
+> radar one should just say "bring into focus"
+> line tesnsion sound isa bit much, maybe it's actually quieter in the action game. Could it be like the ratcheting sound instead? Right now it sound slike I'm being abduected by an alient
+> otherwise sounds seem good
+> generally about the on screen language, it seems like you are putting in user-facing string a lot of information from the spec I gave you. ... Keep it simple, stupid - KISS. You can leave this information in code comments all you want but exposing this to end users is not the corect thing to do
+> also we probably need to talk about boat speed and map size. I haven't played yet but I think I was imagining a higher top speed and larger map. We can adjust later though
+
+Answers to follow-up questions: menu and HUD style "Retro outdoors magazine"; boat speed and map size "Decide after I play".
+
+The agent decided: a KISS pass over every player-facing string and HUD element (removing the speed gauge, the mode badge, the item-replaced popup, the Fish-Boy hints, minigame rule text and "Esc quits" lines, the second progress bar in Power Reel, and invert-Y; using the person's wording for the minigame calls); a restyle of menus, HUD, popups and postgame as a retro 1970s outdoors magazine; the line-tension sound replaced by a quieter ratchet-like tick. Sounds otherwise approved. The menus' current look came from Builder's default style pack palette.
