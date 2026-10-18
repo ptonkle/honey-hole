@@ -136,3 +136,23 @@ table { border-collapse: collapse; width: 100%; }
 }
 #version:disabled { cursor: default; }
 #version:empty { display: none; }
+
+/* ---- the 3D scene, behind the Gallery's panel ---- */
+#scene {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+}
+body[data-screen="gallery"] #scene { display: block; }
+body[data-screen="gallery"] #menus {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  margin: 0;
+  padding: 0;
+  width: 19rem;
+}
+.panel.gallery { background: color-mix(in srgb, var(--panel) 88%, transparent); }
+.panel.notice { color: var(--error); }

@@ -6,11 +6,14 @@
 //! allowlist and the reference ban on floats, hash maps and clocks.
 //!
 //! `api.rs` is the one door the shim calls through; `app.rs` holds the
-//! screens and settings, `view.rs` the panels and items the page draws.
+//! screens and settings, `view.rs` the panels and items the page draws,
+//! `model.rs` the model files and `gfx` what the 3D renderer reads.
 
 pub mod api;
 pub mod app;
+pub mod gfx;
 pub mod glossary;
+pub mod model;
 pub mod patch_notes;
 pub mod strings;
 pub mod view;

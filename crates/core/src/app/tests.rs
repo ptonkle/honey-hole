@@ -45,7 +45,10 @@ fn kinds(a: &App) -> Vec<String> {
 fn the_app_opens_on_the_title_with_its_menu() {
     let a = app();
     assert_eq!(a.screen, Screen::Title);
-    assert_eq!(ids(&a), ["menu.play", "menu.settings", "menu.notes"]);
+    assert_eq!(
+        ids(&a),
+        ["menu.play", "menu.settings", "menu.notes", "menu.gallery"]
+    );
     let v = ui(&a);
     assert_eq!(v["screen"], "title");
     assert_eq!(v["version"], "v0.1.0");

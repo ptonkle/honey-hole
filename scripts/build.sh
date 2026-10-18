@@ -40,6 +40,20 @@ wasm-bindgen --target web --no-typescript --out-dir dist/pkg \
 cp -R web/. dist/
 cp -R data/. dist/data/
 
+# The model files (data/models/<id>.json, each the source of truth) go out
+# as one object by id, so the page fetches them in one request; the core
+# checks every one (crates/core/src/model.rs).
+{
+  printf '{'
+  sep=''
+  for f in data/models/*.json; do
+    printf '%s"%s":' "$sep" "$(basename "$f" .json)"
+    cat "$f"
+    sep=','
+  done
+  printf '}'
+} > dist/data/models.json
+
 # Cache busting. The hash covers every file, so any change gives new URLs.
 BUILD=$(find dist -type f | LC_ALL=C sort | xargs cat | sha256 | cut -c1-12)
 find dist -name '*.js' -not -path '*/vendor/*' -print0 | xargs -0 perl -0777 -pi -e "

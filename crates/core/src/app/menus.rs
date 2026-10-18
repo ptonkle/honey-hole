@@ -37,6 +37,7 @@ impl App {
                     self.button("menu.play"),
                     self.button("menu.settings"),
                     self.button("menu.notes"),
+                    self.button("menu.gallery"),
                 ],
             ),
             self.controls_panel(),
