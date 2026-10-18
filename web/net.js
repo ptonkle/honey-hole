@@ -11,12 +11,28 @@ import { ONLINE } from "./online-config.js";
 let game = null;
 let redraw = null;
 let online = null;
+let clock = null;
+
+// The worker's tick, started with online play (the default load-and-idle
+// path starts no worker: tests/browser/check.py), for a host or joiner
+// whose tab goes to the background.
+function startClock() {
+  if (clock) return;
+  try {
+    clock = new Worker("./net-clock.js");
+    clock.onmessage = pump;
+    clock.postMessage(ONLINE.pumpMs);
+  } catch (e) {
+    clock = setInterval(pump, ONLINE.pumpMs);
+  }
+}
 
 function onNet(e) {
   game.net_event(e.kind, e.peer || "", e.text || "", !!e.host);
 }
 
 async function request(req) {
+  startClock();
   try {
     if (!online) online = await import("./online.js");
     if (req.op === "host_room") await online.hostRoom(req.room, onNet);
@@ -52,16 +68,9 @@ function loop() {
   requestAnimationFrame(loop);
 }
 
-/** Starts pumping: every animation frame, and on a worker's timer, which a tab in the background does not slow. */
+/** Starts pumping every animation frame; online play adds a worker's tick, which a tab in the background does not slow. */
 export function startNet(g, draw) {
   game = g;
   redraw = () => draw(JSON.parse(game.ui()));
-  try {
-    const clock = new Worker("./net-clock.js");
-    clock.onmessage = pump;
-    clock.postMessage(ONLINE.pumpMs);
-  } catch (e) {
-    setInterval(pump, ONLINE.pumpMs);
-  }
   requestAnimationFrame(loop);
 }
