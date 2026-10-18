@@ -21,6 +21,7 @@ pub mod lake;
 mod menus;
 pub mod minigames;
 mod notes;
+pub mod online_play;
 pub mod play;
 pub mod sounds;
 #[cfg(test)]
@@ -37,8 +38,14 @@ pub enum Screen {
     Settings,
     /// What's New: each version's notes (`patch_notes.rs`)
     Notes,
+    /// Play's choice: Offline or Online (`app/online_play.rs`)
+    PlayMenu,
     /// the offline match setup, "New match" (`app/play.rs`)
     Lobby,
+    /// Host, or Join by room code (`app/online_play.rs`)
+    Online,
+    /// an online match's seats and setup before it starts
+    OnlineLobby,
     /// a match (`app/play.rs`)
     Play,
     /// after a match: each player's catches revealed, then the ranking
@@ -189,6 +196,8 @@ pub struct App {
     pub minigames: minigames::MinigamesScreen,
     /// the page's `?debug=fishing`: a fish by every bobber (`app/fishing.rs`)
     pub debug_fishing: bool,
+    /// online play: the session, its codes and the transport's requests
+    pub online: online_play::OnlinePlay,
     /// the page's `?debug=watch`: an AI plays the person's seat too, and the
     /// camera follows it (`app/play.rs`)
     pub debug_watch: bool,
@@ -229,6 +238,7 @@ impl App {
             flow: crate::flow::Flow::default(),
             minigames: minigames::MinigamesScreen::default(),
             debug_fishing: false,
+            online: online_play::OnlinePlay::default(),
             debug_watch: false,
             debug_place: None,
         })
@@ -268,9 +278,12 @@ impl App {
             | Screen::Gallery
             | Screen::Lobby
             | Screen::Sounds
+            | Screen::PlayMenu
+            | Screen::Online
             | Screen::Lake => self.back(),
             Screen::Minigames => self.minigames_escape(),
-            Screen::Title => {}
+            // leaving a lobby is its own button, not a stray Escape
+            Screen::Title | Screen::OnlineLobby => {}
         }
     }
 
@@ -286,6 +299,9 @@ impl App {
                 | Screen::Lobby
                 | Screen::Sounds
                 | Screen::Lake
+                | Screen::PlayMenu
+                | Screen::Online
+                | Screen::OnlineLobby
                 | Screen::Minigames
         )
     }
@@ -319,7 +335,10 @@ impl App {
         match name {
             "key" => self.key(value),
             "key.up" | "keys.release" | "mouse.down" | "mouse.up" | "mouse.move" => {}
-            "menu.play" => self.go(Screen::Lobby),
+            "menu.play" => self.go(Screen::PlayMenu),
+            "menu.offline" => self.go(Screen::Lobby),
+            "menu.online" => self.go(Screen::Online),
+            "flag.codes" => self.online.codes = value == "on",
             "menu.settings" => {
                 self.settings_return = self.screen == Screen::Play;
                 self.go(Screen::Settings);
@@ -346,6 +365,7 @@ impl App {
             "data.ui2d" | "data.fish" => self.fishboy_act(name, value)?,
             _ if name.starts_with("data.") => self.data_act(name, value)?,
             _ if name.starts_with("lobby.") => self.lobby_act(name, value)?,
+            _ if name.starts_with("online.") => self.online_act(name, value)?,
             _ if name.starts_with("settings.") => self.settings_act(name, value)?,
             _ if name.starts_with("gallery.") => self.gallery_act(name, value)?,
             _ if name.starts_with("minigames.")
@@ -405,6 +425,9 @@ impl App {
             Screen::Settings => self.settings_panels(),
             Screen::Notes => self.notes_panels(),
             Screen::Lobby => self.lobby_panels(),
+            Screen::PlayMenu => self.play_menu_panels(),
+            Screen::Online => self.online_panels(),
+            Screen::OnlineLobby => self.online_lobby_panels(),
             Screen::Play => self.play_panels(),
             Screen::Postgame => self.postgame_panels(),
             Screen::Gallery => self.gallery_panels(),

@@ -20,17 +20,17 @@ A seat the computer plays, with a name of its own and a difficulty: Easy, Normal
 
 Not: bot, CPU, computer player, NPC
 
-### Animation
-
-A model's movement, played in a loop: a fish's idle swim and panic swim, the angler's driving and fishing poses, a plant's sway. Still shows the model at rest.
-
-Not: clip, motion, tween
-
 ### Angler
 
 The figure each player plays: it sits on the boat's back bench to drive and stands at the bow to fish. Its shirt and hat band wear the player's colour.
 
 Not: fisherman, avatar
+
+### Animation
+
+A model's movement, played in a loop: a fish's idle swim and panic swim, the angler's driving and fishing poses, a plant's sway. Still shows the model at rest.
+
+Not: clip, motion, tween
 
 ### Back
 
@@ -97,17 +97,18 @@ Not: boating mode, sailing
 The angler's computer, strapped to the left forearm. Raised to the face, its screen fills most of the view and shows the game's tabs, with the lake still in sight round its edge.
 
 Not: Pip-Boy, pipboy, fishboy, PDA
-### Fishpedia
-
-The Fish-Boy's tab that lists each kind of fish in this match, in rows by tier, each with its name, a box of its idle swim and how many are left. The counts are known to everyone.
-
-Not: encyclopedia, bestiary, fish log
 
 ### Fishing mode
 
 The boat's mode for fishing: the angler stands at the bow, the motor is off so the boat coasts to a stop, and A and D swivel the cast. Q switches back to driving mode.
 
 Not: angling mode, cast mode
+
+### Fishpedia
+
+The Fish-Boy's tab that lists each kind of fish in this match, in rows by tier, each with its name, a box of its idle swim and how many are left. The counts are known to everyone.
+
+Not: encyclopedia, bestiary, fish log
 
 ### Fog distance
 
@@ -127,6 +128,18 @@ To catch a biting fish on the line by pressing Space in time. Every player sees 
 
 Not: snag
 
+### Host
+
+The player whose browser opens an online match's Lobby and referees the match: it seats the others, chooses the match setup, runs the AI players, keeps the time and settles every claim to a shared fish or buoy. If the host leaves, the match ends.
+
+Not: server, owner, admin
+
+### Invite code
+
+A long code the host's browser makes for one joiner, pasted to them by hand instead of a room code. The joiner's browser answers with a reply code. The automated online check uses them, so it needs no relay.
+
+Not: offer, token
+
 ### Item buoy
 
 The giant floating fishing bobber, glowing at its seam and topped by a beacon, that holds a hidden item. A player who drives through it takes the item.
@@ -138,6 +151,12 @@ Not: crate, loot box
 A debug screen, opened from the Title, that draws one checked map of the lake with a camera tour or a fixed view. Its fog distance can be changed live.
 
 Not: level editor, map viewer, flyover
+
+### Lobby
+
+The screen where players gather for an online match: each seat's player colour, name and Ready mark, and the host's match setup. The host's Start match begins the match for everyone.
+
+Not: waiting room, room screen
 
 ### Lure
 
@@ -195,7 +214,7 @@ Not: inventory, bag, haul
 
 ### New match
 
-The screen Play opens, where an offline match is set up: how many AI players and how hard each plays, the match length, the item buoy interval and the map seed. Start match begins it.
+The screen Offline opens (from Play), where an offline match is set up: how many AI players and how hard each plays, the match length, the item buoy interval and the map seed. Start match begins it.
 
 Not: lobby screen, setup wizard
 
@@ -204,6 +223,18 @@ Not: lobby screen, setup wizard
 A fish tasting the lure before it bites. Space during a nibble scares the fish away.
 
 Not: tug, peck
+
+### Offline
+
+Play on this browser alone, against AI players: New match sets it up.
+
+Not: single player, local
+
+### Online
+
+Play with people in other browsers, joined by a room code. Each person drives their own boat; the host referees.
+
+Not: multiplayer, network play
 
 ### Ping
 
@@ -235,6 +266,12 @@ The Fish-Boy's green overhead map of the lake. It always shows your boat and its
 
 Not: minimap, sonar
 
+### Ready
+
+A joiner's mark in the Lobby that they are set to play. The host can start once every seated person is Ready.
+
+Not: ready up, confirm
+
 ### Reel
 
 The minigame after a hook: keep the fish inside the catch zone until the catch meter is full. A perfect reel takes {fishing.reel.perfect_ms} by tier.
@@ -243,9 +280,21 @@ Not: fight, tug of war
 
 ### Rematch
 
-The postgame's button that starts another match with the same players, length and item buoy interval, on a new layout of the lake.
+The postgame's button that starts another match with the same players, length and item buoy interval, on a new layout of the lake. Online, it is the host's, and takes everyone back to the Lobby.
 
 Not: replay, restart, play again
+
+### Reply code
+
+The code a joiner's browser makes from an invite code, pasted back to the host to finish the link.
+
+Not: answer, response code
+
+### Room code
+
+The letters and digits that name an online match. The host's browser makes it; the others type it on the Online screen to join.
+
+Not: lobby code, game ID, PIN
 
 ### Settings
 

@@ -1904,6 +1904,202 @@
     "test": "a_hook_heard_in_the_match_pops_up_for_this_player"
   },
   {
+    "name": "online: the host tells everyone of a ram",
+    "file": "crates/core/src/online/session.rs",
+    "find": "            self.broadcast(&Msg::Rammed { ram });\n",
+    "replace": "",
+    "test": "a_ram_judged_by_the_host_wrecks_the_victim_in_every_browser"
+  },
+  {
+    "name": "online: rams wait for the host",
+    "file": "crates/core/src/sim/collide.rs",
+    "find": "if (a_rams || b_rams) && m.online.rams_elsewhere {",
+    "replace": "if false {",
+    "test": "a_ram_judged_by_the_host_wrecks_the_victim_in_every_browser"
+  },
+  {
+    "name": "online: a slow bump is no ram",
+    "file": "crates/core/src/sim/remote.rs",
+    "find": "let (a_rams, b_rams) = (c.a_toward >= r.ram_wreck, c.b_toward >= r.ram_wreck);",
+    "replace": "let (a_rams, b_rams) = (c.a_toward >= r.ram_wreck / 2, c.b_toward >= r.ram_wreck / 2);",
+    "test": "a_slow_bump_wrecks_nobody"
+  },
+  {
+    "name": "online: a joiner sets its clock from the host",
+    "file": "crates/core/src/online/session.rs",
+    "find": "                    m.tick = expected.max(0) as u32;\n",
+    "replace": "",
+    "test": "two_to_four_browsers_agree_on_the_seats_and_the_timer"
+  },
+  {
+    "name": "online: a held thing is refused to others",
+    "file": "crates/core/src/sim/remote.rs",
+    "find": "Some(thing) => m.online.holder(&thing).is_none_or(|s| s == seat),",
+    "replace": "Some(_) => true,",
+    "test": "two_claims_for_one_thing_are_settled_the_same_way_everywhere"
+  },
+  {
+    "name": "online: an offline claim is judged at once",
+    "file": "crates/core/src/sim/remote.rs",
+    "find": "            let v = self.judge_claim(seat, id, claim);\n            self.online.incoming.push(v);\n",
+    "replace": "",
+    "test": "an_offline_claim_is_answered_at_once"
+  },
+  {
+    "name": "online: the host passes a joiner's state on",
+    "file": "crates/core/src/online/session.rs",
+    "find": "            self.send_others(peer, text);\n",
+    "replace": "",
+    "test": "joiners_with_no_link_between_them_see_each_other_through_the_host"
+  },
+  {
+    "name": "online: other boats are drawn 100 ms behind",
+    "file": "crates/core/src/online/session.rs",
+    "find": "let at = m.tick.saturating_sub(INTERP_TICKS);",
+    "replace": "let at = m.tick;",
+    "test": "a_boat_driven_in_one_browser_moves_in_the_others_100_ms_behind"
+  },
+  {
+    "name": "online: the host's link closing ends the match",
+    "file": "crates/core/src/online/session.rs",
+    "find": "if self.host_peer.as_deref() == Some(peer) && !self.over() {",
+    "replace": "if false {",
+    "test": "the_host_leaving_ends_the_match_for_everyone"
+  },
+  {
+    "name": "online: a leaver's boat leaves every match",
+    "file": "crates/core/src/online/session.rs",
+    "find": "                self.world.push(WorldEvent::Left { seat });\n",
+    "replace": "",
+    "test": "a_joiner_who_leaves_a_match_takes_its_boat_out_and_the_match_goes_on"
+  },
+  {
+    "name": "online: a lobby leaver's seat opens",
+    "file": "crates/core/src/online/session.rs",
+    "find": "            s.who = Who::Open;\n            s.name.clear();\n            s.ready = false;\n",
+    "replace": "",
+    "test": "a_joiner_who_leaves_the_lobby_frees_its_seat"
+  },
+  {
+    "name": "online: other match numbers are refused",
+    "file": "crates/core/src/online/session.rs",
+    "find": "} else if tuning != self.tuning {",
+    "replace": "} else if false {",
+    "test": "a_joiner_with_other_match_numbers_or_a_full_lobby_is_refused"
+  },
+  {
+    "name": "online: a joiner's match waits for the host's end",
+    "file": "crates/core/src/sim/mod.rs",
+    "find": "if self.tick >= self.rules.length_ticks && !self.online.end_elsewhere {",
+    "replace": "if self.tick >= self.rules.length_ticks {",
+    "test": "the_host_ends_the_match_and_its_end_reaches_every_browser"
+  },
+  {
+    "name": "online: the host's end reaches joiners",
+    "file": "crates/core/src/online/session.rs",
+    "find": "            if self.end_heard {\n                m.end_now();\n            }\n",
+    "replace": "",
+    "test": "the_host_ends_the_match_and_its_end_reaches_every_browser"
+  },
+  {
+    "name": "online: a grounding is reported",
+    "file": "crates/core/src/online/session.rs",
+    "find": "                    self.send(&h, &Msg::Report { event });\n",
+    "replace": "",
+    "test": "a_grounding_is_judged_by_its_owner_and_heard_by_everyone"
+  },
+  {
+    "name": "online: the lobby repeats a Ready",
+    "file": "crates/core/src/online/session.rs",
+    "find": "                if self.start.is_none() && ready_off {",
+    "replace": "if false {",
+    "test": "the_lobby_survives_dropped_messages"
+  },
+  {
+    "name": "online: a room code is cleaned",
+    "file": "crates/core/src/online/mod.rs",
+    "find": ".map(|c| c.to_ascii_uppercase())",
+    "replace": ".map(|c| c)",
+    "test": "a_room_code_reads_back_and_a_bad_one_is_refused"
+  },
+  {
+    "name": "online app: the host's setup reaches the lobby",
+    "file": "crates/core/src/app/play.rs",
+    "find": "        self.online_setup_changed();\n",
+    "replace": "",
+    "test": "two_apps_meet_in_a_lobby_and_start_a_match_together"
+  },
+  {
+    "name": "online app: each tick runs the session",
+    "file": "crates/core/src/app/play.rs",
+    "find": "                s.after_step(&mut p.game, now / 1000);\n",
+    "replace": "",
+    "test": "two_apps_meet_in_a_lobby_and_start_a_match_together"
+  },
+  {
+    "name": "online app: the host leaving ends the joiner's match",
+    "file": "crates/core/src/app/online_play.rs",
+    "find": "                    p.game.end_now();\n",
+    "replace": "",
+    "test": "the_host_leaving_ends_the_joiners_match_and_says_so"
+  },
+  {
+    "name": "online app: a lobby leaver says so first",
+    "file": "crates/core/src/online/session.rs",
+    "find": "            self.broadcast(&Msg::Bye);\n",
+    "replace": "",
+    "test": "a_joiner_leaving_the_lobby_frees_its_seat"
+  },
+  {
+    "name": "online app: play offers offline and online",
+    "file": "crates/core/src/app.rs",
+    "find": "\"menu.play\" => self.go(Screen::PlayMenu),",
+    "replace": "\"menu.play\" => self.go(Screen::Lobby),",
+    "test": "play_offers_offline_and_online"
+  },
+  {
+    "name": "boundary: only online.js may name webrtc",
+    "file": "crates/core/tests/boundary.rs",
+    "find": "        \"online.js\" => PagePolicy {\n            webrtc: true,",
+    "replace": "        \"online.js\" => PagePolicy {\n            webrtc: false,",
+    "test": "only_online_js_may_name_webrtc"
+  },
+  {
+    "name": "boundary: connect-src names pinned relays only",
+    "file": "crates/core/tests/boundary.rs",
+    "find": ".find(|s| !relays.iter().any(|r| r == *s))",
+    "replace": ".find(|s| s.is_empty())",
+    "test": "connect_src_allows_self_first_and_only_pinned_relays"
+  },
+  {
+    "name": "online fishing: a catch elsewhere counts here",
+    "file": "crates/core/src/sim/fishing/shared.rs",
+    "find": "                    if !v.granted || local || f >= self.fishing.fish.len() {",
+    "replace": "                    if true {",
+    "test": "two_lines_on_one_fish_one_hook_holds_and_its_catch_counts_everywhere"
+  },
+  {
+    "name": "online fishing: a hook is claimed",
+    "file": "crates/core/src/sim/fishing/shared.rs",
+    "find": "                    self.claim(seat, Claim::HookFish { fish });\n",
+    "replace": "",
+    "test": "two_lines_on_one_fish_one_hook_holds_and_its_catch_counts_everywhere"
+  },
+  {
+    "name": "online fishing: a freed fish is reported",
+    "file": "crates/core/src/sim/fishing/shared.rs",
+    "find": "                self.online.reports_out.push(event);\n",
+    "replace": "",
+    "test": "a_fish_that_gets_away_is_free_for_another_line"
+  },
+  {
+    "name": "online fishing: the host releases a freed fish",
+    "file": "crates/core/src/sim/fishing/shared.rs",
+    "find": "                    if self.online.role == Role::Host {\n                        self.online.release(&fish_thing(fish));\n                    }\n",
+    "replace": "",
+    "test": "a_fish_that_gets_away_is_free_for_another_line"
+  },
+  {
     "name": "land behind the boat pulls the camera in",
     "file": "crates/core/src/scene/camera.rs",
     "find": "if blocked(pivot.lerp(want, t)) {",
@@ -2154,5 +2350,26 @@
     "find": "            setup.seats[0].occupant = Occupant::Ai(Difficulty::Hard);",
     "replace": "",
     "test": "watch_mode_hands_the_persons_seat_to_an_ai"
+  },
+  {
+    "name": "online flow: the clock counts the countdown",
+    "file": "crates/core/src/sim/remote.rs",
+    "find": "        total.saturating_sub(self.countdown) + self.tick\n",
+    "replace": "        let _ = total;\n        self.tick\n",
+    "test": "the_countdown_runs_out_together_and_the_clock_then_follows_the_host"
+  },
+  {
+    "name": "online flow: a joiner runs no AI brain",
+    "file": "crates/core/src/app/play.rs",
+    "find": "        ai.brains.retain(|b| !game.is_remote(b.seat));\n",
+    "replace": "",
+    "test": "the_host_runs_the_ai_players_and_the_joiner_sees_them"
+  },
+  {
+    "name": "online flow: the host's rematch goes back to the lobby",
+    "file": "crates/core/src/online/session.rs",
+    "find": "        self.broadcast(&Msg::Lobby);\n",
+    "replace": "",
+    "test": "the_hosts_rematch_takes_everyone_back_to_the_lobby_for_the_next_match"
   }
 ]

@@ -42,6 +42,7 @@
 
 pub mod lake;
 pub mod reel;
+pub mod shared;
 pub mod tuning;
 pub mod view;
 
@@ -161,6 +162,9 @@ pub struct Fishing {
     /// catches the High-Quality Camera has already raised, by seat and
     /// catch number
     pub photographed: Vec<(usize, usize)>,
+    /// **Hook for online play** (`shared.rs`): fish that got off a line
+    /// since the last look, by seat
+    pub freed: Vec<(usize, u32)>,
     rng: Rng,
 }
 
@@ -200,6 +204,7 @@ impl Fishing {
             reel_power_pct: vec![100; seats],
             tame: false,
             photographed: Vec::new(),
+            freed: Vec::new(),
             rng: Rng::stream(seed, 32),
         }
     }
@@ -241,6 +246,7 @@ impl Fishing {
             Stage::Reeling => {
                 let fish = line.fish.unwrap_or(0);
                 self.free(map, fish, rod);
+                self.freed.push((seat, fish as u32));
                 Some(if broke {
                     MatchEvent::LineBroke {
                         seat,

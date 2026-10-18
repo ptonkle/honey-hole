@@ -77,6 +77,9 @@ Collected as the agent makes them; brought up in the morning. Each also has a ro
 - V39. Ramming pays far better than fishing in AI playtests (855 points knocked off rivals a minute of hunting, 92 landed a minute of fishing; 284 of 337 legendary hooks rammed off; `notes/playtests.md`). No rule was changed; the options are a late popup for legendaries (if that is what B4's "not announced for 20 seconds" meant, R4.49), a rammed-off fish that dives far from the rammer, or gentler AI (`ai.skill.*.aggression_pct`). A 10 s ram stall was tried and did nothing (R4.47, R4.48).
 - V40. An AI keeps reeling a fish worth more than 30 s of its fishing when a rammer comes, and dodges across the ram otherwise (R4.46).
 - V41. `?debug=watch` hands the person's seat to a Hard AI player to watch it play (R4.52).
+- V42. Online (decision 11, as built): other boats drawn 100 ms behind; boats meeting at ram speed pass through each other until the host's verdict, about a round trip later; the host leaving ends the match (no migration); claims settled 150 ms after they are made, in the order made; Play offers Offline and Online (SECOND-ORDER R3.41-R3.49).
+- V43. Fishing online: a hook shows at once and is settled by the host's claim (the first made wins; a loser's line lets the fish go); the host's fish places are the truth, sent once a second (SECOND-ORDER R3.63).
+- V44. Online with the match flow: the host's Rematch takes everyone back to the Lobby (joiners Ready again; a joiner's postgame offers Back to Title only); the countdown is part of the shared clock (SECOND-ORDER R3.65).
 
 ## Status
 

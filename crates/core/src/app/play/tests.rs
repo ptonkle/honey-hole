@@ -27,6 +27,7 @@ pub(crate) fn lobby() -> App {
     a.act("data.maps", MAPS).unwrap();
     a.act("data.names", NAMES).unwrap();
     a.act("menu.play", "").unwrap();
+    a.act("menu.offline", "").unwrap();
     a
 }
 

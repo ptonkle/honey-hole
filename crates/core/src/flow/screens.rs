@@ -344,7 +344,10 @@ impl App {
 
     /// The postgame's buttons.
     pub(crate) fn postgame_panels(&self) -> Vec<Panel> {
-        let items = if self.postgame_ranked() {
+        let items = if self.postgame_ranked() && self.online_joiner() {
+            // online, Rematch is the host's
+            vec![self.button("postgame.title")]
+        } else if self.postgame_ranked() {
             vec![self.button("postgame.rematch"), self.button("postgame.title")]
         } else {
             vec![Item::quiet_button("postgame.skip", self.t("postgame.skip"))]

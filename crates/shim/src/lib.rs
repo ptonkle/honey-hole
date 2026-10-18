@@ -66,6 +66,21 @@ impl Game {
         floats(&self.s.sound_noise())
     }
 
+    /// A transport event (`web/online.js` through `web/net.js`).
+    pub fn net_event(&mut self, kind: &str, peer: &str, text: &str, host: bool) {
+        self.s.net_event(kind, peer, text, host)
+    }
+
+    pub fn net_code(&mut self, which: &str, code: &str) {
+        self.s.net_code(which, code)
+    }
+
+    /// The page's clock in (ms); the text to send and the transport's
+    /// requests out.
+    pub fn net_pump(&mut self, now_ms: f64) -> String {
+        self.s.net_pump((now_ms * 1000.0) as i64)
+    }
+
     pub fn numbers(&self) -> String {
         self.s.numbers()
     }
