@@ -16,7 +16,10 @@
 //!   within `ai.flee_within_ms` (before its own reel would end), is a
 //!   threat; the brain drops the line and dodges across the rival's course
 //!   ([`flee_point`]) by its skill's `evade_pct` chance. Moving across the
-//!   ram takes the speed toward it under the wrecking speed.
+//!   ram takes the speed toward it under the wrecking speed. A fish on the
+//!   line worth more than its fishing would earn in `ai.respawn_cost_ms`
+//!   (the trip back from the spawn) is kept on: fleeing would lose it for
+//!   sure, and a ram may miss.
 
 use crate::map::fish::Tier;
 use crate::map::trig;
@@ -101,6 +104,13 @@ pub fn should_flee(s: &Senses, b: &Boat, r: &RivalSeen) -> Option<i32> {
     let eta = d * 1000 / closing.max(1);
     if eta > t.flee_within_ms as i64 {
         return None;
+    }
+    // a fish worth more than the trip back from the spawn is kept on: a
+    // ram might miss, and fleeing loses the fish for sure
+    if let Some(f) = s.fishing.on_line.as_ref().filter(|_| s.fishing.stage == Stage::Reeling) {
+        if super::fish::worth(s, f) as i64 > t.fishing_rate_per_min as i64 * t.respawn_cost_ms as i64 / 60_000 {
+            return None;
+        }
     }
     if let (Stage::Reeling, Some(rv)) = (s.fishing.stage, s.fishing.reel.as_ref()) {
         let need = (1000 - rv.meter).max(0) as i64;
