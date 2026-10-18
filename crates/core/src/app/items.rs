@@ -714,3 +714,6 @@ impl App {
         out
     }
 }
+
+#[cfg(test)]
+mod tests;

@@ -401,7 +401,7 @@ impl App {
                     .as_ref()
                     .is_some_and(|p| !p.menu_open() && !p.game.ended),
             live: (self.screen == Screen::Play && self.play.is_some()) || self.screen == Screen::Minigames,
-            hide_cursor: self.minigames_hide_cursor(),
+            hide_cursor: self.minigames_hide_cursor() || self.my_minigame().is_some_and(|m| m.hides_cursor()),
             panels,
         }
     }

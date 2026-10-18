@@ -488,6 +488,7 @@
     "MinigameStarted": [{ "cue": "minigame_start", "who": "mine" }],
     "MinigameTick": [{ "cue": "minigame_tick", "who": "mine" }],
     "MinigameMiss": [{ "cue": "minigame_miss", "who": "mine" }],
+    "Shutter": [{ "cue": "camera_shutter", "who": "mine" }],
     "MinigameDone": [{ "cue": "minigame_success", "who": "mine" }],
     "ItemUsed": [{ "cue": "use_{item}", "who": "mine", "each": { "item": ["cloak", "power_reel", "nitrous", "teleporter", "camera", "enhanced_radar"] } }],
     "CloakEnded": [{ "cue": "cloak_off", "who": "mine" }],
