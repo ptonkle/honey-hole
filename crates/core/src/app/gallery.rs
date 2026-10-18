@@ -29,6 +29,14 @@ const FLOOR_SIDES: i32 = 32;
 const ABOVE: i32 = deg(88);
 /// The four copies stand this far apart, in percent of a copy's width.
 const ROW_GAP: i32 = 108;
+/// In the line-up, the models stand this far apart, end to end (mm).
+const LINEUP_GAP_MM: i32 = 250;
+/// The line-up seen from the side looks this far down.
+const LINEUP_PITCH: i32 = deg(6);
+/// How much room the camera leaves round the line-up, in percent.
+const LINEUP_MARGIN: i32 = 110;
+/// The line-up's floor lies this far below its lowest point (mm).
+const LINEUP_FLOOR_MM: i32 = 100;
 
 /// `data/look.json`: the players' colours and the gallery's light.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
@@ -118,6 +126,9 @@ pub struct Gallery {
     pub anim_from: i64,
     /// looking straight down, as from a boat, not from the model's angle
     pub above: bool,
+    /// every model of this kind in a row at true size, with the boat for
+    /// scale, not this model fitted to the screen
+    pub lineup: bool,
 }
 
 impl Default for Gallery {
@@ -131,6 +142,7 @@ impl Default for Gallery {
             turn_from: 0,
             anim_from: 0,
             above: false,
+            lineup: false,
         }
     }
 }
@@ -243,6 +255,13 @@ impl App {
                     _ => return Err(format!("There is no view \"{value}\".")),
                 };
             }
+            "gallery.size" => {
+                self.gallery.lineup = match value {
+                    "fit" => false,
+                    "lineup" => true,
+                    _ => return Err(format!("There is no size \"{value}\".")),
+                };
+            }
             "gallery.turn" => {
                 self.gallery.yaw = self.gallery_yaw();
                 self.gallery.turn_from = self.clock;
@@ -327,11 +346,24 @@ impl App {
                 choice("above".into(), self.t("gallery.view.above")),
             ],
         });
-        items.push(Item::Toggle {
-            id: "gallery.turn".into(),
-            label: self.t("gallery.turn"),
-            value: g.turning,
+        items.push(Item::Select {
+            id: "gallery.size".into(),
+            label: self.t("gallery.size"),
+            value: if g.lineup { "lineup" } else { "fit" }.into(),
+            options: vec![
+                choice("fit".into(), self.t("gallery.size.fit")),
+                choice("lineup".into(), self.t("gallery.size.lineup")),
+            ],
         });
+        // the line-up stands still: a row turning about its middle would
+        // swing its ends out of the frame
+        if !g.lineup {
+            items.push(Item::Toggle {
+                id: "gallery.turn".into(),
+                label: self.t("gallery.turn"),
+                value: g.turning,
+            });
+        }
         items.push(self.button("menu.back"));
         let mut p = Panel::new("gallery", m.name.clone(), items);
         let (key, size) = match m.kind {
@@ -356,6 +388,9 @@ impl App {
         }
         let g = &self.gallery;
         let ms = ((self.clock - g.anim_from).max(0) / 1000 % model::MAX_MS as i64) as u32;
+        if g.lineup {
+            return self.lineup_frame(look, m.kind, ms);
+        }
         let (anim, rider) = match g.show {
             Show::Still => (None, None),
             Show::Anim(a) => (Some(a), None),
@@ -420,6 +455,84 @@ impl App {
         );
 
         let fog = (dist + radius, dist * 4);
+        (render::view_values(&cam, aspect, fog, &look.gallery.light), tris)
+    }
+
+    /// The models in the line-up, left to right: every model of `kind`,
+    /// shortest first (gallery order), then the first boat for scale when
+    /// `kind` is not a boat.
+    pub fn lineup(&self, kind: Kind) -> Vec<&Model> {
+        let mut row: Vec<&Model> = self.models.iter().filter(|m| m.kind == kind).collect();
+        if kind != Kind::Boat {
+            row.extend(self.models.iter().find(|m| m.kind == Kind::Boat));
+        }
+        row
+    }
+
+    /// The line-up: each model at its true size, nose to the right, end to
+    /// end with a gap between, playing the chosen animation where it has
+    /// one; a boat carries the angler standing at the bow. The camera fits
+    /// the whole row, so a longer model is drawn longer.
+    fn lineup_frame(&self, look: &Look, kind: Kind, ms: u32) -> (Vec<i32>, Vec<i32>) {
+        let g = &self.gallery;
+        let anim = match g.show {
+            Show::Anim(a) => Some(a),
+            _ => None,
+        };
+        let slot = g.colour.unwrap_or(0);
+        let gap = model::mm([0, 0, LINEUP_GAP_MM]).z;
+        let mut tris = Vec::new();
+        let mut cursor = 0;
+        for m in self.lineup(kind) {
+            let transforms = m.transforms(&m.poses(anim, ms));
+            let (back, length) = (model::mm(m.min_mm).z, model::mm([0, 0, m.length_mm()]).z);
+            // nose (+z) to the right (+x), its tail end at the cursor
+            let place = Affine::translate(v3(cursor - back, 0, 0)).then(&Affine::rot_y(fx::QUARTER));
+            m.draw(&transforms, &place, &m.colours(look.player(slot)), &mut tris);
+            let rider = self.rider().zip(m.anchor(Anim::Fish.key()));
+            if let (Some((r, at)), Kind::Boat) = (rider, m.kind) {
+                let seat = place.then(&m.anchor_frame(at, &transforms));
+                let rt = r.transforms(&r.poses(Some(Anim::Fish), ms));
+                r.draw(&rt, &seat, &r.colours(look.player(slot)), &mut tris);
+            }
+            cursor += length + gap;
+        }
+        if tris.is_empty() {
+            return (Vec::new(), Vec::new());
+        }
+
+        // the row's bounds, from the triangles drawn
+        let mut lo = [i32::MAX; 3];
+        let mut hi = [i32::MIN; 3];
+        for v in tris.chunks(render::VERTEX_VALUES) {
+            for k in 0..3 {
+                lo[k] = lo[k].min(v[k]);
+                hi[k] = hi[k].max(v[k]);
+            }
+        }
+        let centre = v3((lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, (lo[2] + hi[2]) / 2);
+        let half = |k: usize| (hi[k] - lo[k]) / 2;
+        let aspect = render::aspect(self.size);
+        // across the screen: the row's length; up the screen: its height
+        // from the side, its depth from above
+        let up = if g.above { half(2) } else { half(1) };
+        let fit = up.max(fx::div(half(0), aspect.max(ONE)));
+        let dist = Camera::fit(FOV, fit, LINEUP_MARGIN);
+        let fwd = facing(fx::HALF, -if g.above { ABOVE } else { LINEUP_PITCH });
+        let cam = Camera {
+            eye: centre.sub(fwd.scale(dist)),
+            fwd,
+            fov: FOV,
+            near: dist / 50,
+            far: dist * 8,
+        };
+        push_floor(
+            &mut tris,
+            v3(centre.x, lo[1] - model::mm([0, LINEUP_FLOOR_MM, 0]).y, centre.z),
+            dist * 4,
+            render::rgb(look.gallery.floor),
+        );
+        let fog = (dist + fit, dist * 4);
         (render::view_values(&cam, aspect, fog, &look.gallery.light), tris)
     }
 }

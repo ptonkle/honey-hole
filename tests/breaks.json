@@ -628,5 +628,33 @@
     "find": "[(css_w * dpr_pct / 100).max(1), (css_h * dpr_pct / 100).max(1)]",
     "replace": "[css_w * dpr_pct / 100, css_h * dpr_pct / 100]",
     "test": "the_buffer_is_the_css_size_at_the_pixel_ratio_and_never_empty"
+  },
+  {
+    "name": "the line-up stands models end to end at their lengths",
+    "file": "crates/core/src/app/gallery.rs",
+    "find": "cursor += length + gap;",
+    "replace": "cursor += gap;",
+    "test": "the_line_up_shows_every_fish_at_true_size_end_to_end_with_the_boat"
+  },
+  {
+    "name": "the line-up adds the boat for scale",
+    "file": "crates/core/src/app/gallery.rs",
+    "find": "        if kind != Kind::Boat {\n            row.extend(",
+    "replace": "        if false {\n            row.extend(",
+    "test": "the_line_up_shows_every_fish_at_true_size_end_to_end_with_the_boat"
+  },
+  {
+    "name": "the line-up hides the turn toggle",
+    "file": "crates/core/src/app/gallery.rs",
+    "find": "        if !g.lineup {\n            items.push(Item::Toggle {",
+    "replace": "        if true {\n            items.push(Item::Toggle {",
+    "test": "the_line_up_shows_every_fish_at_true_size_end_to_end_with_the_boat"
+  },
+  {
+    "name": "the line-up ignores which fish is chosen",
+    "file": "crates/core/src/app/gallery.rs",
+    "find": "        if g.lineup {\n            return self.lineup_frame(",
+    "replace": "        if g.lineup && false {\n            return self.lineup_frame(",
+    "test": "the_line_up_is_the_same_whichever_fish_is_chosen"
   }
 ]
