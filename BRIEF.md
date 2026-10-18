@@ -288,7 +288,7 @@ Since 2026-10-17 (overnight) the plan is approved in advance: the agent builds u
 - models of fish, boats, the world, the minigames, the radar view and the Fishpedia, shown in the design journal for an early OK;
 - map generation.
 
-Where this brief is silent, the agent asks if the answer changes the design; otherwise it decides, records the decision in `SECOND-ORDER.md`, and continues. The agent may not loosen a Builder requirement or a boundary test. It may not add a server, an account or analytics, and may make no off-origin request except the pinned relays the online design will need, once agreed. The agent may deploy locally (served from this machine) but does not publish to GitHub until the person grants it.
+Where this brief is silent, the agent asks if the answer changes the design; otherwise it decides, records the decision in `SECOND-ORDER.md`, and continues. The agent may not loosen a Builder requirement or a boundary test. It may not add a server, an account or analytics, and may make no off-origin request except the pinned relays the online design will need, once agreed. Since 2026-10-18 the agent may publish to the public repository ptonkle/honey-hole and its GitHub Pages site with `./scripts/publish.sh` once `./scripts/check.sh` passes (`DECISIONS.md`). Before that, local deploys only.
 
 ## Allowed core dependencies
 

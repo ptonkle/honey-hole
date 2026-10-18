@@ -159,3 +159,9 @@ The agent decided: a KISS pass over every player-facing string and HUD element (
 > make sure that after it announces the winners "Herb fisherman wins" popup, thre is still an option to close that popup and see what summed up to that total
 
 The agent decided: the postgame winner announcement can be closed to show each player's catches and points adding up to their total, with a way back to the ranking.
+
+## 2026-10-18 (publishing)
+
+> deploy the game
+
+Asked which deploy; the person chose "GitHub Pages, public". Grant: the agent may create the public repository ptonkle/honey-hole, push to it, and publish with `./scripts/publish.sh` to GitHub Pages, until withdrawn.
