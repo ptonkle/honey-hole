@@ -367,7 +367,8 @@ pub mod tests {
             "nitrous_ms": 15000,
             "teleport_charge_ms": 5000,
             "teleport_clear_mm": 6000,
-            "camera_prompt_ms": 8000
+            "camera_prompt_ms": 8000,
+            "reel_holds_in_minigame": true
         })
     }
 

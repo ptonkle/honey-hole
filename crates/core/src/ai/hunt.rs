@@ -210,5 +210,10 @@ pub fn chase(brain: &mut Brain, s: &Senses, nav: &Nav, b: &Boat, seat: usize, ou
     }
     // land beyond the target does not slow the run-in
     let beyond = nav::land_ahead(s.map, at, b.heading, t.look_ahead_mm) as i64 > d + 6000;
-    nav::steer(s.map, s.rules, t, b, aim, ram.max(s.rules.top), beyond, out);
+    let top = if b.nitrous {
+        pct(s.rules.top, s.rules.nitrous_top_pct)
+    } else {
+        s.rules.top
+    };
+    nav::steer(s.map, s.rules, t, b, aim, ram.max(top), beyond, out);
 }

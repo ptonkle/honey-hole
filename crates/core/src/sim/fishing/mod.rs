@@ -157,6 +157,11 @@ pub struct Fishing {
     /// **Hook for the items system** (Power Reel): the reel's power by
     /// seat, in percent; 100 is plain.
     pub reel_power_pct: Vec<i32>,
+    /// **Hook for the items system** (SECOND-ORDER R5.31): by seat, the
+    /// reel holds still this tick (an item's minigame has the keys). The
+    /// zone, the fish's marker and the meter wait; a ram still snaps the
+    /// line.
+    pub reel_held: Vec<bool>,
     /// **Test hook**: the next reel's fish holds still near the top of the
     /// bar, so holding Space lands it.
     pub tame: bool,
@@ -212,6 +217,7 @@ impl Fishing {
             schools: Vec::new(),
             lines: vec![Line::idle(); seats],
             reel_power_pct: vec![100; seats],
+            reel_held: vec![false; seats],
             tame: false,
             photographed: Vec::new(),
             announcer: announce::Announcer::new(tuning::PerTier {
@@ -466,6 +472,9 @@ impl Fishing {
             Stage::Reeling => {
                 if speed > t.drag_snap_mm_per_s {
                     events.extend(self.end_line(w.map, seat, rod, true));
+                    return;
+                }
+                if self.reel_held.get(seat).copied().unwrap_or(false) {
                     return;
                 }
                 let power = self.reel_power_pct[seat];

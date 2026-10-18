@@ -138,6 +138,16 @@ impl Shoot {
         });
     }
 
+    /// How near a click must be to a fish's middle to photograph it.
+    pub fn reach(&self) -> i32 {
+        ((self.t.fish_len as i64 / 2) * self.t.hit_pct as i64 / 100) as i32
+    }
+
+    /// Gravity, thousandths of a unit a tick a tick.
+    pub fn gravity(&self) -> i32 {
+        self.gravity
+    }
+
     /// The fish a click at `p` photographs: the nearest within reach.
     pub fn under(&self, p: Pt) -> Option<usize> {
         let reach = (self.t.fish_len as i64 / 2) * self.t.hit_pct as i64 / 100;

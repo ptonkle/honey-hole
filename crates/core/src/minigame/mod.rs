@@ -48,6 +48,7 @@ mod cloak;
 mod focus;
 mod reel;
 pub(crate) mod shape;
+pub mod sight;
 #[cfg(test)]
 mod tests;
 

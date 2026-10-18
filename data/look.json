@@ -119,6 +119,23 @@
       "above_pitch_deg": 62
     }
   },
+  "title": {
+    "_note": "The menus' lake backdrop (crates/core/src/app/title.rs). It shows the checked map at map_index in the map list until another lake has been drawn (a match's, the Lake preview's). The camera's point moves along the lake's tour at drift_pct of the tour's speed, from start_ms of the tour; the camera stands back_mm behind it and pivot_mm over it, pitch_deg down, aims ahead_mm beyond it and aim_mm up, and sways round it by up to sway_deg either side once each sway_ms. boats: each lead_ms of the tour ahead of the camera's point (negative: behind) and side_mm left of the tour (negative: right), in the player colour of its slot (0 blue, 1 red, 2 green, 3 yellow).",
+    "map_index": 0,
+    "drift_pct": 30,
+    "start_ms": 12000,
+    "back_mm": 12500,
+    "pivot_mm": 3600,
+    "pitch_deg": 7,
+    "ahead_mm": 14000,
+    "aim_mm": 1200,
+    "sway_deg": 35,
+    "sway_ms": 80000,
+    "boats": [
+      { "lead_ms": 700, "side_mm": 2200, "slot": 0 },
+      { "lead_ms": 2000, "side_mm": -3800, "slot": 1 }
+    ]
+  },
   "fishing": {
     "_note": "How the fishing is drawn (crates/core/src/app/fishing.rs). From the boat camera a fish under the water is drawn fish_scale_pct of its size and at fish_depth_pct of its depth, so it reads from nine metres back (SECOND-ORDER R2.38, R3.6); the bobber and lure are drawn bobber_scale_pct and lure_scale_pct of life. The line is line_mm wide from the boat camera and line_under_mm under the water, in the line colour. A landed fish hangs landed_drop_mm under the rod's tip. under: the underwater camera, back_mm behind the lure and up_mm above it, looking pitch_deg down; the murk is colour, fading in from fog_start_pct of fog_mm, with a lighter zenith overhead, and things deeper than the lure tint toward colour by up to tint_pct over clear_mm. It stays clear_surface_mm under the surface and clear_bed_mm over the bed. pip: the picture-in-picture of the boat in the top-left corner, width_pct of the screen wide, tall_pct as tall as it is wide, margin_pct from the corner, with a white border border_permille thousandths of the screen wide.",
     "fish_scale_pct": 200,
