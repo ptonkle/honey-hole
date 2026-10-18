@@ -28,6 +28,8 @@ Every `SECOND-ORDER.md` row with status *person*, by number, with what the perso
 
 - R1.23: whether settings are kept between visits (browser storage, D17). Today they last for the visit.
 - R1.30: the game's name ("Fishing" is the working name), and a read of the menu strings and text size choices the agent wrote.
+- R1.48: the draft fish roster and their names (seven fish, Midwest lakes), shown in the Gallery.
+- R1.54: the four player colours and the Gallery's light in `data/look.json`.
 
 ## Mistakes so far
 

@@ -161,6 +161,7 @@ tags = ["boundary"]
 "test:boundary" = ["boundary"]
 "test:copy" = ["copy"]
 "test:data_files" = ["copy", "whatsnew"]
+"test:data_files:every_model_file" = ["models"]
 "test:no_storage" = ["page"]
 
 # ---------------------------------------------------------------------------
@@ -171,3 +172,4 @@ boot = ["menus", "copy", "whatsnew", "page"]
 settings = ["menus", "copy", "page"]
 notes = ["menus", "copy", "whatsnew", "page"]
 play = ["menus", "copy", "page"]
+gallery = ["gallery", "models", "gfx", "menus", "copy", "page"]

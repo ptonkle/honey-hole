@@ -14,6 +14,12 @@ Where slush comes out. Each line has up to {line.spouts} spouts.
 Not: tap, dispenser, nozzle
 -->
 
+### Animation
+
+A model's movement, played in a loop: a fish's idle swim and panic swim, the angler's driving and fishing poses, a plant's sway. Still shows the model at rest.
+
+Not: clip, motion, tween
+
 ### Back
 
 The button at the foot of each screen opened from the Title. It goes back to the Title, as Esc does.
@@ -26,11 +32,23 @@ The keys the game uses, listed on the Title.
 
 Not: keybindings, hotkeys, bindings
 
+### Gallery
+
+The screen, opened from the Title, that shows each model turning on a plain floor, in its animations and in each player colour.
+
+Not: showcase, viewer, model viewer
+
 ### Minor version
 
 A version whose last number is not zero. It holds fixes only, and What's New lists it when the reader asks.
 
 Not: hotfix, point release
+
+### Model
+
+One fish, boat, figure, item or piece of scenery, kept as its own file of flat-coloured faces.
+
+Not: mesh, asset, sprite
 
 ### Pause menu
 
@@ -43,6 +61,12 @@ Not: freeze, halt
 The screen where the game runs. It is a stand-in until the game is designed.
 
 Not: level, stage, round
+
+### Player colour
+
+The colour a player's lobby slot gives them: blue, red, green or yellow. It marks their boat and their name, and the name is always shown with it.
+
+Not: team colour, skin
 
 ### Settings
 

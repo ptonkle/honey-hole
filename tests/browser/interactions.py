@@ -44,8 +44,8 @@ def step_boot(page, check):
     check(page.inner_text(".panel.title h2") == STRINGS["title"], "the Title shows the game's name")
     menu = page.locator(".panel.menu .button").all_inner_texts()
     check(
-        menu == [STRINGS["menu.play"], STRINGS["menu.settings"], STRINGS["menu.notes"]],
-        f"the Title's menu is Play, Settings, What's New {menu}",
+        menu == [STRINGS["menu.play"], STRINGS["menu.settings"], STRINGS["menu.notes"], STRINGS["menu.gallery"]],
+        f"the Title's menu is Play, Settings, What's New, Gallery {menu}",
     )
     check(page.inner_text("#version") == "v0.1.0", "the version shows in the corner")
     check(page.inner_text("#message") == "", "no error message is shown")
@@ -122,8 +122,39 @@ def step_play(page, check):
     check(page.inner_text("#message") == "", "no error message after the round trip")
 
 
+def drawn(page, heading):
+    """Waits until the page has drawn a frame of the model named `heading`."""
+    page.wait_for_selector(f"body[data-drawn=\"{heading}\"]", state="attached", timeout=10000)
+    return page.get_attribute("body", "data-drawn") == heading
+
+
+def step_gallery(page, check):
+    # the Gallery: the first model drawn, another chosen, seen from above
+    page.click(by_id("menu.gallery"))
+    check(screen(page, "gallery"), "the Gallery opens from the Title")
+    first = page.locator(f"{by_id('gallery.model')} option").first.inner_text()
+    check(drawn(page, first), f"the Gallery draws its first model, {first}")
+    check(page.is_visible("#scene"), "the 3D scene shows behind the Gallery's panel")
+    check(page.inner_text("#message") == "", "the models and the look file load without a refusal")
+    # the fish are files; the bluegill is one of the seven draft fish
+    page.select_option(by_id("gallery.model"), "bluegill")
+    check(drawn(page, "Bluegill"), "choosing the bluegill draws it")
+    shows = page.locator(f"{by_id('gallery.show')} option").all_inner_texts()
+    check(shows == [STRINGS["gallery.still"], STRINGS["anim.idle"], STRINGS["anim.panic"]], f"a fish shows still, idle and panic {shows}")
+    page.select_option(by_id("gallery.show"), "anim.panic")
+    page.select_option(by_id("gallery.view"), "above")
+    page.wait_for_selector(f"{by_id('gallery.view')} option[value='above']:checked", state="attached", timeout=5000)
+    check(page.input_value(by_id("gallery.view")) == "above", "the view from above can be chosen")
+    # a key pressed in a select belongs to the select, and a chosen select
+    # keeps the focus, so leave it first (SECOND-ORDER R1.52)
+    page.evaluate("() => document.activeElement.blur()")
+    page.keyboard.press("Escape")
+    check(screen(page, "title"), "Escape in the Gallery goes to the Title")
+    check(page.is_hidden("#scene"), "the scene hides off the Gallery")
+
+
 # The steps in order, by name; `boot` always runs.
-STEPS = [("boot", step_boot), ("settings", step_settings), ("notes", step_notes), ("play", step_play)]
+STEPS = [("boot", step_boot), ("settings", step_settings), ("notes", step_notes), ("play", step_play), ("gallery", step_gallery)]
 
 
 def chosen_steps():

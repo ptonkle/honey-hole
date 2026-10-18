@@ -45,6 +45,8 @@ fn models() -> Value {
     fish["animations"] = anims(&["idle", "panic"]);
     let mut angler = tri("figure", "Angler", true);
     angler["animations"] = anims(&["drive", "fish"]);
+    // an anchor of its own, which a figure never uses to carry a rider
+    angler["anchors"] = json!({ "drive": { "part": "p", "at": [0, 0, 0] } });
     let mut boat = tri("boat", "Boat", true);
     boat["anchors"] =
         json!({ "drive": { "part": "p", "at": [0, 0, 0] }, "fish": { "part": "p", "at": [0, 0, 500] } });

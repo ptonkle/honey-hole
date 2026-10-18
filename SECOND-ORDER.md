@@ -37,6 +37,22 @@ One row per assumption, surprise or open item. **Kind** is *divergence* (what wa
 | R1.32 | finding | Rule 6: each new behaviour test must fail with its behaviour broken. | `scripts/break_tests.py`: 25 of 25 breaks caught, each by an assertion, not a build error (strings, unknown actions, Escape in each screen, Back, the pause menu, the version's reach, the volume's range and steps, text sizes, minor versions, the patch notes' checks). | Added 24 rows to `tests/breaks.json` and moved the template's two to the new modules. | `tests/breaks.json` | done |
 | R1.33 | divergence | Ape Race ignores an action it does not know. | The template refuses it by name. | Kept the template's refusal: `act` returns `{"error": ...}` and the page shows the message; a refused setting value (a volume that is not a number, an unlisted text size) is refused the same way and leaves the setting as it was. | `an_unknown_action_is_refused_by_name` | done |
 | R1.34 | divergence | Ape Race's menu look: jungle colours, its fonts, a menu dock and a flyover behind the Title. | The person asked that fishing feel like its own game. | A neutral stylesheet (system font, greys, one blue accent, light and dark) until the game has a style. The panel `kind` names a panel for the stylesheet only. | `web/style.css` | done |
+| R1.40 | finding | The person wants each model in its own file, not built in Rust as in Ape Race (BRIEF.md, Look). | A model file is JSON under `data/models/<id>.json`: a name, a kind, `"unit": "mm"`, a gallery angle, flat colours by name (or the `player` slot at a shade), parts (pivot, parent, vertices), faces over all vertices, anchors, and animations as keyframed part poses (turn, move, scale). | The core parses and checks every file (`model::parse`) and poses it into flat triangles; the build bundles the files into one `dist/data/models.json`. The written files are the source of truth; the throwaway writer that made the first fish is not kept. | the format: doc comment of `crates/core/src/model.rs`; `every_model_file_is_accepted` in `crates/core/tests/data_files.rs` | done |
+| R1.41 | finding | Hand-written vertex lists are slow to author once the person or an agent wants richer models. | Every piece of the format maps onto glTF: parts are nodes with pivots, a vertex in one part is a skin with one joint at full weight, animations are rotation, translation and scale channels, and the units are millimetres against glTF metres. | Nothing yet. A glTF (and so Blender) importer could write model files later as a tool outside the core, as long as the model file stays the thing the game reads. |  | open |
+| R1.42 | divergence | Animated models would be rigid pieces, each turning about a joint, as in Ape Race. | Rigid pieces open a gap at every joint of a bending fish. | A vertex moves with the part that lists it, and a face may join vertices of two parts and stretch between them, so a fish body bends in three parts (head, body, tail, then the tail fin) without a gap. | `model.rs` doc comment | done |
+| R1.43 | divergence | Keys ease in and out (smoothstep), which suits a swing between two poses. | A wave sampled at many keys stops at every key when eased. | An animation may say `"ease": "linear"` (default `"smooth"`). The fish swims are travelling waves sampled at 12 keys, played linear. The change is backward compatible. | `a_part_turns_about_its_pivot_easing_between_keys` | done |
+| R1.44 | divergence | The fixed-point maths would sit at the crate root (`fx.rs`, `geom.rs`), as in Ape Race. | A second agent was writing map generation at the same time and was likely to port the same files. | Ported into `crates/core/src/gfx/` (`fx`, `geom`, `render`) without Ape Race's dice, to avoid a clash. If the map code has its own copy, merge the two into one. |  | open |
+| R1.45 | finding | A renderer must upload scenery once and draw it by instance, as Ape Race does. | The Gallery draws one model (or four), so one triangle list a frame from the core is enough and simplest. | The page renders one dynamic vertex buffer a frame (`web/gl.js`). The game world, with many trees and fish, will want static buffers and instancing: a renderer change when the world is drawn. | `crates/core/src/gfx/render.rs` doc comment | open |
+| R1.46 | finding | The page could fetch each model file by its name. | The build stamps a cache-busting hash only on literal `fetch("...")` URLs, so a computed URL would be served stale after a deploy. | `scripts/build.sh` bundles `data/models/*.json` into one object by id, `dist/data/models.json`, which the page fetches by a literal URL. | `scripts/build.sh` | done |
+| R1.47 | finding | A loose format would let a slip through: a stray vertex, an unused colour, an animation the game never plays. | The core refuses each by name: an unknown kind or slot, a colour outside 0 to 255, a face of fewer than 3 corners or naming a vertex twice, a vertex in no face, a colour on no face, a parent listed after its child, keys out of order, an animation name outside idle, panic, drive, fish, bob and sway; a fish needs idle and panic, a figure drive and fish. | The game can rely on every model having the animations it plays by name. | `crates/core/src/model/tests.rs`; `tests/breaks.json` | done |
+| R1.48 | worklist | The draft roster is the person's to confirm (BRIEF.md, Decisions). | Seven fish were modelled, named by the agent: Bluegill and Yellow perch (common), Smallmouth bass and Walleye (uncommon), Northern pike (rare), Muskellunge and Lake sturgeon (legendary). Model lengths: 200, 250, 400, 550, 800, 1200 and 1500 mm. | The names show in the Gallery. The tiers, game lengths and values are not set by the models; the person confirms the roster and names, which lean Midwest (DECISIONS.md, round 1). |  | person |
+| R1.49 | finding | Each fish's markings would be looked up during the build. | No web lookup was made in this run; the markings follow standard field-guide descriptions the agent knows (Michigan and Wisconsin DNR species pages), written into each file's `_note`. | The person, or a later run with a lookup, checks the markings against a field guide. | each fish file's `_note` | open |
+| R1.50 | divergence | The Gallery shows each model from its own flattering angle. | The person said fish are seen below the surface from the boat, so each must read as a dark shape from above too (DECISIONS.md, round 1). | The Gallery has a View choice: its best side, or from above (88° down, the model across the screen). Every fish has a still from above. The backs are kept dark. | `the_view_from_above_looks_nearly_straight_down` | done |
+| R1.51 | finding | The swim clips would be VP9 WebM or H.264 MP4, encoded by piping frames to ffmpeg. | Playwright's bundled ffmpeg has only VP8, MJPEG decoding and no pipe or raw output, and there is no system ffmpeg. | Clips are VP8 WebM, 1280×720, 25 fps, about 1.0 to 1.4 MB each. Frames come from a fake page clock, so every frame is exactly 40 ms apart. Each clip is a whole number of swim cycles, and every cycle is a multiple of 40 ms, so the clips loop cleanly. | `notes/shots/models/swims/` | done |
+| R1.52 | finding | Escape always leaves the Gallery (or Settings) for the Title. | The page sends no key typed into a select to the core, and a select keeps the focus after a choice, so after picking a model Escape does nothing until the focus leaves the select. | Not changed: the page rule is the menu port's. The Gallery browser step moves the focus off the select first. Worth a look when the menus get the game's style. | `step_gallery` in `tests/browser/interactions.py` | open |
+| R1.53 | finding | An agent's scratchpad folder is its own. | Agents started from this session share one scratchpad folder: another agent overwrote this agent's screenshot script, and its boat shots landed in a copy. | The stray shots were removed and the fish stills retaken from a private subfolder. Agents working in parallel keep their scripts in a subfolder named after themselves. |  | done |
+| R1.54 | worklist | The players' colours and the Gallery's light are presentation the agent may choose. | Blue (38, 104, 214), red (210, 48, 44), green (52, 160, 72) and yellow (238, 196, 40); a pale grey-blue floor and fog; one warm sun from the upper left. | In `data/look.json` for the person to approve or change; the core checks all four colours are there and in range. | `data/look.json`; `a_bad_look_file_is_refused_by_name` | person |
+| R1.55 | finding | A model file's part and colour names are internal. | The copy tests read every string value under `data/` as reader-visible, model files included, so a part or colour name may not use a glossary `Not:` word or a tone-listed phrase. Keys starting with `_` (the `_note`) are skipped. | Part and colour names are plain words (`head`, `back`, `fin`). | `crates/core/tests/copy.rs` | done |
 
 ## Strings written by the agent
 
@@ -67,3 +83,31 @@ Each reader-visible string the agent wrote, with its key, for the person to read
 | `pause.heading` | Paused |
 | `data/patch-notes.json` 0.1.0 | First version: the Title, Settings, What's New and a stand-in Play screen with a pause menu. |
 | core messages | "Unknown action \"…\".", "The volume \"…\" is not a whole number.", "There is no text size \"…\".", the strings file and patch notes refusals in `strings.rs` and `patch_notes.rs` |
+| `menu.gallery` | Gallery |
+| `gallery.heading` | Gallery |
+| `gallery.model` | Model |
+| `gallery.show` | Animation |
+| `gallery.still` | Still |
+| `gallery.rider` | {figure}: {pose} |
+| `gallery.colour` | Player colour |
+| `gallery.colour.all` | All four |
+| `gallery.view` | View |
+| `gallery.view.model` | Its best side |
+| `gallery.view.above` | From above |
+| `gallery.turn` | Turn |
+| `gallery.long` | {feet} ft long |
+| `gallery.tall` | {feet} ft tall |
+| `gallery.none` | No models are loaded. |
+| `gallery.no_scene` | This browser cannot draw 3D (WebGL 2), so the models cannot be shown. |
+| `anim.idle` | Idle swim |
+| `anim.panic` | Panic swim |
+| `anim.drive` | Driving |
+| `anim.fish` | Fishing |
+| `anim.bob` | Bobbing |
+| `anim.sway` | Swaying |
+| `colour.blue` | Blue |
+| `colour.red` | Red |
+| `colour.green` | Green |
+| `colour.yellow` | Yellow |
+| `data/models/*.json `name`` | Bluegill, Yellow perch, Smallmouth bass, Walleye, Northern pike, Muskellunge, Lake sturgeon |
+| `core messages` | the model file refusals in `model.rs` ("bluegill: face 12 names the colour …") and the look file and Gallery refusals in `app/gallery.rs` |
