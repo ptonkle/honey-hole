@@ -294,9 +294,22 @@ impl Fishing {
     }
 
     /// One tick of fishing, after the boats have moved.
-    pub fn step(&mut self, w: &World, inputs: &[SeatInput], scores: &mut [Score], events: &mut Vec<MatchEvent>) {
+    pub fn step(
+        &mut self,
+        w: &World,
+        inputs: &[SeatInput],
+        scores: &mut [Score],
+        events: &mut Vec<MatchEvent>,
+    ) {
         let tick = w.tick;
-        lake::roam(w.map, &self.fish_tuning, &mut self.rng, tick, &mut self.fish, &mut self.schools);
+        lake::roam(
+            w.map,
+            &self.fish_tuning,
+            &mut self.rng,
+            tick,
+            &mut self.fish,
+            &mut self.schools,
+        );
         for seat in 0..self.lines.len() {
             let none = SeatInput::default();
             let i = inputs.get(seat).copied().unwrap_or(none);
@@ -649,8 +662,7 @@ impl Fishing {
             let swerve = ((reel.marker - reel::BAR / 2) as i64 * 3000 / reel::BAR as i64) as i32;
             let to = lake::ahead(base, across, swerve);
             let surface = self.tuning.reel.surface_depth_mm;
-            let depth = line.hooked_depth_mm
-                + ((surface - line.hooked_depth_mm) as i64 * got / full) as i32;
+            let depth = line.hooked_depth_mm + ((surface - line.hooked_depth_mm) as i64 * got / full) as i32;
             let f = &mut self.fish[fish];
             lake::swim(f, to, lake::per_tick(self.fish_tuning.freed_speed_mm_per_s));
             f.depth_mm = depth;

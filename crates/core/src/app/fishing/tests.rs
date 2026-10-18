@@ -13,7 +13,10 @@ use serde_json::Value;
 fn all_models() -> String {
     let mut all: Value = serde_json::from_str(&models()).unwrap();
     for (id, text) in [
-        ("bluegill", include_str!("../../../../../data/models/bluegill.json")),
+        (
+            "bluegill",
+            include_str!("../../../../../data/models/bluegill.json"),
+        ),
         ("bobber", include_str!("../../../../../data/models/bobber.json")),
         ("lure", include_str!("../../../../../data/models/lure.json")),
     ] {
@@ -27,8 +30,10 @@ fn all_models() -> String {
 fn fishing() -> App {
     let mut a = lobby();
     a.load_models(&all_models(), LOOK).unwrap();
-    a.act("data.fish", include_str!("../../../../../data/fish.json")).unwrap();
-    a.act("data.controls", include_str!("../../../../../data/controls.json")).unwrap();
+    a.act("data.fish", include_str!("../../../../../data/fish.json"))
+        .unwrap();
+    a.act("data.controls", include_str!("../../../../../data/controls.json"))
+        .unwrap();
     a.resize(1600, 900, 100);
     a.act("lobby.start", "").unwrap();
     a.advance(0);
@@ -113,8 +118,31 @@ fn the_reel_bar_shows_the_zone_the_fish_and_the_catch_meter() {
     assert_eq!(p.heading, a.t("fishing.reeling"));
     // the zone is 280 thousandths, centred: 36% to 64%; the fish at 50%;
     // the meter starts at 30%
-    assert!(matches!(&p.items[0], Item::Meter { zone: Some([36, 64]), marker: Some(50), vertical: true, .. }), "{:?}", p.items[0]);
-    assert!(matches!(&p.items[1], Item::Meter { fill: 30, vertical: true, .. }), "{:?}", p.items[1]);
+    assert!(
+        matches!(
+            &p.items[0],
+            Item::Meter {
+                zone: Some([36, 64]),
+                marker: Some(50),
+                vertical: true,
+                ..
+            }
+        ),
+        "{:?}",
+        p.items[0]
+    );
+    assert!(
+        matches!(
+            &p.items[1],
+            Item::Meter {
+                fill: 30,
+                vertical: true,
+                ..
+            }
+        ),
+        "{:?}",
+        p.items[1]
+    );
 }
 
 #[test]
@@ -134,7 +162,10 @@ fn a_hook_pops_up_for_every_player_in_its_tier_for_two_seconds() {
     let pops = panels_of(&a, "popup tier-uncommon");
     assert_eq!(pops.len(), 1);
     let who = a.play.as_ref().unwrap().game.setup.seats[1].name.clone();
-    let want = a.t("popup.hooked").replace("{player}", &who).replace("{fish}", "Walleye");
+    let want = a
+        .t("popup.hooked")
+        .replace("{player}", &who)
+        .replace("{fish}", "Walleye");
     assert_eq!(pops[0].heading, want);
     assert_eq!(pops[0].sub, a.t("tier.uncommon"));
     // 2 s is 100 ticks: gone then

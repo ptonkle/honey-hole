@@ -160,7 +160,12 @@ pub fn check(c: &mut Checker, f: &FishTuning, g: &FishingTuning) {
         .range("fish.roam_radius_mm", f.roam_radius_mm, 0, 100_000)
         .range("fish.roam_speed_mm_per_s", f.roam_speed_mm_per_s, 1, 10_000)
         .range("fish.roam_rest_min_ms", f.roam_rest_min_ms, 0, 60_000)
-        .range("fish.roam_rest_max_ms", f.roam_rest_max_ms, f.roam_rest_min_ms, 60_000)
+        .range(
+            "fish.roam_rest_max_ms",
+            f.roam_rest_max_ms,
+            f.roam_rest_min_ms,
+            60_000,
+        )
         .range("fish.follow_speed_mm_per_s", f.follow_speed_mm_per_s, 1, 20_000)
         .range("fish.freed_swim_mm", f.freed_swim_mm, 0, 100_000)
         .range("fish.freed_speed_mm_per_s", f.freed_speed_mm_per_s, 1, 20_000)
@@ -174,40 +179,66 @@ pub fn check(c: &mut Checker, f: &FishTuning, g: &FishingTuning) {
             30_000,
         )
         .range("fish.sight_lure_mm", f.sight_lure_mm, 0, 100_000);
-    c.range("fishing.cast_max_speed_mm_per_s", g.cast_max_speed_mm_per_s, 0, 60_000)
-        .range("fishing.charge_full_ms", g.charge_full_ms, 20, 10_000)
-        .range("fishing.cast_min_mm", g.cast_min_mm, 0, 100_000)
-        .range("fishing.cast_max_mm", g.cast_max_mm, g.cast_min_mm, 100_000)
-        .range("fishing.cast_flight_ms", g.cast_flight_ms, 20, 10_000)
-        .range("fishing.sink_mm_per_s", g.sink_mm_per_s, 1, 20_000)
-        .range("fishing.bed_clear_mm", g.bed_clear_mm, 0, 5000)
-        .range("fishing.drag_reel_in_mm_per_s", g.drag_reel_in_mm_per_s, 0, 60_000)
-        .range("fishing.drag_snap_mm_per_s", g.drag_snap_mm_per_s, 0, 60_000)
-        .range("fishing.attract_radius_mm", g.attract_radius_mm, 0, 100_000)
-        .range("fishing.attract_depth_mm", g.attract_depth_mm, 1, 30_000)
-        .range("fishing.attract_far_pct", g.attract_far_pct, 0, 100)
-        .range("fishing.approach_speed_mm_per_s", g.approach_speed_mm_per_s, 1, 20_000)
-        .range("fishing.wait_min_ms", g.wait_min_ms, 0, 60_000)
-        .range("fishing.wait_max_ms", g.wait_max_ms, g.wait_min_ms, 60_000)
-        .range("fishing.nibbles_min", g.nibbles_min, 0, 10)
-        .range("fishing.nibbles_max", g.nibbles_max, g.nibbles_min, 10)
-        .range("fishing.nibble_gap_min_ms", g.nibble_gap_min_ms, 20, 10_000)
-        .range("fishing.nibble_gap_max_ms", g.nibble_gap_max_ms, g.nibble_gap_min_ms, 10_000)
-        .range("fishing.hook_window_ms", g.hook_window_ms, 20, 10_000)
-        .range("fishing.camera_value_pct", g.camera_value_pct, 100, 1000)
-        .range("fishing.landed_ms", g.landed_ms, 0, 10_000);
+    c.range(
+        "fishing.cast_max_speed_mm_per_s",
+        g.cast_max_speed_mm_per_s,
+        0,
+        60_000,
+    )
+    .range("fishing.charge_full_ms", g.charge_full_ms, 20, 10_000)
+    .range("fishing.cast_min_mm", g.cast_min_mm, 0, 100_000)
+    .range("fishing.cast_max_mm", g.cast_max_mm, g.cast_min_mm, 100_000)
+    .range("fishing.cast_flight_ms", g.cast_flight_ms, 20, 10_000)
+    .range("fishing.sink_mm_per_s", g.sink_mm_per_s, 1, 20_000)
+    .range("fishing.bed_clear_mm", g.bed_clear_mm, 0, 5000)
+    .range(
+        "fishing.drag_reel_in_mm_per_s",
+        g.drag_reel_in_mm_per_s,
+        0,
+        60_000,
+    )
+    .range("fishing.drag_snap_mm_per_s", g.drag_snap_mm_per_s, 0, 60_000)
+    .range("fishing.attract_radius_mm", g.attract_radius_mm, 0, 100_000)
+    .range("fishing.attract_depth_mm", g.attract_depth_mm, 1, 30_000)
+    .range("fishing.attract_far_pct", g.attract_far_pct, 0, 100)
+    .range(
+        "fishing.approach_speed_mm_per_s",
+        g.approach_speed_mm_per_s,
+        1,
+        20_000,
+    )
+    .range("fishing.wait_min_ms", g.wait_min_ms, 0, 60_000)
+    .range("fishing.wait_max_ms", g.wait_max_ms, g.wait_min_ms, 60_000)
+    .range("fishing.nibbles_min", g.nibbles_min, 0, 10)
+    .range("fishing.nibbles_max", g.nibbles_max, g.nibbles_min, 10)
+    .range("fishing.nibble_gap_min_ms", g.nibble_gap_min_ms, 20, 10_000)
+    .range(
+        "fishing.nibble_gap_max_ms",
+        g.nibble_gap_max_ms,
+        g.nibble_gap_min_ms,
+        10_000,
+    )
+    .range("fishing.hook_window_ms", g.hook_window_ms, 20, 10_000)
+    .range("fishing.camera_value_pct", g.camera_value_pct, 100, 1000)
+    .range("fishing.landed_ms", g.landed_ms, 0, 10_000);
     g.tier_value_pct.check(c, "fishing.tier_value_pct", 1, 10_000);
     let r = &g.reel;
     c.range("fishing.reel.zone_permille", r.zone_permille, 50, 900)
         .range("fishing.reel.gravity_per_s2", r.gravity_per_s2, 0, 100_000)
         .range("fishing.reel.lift_per_s2", r.lift_per_s2, 1, 100_000)
-        .range("fishing.reel.zone_top_speed_per_s", r.zone_top_speed_per_s, 1, 100_000)
+        .range(
+            "fishing.reel.zone_top_speed_per_s",
+            r.zone_top_speed_per_s,
+            1,
+            100_000,
+        )
         .range("fishing.reel.start_pct", r.start_pct, 1, 99)
         .range("fishing.reel.tick_ms", r.tick_ms, 20, 10_000)
         .range("fishing.reel.surface_depth_mm", r.surface_depth_mm, 0, 5000);
     r.perfect_ms.check(c, "fishing.reel.perfect_ms", 200, 600_000);
     r.drain_ms.check(c, "fishing.reel.drain_ms", 200, 600_000);
-    r.fish_speed_per_s.check(c, "fishing.reel.fish_speed_per_s", 1, 100_000);
+    r.fish_speed_per_s
+        .check(c, "fishing.reel.fish_speed_per_s", 1, 100_000);
     r.fish_turn_ms.check(c, "fishing.reel.fish_turn_ms", 20, 60_000);
     r.fish_dart_pct.check(c, "fishing.reel.fish_dart_pct", 0, 100);
 }

@@ -282,7 +282,7 @@
   {
     "name": "one schooling fish is refused",
     "file": "crates/core/src/map/fish.rs",
-    "find": "if k.tier.schools() && count == 1 {",
+    "find": "if tier.schools() && count == 1 {",
     "replace": "if false {",
     "test": "the_fish_counts_are_exact_per_kind"
   },

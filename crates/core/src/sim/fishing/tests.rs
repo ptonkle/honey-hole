@@ -143,7 +143,10 @@ fn until(m: &mut Match, limit: u32, want: impl Fn(&MatchEvent) -> bool) -> Vec<M
             return e;
         }
     }
-    panic!("nothing came in {limit} ticks; line {:?}", m.fishing.lines[0].stage)
+    panic!(
+        "nothing came in {limit} ticks; line {:?}",
+        m.fishing.lines[0].stage
+    )
 }
 
 /// A tap of Space: the shortest cast, 4 m from the bow.
@@ -163,7 +166,11 @@ fn lure_set_by_fish(m: &mut Match, kind: usize) -> usize {
         step0(m, SeatInput::default());
     }
     let e = step0(m, tap("cast"));
-    assert!(e.iter().any(|e| matches!(e, MatchEvent::LureStopped { seat: 0, .. })), "{e:?}");
+    assert!(
+        e.iter()
+            .any(|e| matches!(e, MatchEvent::LureStopped { seat: 0, .. })),
+        "{e:?}"
+    );
     f
 }
 
@@ -193,13 +200,20 @@ fn a_cast_is_refused_above_the_speed_limit() {
     // line looks
     m.boats[0].as_mut().unwrap().set_vel([1300, 0]);
     let e = step0(&mut m, space_down());
-    assert!(e.iter().any(|e| matches!(e, MatchEvent::CastRefused { seat: 0, .. })), "{e:?}");
+    assert!(
+        e.iter()
+            .any(|e| matches!(e, MatchEvent::CastRefused { seat: 0, .. })),
+        "{e:?}"
+    );
     assert_eq!(m.fishing.lines[0].stage, Stage::Idle);
     assert!(m.fishing_view(0).too_fast);
     // at 900 the charge starts
     m.boats[0].as_mut().unwrap().set_vel([900, 0]);
     let e = step0(&mut m, space_down());
-    assert!(e.iter().any(|e| matches!(e, MatchEvent::Charging { seat: 0 })), "{e:?}");
+    assert!(
+        e.iter().any(|e| matches!(e, MatchEvent::Charging { seat: 0 })),
+        "{e:?}"
+    );
     assert_eq!(m.fishing.lines[0].stage, Stage::Charging);
 }
 
@@ -245,7 +259,11 @@ fn the_bobber_lands_in_the_swivel_direction_and_the_lure_sinks_to_where_space_st
     cast_short(&mut m);
     let l = &m.fishing.lines[0];
     assert_eq!(l.stage, Stage::Flying);
-    assert!((l.to.x - BOW_X).abs() < 60 && (l.to.y - (AT.y + 4000)).abs() < 60, "{:?}", l.to);
+    assert!(
+        (l.to.x - BOW_X).abs() < 60 && (l.to.y - (AT.y + 4000)).abs() < 60,
+        "{:?}",
+        l.to
+    );
     // a 1 s flight
     let e = until(&mut m, 60, |e| matches!(e, MatchEvent::BobberLanded { .. }));
     assert_eq!(m.tick, 51, "{e:?}");
@@ -255,7 +273,13 @@ fn the_bobber_lands_in_the_swivel_direction_and_the_lure_sinks_to_where_space_st
     }
     // 20 mm a tick for 30 ticks, then one more with Space
     let e = step0(&mut m, tap("cast"));
-    assert!(e.contains(&MatchEvent::LureStopped { seat: 0, depth_mm: 620 }), "{e:?}");
+    assert!(
+        e.contains(&MatchEvent::LureStopped {
+            seat: 0,
+            depth_mm: 620
+        }),
+        "{e:?}"
+    );
     assert_eq!(m.fishing.lines[0].stage, Stage::Set);
 }
 
@@ -386,7 +410,10 @@ fn a_perfect_reel_takes_the_tiers_time() {
         (Tier::Legendary, 1000),
     ] {
         let got = perfect_ticks(tier);
-        assert!(got * 10 >= want * 9 && got * 10 <= want * 11, "{tier:?}: {got} ticks");
+        assert!(
+            got * 10 >= want * 9 && got * 10 <= want * 11,
+            "{tier:?}: {got} ticks"
+        );
     }
 }
 
@@ -446,7 +473,9 @@ fn a_broken_line_loses_the_fish_which_stays_in_the_lake_and_swims_away() {
     let mut m = fresh(1);
     let f = hooked(&mut m, 0);
     let was = m.fishing.fish[f].at;
-    let e = until(&mut m, 500, |e| matches!(e, MatchEvent::LineBroke { seat: 0, .. }));
+    let e = until(&mut m, 500, |e| {
+        matches!(e, MatchEvent::LineBroke { seat: 0, .. })
+    });
     assert!(e.contains(&MatchEvent::LineBroke {
         seat: 0,
         fish: f as u32
@@ -536,10 +565,13 @@ fn the_camera_raises_the_last_catch_once() {
 
 /// The fish is dropped: it swims off and the line is idle.
 fn assert_dropped(m: &Match, f: usize, e: &[MatchEvent]) {
-    assert!(e.contains(&MatchEvent::FishDropped {
-        seat: 0,
-        fish: f as u32
-    }), "{e:?}");
+    assert!(
+        e.contains(&MatchEvent::FishDropped {
+            seat: 0,
+            fish: f as u32
+        }),
+        "{e:?}"
+    );
     assert!(matches!(m.fishing.fish[f].state, FishState::Fleeing { .. }));
     assert_eq!(m.fishing.lines[0].stage, Stage::Idle);
 }
@@ -597,7 +629,11 @@ fn a_moving_boat_drags_the_bobber_and_too_fast_reels_the_line_in() {
         step0(&mut m, SeatInput::default());
     }
     let l = &m.fishing.lines[0];
-    assert!((l.bobber.dist(m.rod(0)) - len).abs() <= 2, "{} vs {len}", l.bobber.dist(m.rod(0)));
+    assert!(
+        (l.bobber.dist(m.rod(0)) - len).abs() <= 2,
+        "{} vs {len}",
+        l.bobber.dist(m.rod(0))
+    );
     assert!(l.bobber.x < BOW_X + 4000 - 500, "{:?}", l.bobber);
     // at 4 m/s the line comes in
     m.boats[0].as_mut().unwrap().set_vel([-4000, 0]);
@@ -611,10 +647,13 @@ fn too_fast_with_a_fish_on_breaks_the_line() {
     let f = hooked(&mut m, 0);
     m.boats[0].as_mut().unwrap().set_vel([-6000, 0]);
     let e = step0(&mut m, space_held());
-    assert!(e.contains(&MatchEvent::LineBroke {
-        seat: 0,
-        fish: f as u32
-    }), "{e:?}");
+    assert!(
+        e.contains(&MatchEvent::LineBroke {
+            seat: 0,
+            fish: f as u32
+        }),
+        "{e:?}"
+    );
 }
 
 #[test]
@@ -692,7 +731,7 @@ fn stocking_follows_the_counts_schools_and_lengths() {
     for (k, kind) in real.0.iter().enumerate() {
         let n = fish.iter().filter(|f| f.kind == k).count() as u32;
         // within 20% either way, rounded (a lone schooling fish makes two)
-        let (lo, hi) = (kind.count * 8 / 10, (kind.count * 12 + 9) / 10);
+        let (lo, hi) = (kind.count * 8 / 10, (kind.count * 12).div_ceil(10));
         assert!(n >= lo && n <= hi.max(2), "{}: {n} of {}", kind.id, kind.count);
     }
     for (s, _) in schools.iter().enumerate() {
@@ -735,7 +774,10 @@ fn schools_roam_together_and_slowly() {
         assert!(s.at.dist(s.home) <= 10_000);
         assert!(m.map.wet(f.at));
     }
-    assert!(m.fishing.fish.iter().zip(&start).any(|(f, w)| f.at != *w), "nothing moved");
+    assert!(
+        m.fishing.fish.iter().zip(&start).any(|(f, w)| f.at != *w),
+        "nothing moved"
+    );
 }
 
 /// A whole little fishing match driven by a scripted angler: cast toward
@@ -778,7 +820,10 @@ fn the_same_inputs_give_the_same_catches() {
     let (b, sb) = scripted(41);
     assert_eq!(a, b);
     assert_eq!(sa, sb);
-    assert!(a.iter().any(|e| matches!(e, MatchEvent::Hooked { .. })), "the script never hooked");
+    assert!(
+        a.iter().any(|e| matches!(e, MatchEvent::Hooked { .. })),
+        "the script never hooked"
+    );
 }
 
 /// A steady player, who holds Space while the zone's middle (led a little

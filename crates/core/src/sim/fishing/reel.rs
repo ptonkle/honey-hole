@@ -62,7 +62,11 @@ impl Reel {
         Reel {
             tier,
             // tamed, the zone starts round the still marker
-            zone: if tame { BAR - zone_h } else { (BAR / 2 - zone_h / 2).clamp(0, BAR - zone_h) },
+            zone: if tame {
+                BAR - zone_h
+            } else {
+                (BAR / 2 - zone_h / 2).clamp(0, BAR - zone_h)
+            },
             zone_h,
             zone_v: 0,
             marker,

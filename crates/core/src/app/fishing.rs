@@ -141,7 +141,12 @@ impl App {
             return Vec::new();
         };
         let mut out = Vec::new();
-        for b in view.world.boats.iter().filter(|b| !b.wrecked && b.mode == Mode::Fishing) {
+        for b in view
+            .world
+            .boats
+            .iter()
+            .filter(|b| !b.wrecked && b.mode == Mode::Fishing)
+        {
             let on = Instance {
                 model: boat,
                 place: lake.place(P::new(b.x_mm, b.y_mm), 0, b.heading, 1000),
@@ -168,7 +173,13 @@ impl App {
 
     /// A fish model where the view says it is: life size at its depth
     /// under the water, or larger and shallower from the boat camera.
-    fn fish_instance<'a>(&'a self, lake: &Lake, f: &FishSeen, under: bool, look: &FishingLook) -> Option<Instance<'a>> {
+    fn fish_instance<'a>(
+        &'a self,
+        lake: &Lake,
+        f: &FishSeen,
+        under: bool,
+        look: &FishingLook,
+    ) -> Option<Instance<'a>> {
         let model = self.models.iter().find(|m| m.id == f.kind)?;
         let mut scale = (f.length_mm as i64 * 1000 / f.base_length_mm.max(1) as i64) as i32;
         let mut depth = f.depth_mm;
@@ -282,9 +293,14 @@ impl App {
         let p = self.play.as_ref()?;
         let pitch = deg(look.pitch_deg) + (p.cam_pitch - deg(15)) / 3;
         let back = facing(yaw_of_heading(view.cam_yaw), -pitch);
-        let mut eye = target.sub(back.scale(mm(look.back_mm))).add(v3(0, mm(look.up_mm), 0));
+        let mut eye = target
+            .sub(back.scale(mm(look.back_mm)))
+            .add(v3(0, mm(look.up_mm), 0));
         let bed = lake.ground_mm(lake.map_point(eye));
-        eye.y = eye.y.max(mm(bed + look.clear_bed_mm)).min(-mm(look.clear_surface_mm));
+        eye.y = eye
+            .y
+            .max(mm(bed + look.clear_bed_mm))
+            .min(-mm(look.clear_surface_mm));
         Some(Camera {
             eye,
             fwd: target.sub(eye).norm(),
@@ -391,7 +407,10 @@ impl App {
             return Vec::new();
         };
         let mut panels = Vec::new();
-        let fishing = p.game.boat(p.seat).is_some_and(|b| b.mode == Mode::Fishing && !b.wrecked());
+        let fishing = p
+            .game
+            .boat(p.seat)
+            .is_some_and(|b| b.mode == Mode::Fishing && !b.wrecked());
         let mine = fv.lines.iter().find(|l| l.seat == fv.seat);
         let mut items = Vec::new();
         let heading = match fv.stage {
@@ -453,9 +472,10 @@ impl App {
             let mut panel = Panel::new("fishing", h, items);
             if matches!(fv.stage, Stage::Sinking | Stage::Set) {
                 if let Some(l) = mine {
-                    panel.sub = self
-                        .t("fishing.depth")
-                        .replace("{metres}", &format!("{}.{}", l.lure_depth_mm / 1000, l.lure_depth_mm % 1000 / 100));
+                    panel.sub = self.t("fishing.depth").replace(
+                        "{metres}",
+                        &format!("{}.{}", l.lure_depth_mm / 1000, l.lure_depth_mm % 1000 / 100),
+                    );
                 }
             }
             panels.push(panel);
@@ -468,7 +488,13 @@ impl App {
     fn popups(&self, p: &play::Play, fv: &FishingView) -> Vec<Panel> {
         let now = p.game.tick;
         let keep = POPUP_MS / TICK_MS as u32;
-        let name = |seat: usize| p.game.setup.seats.get(seat).map_or(String::new(), |s| s.name.clone());
+        let name = |seat: usize| {
+            p.game
+                .setup
+                .seats
+                .get(seat)
+                .map_or(String::new(), |s| s.name.clone())
+        };
         let mut out = Vec::new();
         for (tick, e) in p.log.iter().rev() {
             if now.saturating_sub(*tick) >= keep {
@@ -518,7 +544,12 @@ impl App {
         };
         let seat = p.seat;
         let fi = &mut p.game.fishing;
-        let Some(kind) = fi.roster.0.iter().position(|k| k.tier == crate::map::fish::Tier::Common) else {
+        let Some(kind) = fi
+            .roster
+            .0
+            .iter()
+            .position(|k| k.tier == crate::map::fish::Tier::Common)
+        else {
             return;
         };
         let at = fi.lines[seat].bobber;

@@ -578,7 +578,8 @@ impl Match {
             tick: self.tick,
         };
         let all: Vec<SeatInput> = (0..self.seats.len()).map(input).collect();
-        self.fishing.step(&world, &all, &mut self.scores, &mut self.events);
+        self.fishing
+            .step(&world, &all, &mut self.scores, &mut self.events);
         if self.tick >= self.rules.length_ticks {
             self.ended = true;
             self.events.push(MatchEvent::MatchEnded);
@@ -755,7 +756,10 @@ impl Match {
                 .fish
                 .iter()
                 .map(|(kind, _)| {
-                    let n = r.0.iter().position(|k| &k.id == kind).map_or(0, |k| self.fishing.left(k));
+                    let n =
+                        r.0.iter()
+                            .position(|k| &k.id == kind)
+                            .map_or(0, |k| self.fishing.left(k));
                     (kind.clone(), n as u32)
                 })
                 .collect();

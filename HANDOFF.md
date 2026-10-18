@@ -72,6 +72,8 @@ The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the 
 
 2026-10-18, the Fish-Boy integrated with the match core and the lake world, merged with main (branch `worktree-agent-a0af07e03570f7fa8`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 265 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 218 of 218 breaks caught.
 
+2026-10-18, fishing (fish in the lake, the cast, nibbles, the hook window, the reel, catches, the underwater camera and picture-in-picture, the fishing HUD), merged with main (branch `worktree-agent-a619c0b6bfe7ceb22`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 291 checks, with the new `fishing` step); `count-tests.sh`: 300 passed, 0 failed, 0 ignored; `scripts/break_tests.py` on the 34 new breaks: 34 of 34 caught (and the map row "one schooling fish is refused" repaired).
+
 ## The next action
 
 One action.

@@ -219,7 +219,14 @@ pub fn stock(
 }
 
 /// One tick of every school's wander, and of each roaming or fleeing fish.
-pub fn roam(map: &Map, t: &FishTuning, rng: &mut Rng, tick: u32, fish: &mut [LakeFish], schools: &mut Vec<School>) {
+pub fn roam(
+    map: &Map,
+    t: &FishTuning,
+    rng: &mut Rng,
+    tick: u32,
+    fish: &mut [LakeFish],
+    schools: &mut Vec<School>,
+) {
     let leg = per_tick(t.roam_speed_mm_per_s);
     for s in schools.iter_mut() {
         if tick < s.rest_until {

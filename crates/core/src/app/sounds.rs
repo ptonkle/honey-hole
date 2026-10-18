@@ -89,7 +89,11 @@ impl App {
         }
         // the line's whine while reeling (0 to 1000, as MILLI)
         if let Some(level) = self.line_tension() {
-            voices.extend(s.voice("tension", LINE_TENSION, motor::line_tension(&t.line_tension, level)));
+            voices.extend(s.voice(
+                "tension",
+                LINE_TENSION,
+                motor::line_tension(&t.line_tension, level),
+            ));
         }
         voices
     }
