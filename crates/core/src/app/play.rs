@@ -105,6 +105,11 @@ impl Play {
         (self.pending_us * ONE as i64 / (TICK_MS as i64 * 1000)) as i32
     }
 
+    /// W or S is held (the motor's sound rises with it).
+    pub fn throttle_held(&self) -> bool {
+        self.gather.held().forward || self.gather.held().back
+    }
+
     pub fn menu_open(&self) -> bool {
         self.game.seats[self.seat].menu_open
     }
@@ -385,12 +390,14 @@ impl App {
         p.last_now = Some(now);
         p.pending_us += dt;
         let mut ran = 0;
+        let mut heard = Vec::new();
         while p.pending_us >= step_us && ran < MAX_CATCH_UP {
             let mut inputs = vec![sim::SeatInput::default(); p.game.seats.len()];
             inputs[p.seat] = p.gather.take();
             let tick = p.game.tick;
             for e in p.game.step(&inputs) {
                 p.log.push((tick + 1, e.clone()));
+                heard.push(serde_json::to_value(e).unwrap_or_default());
             }
             p.pending_us -= step_us;
             ran += 1;
@@ -399,6 +406,13 @@ impl App {
         p.pending_us = p.pending_us.min(step_us - 1);
         let over = p.log.len().saturating_sub(LOG_KEEP);
         p.log.drain(..over);
+        // the events' sounds, heard from this browser's seat
+        let listener = Some(p.seat as i64);
+        if let Some(s) = self.sound.as_mut() {
+            for e in &heard {
+                s.event(e, listener);
+            }
+        }
     }
 
     /// The match as a world renderer reads it.

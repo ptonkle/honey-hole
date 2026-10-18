@@ -149,8 +149,11 @@ pub enum WreckCause {
 /// Something that happened this tick. The first group is the match core's;
 /// the rest are named in PLAN.md for the systems that will raise them, and
 /// their fields are theirs to settle.
+///
+/// As JSON an event is `{"type": "Wrecked", "seat": 1, ...}`: the sound
+/// engine's `data/sounds.json` `events` table names events this way.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-#[serde(tag = "type", rename_all = "snake_case")]
+#[serde(tag = "type")]
 pub enum MatchEvent {
     ModeChanged {
         seat: usize,

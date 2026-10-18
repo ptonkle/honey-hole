@@ -27,6 +27,9 @@ pub struct Tuning {
     pub game: MatchTuning,
     pub boat: BoatTuning,
     pub wreck: WreckTuning,
+    /// the sound engine's section, read and checked by `sound::Bank::parse`
+    #[serde(default)]
+    pub audio: serde_json::Value,
 }
 
 /// The match: its length, its seats and the spawn.

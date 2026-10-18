@@ -160,6 +160,11 @@ def step_gallery(page, check):
     page.select_option(by_id("gallery.view"), "above")
     page.wait_for_selector(f"{by_id('gallery.view')} option[value='above']:checked", state="attached", timeout=5000)
     check(page.input_value(by_id("gallery.view")) == "above", "the view from above can be chosen")
+    # true size: every fish in a row with the boat; the row stands still
+    page.select_option(by_id("gallery.size"), "lineup")
+    page.wait_for_selector(by_id("gallery.turn"), state="detached", timeout=5000)
+    check(page.input_value(by_id("gallery.size")) == "lineup", "the true-size row can be chosen")
+    check(page.locator(by_id("gallery.turn")).count() == 0, "the true-size row has no turn toggle")
     # a key pressed in a select belongs to the select, and a chosen select
     # keeps the focus, so leave it first (SECOND-ORDER R1.52)
     page.evaluate("() => document.activeElement.blur()")
@@ -168,8 +173,41 @@ def step_gallery(page, check):
     check(page.is_hidden("#scene"), "the scene hides off the Gallery")
 
 
+def step_sounds(page, check):
+    # the Sounds screen, from the Gallery: every cue by its label, one played,
+    # and another boat's motor driving past. A headless browser may play no
+    # sound, so the check is that the WebAudio graph is built without an
+    # error: the page marks the context started, each sound it builds and
+    # the loops it runs.
+    page.click(by_id("menu.gallery"))
+    screen(page, "gallery")
+    page.click(by_id("menu.sounds"))
+    check(screen(page, "sounds"), "the Sounds screen opens from the Gallery")
+    recipes = json.loads((DATA / "sounds.json").read_text())
+    labels = [c["label"] for c in recipes["cues"] if "label" in c]
+    shown = page.locator(".panel.sounds .button").all_inner_texts()
+    check(shown == labels, f"the Sounds screen lists every cue by its label ({len(shown)} of {len(labels)})")
+    page.wait_for_selector("body[data-audio='started']", state="attached", timeout=5000)
+    check(page.get_attribute("body", "data-audio") == "started", "a click starts the sound")
+    page.click(by_id("sounds.play.catch_legendary"))
+    page.wait_for_selector("body[data-last-sound='catch_legendary']", state="attached", timeout=5000)
+    check(page.get_attribute("body", "data-last-sound") == "catch_legendary", "the legendary catch builds its sound graph")
+    page.click(by_id("sounds.play.explosion"))
+    page.wait_for_selector("body[data-last-sound='explosion']", state="attached", timeout=5000)
+    check(page.get_attribute("body", "data-last-sound") == "explosion", "the explosion, with its noise layers, builds too")
+    # the other boat starts 100 m off, out of hearing, and is heard as it nears
+    page.click(by_id("sounds.drive_past"))
+    page.wait_for_selector("body[data-audio-voices='rival.debug']", state="attached", timeout=8000)
+    check(page.get_attribute("body", "data-audio-voices") == "rival.debug", "the other boat's motor is heard as it drives past")
+    check(page.inner_text("#message") == "", "no refusal on the Sounds screen")
+    page.keyboard.press("Escape")
+    check(screen(page, "title"), "Escape on Sounds goes to the Title")
+    page.wait_for_selector("body[data-audio-voices='']", state="attached", timeout=5000)
+    check(page.get_attribute("body", "data-audio-voices") == "", "leaving the Sounds screen stops its motor")
+
+
 # The steps in order, by name; `boot` always runs.
-STEPS = [("boot", step_boot), ("settings", step_settings), ("notes", step_notes), ("play", step_play), ("gallery", step_gallery)]
+STEPS = [("boot", step_boot), ("settings", step_settings), ("notes", step_notes), ("play", step_play), ("gallery", step_gallery), ("sounds", step_sounds)]
 
 
 def chosen_steps():

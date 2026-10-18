@@ -28,6 +28,7 @@ Every `SECOND-ORDER.md` row with status *person*, by number, with what the perso
 
 - R1.23: whether settings are kept between visits (browser storage, D17). Today they last for the visit.
 - R1.63: the fog's sight distance (120 m assumed), which the map validator's hiding rule depends on.
+- R2.100: the sound labels on the Sounds screen (`label` in `data/sounds.json`), a generated list a reader sees.
 - R1.69: the fish roster and how the example counts split over it.
 - R1.30: the game's name ("Fishing" is the working name), and a read of the menu strings and text size choices the agent wrote.
 - R1.107: a read of the eleven lake prop names the Gallery shows (listed at the foot of `SECOND-ORDER.md`), and the props' look (`notes/shots/models/props/`).
@@ -37,6 +38,9 @@ Every `SECOND-ORDER.md` row with status *person*, by number, with what the perso
 - R2.7: the boat's handling numbers the brief does not name (reverse, braking, coasting, slip, turning, swivel, nitrous), in `data/tuning.json`; try them by driving.
 - R2.11: the twelve draft AI names in `data/names.json`.
 - R2.21: the match setup's length choices (4, 8, 12 min) and buoy intervals (30 s to 2 min).
+- R1.160: the fish's new shapes from above and their new base lengths (R1.153, R1.154), in `notes/shots/models/fish-v2/`.
+- R2.116: the six more roster fish's look from the side and from above, in `notes/shots/models/fish-more/` (swims in `notes/shots/models/swims/`).
+- R2.117: a read of their six names (listed at the foot of `SECOND-ORDER.md`).
 
 ## Mistakes so far
 
@@ -51,6 +55,9 @@ The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the 
 2026-10-17, the model format, renderer, Gallery and the seven draft fish, merged with main (maps, boat, angler, buoy) (branch `worktree-agent-ae7232570ef10b3c9`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 129 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 82 of 82 breaks caught.
 
 2026-10-17, the angler remodelled without boxes (branch `worktree-agent-a6cc1aec971e299a0`, after f39df0b): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 138 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 90 of 90 breaks caught.
+2026-10-17, the item buoy as a giant bobber (branch `worktree-agent-aedf5b313381339fe`, after f08c629): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 136 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 88 of 88 breaks caught.
+2026-10-17, the true-size line-up and the fish shapes from above (branch `worktree-agent-a28fb9a4d934aae73`, after 8a848c5): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 144 checks); `count-tests.sh`: 138 passed, 0 failed, 0 ignored; `scripts/break_tests.py line-up`: 4 of 4 new breaks caught.
+2026-10-17, six more roster fish (branch `worktree-agent-ad8a32d5f83ca73c9`, after 443a6fd): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 173 passed, 0 failed, 0 ignored; `scripts/break_tests.py roster panic sampled`: 3 of 3 new breaks caught.
 
 ## The next action
 

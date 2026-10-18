@@ -121,6 +121,11 @@ impl Gather {
         }
     }
 
+    /// The actions held now.
+    pub fn held(&self) -> Actions {
+        self.held
+    }
+
     /// A press with no key behind it (an on-screen button).
     pub fn tap(&mut self, action: &str) {
         self.pressed.set(action, true);

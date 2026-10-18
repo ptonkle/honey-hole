@@ -168,3 +168,15 @@ body[data-screen="gallery"] #menus {
 .panel.gallery { background: color-mix(in srgb, var(--panel) 88%, transparent); }
 .panel.notice { color: var(--error); }
 .field.text input { font: inherit; padding: 0.35rem 0.5rem; }
+
+/* ---- the Sounds screen: a grid of sound buttons, then the loops ---- */
+body[data-screen="sounds"] #menus { max-width: 60rem; }
+.panel.sounds {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+}
+.panel.sounds h2, .panel.sounds .sub { grid-column: 1 / -1; }
+.panel.gallery-more {
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  padding: 0.5rem 0.75rem;
+}

@@ -8,6 +8,7 @@
 // what the core last returned.
 import init, { Game } from "./pkg/tool_shim.js";
 import { makeRenderer } from "./gl.js";
+import { startAudio } from "./audio.js";
 
 const el = (id) => document.getElementById(id);
 const make = (tag, cls, text) => {
@@ -379,12 +380,14 @@ async function main() {
   const look = await (await fetch("data/look.json")).text();
   const vertex = await (await fetch("data/shaders/scene.vert")).text();
   const fragment = await (await fetch("data/shaders/scene.frag")).text();
+  const sounds = await (await fetch("data/sounds.json")).text();
+  const tuning = await (await fetch("data/tuning.json")).text();
   game = new Game(strings, notes);
   bindInput();
   draw(JSON.parse(game.load_models(models, look)));
   // the match's files, each checked by the core (refused by name)
   const files = [
-    ["data.tuning", await (await fetch("data/tuning.json")).text()],
+    ["data.tuning", tuning],
     ["data.controls", await (await fetch("data/controls.json")).text()],
     ["data.names", await (await fetch("data/names.json")).text()],
     ["data.maps", await (await fetch("data/maps/michigan-lake.json")).text()],
@@ -393,6 +396,8 @@ async function main() {
     const result = JSON.parse(game.act(name, text));
     if (result.error) el("message").textContent = result.error;
   });
+  draw(JSON.parse(game.load_sounds(sounds, tuning)));
+  startAudio(game);
   renderer = makeRenderer(el("scene"), JSON.parse(game.numbers()), { vertex, fragment });
   if (!renderer) send("scene.unavailable", "");
   window.addEventListener("resize", () => renderer && resize());

@@ -20,6 +20,7 @@ pub mod map;
 pub mod model;
 pub mod patch_notes;
 pub mod sim;
+pub mod sound;
 pub mod strings;
 pub mod tuning;
 pub mod view;

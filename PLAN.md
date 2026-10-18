@@ -39,6 +39,11 @@ Collected as the agent makes them; brought up in the morning. Each also has a ro
 - V5. Two boats ramming each other head-on, both fast enough, are both wrecked (R2.4).
 - V6. The draft AI names (`data/names.json`, R2.11).
 - V7. The match menu has Resume as well as Settings and Leave match (R2.9).
+- V3. Fish base lengths trimmed so a 1.5× catch is a trophy, not past a record (muskie 0.95 m, pike 0.65 m, walleye 0.43 m, smallmouth 0.35 m, perch 0.2 m, bluegill 0.17 m); the sturgeon stays 1.5 m rather than the 1.8 m first suggested (SECOND-ORDER R1.150–R1.154).
+- V4. Angler brows made level and slightly raised (the person said they looked sad).
+- V5. Sound: a rival's motor is heard from 5 s at top speed (80 m), rising with the square of the nearness to full within 6 m, and its Doppler shift is exaggerated 3 times (about +16% closing, -12% leaving) because the true shift of a boat is under a semitone (SECOND-ORDER R2.93, R2.94). Every sound's recipe is the agent's: audition them on the Sounds screen (Gallery, Sounds) and say which to change.
+- V6. Sound: the 3-2-1 beeps are alike with a higher go, the buoy's five beats climb to a high last one, and an explosion and the wreck chime are heard by every player at full volume (SECOND-ORDER R2.96, R2.97, R2.106).
+- V7. Six more roster fish modelled (pumpkinseed, rock bass, largemouth bass, black crappie, channel catfish, lake trout), bases 150 to 600 mm on the same 1.5× rule (SECOND-ORDER R2.110 to R2.117).
 
 ## Status
 

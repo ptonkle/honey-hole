@@ -76,13 +76,13 @@ Not: angling mode, cast mode
 
 ### Gallery
 
-The screen, opened from the Title, that shows each model turning on a plain floor, in its animations and in each player colour.
+The screen, opened from the Title, that shows each model turning on a plain floor, in its animations and in each player colour. It can also show every model of one kind side by side at true size, with the boat for scale.
 
 Not: showcase, viewer, model viewer
 
 ### Item buoy
 
-The floating yellow box marked with a question mark that holds a hidden item. A player who drives through it takes the item.
+The giant floating fishing bobber, glowing at its seam and topped by a beacon, that holds a hidden item. A player who drives through it takes the item.
 
 Not: crate, loot box
 
@@ -102,7 +102,7 @@ Not: round, session
 
 The menu over Play that Esc opens when there is nothing else to cancel, and the Menu button too. It offers Resume, Settings and Leave match. A match against AI players only waits while it is open.
 
-Not: pause menu, options
+Not: options
 
 ### Minor version
 
@@ -140,6 +140,12 @@ The screen where the reader sets the volume, the text size and their name in mat
 
 Not: options, preferences, config
 
+### Sounds
+
+The screen, opened from the Gallery, that plays each of the game's sounds on a click, and runs the motors and the line's whine at chosen settings, including another boat's motor driving past. The game makes every sound from a recipe as it plays; there are no recordings.
+
+Not: soundboard, audio test, sound test
+
 ### Spawn point
 
 The place at one end of the lake where every boat starts a match, side by side, and comes back after a wreck.
@@ -166,7 +172,7 @@ Not: build, release
 
 ### Volume
 
-How loud the game's sounds play, in percent. The game plays no sound yet.
+How loud the game's sounds play, in percent. Sound starts after the reader's first click or key press on the page.
 
 Not: loudness, sound level
 
