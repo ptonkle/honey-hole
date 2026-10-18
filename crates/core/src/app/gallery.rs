@@ -9,7 +9,7 @@ use serde::Deserialize;
 use super::*;
 use crate::gfx::fx::{self, deg, ONE, TURN};
 use crate::gfx::geom::{facing, v3, Affine, V3};
-use crate::gfx::render::{self, Camera, Light, Rgb};
+use crate::gfx::render::{self, Camera, Frame, Light, Rgb};
 use crate::model::{self, Anim, Kind, Model};
 use crate::view::Choice;
 
@@ -39,6 +39,10 @@ pub struct Look {
     /// 0–255, by `PLAYER_COLOURS` name
     pub players: std::collections::BTreeMap<String, [i32; 3]>,
     pub gallery: GalleryLook,
+    /// the lake's look (`crate::scene::LakeLook`); a look file without one
+    /// draws no lake
+    #[serde(default)]
+    pub lake: Option<crate::scene::LakeLook>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
@@ -73,13 +77,16 @@ impl Look {
             ));
         }
         look.gallery.light.check()?;
+        if let Some(lake) = &look.lake {
+            lake.check()?;
+        }
         if look.gallery.turn_seconds <= 0 {
             return Err("The gallery's turn must take some seconds.".into());
         }
         Ok(look)
     }
 
-    fn player(&self, slot: usize) -> Rgb {
+    pub fn player(&self, slot: usize) -> Rgb {
         render::rgb(self.players[PLAYER_COLOURS[slot]])
     }
 }
@@ -346,13 +353,14 @@ impl App {
         panels
     }
 
-    /// This frame's view values and triangles (empty off the Gallery).
-    pub fn frame(&self) -> (Vec<i32>, Vec<i32>) {
+    /// The Gallery's frame: its view values and triangles (empty off the
+    /// Gallery).
+    pub fn gallery_frame(&self) -> Frame {
         let (Some(look), Some(m)) = (self.look.as_ref(), self.models.get(self.gallery.model)) else {
-            return (Vec::new(), Vec::new());
+            return Frame::default();
         };
         if self.screen != Screen::Gallery {
-            return (Vec::new(), Vec::new());
+            return Frame::default();
         }
         let g = &self.gallery;
         let ms = ((self.clock - g.anim_from).max(0) / 1000 % model::MAX_MS as i64) as u32;
@@ -420,7 +428,12 @@ impl App {
         );
 
         let fog = (dist + radius, dist * 4);
-        (render::view_values(&cam, aspect, fog, &look.gallery.light), tris)
+        let light = &look.gallery.light;
+        Frame {
+            view: render::view_values(&cam, aspect, fog, light, &render::Air::plain(light)),
+            tris,
+            ..Frame::default()
+        }
     }
 }
 

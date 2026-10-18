@@ -38,6 +38,7 @@ impl App {
                     self.button("menu.settings"),
                     self.button("menu.notes"),
                     self.button("menu.gallery"),
+                    self.button("menu.lake"),
                 ],
             ),
             self.controls_panel(),

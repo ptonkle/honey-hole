@@ -102,7 +102,7 @@ fn options(a: &App, id: &str) -> Vec<String> {
 
 /// Triangles in this frame.
 fn triangles(a: &App) -> usize {
-    a.frame().1.len() / VERTEX_VALUES / 3
+    a.frame().tris.len() / VERTEX_VALUES / 3
 }
 
 #[test]
@@ -123,7 +123,7 @@ fn with_no_models_the_gallery_says_so_and_draws_nothing() {
     a.act("menu.gallery", "").unwrap();
     assert_eq!(panel(&a)["sub"], "GALLERY.NONE");
     assert_eq!(ids(&a), ["menu.back"]);
-    assert_eq!(a.frame(), (Vec::new(), Vec::new()));
+    assert_eq!(a.frame(), Frame::default());
 }
 
 #[test]
@@ -201,11 +201,11 @@ fn the_colour_choice_shows_for_a_slot_and_all_four_draws_four() {
     );
     // the player's colour fills the slot: red is 255, 0, 0
     a.act("gallery.colour", "red").unwrap();
-    let (_, tris) = a.frame();
+    let tris = a.frame().tris;
     assert_eq!(&tris[6..9], &[ONE, 0, 0]);
     a.act("gallery.colour", "all").unwrap();
     assert_eq!(triangles(&a), 4 + 32);
-    let (_, tris) = a.frame();
+    let tris = a.frame().tris;
     let colours: Vec<&[i32]> = (0..4).map(|k| &tris[k * 27 + 6..k * 27 + 9]).collect();
     assert_eq!(
         colours,
@@ -242,7 +242,7 @@ fn the_view_from_above_looks_nearly_straight_down() {
     let centre = a.models[a.gallery.model].ball().0;
     // the eye's height over the model's middle, and how far off to the side
     let eye = |a: &App| {
-        let v = a.frame().0;
+        let v = a.frame().view;
         let e = v3(v[16], v[17], v[18]).sub(centre);
         (e.y, v3(e.x, 0, e.z).len())
     };

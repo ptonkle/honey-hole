@@ -16,7 +16,7 @@ pub const QUARTER: i32 = TURN / 4;
 pub const HALF: i32 = TURN / 2;
 
 /// 2π in Q16.16 (6.283185 × 65 536).
-const TWO_PI: i64 = 411_775;
+pub const TWO_PI: i64 = 411_775;
 
 pub const fn int(n: i32) -> i32 {
     n * ONE

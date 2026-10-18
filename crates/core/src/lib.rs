@@ -16,5 +16,6 @@ pub mod glossary;
 pub mod map;
 pub mod model;
 pub mod patch_notes;
+pub mod scene;
 pub mod strings;
 pub mod view;

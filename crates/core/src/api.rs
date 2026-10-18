@@ -82,11 +82,37 @@ impl Session {
         }
     }
 
-    /// This frame's view values and triangles (`gfx::render`).
-    pub fn frame(&self) -> (Vec<i32>, Vec<i32>) {
+    /// This frame's draw data (`gfx::render::Frame`).
+    pub fn frame(&self) -> crate::gfx::render::Frame {
         match &self.app {
             Ok(app) => app.frame(),
-            Err(_) => (Vec::new(), Vec::new()),
+            Err(_) => Default::default(),
+        }
+    }
+
+    /// Takes the setting's checked map list, and returns what the page
+    /// draws, or why it was refused.
+    pub fn load_maps(&mut self, list_json: &str) -> String {
+        match &mut self.app {
+            Ok(app) => match app.load_maps(list_json) {
+                Ok(()) => ok(&app.ui()),
+                Err(e) => error(&e),
+            },
+            Err(e) => error(e),
+        }
+    }
+
+    /// The static world's stamp: 0 for none; a new one means upload
+    /// [`Session::world_vertices`] again.
+    pub fn world_stamp(&self) -> u32 {
+        self.app.as_ref().map_or(0, |a| a.world_stamp())
+    }
+
+    /// The static world's vertices (`scene::Lake::vertices`).
+    pub fn world_vertices(&self) -> &[i32] {
+        match &self.app {
+            Ok(app) => app.world.as_ref().map_or(&[], |w| &w.vertices),
+            Err(_) => &[],
         }
     }
 

@@ -22,7 +22,7 @@ fn floats(v: &[i32]) -> Vec<f32> {
 #[wasm_bindgen]
 pub struct Game {
     s: tool_core::api::Session,
-    frame: (Vec<i32>, Vec<i32>),
+    frame: tool_core::gfx::render::Frame,
 }
 
 #[wasm_bindgen]
@@ -47,6 +47,10 @@ impl Game {
         self.s.load_models(models_json, look_json)
     }
 
+    pub fn load_maps(&mut self, list_json: &str) -> String {
+        self.s.load_maps(list_json)
+    }
+
     pub fn numbers(&self) -> String {
         self.s.numbers()
     }
@@ -60,20 +64,44 @@ impl Game {
         self.s.resize(css_w as i32, css_h as i32, (dpr * 100.0) as i32)
     }
 
-    /// Builds this frame; read it with `view`, `vertices` and `vertex_count`.
+    /// Builds this frame; read it with `view`, `vertices`, `vertex_count`,
+    /// `statics`, `groups` and `instances`.
     pub fn build_frame(&mut self) {
         self.frame = self.s.frame()
     }
 
     pub fn view(&self) -> Vec<f32> {
-        floats(&self.frame.0)
+        floats(&self.frame.view)
     }
 
     pub fn vertices(&self) -> Vec<f32> {
-        floats(&self.frame.1)
+        floats(&self.frame.tris)
     }
 
     pub fn vertex_count(&self) -> u32 {
-        tool_core::gfx::render::vertex_count(&self.frame.1)
+        tool_core::gfx::render::vertex_count(&self.frame.tris)
+    }
+
+    /// The static world's terrain and water ranges (first vertex, count).
+    pub fn statics(&self) -> Vec<i32> {
+        self.frame.statics.to_vec()
+    }
+
+    /// The instanced groups, `group` values each (`numbers`).
+    pub fn groups(&self) -> Vec<i32> {
+        self.frame.groups.clone()
+    }
+
+    pub fn instances(&self) -> Vec<f32> {
+        floats(&self.frame.instances)
+    }
+
+    /// 0 for no static world; a new stamp means upload `world_vertices`.
+    pub fn world_stamp(&self) -> u32 {
+        self.s.world_stamp()
+    }
+
+    pub fn world_vertices(&self) -> Vec<f32> {
+        floats(self.s.world_vertices())
     }
 }
