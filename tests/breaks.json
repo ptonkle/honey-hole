@@ -2574,5 +2574,75 @@
     "find": "        self.broadcast(&Msg::Lobby);\n",
     "replace": "",
     "test": "the_hosts_rematch_takes_everyone_back_to_the_lobby_for_the_next_match"
+  },
+  {
+    "name": "a hook's announcement ignores its delay",
+    "file": "crates/core/src/sim/fishing/announce.rs",
+    "find": "due: tick + ticks(delay_ms),",
+    "replace": "due: tick,",
+    "test": "a_delayed_hook_is_announced_late_and_a_lost_one_never"
+  },
+  {
+    "name": "a lost fish's hook is still announced",
+    "file": "crates/core/src/sim/fishing/announce.rs",
+    "find": "self.waiting.retain(|w| !(w.seat == *seat && w.fish == *fish));",
+    "replace": "self.waiting.retain(|_| true);",
+    "test": "a_delayed_hook_is_announced_late_and_a_lost_one_never"
+  },
+  {
+    "name": "a hook is never announced",
+    "file": "crates/core/src/sim/mod.rs",
+    "find": "        self.fishing.announcer.step(self.tick, &mut self.events);\n",
+    "replace": "",
+    "test": "with_no_delay_a_hook_is_announced_straight_after_it"
+  },
+  {
+    "name": "the hook popup reads the hook, not its announcement",
+    "file": "data/flow.json",
+    "find": "{ \"event\": \"Announced\", \"text\": \"popup.hooked\"",
+    "replace": "{ \"event\": \"Hooked\", \"text\": \"popup.hooked\"",
+    "test": "a_hook_names_the_player_and_the_fish_in_its_tier"
+  },
+  {
+    "name": "the AI forgets a hook popup's delay",
+    "file": "crates/core/src/ai/mod.rs",
+    "find": "tick: s.tick.saturating_sub(ticks(*ago_ms)),",
+    "replace": "tick: s.tick,",
+    "test": "the_ai_hunts_on_the_hook_popup_not_the_hook_and_knows_its_delay"
+  },
+  {
+    "name": "a rammed-off fish swims the freed distance",
+    "file": "crates/core/src/sim/mod.rs",
+    "find": "if let WreckCause::Rammed { .. } = cause {",
+    "replace": "if false {",
+    "test": "a_rammed_off_fish_swims_the_rammed_distance_and_others_the_freed_one"
+  },
+  {
+    "name": "a reeling boat wrecks at the plain ram speed",
+    "file": "crates/core/src/sim/collide.rs",
+    "find": "let need = |reel: bool| if reel { r.ram_wreck_reeling } else { r.ram_wreck };",
+    "replace": "let need = |_reel: bool| r.ram_wreck;",
+    "test": "a_reeling_boat_is_wrecked_only_at_the_reeling_ram_speed"
+  },
+  {
+    "name": "an anchored reeling boat is pushed by a bump",
+    "file": "crates/core/src/sim/collide.rs",
+    "find": "let anchored = |reel: bool| reel && m.rules.reeling_anchored;",
+    "replace": "let anchored = |_reel: bool| false;",
+    "test": "an_anchored_reeling_boat_is_not_pushed_by_a_bump"
+  },
+  {
+    "name": "a fast rammer is not wrecked",
+    "file": "crates/core/src/sim/collide.rs",
+    "find": "if a_crash && !b_rams {",
+    "replace": "if false {",
+    "test": "a_rammer_over_the_rammer_wreck_speed_is_wrecked_too"
+  },
+  {
+    "name": "a reeling threshold under the ram speed is accepted",
+    "file": "crates/core/src/sim/balance.rs",
+    "find": "        b.reeling_ram_wreck_pct,\n        ram_wreck_pct,",
+    "replace": "        b.reeling_ram_wreck_pct,\n        0,",
+    "test": "a_reeling_threshold_under_the_ram_speed_is_refused"
   }
 ]

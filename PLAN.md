@@ -86,6 +86,7 @@ Collected as the agent makes them; brought up in the morning. Each also has a ro
 - V48. The camera's offer: Shift uses it, Esc saves it, and after 10 s it is saved (R4.18).
 - V49. Enhanced Radar pings whatever the cooldown and marks the nearest fish of each tier (R4.19).
 - V50. Your cloaked boat is drawn see-through and pale to you; the slot's item icons, the effect timers, the camera's offer and the item popups are the agent's (R4.12, R4.20 to R4.22; shots in `notes/shots/items/`).
+- V-balance: choose a ramming fix (`notes/balance-options.md`). Five knobs in `data/tuning.json` `balance`, each measured over 48 + 48 AI matches. Applied: a legendary's hook popup comes 20 s after the hook (`announce_delay_ms.legendary` 20000, the reading of B4's "leggendaries ar not announced for 20 seconds"), and a rare or legendary fish rammed off a line swims 80 m (`rammed_swim_mm`). Legendary hooks landed went from 11% to 64%, points knocked off from 684 to 211 a player a match, rams from 9.6 to 4.8 a match. Undo the main part with one value, `announce_delay_ms.legendary` back to 0. The rule-changing knobs (a higher ram speed against a reeling boat, wrecking the rammer) were measured only (SECOND-ORDER R5.1 to R5.9).
 
 ## Status
 

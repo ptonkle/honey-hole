@@ -6,7 +6,7 @@
 //! popup for a new event is adding a row (and its string):
 //!
 //! ```json
-//! {"event": "Hooked", "text": "popup.hooked", "style": "tier", "tier": "tier",
+//! {"event": "Announced", "text": "popup.hooked", "style": "tier", "tier": "tier",
 //!  "fill": {"player": "name:seat", "fish": "fish:kind"}}
 //! ```
 //!

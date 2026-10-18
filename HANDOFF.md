@@ -41,6 +41,9 @@ Every `SECOND-ORDER.md` row with status *person*, by number, with what the perso
 - R4.45: the eased rare and legendary reel fights (`fishing.reel` in `data/tuning.json`), PLAN.md V38.
 - R4.47: ramming pays several times better than fishing in AI playtests (`notes/playtests.md`); which rule to change, if any (PLAN.md V39).
 - R4.49: whether B4's "leggendaries ar not announced for 20 seconds" means a legendary's hook popup comes 20 s late.
+- R5.9: the ramming fix applied overnight (a legendary's popup 20 s late, a rammed-off rare or legendary swims 80 m); keep it, pick another option, or undo it with `balance.announce_delay_ms.legendary` 0 (`notes/balance-options.md`, PLAN.md V-balance).
+- R5.5: whether a reeling boat should be harder to wreck and not pushed by bumps (a change to the 80% rule; measured only).
+- R5.6: whether a ram should cost the rammer its held item (needs the items work; not built).
 - R2.11: the twelve draft AI names in `data/names.json`.
 - R2.21: the match setup's length choices (4, 8, 12 min) and buoy intervals (30 s to 2 min).
 - R3.44: whether two players both behind strict NATs must be able to connect (a TURN server: a server or a paid service, and a new origin).
@@ -66,6 +69,8 @@ By system, from `SECOND-ORDER.md`, with the rule each one produced.
 ## What passed
 
 The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the date and commit.
+
+2026-10-18, the balance knobs for ramming, with a legendary popup 20 s late and an 80 m swim applied (`notes/balance-options.md`), merged with main at dc644e7 (online play) (branch `worktree-agent-a0102cd6c05bc4610`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 415 passed, 0 failed, 0 ignored; `break_tests.py` on the 10 new rows: 10 of 10 caught.
 
 2026-10-18, online play, both halves (transport, lobby, boats, wrecks, timer; fishing shared by claims; branch `online`, worktree `.claude/worktrees/online-redo`, after d5a813b, merged with main at dad627e): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `./scripts/check-online.sh`: `ONLINE CHECK PASSED` (chromium, firefox, webkit); `count-tests.sh`: 369 passed, 0 failed, 0 ignored; `scripts/break_tests.py online boundary:`: every new break caught (24 + 5 for shared fishing).
 

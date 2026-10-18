@@ -167,7 +167,7 @@ fn fill(events: &[Value], me: usize) -> Vec<Popup> {
 
 #[test]
 fn a_hook_names_the_player_and_the_fish_in_its_tier() {
-    let hooked = json!({"type": "Hooked", "seat": 1, "fish": 7, "kind": "walleye", "tier": "Uncommon"});
+    let hooked = json!({"type": "Announced", "seat": 1, "fish": 7, "kind": "walleye", "tier": "Uncommon", "delay_ms": 0});
     let p = fill(&[hooked], 0);
     assert_eq!(p.len(), 1);
     assert_eq!(p[0].text, "Rod Fisher has hooked a Walleye!");
@@ -200,7 +200,7 @@ fn a_wreck_says_who_rammed_whom_or_who_ran_aground() {
 
 #[test]
 fn an_unknown_fish_or_seat_still_makes_a_popup_and_other_events_make_none() {
-    let odd = json!({"type": "Hooked", "seat": 9, "kind": "kraken", "tier": "Rare"});
+    let odd = json!({"type": "Announced", "seat": 9, "kind": "kraken", "tier": "Rare"});
     let p = fill(
         &[odd, json!({"type": "Bumped", "a": 0, "b": 1, "speed": 3000})],
         0,
@@ -217,7 +217,7 @@ fn a_popup_row_with_a_bad_style_or_fill_is_refused_by_name() {
     v["popups"]["rows"][0]["style"] = json!("loud");
     assert_eq!(
         FlowLook::parse(&v.to_string()).unwrap_err(),
-        "Popup row 1 (Hooked) names the style \"loud\", which is not listed."
+        "Popup row 1 (Announced) names the style \"loud\", which is not listed."
     );
     let mut v: Value = serde_json::from_str(FLOW).unwrap();
     v["popups"]["rows"][7]["fill"]["player"] = json!("seat");
@@ -485,7 +485,7 @@ fn the_countdown_is_drawn_then_go() {
 #[test]
 fn a_hook_heard_in_the_match_pops_up_for_this_player() {
     let mut a = match_app();
-    let hooked = json!({"type": "Hooked", "seat": 1, "fish": 0, "kind": "walleye", "tier": "Uncommon"});
+    let hooked = json!({"type": "Announced", "seat": 1, "fish": 0, "kind": "walleye", "tier": "Uncommon", "delay_ms": 0});
     a.flow_hear(&[hooked]);
     a.advance(a.clock);
     assert_eq!(a.flow.popups.shown().count(), 1);

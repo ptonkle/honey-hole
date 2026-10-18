@@ -21,6 +21,13 @@
 //! stalls. If both are that fast, both are wrecked. Slower, they bump: each
 //! is pushed apart and their closing speed is reversed at `bump_pct`. A
 //! ghosted boat passes through boats.
+//!
+//! **The balance knobs** (`sim/balance.rs`, all off as shipped): a boat
+//! reeling a fish in is wrecked only at `ram_wreck_reeling`, and with
+//! `reeling_anchored` a bump does not push it (the other boat takes the
+//! whole bump); a rammer at `rammer_wreck` or more toward its victim is
+//! wrecked too (its wreck's cause names the victim, as a head-on ram's
+//! does).
 
 use super::boat::{dir, Boat, ONE, UM};
 use super::{Match, MatchEvent, Rules, WreckCause};
@@ -261,24 +268,35 @@ pub fn boats(m: &mut Match) {
             else {
                 continue;
             };
-            let (a_rams, b_rams) = (a_toward >= r.ram_wreck, b_toward >= r.ram_wreck);
+            let (reel_i, reel_j) = (reeling(m, i), reeling(m, j));
+            let need = |reel: bool| if reel { r.ram_wreck_reeling } else { r.ram_wreck };
+            let (a_rams, b_rams) = (a_toward >= need(reel_j), b_toward >= need(reel_i));
             if (a_rams || b_rams) && m.online.rams_elsewhere {
                 // online: the host judges it (`sim::remote`); the boats
                 // pass through each other until its verdict arrives
                 continue;
             }
             if a_rams || b_rams {
+                let crash = |toward: i32| r.rammer_wreck > 0 && toward >= r.rammer_wreck;
+                let (a_crash, b_crash) = (a_rams && crash(a_toward), b_rams && crash(b_toward));
                 if a_rams {
                     m.wreck(j, WreckCause::Rammed { by: i }, tick);
                 }
                 if b_rams {
                     m.wreck(i, WreckCause::Rammed { by: j }, tick);
                 }
+                // a rammer fast enough wrecks itself too (balance.rammer_wreck_pct)
+                if a_crash && !b_rams {
+                    m.wreck(i, WreckCause::Rammed { by: j }, tick);
+                }
+                if b_crash && !a_rams {
+                    m.wreck(j, WreckCause::Rammed { by: i }, tick);
+                }
                 for (seat, rams, other_rams, toward, sign) in [
                     (i, a_rams, b_rams, a_toward, 1i64),
                     (j, b_rams, a_rams, b_toward, -1),
                 ] {
-                    if rams && !other_rams {
+                    if rams && !other_rams && !m.boats[seat].as_ref().is_some_and(|b| b.wrecked()) {
                         let stall = tick + m.rules.stall_ticks;
                         let boat = m.boats[seat].as_mut().unwrap();
                         boat.stall_until = stall;
@@ -292,13 +310,24 @@ pub fn boats(m: &mut Match) {
                 }
                 continue;
             }
-            bump(m, i, j, d, dist2, reach);
+            let anchored = |reel: bool| reel && m.rules.reeling_anchored;
+            let (hold_i, hold_j) = (anchored(reel_i), anchored(reel_j));
+            bump(m, i, j, d, dist2, reach, [hold_i && !hold_j, hold_j && !hold_i]);
         }
     }
 }
 
-/// Two boats bump apart.
-fn bump(m: &mut Match, i: usize, j: usize, d: [i64; 2], dist2: i64, reach: i64) {
+/// Whether a seat's boat is reeling a fish in.
+fn reeling(m: &Match, seat: usize) -> bool {
+    m.fishing
+        .lines
+        .get(seat)
+        .is_some_and(|l| l.stage == super::fishing::Stage::Reeling)
+}
+
+/// Two boats bump apart. A boat that `holds` (anchored) is not moved; the
+/// other takes the whole push.
+fn bump(m: &mut Match, i: usize, j: usize, d: [i64; 2], dist2: i64, reach: i64, holds: [bool; 2]) {
     let one = ONE as i64;
     let (va, vb) = (
         m.boats[i].as_ref().unwrap().vel(),
@@ -306,12 +335,17 @@ fn bump(m: &mut Match, i: usize, j: usize, d: [i64; 2], dist2: i64, reach: i64) 
     );
     let rel = dot([vb[0] - va[0], vb[1] - va[1]], d);
     let push = (reach - isqrt(dist2)) / 2 + 1;
-    let k = if rel < 0 {
+    let k_all = if rel < 0 {
         -rel * (100 + m.rules.bump_pct as i64) / 200
     } else {
         0
     };
-    for (seat, sign) in [(i, -1i64), (j, 1)] {
+    for (n, (seat, sign)) in [(i, -1i64), (j, 1)].into_iter().enumerate() {
+        if holds[n] {
+            continue;
+        }
+        let share = if holds[1 - n] { 2 } else { 1 };
+        let (k, push) = (k_all * share, push * share);
         let b = m.boats[seat].as_mut().unwrap();
         let mut v = b.vel();
         v[0] += (sign * k * d[0] / one) as i32;

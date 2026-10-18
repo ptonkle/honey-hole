@@ -516,3 +516,34 @@ fn the_view_draws_each_boat_between_its_last_two_ticks() {
     assert_eq!(half.boats[0].colour, "blue");
     assert_eq!(half.remaining_ms, 480_000 - 20);
 }
+
+#[test]
+fn a_rammer_over_the_rammer_wreck_speed_is_wrecked_too() {
+    // 90% of top speed: 14 400 mm/s
+    let t = sample();
+    let mut m = ram(14_400, &t);
+    m.step(&[SeatInput::default(); 2]);
+    assert!(!boat(&m, 0).wrecked(), "as shipped, the rammer only stalls");
+    let mut j = tuning::tests::sample_json();
+    j["balance"]["rammer_wreck_pct"] = 85.into();
+    let t = tuning::parse(&j.to_string()).unwrap();
+    let mut m = ram(14_400, &t);
+    let ev = m.step(&[SeatInput::default(); 2]).to_vec();
+    assert_eq!(
+        ev,
+        [
+            MatchEvent::Wrecked {
+                seat: 1,
+                cause: WreckCause::Rammed { by: 0 }
+            },
+            MatchEvent::Wrecked {
+                seat: 0,
+                cause: WreckCause::Rammed { by: 1 }
+            }
+        ]
+    );
+    // under it, a ram is as before
+    let mut m = ram(12_800, &t);
+    m.step(&[SeatInput::default(); 2]);
+    assert!(!boat(&m, 0).wrecked() && boat(&m, 1).wrecked());
+}

@@ -51,6 +51,24 @@
     "scrape_keep_pct": 70,
     "bump_pct": 50
   },
+  "balance": {
+    "_note": "Knobs for the ramming question (crates/core/src/sim/balance.rs; notes/balance-options.md; PLAN.md V-balance). Each knob's off value is the game before it: announce_delay_ms 0, rammed_swim_mm 12000 (fish.freed_swim_mm), reeling_ram_wreck_pct 80, reeling_anchored false, rammer_wreck_pct 0. Applied 2026-10-18 from the measurements (V-balance): legendary announce_delay_ms 20000 (round 1, B4: 'leggendaries ar not announced for 20 seconds') and rare and legendary rammed_swim_mm 80000; announce_delay_ms.legendary back to 0 undoes the main change. announce_delay_ms: a hook's popup (and its sound) comes this long after the hook, by tier; a fish landed or lost before then is never announced, and the AI hears only the popup. rammed_swim_mm: how far a fish knocked off a line by a ram swims off, by tier (any other lost fish swims fish.freed_swim_mm). reeling_ram_wreck_pct: the speed toward a boat reeling a fish in, in percent of top speed, that wrecks it (BRIEF: 80%, the same as wreck.ram_wreck_pct). reeling_anchored: a boat reeling a fish in is not pushed by a bump. rammer_wreck_pct: a rammer this fast toward its victim is wrecked too (0: never; round 1, B1: the rammer only stalls). The last three change rules the person set, so they stay as the person set them unless the person says otherwise.",
+    "announce_delay_ms": {
+      "common": 0,
+      "uncommon": 0,
+      "rare": 0,
+      "legendary": 20000
+    },
+    "rammed_swim_mm": {
+      "common": 12000,
+      "uncommon": 12000,
+      "rare": 80000,
+      "legendary": 80000
+    },
+    "reeling_ram_wreck_pct": 80,
+    "reeling_anchored": false,
+    "rammer_wreck_pct": 0
+  },
   "fish": {
     "_note": "The fish in the lake (crates/core/src/sim/fishing/lake.rs). Each kind's count in data/fish.json (the BRIEF's example spread) moves by up to count_variance_pct either way by the match seed; commons and uncommons swim in schools of 2-4 and rares and legendaries alone (map/fish.rs places them, at their tier's depths). A fish's length is length_min_pct to length_max_pct of its kind's base length (BRIEF: about 1.5 times). A school wanders within roam_radius_mm of where it was placed at roam_speed_mm_per_s, resting roam_rest_min_ms to roam_rest_max_ms between legs; its fish keep up at follow_speed_mm_per_s. A fish that gets free swims freed_swim_mm off at freed_speed_mm_per_s, then roams from there (the person: 'maybe they swim a bit away'). Sight: a fish shows from a boat within sight_shallow_mm when it swims at sight_shallow_depth_mm or shallower, falling in proportion to sight_deep_mm at sight_deep_depth_mm and deeper (the person: close only, but more generous for legendaries); with your line in, also within sight_lure_mm of your lure.",
     "count_variance_pct": 20,
