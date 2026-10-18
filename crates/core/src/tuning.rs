@@ -32,6 +32,8 @@ pub struct Tuning {
     pub fishing: crate::sim::fishing::tuning::FishingTuning,
     /// the Fish-Boy's radar: the ping (`fishboy/radar.rs`)
     pub radar: RadarTuning,
+    /// the AI players (`ai/tuning.rs`)
+    pub ai: crate::ai::tuning::AiTuning,
     /// the sound engine's section, read and checked by `sound::Bank::parse`
     #[serde(default)]
     pub audio: serde_json::Value,
@@ -236,6 +238,7 @@ impl Tuning {
                 r.ping_sweep_ms <= r.ping_cooldown_ms,
                 "radar.ping_sweep_ms must end before radar.ping_cooldown_ms.",
             );
+        crate::ai::tuning::check(&mut c, &self.ai, w.ram_wreck_pct, w.land_wreck_pct);
         c.done()
     }
 }
@@ -296,8 +299,15 @@ pub mod tests {
                 "ping_sweep_ms": 3000
             },
             "fish": fish_sample(),
-            "fishing": fishing_sample()
+            "fishing": fishing_sample(),
+            "ai": ai_sample()
         })
+    }
+
+    /// The AI section, for tests: the shipped file's numbers.
+    pub fn ai_sample() -> serde_json::Value {
+        let file: serde_json::Value = serde_json::from_str(include_str!("../../../data/tuning.json")).unwrap();
+        file["ai"].clone()
     }
 
     /// The fish section, round numbers for tests.

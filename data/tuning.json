@@ -140,6 +140,67 @@
     "camera_value_pct": 150,
     "landed_ms": 2000
   },
+  "ai": {
+    "_note": "The AI players (crates/core/src/ai/). They see only what their seat could: the fish in sight (Match::fishing_view), rivals within the fog distance with no land between, rivals heard within hear_mm (a rival's motor is heard from about 5 s away at top speed), their own pings, and the hook popups. Driving: a path over a grid of path_cell_mm cells, each open when all its water is path_clear_mm or more from land and dearer nearer than path_roomy_mm; with land within look_ahead_mm ahead the boat keeps under careful_speed_pct of top speed, below the 50% that grounds a boat, and it brakes with brake_use_pct of its braking. Fishing: it stops cast_stop_mm short of the fish it chose (the most points for the time it would take), casts at it, stops the lure at its depth, reels in after lure_wait_ms with nothing coming, and leaves a fish after tries_per_fish misses. Hunting: on a rival's hook it reckons the fish's points against fishing_rate_per_min of its own, and goes only if it can get there before the rival's reel ends (rival_reel_ms, a steady player's time by tier); it rams at ram_speed_pct of top speed or more (80% wrecks) after a straight run of ram_runup_mm. Evading: a rival closing faster than threat_speed_pct of top speed, who would arrive before its own reel ends, may make it drop the line and flee for flee_ms. A ping's sighting is chased for sighting_keep_ms. skill: per difficulty, the reaction to a bite, the reel's lag and noise (thousandths of the bar), the cast's aim and charge noise, aggression (how readily it hunts), the chance it evades, and how often it pings.",
+    "path_cell_mm": 8000,
+    "path_clear_mm": 4000,
+    "path_roomy_mm": 12000,
+    "waypoint_mm": 8000,
+    "look_ahead_mm": 40000,
+    "careful_speed_pct": 40,
+    "brake_use_pct": 60,
+    "ram_speed_pct": 90,
+    "ram_runup_mm": 45000,
+    "cast_stop_mm": 12000,
+    "lure_wait_ms": 12000,
+    "tries_per_fish": 2,
+    "hear_mm": 80000,
+    "threat_speed_pct": 60,
+    "flee_ms": 6000,
+    "rival_reel_ms": {
+      "common": 3000,
+      "uncommon": 6500,
+      "rare": 17000,
+      "legendary": 75000
+    },
+    "fishing_rate_per_min": 40,
+    "sighting_keep_ms": 20000,
+    "skill": {
+      "easy": {
+        "reaction_min_ms": 350,
+        "reaction_max_ms": 800,
+        "reel_lag_ms": 40,
+        "reel_noise_permille": 90,
+        "aim_noise_deg": 12,
+        "charge_noise_pct": 15,
+        "aggression_pct": 15,
+        "evade_pct": 30,
+        "ping_every_ms": 45000
+      },
+      "normal": {
+        "reaction_min_ms": 220,
+        "reaction_max_ms": 480,
+        "reel_lag_ms": 20,
+        "reel_noise_permille": 50,
+        "aim_noise_deg": 6,
+        "charge_noise_pct": 8,
+        "aggression_pct": 45,
+        "evade_pct": 60,
+        "ping_every_ms": 25000
+      },
+      "hard": {
+        "reaction_min_ms": 150,
+        "reaction_max_ms": 300,
+        "reel_lag_ms": 0,
+        "reel_noise_permille": 30,
+        "aim_noise_deg": 2,
+        "charge_noise_pct": 3,
+        "aggression_pct": 75,
+        "evade_pct": 90,
+        "ping_every_ms": 15000
+      }
+    }
+  },
   "audio": {
     "_note": "Read by crates/core/src/sound/motor.rs. Gains run 0 to 1 and pitches are multiples of the recipe's own (1 is as written, 2 an octave up). Times in seconds unless the key says ms; distances in mm.",
     "rival_motor": {

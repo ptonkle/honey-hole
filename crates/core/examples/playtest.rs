@@ -1,0 +1,342 @@
+//! Headless playtests: AI-only 4-player matches on Burt Lake, and the
+//! balance numbers they come to (PLAN.md decision 10).
+//!
+//!     cargo run --release --example playtest              8 matches from seed 1
+//!     cargo run --release --example playtest -- 20 7     20 matches from seed 7
+//!
+//! Half the matches are four Normal players, half a mix of difficulties.
+//! Run from the repository root (it reads data/). It prints Markdown tables
+//! for notes/playtests.md: catches and points by player and tier, how the
+//! time is spent, wrecks, hooks lost to rams, the fish left by tier, reel
+//! times by tier, the winner's margin, and the AI's cost per tick.
+
+use std::fs;
+use std::time::Instant;
+
+use tool_core::ai::{Activity, Crew};
+use tool_core::map::fish::Tier;
+use tool_core::map::{generate, list, Setting};
+use tool_core::roster::Roster;
+use tool_core::sim::{Difficulty, Match, MatchEvent, Occupant, Setup, WreckCause};
+use tool_core::tuning;
+
+const TIERS: [Tier; 4] = [Tier::Common, Tier::Uncommon, Tier::Rare, Tier::Legendary];
+const ACTS: [Activity; 4] = [Activity::Fishing, Activity::Hunting, Activity::Driving, Activity::Idle];
+
+fn tier_ix(t: Tier) -> usize {
+    TIERS.iter().position(|&x| x == t).unwrap_or(0)
+}
+
+fn act_ix(a: Activity) -> usize {
+    ACTS.iter().position(|&x| x == a).unwrap_or(3)
+}
+
+fn diff_ix(d: Difficulty) -> usize {
+    Difficulty::ALL.iter().position(|&x| x == d).unwrap_or(1)
+}
+
+#[derive(Default, Clone)]
+struct SeatStats {
+    catches: [u32; 4],
+    value: [i64; 4],
+    acts: [u64; 4],
+    rammed_others: u32,
+    was_rammed: u32,
+    grounded: u32,
+    hooks: u32,
+    lost_to_rams: u32,
+    /// points of the fish this seat's rams knocked off a line
+    denied: i64,
+}
+
+#[derive(Default)]
+struct Totals {
+    matches: u32,
+    by_diff: [SeatStats; 3],
+    seats_by_diff: [u32; 3],
+    reel_ms: [(i64, u32); 4],
+    left: [(u32, u32); 4],
+    margins: Vec<i64>,
+    winners_by_diff: [u32; 3],
+    ai_ns: u128,
+    ai_ticks: u64,
+    step_ns: u128,
+    ticks: u64,
+    all: SeatStats,
+}
+
+fn add(a: &mut SeatStats, b: &SeatStats) {
+    for k in 0..4 {
+        a.catches[k] += b.catches[k];
+        a.value[k] += b.value[k];
+        a.acts[k] += b.acts[k];
+    }
+    a.rammed_others += b.rammed_others;
+    a.was_rammed += b.was_rammed;
+    a.grounded += b.grounded;
+    a.hooks += b.hooks;
+    a.lost_to_rams += b.lost_to_rams;
+    a.denied += b.denied;
+}
+
+fn lineup(k: u32) -> [Difficulty; 4] {
+    use Difficulty::*;
+    match k % 6 {
+        1 => [Hard, Normal, Normal, Easy],
+        3 => [Hard, Hard, Easy, Easy],
+        5 => [Easy, Normal, Hard, Normal],
+        _ => [Normal; 4],
+    }
+}
+
+fn main() {
+    let read = |p: &str| fs::read_to_string(p).unwrap_or_else(|e| panic!("{p}: {e}"));
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    let matches: u32 = args.first().and_then(|a| a.parse().ok()).unwrap_or(8);
+    let base: u64 = args.get(1).and_then(|a| a.parse().ok()).unwrap_or(1);
+    // a third argument traces that seat's events and goals in each match
+    let trace: Option<usize> = args.get(2).and_then(|a| a.parse().ok());
+    let t = tuning::parse(&read("data/tuning.json")).unwrap();
+    let roster = Roster::parse(&read("data/fish.json")).unwrap();
+    let maps = list::parse(&read("data/maps/michigan-lake.json")).unwrap();
+    let names: serde_json::Value = serde_json::from_str(&read("data/names.json")).unwrap();
+    let names: Vec<String> = names["ai"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| v.as_str().unwrap().to_string())
+        .collect();
+    let mut tot = Totals::default();
+    println!("| Match | Map | Players (difficulty: points) | Winner's margin |");
+    println!("| --- | --- | --- | --- |");
+    for k in 0..matches {
+        let seed = base + k as u64;
+        let map_seed = list::pick(&maps, seed);
+        let map = generate(Setting::MichiganLake, map_seed);
+        let mut setup = Setup::new(&t);
+        setup.seed = seed;
+        setup.fish = roster.0.iter().map(|f| (f.id.clone(), f.count)).collect();
+        let ups = lineup(k);
+        for (s, d) in ups.iter().enumerate() {
+            setup = setup.with(s, Occupant::Ai(*d), &names[(seed as usize * 3 + s) % names.len()]);
+        }
+        let mut m = Match::new(map, &t, setup).unwrap();
+        m.stock(&roster).unwrap();
+        let start: Vec<(Tier, u32)> = m.fish_left().iter().map(|(id, n)| (roster.get(id).unwrap().tier, *n)).collect();
+        let mut crew = Crew::new(&m);
+        let mut st = vec![SeatStats::default(); 4];
+        let mut hooked_at = [None::<(u32, Tier)>; 4];
+        while !m.ended {
+            let a = Instant::now();
+            let inputs = crew.inputs(&m);
+            tot.ai_ns += a.elapsed().as_nanos();
+            tot.ai_ticks += 4;
+            for b in &crew.brains {
+                st[b.seat].acts[act_ix(b.activity)] += 1;
+            }
+            let a = Instant::now();
+            let events = m.step(&inputs).to_vec();
+            if let Some(ts) = trace {
+                for e in &events {
+                    let txt = format!("{e:?}");
+                    if !txt.starts_with("ReelTick") && (txt.contains(&format!("seat: {ts}")) || txt.starts_with("Hooked") || txt.starts_with("Wrecked")) {
+                        let b = m.boat(ts).unwrap();
+                        println!("{:6} {txt}  [at {:?} speed {}]", m.tick, b.at(), b.speed_mm_per_s());
+                    }
+                }
+                if m.tick % 100 == 0 {
+                    if let Some(br) = crew.brain(ts) {
+                        let b = m.boat(ts).unwrap();
+                        println!("{:6} goal {:?} {:?} stage {:?} at {:?} speed {} seen {}", m.tick, br.goal, br.activity, m.fishing.lines[ts].stage, b.at(), b.speed_mm_per_s(), m.fishing_view(ts).fish.len());
+                    }
+                }
+            }
+            tot.step_ns += a.elapsed().as_nanos();
+            tot.ticks += 1;
+            let rammed: Vec<(usize, usize)> = events
+                .iter()
+                .filter_map(|e| match e {
+                    MatchEvent::Wrecked {
+                        seat,
+                        cause: WreckCause::Rammed { by },
+                    } => Some((*seat, *by)),
+                    _ => None,
+                })
+                .collect();
+            for e in &events {
+                match e {
+                    MatchEvent::Wrecked { seat, cause } => match cause {
+                        WreckCause::Rammed { by } => {
+                            st[*seat].was_rammed += 1;
+                            st[*by].rammed_others += 1;
+                        }
+                        WreckCause::Grounded => st[*seat].grounded += 1,
+                    },
+                    MatchEvent::Hooked { seat, tier, .. } => {
+                        st[*seat].hooks += 1;
+                        hooked_at[*seat] = Some((m.tick, *tier));
+                    }
+                    MatchEvent::FishDropped { seat, fish } => {
+                        if let Some(&(_, by)) = rammed.iter().find(|(v, _)| v == seat) {
+                            st[*seat].lost_to_rams += 1;
+                            let f = &m.fishing.fish[*fish as usize];
+                            let kind = &m.fishing.roster.0[f.kind];
+                            st[by].denied += tool_core::sim::fishing::value(
+                                kind.value,
+                                kind.base_length_mm,
+                                f.length_mm,
+                                t.fishing.tier_value_pct.get(f.tier),
+                            ) as i64;
+                        }
+                        hooked_at[*seat] = None;
+                    }
+                    MatchEvent::LineBroke { seat, .. } => hooked_at[*seat] = None,
+                    MatchEvent::Caught { seat, tier, .. } => {
+                        if let Some((h, _)) = hooked_at[*seat].take() {
+                            let r = &mut tot.reel_ms[tier_ix(*tier)];
+                            r.0 += (m.tick - h) as i64 * 20;
+                            r.1 += 1;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+        for (s, score) in m.scores.iter().enumerate() {
+            for c in &score.catches {
+                let tier = roster.get(&c.kind).unwrap().tier;
+                st[s].catches[tier_ix(tier)] += 1;
+                st[s].value[tier_ix(tier)] += c.value as i64;
+            }
+        }
+        let left = m.fish_left();
+        for (i, (_, n)) in left.iter().enumerate() {
+            let ti = tier_ix(start[i].0);
+            tot.left[ti].0 += *n;
+            tot.left[ti].1 += start[i].1;
+        }
+        let pts: Vec<i64> = st.iter().map(|s| s.value.iter().sum()).collect();
+        let mut sorted = pts.clone();
+        sorted.sort_unstable_by(|a, b| b.cmp(a));
+        let margin = if sorted[0] > 0 { (sorted[0] - sorted[1]) * 100 / sorted[0] } else { 0 };
+        tot.margins.push(margin);
+        let win = pts.iter().position(|&p| p == sorted[0]).unwrap_or(0);
+        tot.winners_by_diff[diff_ix(ups[win])] += 1;
+        let who: Vec<String> = (0..4).map(|s| format!("{}: {}", ups[s].key(), pts[s])).collect();
+        println!("| {} | {} | {} | {}% |", seed, map_seed, who.join(", "), margin);
+        for s in 0..4 {
+            add(&mut tot.by_diff[diff_ix(ups[s])], &st[s]);
+            tot.seats_by_diff[diff_ix(ups[s])] += 1;
+            add(&mut tot.all, &st[s]);
+        }
+        tot.matches += 1;
+    }
+    report(&tot);
+}
+
+fn report(tot: &Totals) {
+    let names = ["Common", "Uncommon", "Rare", "Legendary"];
+    println!();
+    println!("### Catches and points per player, by difficulty (mean per match)");
+    println!();
+    println!("| Difficulty | Players | Common | Uncommon | Rare | Legendary | Points | Wins |");
+    println!("| --- | --- | --- | --- | --- | --- | --- | --- |");
+    for (d, diff) in Difficulty::ALL.iter().enumerate() {
+        let n = tot.seats_by_diff[d].max(1) as f64;
+        let s = &tot.by_diff[d];
+        if tot.seats_by_diff[d] == 0 {
+            continue;
+        }
+        let cell = |k: usize| format!("{:.1} ({:.0} pts)", s.catches[k] as f64 / n, s.value[k] as f64 / n);
+        println!(
+            "| {} | {} | {} | {} | {} | {} | {:.0} | {} |",
+            diff.key(),
+            tot.seats_by_diff[d],
+            cell(0),
+            cell(1),
+            cell(2),
+            cell(3),
+            s.value.iter().sum::<i64>() as f64 / n,
+            tot.winners_by_diff[d]
+        );
+    }
+    println!();
+    println!("### Time spent (share of each player's match)");
+    println!();
+    println!("| Difficulty | Fishing | Hunting | Driving | Idle |");
+    println!("| --- | --- | --- | --- | --- |");
+    for (d, diff) in Difficulty::ALL.iter().enumerate() {
+        let s = &tot.by_diff[d];
+        let all = s.acts.iter().sum::<u64>().max(1) as f64;
+        if tot.seats_by_diff[d] == 0 {
+            continue;
+        }
+        println!(
+            "| {} | {:.0}% | {:.0}% | {:.0}% | {:.0}% |",
+            diff.key(),
+            s.acts[0] as f64 * 100.0 / all,
+            s.acts[1] as f64 * 100.0 / all,
+            s.acts[2] as f64 * 100.0 / all,
+            s.acts[3] as f64 * 100.0 / all
+        );
+    }
+    let a = &tot.all;
+    let m = tot.matches.max(1) as f64;
+    println!();
+    println!("### Wrecks, hooks and rams (mean per match, all four players)");
+    println!();
+    println!("| Hooks | Rams that wrecked | Groundings | Hooks lost to rams | Points knocked off lines |");
+    println!("| --- | --- | --- | --- | --- |");
+    println!(
+        "| {:.1} | {:.2} | {:.2} | {:.2} | {:.0} |",
+        a.hooks as f64 / m,
+        a.rammed_others as f64 / m,
+        a.grounded as f64 / m,
+        a.lost_to_rams as f64 / m,
+        a.denied as f64 / m
+    );
+    let fish_min = a.acts[0] as f64 / 50.0 / 60.0;
+    let hunt_min = a.acts[1] as f64 / 50.0 / 60.0;
+    let pts: i64 = a.value.iter().sum();
+    println!();
+    println!(
+        "Points per minute spent fishing: {:.1}. Points knocked off a rival's line per minute spent hunting: {:.1}.",
+        pts as f64 / fish_min.max(0.001),
+        a.denied as f64 / hunt_min.max(0.001)
+    );
+    println!();
+    println!("### Fish left at the end, and reel times");
+    println!();
+    println!("| Tier | Left at the end (of stocked) | Mean reel to a catch |");
+    println!("| --- | --- | --- |");
+    for k in 0..4 {
+        let (l, s) = tot.left[k];
+        let (ms, n) = tot.reel_ms[k];
+        println!(
+            "| {} | {:.1} of {:.1} ({:.0}%) | {} |",
+            names[k],
+            l as f64 / m,
+            s as f64 / m,
+            l as f64 * 100.0 / s.max(1) as f64,
+            if n == 0 { "none".to_string() } else { format!("{:.1} s ({} reels)", ms as f64 / n as f64 / 1000.0, n) }
+        );
+    }
+    let mut margins = tot.margins.clone();
+    margins.sort_unstable();
+    let mean = margins.iter().sum::<i64>() as f64 / margins.len().max(1) as f64;
+    println!();
+    println!(
+        "Winner's margin over second place: mean {:.0}%, median {}%, closest {}%, widest {}%.",
+        mean,
+        margins.get(margins.len() / 2).copied().unwrap_or(0),
+        margins.first().copied().unwrap_or(0),
+        margins.last().copied().unwrap_or(0)
+    );
+    println!();
+    println!(
+        "AI cost: {:.3} ms per AI per tick on average; the match step {:.3} ms per tick ({} ticks).",
+        tot.ai_ns as f64 / tot.ai_ticks.max(1) as f64 / 1e6,
+        tot.step_ns as f64 / tot.ticks.max(1) as f64 / 1e6,
+        tot.ticks
+    );
+}
