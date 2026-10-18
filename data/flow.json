@@ -1,8 +1,8 @@
 {
   "_note": "The match flow's look and popup table (crates/core/src/flow/look.rs). Colours are 0-255 and opacities percent; times ms; sizes in the HUD's 1920 x 1080 units, the burst's in mm. fonts: display (big words) and body (labels), CSS families with the glyph advance in percent of the size. popups.rows: each names a MatchEvent by its JSON type, an optional 'when' (dotted field paths that must equal a value, or '*' for any), the string key of its text, a style, how to fill each {placeholder} (name:<field> a seat's player name, fish:<field> a roster id's fish name, tier:<field> a tier's name, text:<field> the value), the field holding a tier for a tier style, who sees it (all, mine, others; by the event's seat) and a group (popups in one group replace each other in place). The first row that matches an event is used. postgame: the reveal's pacing. burst: a wreck's explosion and the wrecked player's camera shake. ghost_pct: how solid a ghosted boat is drawn.",
   "fonts": {
-    "display": { "family": "'Arial Rounded MT Bold', 'Nunito', 'Trebuchet MS', 'Verdana', sans-serif", "weight": "bold", "advance": 60 },
-    "body": { "family": "'Trebuchet MS', 'Verdana', 'DejaVu Sans', sans-serif", "weight": "bold", "advance": 54 }
+    "display": { "family": "'Arial Rounded MT Bold', 'Nunito', 'Trebuchet MS', 'Verdana', sans-serif", "weight": "bold", "advance": 76 },
+    "body": { "family": "'Trebuchet MS', 'Verdana', 'DejaVu Sans', sans-serif", "weight": "bold", "advance": 62 }
   },
   "card": {
     "fill": [255, 246, 222],
@@ -31,7 +31,7 @@
     "hint_fade_ms": 3000,
     "seed": [255, 250, 236],
     "wreck_flash": [255, 150, 60],
-    "wreck_flash_pct": 55,
+    "wreck_flash_pct": 35,
     "wreck_flash_ms": 700
   },
   "countdown": {
@@ -86,7 +86,7 @@
     "speed_mm_per_s": 9000,
     "up_mm_per_s": 9000,
     "fall_mm_per_s2": 20000,
-    "fireball_mm": 3200,
+    "fireball_mm": 2400,
     "swell_pct": 22,
     "colours": [[255, 246, 170], [255, 186, 60], [236, 92, 36], [90, 80, 76]],
     "shake_ms": 650,

@@ -223,35 +223,50 @@ impl App {
         } else {
             ((r.h * 45 / 100).min(26), (r.h * 38 / 100).min(20))
         };
-        if big {
-            list.text(ink, l.body(), size, Align::Left, (x, r.y + r.h * 36 / 100), &name);
-            list.text(
-                rgb(l.card.soft),
-                l.body(),
-                small,
-                Align::Left,
-                (x, r.y + r.h * 70 / 100),
-                &format!("{length} · {tier_name}"),
-            );
-        } else {
-            list.text(
-                ink,
-                l.body(),
-                size,
-                Align::Left,
-                (x, r.y + r.h / 2),
-                &format!("{name} · {length} · {tier_name}"),
-            );
-        }
+        // the points at the right; the words shrink to fit beside them
         let mono = self.fishboy.theme.as_ref().map_or(l.display(), |t| t.mono());
+        let value = format!("+{}", f.value);
+        let value_w = mono.width(&value, size + 4);
         list.text(
             ink,
             mono,
             size + 4,
             Align::Right,
             (r.right() - 18, r.y + r.h / 2),
-            &format!("+{}", f.value),
+            &value,
         );
+        let room = (r.right() - 18 - value_w - 12 - x).max(1);
+        let font = l.body();
+        let fit = |text: &str, size: i32| size.min(size * room / font.width(text, size).max(1)).max(10);
+        if big {
+            list.text(
+                ink,
+                font,
+                fit(&name, size),
+                Align::Left,
+                (x, r.y + r.h * 36 / 100),
+                &name,
+            );
+            let sub = format!("{length} · {tier_name}");
+            list.text(
+                rgb(l.card.soft),
+                font,
+                fit(&sub, small),
+                Align::Left,
+                (x, r.y + r.h * 70 / 100),
+                &sub,
+            );
+        } else {
+            let line = format!("{name} · {length} · {tier_name}");
+            list.text(
+                ink,
+                font,
+                fit(&line, size),
+                Align::Left,
+                (x, r.y + r.h / 2),
+                &line,
+            );
+        }
     }
 
     /// The final ranking over the columns. Returns the places in seat

@@ -253,7 +253,7 @@ impl App {
                 l.body(),
                 24,
                 Align::Right,
-                (W - EDGE, H - 16),
+                (W - EDGE, H - EDGE - 176 - 26),
                 &self.t("hud.seed").replace("{seed}", &seed),
                 rgb(l.hud.seed),
                 rgb(l.card.outline),
@@ -284,13 +284,13 @@ impl App {
         if self.my_boat().is_some_and(|b| b.wrecked) {
             let text = self.t("hud.wrecked");
             let w = l.body().width(&text, 34) + 80;
-            card(list, &l.card, Rect::new((W - w) / 2, H / 2 + 90, w, 76));
+            card(list, &l.card, Rect::new((W - w) / 2, H / 2 + 200, w, 76));
             list.text(
                 rgb(l.card.ink),
                 l.body(),
                 34,
                 Align::Centre,
-                (W / 2, H / 2 + 128),
+                (W / 2, H / 2 + 238),
                 &text,
             );
             status.push("wrecked=1".into());
@@ -361,7 +361,7 @@ impl App {
     }
 
     fn draw_time(&self, list: &mut List, l: &FlowLook, clock: &str, remaining: i32) {
-        let r = Rect::new(W - EDGE - 290, EDGE, 290, 132);
+        let r = Rect::new(W - EDGE - 290, EDGE + 54, 290, 132);
         card(list, &l.card, r);
         list.text(
             rgb(l.card.soft),
@@ -449,7 +449,7 @@ impl App {
         };
         let word = word.to_uppercase();
         let w = l.display().width(&word, 34) + 116;
-        let r = Rect::new(EDGE + 300 + 20, H - EDGE - 84, w, 84);
+        let r = Rect::new(EDGE + 300 + 20, H - EDGE - 262, w, 84);
         card_in(list, &l.card, r, colour, l.card.outline);
         let ink = rgb(l.card.outline);
         let icon = (r.x + 50, r.y + r.h / 2);
@@ -488,7 +488,7 @@ impl App {
             76
         };
         let w = (font.width(&f.prompt, 30) + 80).max(560);
-        let r = Rect::new((W - w) / 2, H - EDGE - 64 - tall, w, tall);
+        let r = Rect::new((W - w) / 2, H - EDGE - 30 - tall, w, tall);
         card(list, &l.card, r);
         list.text(
             rgb(l.card.ink),
@@ -690,7 +690,7 @@ impl App {
         }
         let hints = ["mode", "fishboy", "item", "menu"]
             .map(|k| (self.t(&format!("hint.{k}_key")), self.t(&format!("hint.{k}"))));
-        let size = 24;
+        let size = 22;
         let font = l.body();
         let widths: Vec<i32> = hints
             .iter()
@@ -699,7 +699,7 @@ impl App {
         let gap = 40;
         let total: i32 = widths.iter().sum::<i32>() + gap * (hints.len() as i32 - 1);
         let mut x = (W - total) / 2;
-        let y = H - EDGE - 26;
+        let y = H - 22;
         list.alpha(pct);
         for ((k, w), width) in hints.iter().zip(&widths) {
             let cap = key_cap(list, l, (x, y), k, size);

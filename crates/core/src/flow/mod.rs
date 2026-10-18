@@ -105,6 +105,10 @@ pub fn fake_catches(m: &mut Match, roster: &Roster) {
         if m.setup.seats[seat].occupant == Occupant::Empty {
             continue;
         }
+        // a seat that has landed fish keeps its own
+        if !m.scores[seat].catches.is_empty() {
+            continue;
+        }
         let n = 1 + (mix(m.setup.seed ^ seat as u64) % 4) as usize;
         for k in 0..n {
             let r = mix(m.setup.seed.wrapping_add((seat * 16 + k) as u64 + 1));
@@ -153,19 +157,41 @@ impl App {
     }
 
     /// Under `?debug=flow`, F8 in a match: [`DEBUG_LEFT_MS`] left, and
-    /// made-up catches when no one has landed one. Returns whether the key
-    /// was used.
+    /// made-up catches for each seat that has landed none. Returns whether the key
+    /// was used. F9 wrecks this seat's boat where it is (as if it had run
+    /// aground), to see the burst, the shake and the ghosting.
     pub(crate) fn flow_debug_key(&mut self, code: &str) -> bool {
-        if !self.flow.debug || code != "F8" || self.screen != Screen::Play || self.play.is_none() {
+        if !self.flow.debug
+            || code != "F8" && code != "F9"
+            || self.screen != Screen::Play
+            || self.play.is_none()
+        {
             return false;
         }
-        let empty = self
-            .play
-            .as_ref()
-            .is_some_and(|p| p.game.scores.iter().all(|s| s.catches.is_empty()));
-        if empty {
-            let _ = self.flow_act("debug.catches", "");
+        if code == "F9" {
+            let Some(p) = self.play.as_mut() else {
+                return false;
+            };
+            let (seat, tick) = (p.seat, p.game.tick);
+            if p.game.boat(seat).is_none_or(|b| b.wrecked()) {
+                return true;
+            }
+            p.game.wreck(seat, crate::sim::WreckCause::Grounded, tick);
+            let heard: Vec<Value> = p
+                .game
+                .events
+                .drain(..)
+                .filter_map(|e| serde_json::to_value(e).ok())
+                .collect();
+            if let Some(s) = self.sound.as_mut() {
+                for e in &heard {
+                    s.event(e, Some(seat as i64));
+                }
+            }
+            self.flow_hear(&heard);
+            return true;
         }
+        let _ = self.flow_act("debug.catches", "");
         let _ = self.flow_act("debug.time_left", &DEBUG_LEFT_MS.to_string());
         true
     }

@@ -54,17 +54,33 @@ pub fn fireball_mm(look: &BurstLook, age_ms: i32) -> i32 {
     }
 }
 
-/// An octahedron's eight faces round `c`, `r` (world units) across.
-fn ball(out: &mut Vec<i32>, c: V3, r: i32, colour: [i32; 3]) {
-    let px = [v3(r, 0, 0), v3(-r, 0, 0)];
-    let py = [v3(0, r, 0), v3(0, -r, 0)];
-    let pz = [v3(0, 0, r), v3(0, 0, -r)];
-    for x in px {
-        for y in py {
-            for z in pz {
-                let (a, b, d) = (c.add(x), c.add(y), c.add(z));
-                let n = x.add(y).add(z).norm();
-                push_tri_glow(out, [a, b, d], n, colour, ONE);
+/// Rings and segments of a puff of the fireball.
+const RINGS: i32 = 5;
+const SEGMENTS: i32 = 10;
+
+/// A low-poly ball of fire round `c`, `r` (world units) across: its faces
+/// take turns between two colours and are partly lit, so it reads as a
+/// round, lumpy puff rather than a flat shape.
+fn ball(out: &mut Vec<i32>, c: V3, r: i32, hot: [i32; 3], cool: [i32; 3]) {
+    let point = |ring: i32, seg: i32| {
+        // from the top (ring 0) to the bottom (ring RINGS)
+        let lat = TURN / 4 - ring * (TURN / 2) / RINGS;
+        let lon = seg * TURN / SEGMENTS + if ring % 2 == 1 { TURN / SEGMENTS / 2 } else { 0 };
+        let flat = mul(r, fx::cos(lat));
+        v3(
+            mul(flat, fx::cos(lon)),
+            mul(r, fx::sin(lat)),
+            mul(flat, fx::sin(lon)),
+        )
+    };
+    for ring in 0..RINGS {
+        for seg in 0..SEGMENTS {
+            let (a, b) = (point(ring, seg), point(ring, seg + 1));
+            let (d, e) = (point(ring + 1, seg), point(ring + 1, seg + 1));
+            let colour = if (ring + seg) % 2 == 0 { hot } else { cool };
+            for tri in [[a, d, b], [b, d, e]] {
+                let n = tri[0].add(tri[1]).add(tri[2]).norm();
+                push_tri_glow(out, tri.map(|q| c.add(q)), n, colour, ONE * 3 / 4);
             }
         }
     }
@@ -80,12 +96,19 @@ pub fn tris(b: &Burst, look: &BurstLook, age_ms: i32) -> Vec<i32> {
     let life = fx::ratio(age_ms, look.ms);
     let r = fireball_mm(look, age_ms);
     if r > 0 {
-        ball(
-            &mut out,
-            b.at.add(v3(0, mm(r / 2), 0)),
-            mm(r),
-            shade(&look.colours, life / 2),
-        );
+        let hot = shade(&look.colours, life / 2);
+        let cool = shade(&look.colours, life / 2 + ONE / 4);
+        ball(&mut out, b.at.add(v3(0, mm(r / 2), 0)), mm(r), hot, cool);
+        // smaller puffs round it, rising
+        for k in 0..4 {
+            let a = (k * TURN / 4) as i64 as i32 + mul(pick(b.seed, k as u64 + 500), TURN / 8);
+            let off = v3(
+                mul(fx::cos(a), mm(r * 6 / 10)),
+                mm(r * 3 / 4 + r * k / 8),
+                mul(fx::sin(a), mm(r * 6 / 10)),
+            );
+            ball(&mut out, b.at.add(off), mm(r * 5 / 10), cool, hot);
+        }
     }
     // seconds in, Q16
     let s = fx::ratio(age_ms, 1000);

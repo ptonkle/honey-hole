@@ -500,9 +500,9 @@ fn a_hook_heard_in_the_match_pops_up_for_this_player() {
 #[test]
 fn a_wreck_goes_off_where_the_boat_was_and_shakes_its_player() {
     let l = look().burst;
-    // the fireball's widest at 22% of 1100 ms (242), half that at 121
-    assert_eq!(burst::fireball_mm(&l, 242), 3200);
-    assert_eq!(burst::fireball_mm(&l, 121), 1600);
+    // the fireball's widest at 22% of 1100 ms (242), half that at 121 (2.4 m wide at most)
+    assert_eq!(burst::fireball_mm(&l, 242), 2400);
+    assert_eq!(burst::fireball_mm(&l, 121), 1200);
     assert_eq!(burst::fireball_mm(&l, 1100), 0);
     let b = Burst {
         seat: 0,
@@ -569,6 +569,20 @@ fn f8_jumps_to_the_last_seconds_only_under_the_debug_flag() {
         g.scores.iter().any(|s| !s.catches.is_empty()),
         "made-up catches for the postgame"
     );
+}
+
+#[test]
+fn f9_under_the_debug_flag_wrecks_your_boat_and_says_so() {
+    let mut a = match_app();
+    a.act("key", "F9").unwrap();
+    assert!(
+        !a.play.as_ref().unwrap().game.boat(0).unwrap().wrecked(),
+        "no flag: nothing"
+    );
+    a.act("debug.flags", "flow").unwrap();
+    a.act("key", "F9").unwrap();
+    assert!(a.play.as_ref().unwrap().game.boat(0).unwrap().wrecked());
+    assert_eq!(a.flow.popups.queue.len(), 1, "the ran-aground popup");
 }
 
 // ---- sounds ----
