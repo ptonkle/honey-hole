@@ -11,12 +11,12 @@
 //! `data/fish.json`, `crate::roster`); [`place`] takes ids from the
 //! stand-in [`ROSTER`], which the map list's checks use.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use super::rng::Rng;
 use super::{Map, P};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Tier {
     Common,
     Uncommon,
