@@ -724,6 +724,7 @@ impl Match {
         // the hook popups due (`balance.announce_delay_ms`), last, after
         // every system that raises or ends a hook this tick
         self.fishing.announcer.step(self.tick, &mut self.events);
+        self.share_announced();
         if self.tick >= self.rules.length_ticks && !self.online.end_elsewhere {
             self.ended = true;
             self.events.push(MatchEvent::MatchEnded);

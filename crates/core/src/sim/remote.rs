@@ -129,7 +129,20 @@ pub enum WorldEvent {
     /// a fish got off a line and is free again (the fishing system)
     FishFreed { fish: u32 },
     /// a fish is at a new place, mm, and depth, mm (the fishing system)
-    FishMoved { fish: u32, at: [i32; 2], depth: i32 },
+    FishPlaces {
+        /// each free fish: its number, x and y (mm) and depth (mm)
+        fish: Vec<[i32; 4]>,
+    },
+    /// a hook's popup, at the host's delay (`balance.announce_delay_ms`):
+    /// every browser shows the host's, once (the fishing system)
+    Announced {
+        seat: usize,
+        fish: u32,
+        /// the roster id ("walleye")
+        fish_kind: String,
+        tier: crate::map::fish::Tier,
+        delay_ms: i32,
+    },
     /// an item buoy came up at a place, mm (the items system)
     BuoySpawned { buoy: u32, at: [i32; 2] },
     /// a popup for every player: a `data/strings.json` key and its

@@ -533,6 +533,7 @@ impl Session {
         m.online.remote = (0..n).map(|s| !self.owns(s)).collect();
         m.online.rams_elsewhere = true;
         m.online.end_elsewhere = !self.host;
+        m.fishing.announcer.online = true;
     }
 
     // ---- receiving ----
