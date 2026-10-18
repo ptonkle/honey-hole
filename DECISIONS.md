@@ -90,3 +90,7 @@ The agent decided: the four player colours in `data/look.json` stay as they are,
 > item buoy is too much like mario. Good idea but just too mario.
 
 The agent decided: the item buoy keeps the idea (a floating mystery item that reads in fog and bobs) but drops the "?" block. Three fishing-themed alternatives (a giant bobber, a buoy with a glowing tackle box, a cluster of lures) for the person to choose from.
+
+> 1
+
+The person chose the giant bobber for the item buoy.
