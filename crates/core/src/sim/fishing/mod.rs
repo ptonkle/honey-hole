@@ -89,6 +89,8 @@ pub struct Interest {
     pub nibbles_left: i32,
     /// it is biting; Space up to and on this tick hooks it
     pub biting_until: Option<u32>,
+    /// the tick of its last nibble (the bobber's dip; `strike.rs` moves it)
+    pub nibbled: Option<u32>,
 }
 
 /// One seat's line.
@@ -568,6 +570,7 @@ impl Fishing {
                     next: 0,
                     nibbles_left: self.rng.range(self.tuning.nibbles_min, self.tuning.nibbles_max),
                     biting_until: None,
+                    nibbled: None,
                 });
             }
             return;
@@ -604,6 +607,7 @@ impl Fishing {
             if int.nibbles_left > 0 {
                 int.nibbles_left -= 1;
                 int.next = tick + ticks(self.rng.range(t.nibble_gap_min_ms, t.nibble_gap_max_ms));
+                int.nibbled = Some(tick);
                 events.push(MatchEvent::Nibble { seat });
             } else {
                 int.biting_until = Some(tick + ticks(t.hook_window_ms));
@@ -706,9 +710,10 @@ impl Fishing {
             if let Some(int) = line.interest {
                 let (to, depth) = (line.bobber, line.lure_depth_mm);
                 let f = &mut self.fish[int.fish];
-                if int.biting_until.is_some() {
-                    // the bite: it strikes the lure and holds it
-                    strike::bite(f, to, &self.tuning.strike);
+                if int.arrived || int.biting_until.is_some() {
+                    // at the lure: it hangs back, darts in to touch it at
+                    // each nibble and backs off, then strikes and holds
+                    strike::at_lure(f, to, &int, w.tick, &self.tuning.strike);
                 } else if f.at.dist(to) > 250 {
                     // it stops a nose short of the lure
                     lake::swim(f, to, approach);

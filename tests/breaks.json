@@ -2968,10 +2968,10 @@
     "test": "a_player_a_fifth_of_a_second_late_still_lands_every_tier"
   },
   {
-    "name": "the biting fish stays where it waited",
-    "file": "crates/core/src/sim/fishing/mod.rs",
-    "find": "strike::bite(f, to, &self.tuning.strike);",
-    "replace": "let _ = &self.tuning.strike;",
+    "name": "the biting fish only touches the lure",
+    "file": "crates/core/src/sim/fishing/strike.rs",
+    "find": "toward_gap(f, lure, t.bite_gap_mm, dart);",
+    "replace": "toward_gap(f, lure, t.touch_gap_mm, dart);",
     "test": "on_the_bite_the_fish_strikes_the_lure_and_holds_it"
   },
   {
@@ -3001,5 +3001,26 @@
     "find": "look.bite.bubbles(&mut tris, hook, cam, b);",
     "replace": "let _ = (hook, b);",
     "test": "on_the_bite_the_bobber_plunges_in_rings_and_bubbles_burst_from_the_lure"
+  },
+  {
+    "name": "a nibbling fish never comes in to touch the lure",
+    "file": "crates/core/src/sim/fishing/strike.rs",
+    "find": "toward_gap(f, lure, t.touch_gap_mm, dart);",
+    "replace": "toward_gap(f, lure, t.rest_gap_mm, dart);",
+    "test": "a_nibble_moves_the_fish_to_the_lure_and_back"
+  },
+  {
+    "name": "a nibble's time is not kept",
+    "file": "crates/core/src/sim/fishing/mod.rs",
+    "find": "int.nibbled = Some(tick);",
+    "replace": "",
+    "test": "a_nibble_moves_the_fish_to_the_lure_and_back"
+  },
+  {
+    "name": "a nibble leaves the bobber still",
+    "file": "crates/core/src/app/fishing.rs",
+    "find": "None => -mm(look.bite.nibble_dip_mm(l.nibble_ms)),",
+    "replace": "None => 0,",
+    "test": "a_nibble_dips_the_bobber_and_lets_it_back_up"
   }
 ]

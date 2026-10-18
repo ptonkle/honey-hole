@@ -54,6 +54,9 @@ pub struct LineView {
     pub tug: bool,
     /// how long since the bite began, while the fish bites (the bite's cue)
     pub bite_ms: Option<u32>,
+    /// how long since the fish's last nibble, until it bites (the
+    /// bobber's dip)
+    pub nibble_ms: Option<u32>,
 }
 
 /// The reel bar, in thousandths of the bar from the bottom.
@@ -176,6 +179,11 @@ impl Match {
                         let began = until.saturating_sub(crate::sim::ticks(fi.tuning.hook_window_ms));
                         self.tick.saturating_sub(began) * TICK_MS as u32
                     }),
+                    nibble_ms: l
+                        .interest
+                        .filter(|i| i.biting_until.is_none())
+                        .and_then(|i| i.nibbled)
+                        .map(|t| self.tick.saturating_sub(t) * TICK_MS as u32),
                 }
             })
             .collect();

@@ -57,12 +57,33 @@ pub struct BiteLook {
     pub twitch_ms: i32,
     pub twitch_mm: i32,
     pub twitch_period_ms: i32,
+    /// a nibble (T1) dips the bobber `nibble_dip_mm`, down in the first
+    /// quarter of `nibble_dip_ms` and back up over the rest
+    pub nibble_dip_mm: i32,
+    pub nibble_dip_ms: i32,
 }
 
 /// The ring's segments.
 const SEGMENTS: i32 = 32;
 
 impl BiteLook {
+    /// How far a nibble has dipped the bobber, `ms` after it (none
+    /// without one).
+    pub fn nibble_dip_mm(&self, ms: Option<u32>) -> i32 {
+        let Some(ms) = ms else {
+            return 0;
+        };
+        let (t, span) = (ms as i32, self.nibble_dip_ms.max(4));
+        let down = span / 4;
+        if t >= span {
+            0
+        } else if t < down {
+            self.nibble_dip_mm * t / down
+        } else {
+            self.nibble_dip_mm * (span - t) / (span - down)
+        }
+    }
+
     /// How far under the water the bobber is, `ms` into the bite.
     pub fn plunge_mm(&self, ms: u32) -> i32 {
         let k = (ms as i32).min(self.plunge_in_ms.max(1));
