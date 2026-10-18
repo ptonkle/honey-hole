@@ -57,7 +57,7 @@ The angler's computer, strapped to the left forearm. Raised to the face, its scr
 Not: Pip-Boy, pipboy, fishboy, PDA
 ### Gallery
 
-The screen, opened from the Title, that shows each model turning on a plain floor, in its animations and in each player colour.
+The screen, opened from the Title, that shows each model turning on a plain floor, in its animations and in each player colour. It can also show every model of one kind side by side at true size, with the boat for scale.
 
 Not: showcase, viewer, model viewer
 
