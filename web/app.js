@@ -9,6 +9,7 @@
 import init, { Game } from "./pkg/tool_shim.js";
 import { makeRenderer } from "./gl.js";
 import { makeOverlay, bitmapFrom } from "./ui2d.js";
+import { startAudio } from "./audio.js";
 
 const el = (id) => document.getElementById(id);
 const make = (tag, cls, text) => {
@@ -365,6 +366,7 @@ async function main() {
   const fragment = await (await fetch("data/shaders/scene.frag")).text();
   const ui2dLook = await (await fetch("data/ui2d.json")).text();
   const fish = await (await fetch("data/fish.json")).text();
+  const sounds = await (await fetch("data/sounds.json")).text();
   const tuning = await (await fetch("data/tuning.json")).text();
   game = new Game(strings, notes);
   bindInput();
@@ -375,6 +377,8 @@ async function main() {
   const ui2dNumbers = JSON.parse(game.ui2d_numbers());
   passLayout = ui2dNumbers.pass;
   overlay = makeOverlay(el("overlay"), ui2dNumbers, (id) => bitmapFrom(game.bitmap_rgba(id), game.bitmap_size(id)));
+  draw(JSON.parse(game.load_sounds(sounds, tuning)));
+  startAudio(game);
   renderer = makeRenderer(el("scene"), JSON.parse(game.numbers()), { vertex, fragment });
   if (!renderer) send("scene.unavailable", "");
   window.addEventListener("resize", () => renderer && resize());

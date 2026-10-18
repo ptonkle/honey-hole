@@ -171,3 +171,14 @@ body[data-screen="play"] #overlay { display: block; }
    panels do not */
 body[data-screen="play"] #menus { pointer-events: none; position: relative; }
 body[data-screen="play"] .panel { pointer-events: auto; }
+/* ---- the Sounds screen: a grid of sound buttons, then the loops ---- */
+body[data-screen="sounds"] #menus { max-width: 60rem; }
+.panel.sounds {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+}
+.panel.sounds h2, .panel.sounds .sub { grid-column: 1 / -1; }
+.panel.gallery-more {
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  padding: 0.5rem 0.75rem;
+}

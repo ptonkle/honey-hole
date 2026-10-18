@@ -191,6 +191,7 @@ fn the_colour_choice_shows_for_a_slot_and_all_four_draws_four() {
             "gallery.show",
             "gallery.colour",
             "gallery.view",
+            "gallery.size",
             "gallery.turn",
             "menu.back"
         ]
@@ -313,4 +314,93 @@ fn every_animation_and_player_colour_has_a_string() {
             "{c}"
         );
     }
+}
+
+/// One upright triangle `len` mm long, nose (+z) to tail, centred.
+fn long(kind: &str, name: &str, len: i32) -> Value {
+    json!({
+        "name": name, "kind": kind, "unit": "mm",
+        "colours": { "c": [10, 20, 30] },
+        "parts": [{ "name": "p", "vertices": [[0, 0, -len / 2], [0, 0, len / 2], [0, 100, 0]] }],
+        "faces": [{ "colour": "c", "v": [0, 1, 2] }]
+    })
+}
+
+/// Two fish (200 mm and 1 m), a 3 m boat with a bow anchor, the angler
+/// and a rock, in the Gallery, the small fish chosen.
+fn lineup_app() -> App {
+    let anims = json!({
+        "idle": { "ms": 1000, "keys": [{ "at": 0 }] },
+        "panic": { "ms": 1000, "keys": [{ "at": 0 }] }
+    });
+    let mut minnow = long("fish", "Minnow", 200);
+    minnow["animations"] = anims.clone();
+    let mut pike = long("fish", "Pike", 1000);
+    pike["animations"] = anims;
+    let mut boat = long("boat", "Boat", 3000);
+    boat["anchors"] = json!({ "fish": { "part": "p", "at": [0, 0, 1000] } });
+    let m = models();
+    let all = json!({
+        "minnow": minnow, "pike": pike, "boat": boat, "angler": m["angler"], "rock": m["rock"]
+    });
+    let mut a = App::new(&strings(), NOTES).unwrap();
+    a.load_models(&all.to_string(), &look().to_string()).unwrap();
+    a.resize(1600, 900, 100);
+    a.act("menu.gallery", "").unwrap();
+    a.act("gallery.model", "minnow").unwrap();
+    a
+}
+
+/// Triangle `t`'s smallest and largest x.
+fn x_span(tris: &[i32], t: usize) -> (i32, i32) {
+    let xs: Vec<i32> = (0..3).map(|k| tris[(t * 3 + k) * VERTEX_VALUES]).collect();
+    (*xs.iter().min().unwrap(), *xs.iter().max().unwrap())
+}
+
+fn close(a: (i32, i32), b: (i32, i32)) -> bool {
+    (a.0 - b.0).abs() <= 4 && (a.1 - b.1).abs() <= 4
+}
+
+#[test]
+fn the_line_up_shows_every_fish_at_true_size_end_to_end_with_the_boat() {
+    let mut a = lineup_app();
+    assert_eq!(options(&a, "gallery.size"), ["fit", "lineup"]);
+    a.act("gallery.size", "lineup").unwrap();
+    // the row stands still, so the turn toggle goes
+    assert!(ids(&a).contains(&"gallery.size".to_string()));
+    assert!(!ids(&a).contains(&"gallery.turn".to_string()));
+    let (_, tris) = a.frame();
+    // minnow, pike, boat, the angler on the boat, then the floor's 32;
+    // no rock and no angler of its own
+    assert_eq!(tris.len() / VERTEX_VALUES / 3, 4 + 32);
+    // metres in Q16: 200 mm is 13 107, the 250 mm gap 16 384, 1 m 65 536
+    let span = |t| x_span(&tris, t);
+    assert!(close(span(0), (0, 13_107)), "{:?}", span(0));
+    let pike = 13_107 + 16_384;
+    assert!(close(span(1), (pike, pike + 65_536)), "{:?}", span(1));
+    let boat = pike + 65_536 + 16_384;
+    assert!(close(span(2), (boat, boat + 196_608)), "{:?}", span(2));
+    // the camera looks at the middle of the row
+    let v = a.frame().0;
+    assert!((v[16] - (boat + 196_608) / 2).abs() <= 4, "{}", v[16]);
+    assert_eq!(
+        a.act("gallery.size", "huge"),
+        Err("There is no size \"huge\".".into())
+    );
+    a.act("gallery.size", "fit").unwrap();
+    assert!(ids(&a).contains(&"gallery.turn".to_string()));
+}
+
+#[test]
+fn the_line_up_is_the_same_whichever_fish_is_chosen() {
+    let mut a = lineup_app();
+    a.act("gallery.turn", "off").unwrap();
+    let fitted_minnow = a.frame();
+    a.act("gallery.model", "pike").unwrap();
+    // fitted to the screen, each fish fills it: the camera moves
+    assert_ne!(a.frame().0, fitted_minnow.0);
+    a.act("gallery.size", "lineup").unwrap();
+    let row = a.frame();
+    a.act("gallery.model", "minnow").unwrap();
+    assert_eq!(a.frame(), row);
 }

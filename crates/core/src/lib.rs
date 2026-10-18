@@ -18,6 +18,7 @@ pub mod map;
 pub mod model;
 pub mod patch_notes;
 pub mod roster;
+pub mod sound;
 pub mod strings;
 pub mod ui2d;
 pub mod view;
