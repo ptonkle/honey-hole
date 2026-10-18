@@ -79,13 +79,32 @@ impl App {
         let row_h = (area / most - 10).clamp(34, 104);
         for (k, c) in cols.iter().enumerate() {
             let x = x0 + k as i32 * (col_w + GAP);
-            self.draw_column(list, l, theme, c, &shown, k, Rect::new(x, TOP, col_w, HEAD_H), row_h);
+            self.draw_column(
+                list,
+                l,
+                theme,
+                c,
+                &shown,
+                k,
+                Rect::new(x, TOP, col_w, HEAD_H),
+                row_h,
+            );
         }
         status.push(format!(
             "postgame={} cards={} totals={}",
             if shown.ranking { "ranking" } else { "reveal" },
-            shown.cards.iter().map(|n| n.to_string()).collect::<Vec<_>>().join(","),
-            shown.totals.iter().map(|n| n.to_string()).collect::<Vec<_>>().join(","),
+            shown
+                .cards
+                .iter()
+                .map(|n| n.to_string())
+                .collect::<Vec<_>>()
+                .join(","),
+            shown
+                .totals
+                .iter()
+                .map(|n| n.to_string())
+                .collect::<Vec<_>>()
+                .join(","),
         ));
         if shown.ranking {
             let places = self.draw_ranking(list, l, cols);
@@ -108,10 +127,33 @@ impl App {
         let colour = self.player_rgb(c.seat);
         let now = shown.current == Some(k);
         // the player being revealed stands out
-        let head_r = if now { Rect::new(head.x, head.y - 10, head.w, head.h) } else { head };
-        card_in(list, &l.card, head_r, l.card.fill, if now { colour } else { l.card.outline });
-        list.circle(rgb(colour), rgb(l.card.outline), 3, (head_r.x + 34, head_r.y + 36), 13);
-        list.text(rgb(l.card.ink), l.body(), 32, Align::Left, (head_r.x + 58, head_r.y + 38), &c.name);
+        let head_r = if now {
+            Rect::new(head.x, head.y - 10, head.w, head.h)
+        } else {
+            head
+        };
+        card_in(
+            list,
+            &l.card,
+            head_r,
+            l.card.fill,
+            if now { colour } else { l.card.outline },
+        );
+        list.circle(
+            rgb(colour),
+            rgb(l.card.outline),
+            3,
+            (head_r.x + 34, head_r.y + 36),
+            13,
+        );
+        list.text(
+            rgb(l.card.ink),
+            l.body(),
+            32,
+            Align::Left,
+            (head_r.x + 58, head_r.y + 38),
+            &c.name,
+        );
         let mono = self.fishboy.theme.as_ref().map_or(l.display(), |t| t.mono());
         list.text(
             rgb(l.card.ink),
@@ -158,7 +200,14 @@ impl App {
                 let b = Rect::new(r.x + 12, r.y + 12, (r.h - 24) * 16 / 10, r.h - 24);
                 if self.models.iter().any(|m| m.id == k.model) {
                     let swim = ((self.clock / 1000) % crate::model::MAX_MS as i64) as u32;
-                    list.model(b, &k.model, Some(crate::model::Anim::Idle), swim, l.postgame.fish_box, 100);
+                    list.model(
+                        b,
+                        &k.model,
+                        Some(crate::model::Anim::Idle),
+                        swim,
+                        l.postgame.fish_box,
+                        100,
+                    );
                 } else {
                     list.fill_rect(rgb(l.postgame.fish_box), b);
                 }
@@ -169,7 +218,11 @@ impl App {
         let tier_name = tier.map_or(String::new(), |t| self.t(&format!("tier.{}", tier_key(t))));
         let length = self.t("catch.feet").replace("{feet}", &feet(f.length_mm));
         let ink = rgb(l.card.ink);
-        let (size, small) = if big { (28, 22) } else { ((r.h * 45 / 100).min(26), (r.h * 38 / 100).min(20)) };
+        let (size, small) = if big {
+            (28, 22)
+        } else {
+            ((r.h * 45 / 100).min(26), (r.h * 38 / 100).min(20))
+        };
         if big {
             list.text(ink, l.body(), size, Align::Left, (x, r.y + r.h * 36 / 100), &name);
             list.text(
@@ -216,12 +269,23 @@ impl App {
         } else {
             self.t("postgame.tie")
         };
-        list.text(rgb(l.card.ink), l.display(), 50, Align::Centre, (W / 2, r.y + 64), &heading);
+        list.text(
+            rgb(l.card.ink),
+            l.display(),
+            50,
+            Align::Centre,
+            (W / 2, r.y + 64),
+            &heading,
+        );
         let mono = self.fishboy.theme.as_ref().map_or(l.display(), |t| t.mono());
         for (i, (place, c)) in order.iter().enumerate() {
             let y = r.y + 130 + i as i32 * 92;
             let row = Rect::new(r.x + 30, y, w - 60, 78);
-            let fill = if *place == 1 { l.postgame.winner } else { l.postgame.card };
+            let fill = if *place == 1 {
+                l.postgame.winner
+            } else {
+                l.postgame.card
+            };
             card_in(list, &l.card, row, fill, l.card.outline);
             list.text(
                 rgb(l.card.ink),
@@ -231,8 +295,21 @@ impl App {
                 (row.x + 24, row.y + 40),
                 &self.t(&format!("postgame.place.{place}")),
             );
-            list.circle(rgb(self.player_rgb(c.seat)), rgb(l.card.outline), 3, (row.x + 150, row.y + 39), 14);
-            list.text(rgb(l.card.ink), l.body(), 34, Align::Left, (row.x + 178, row.y + 40), &c.name);
+            list.circle(
+                rgb(self.player_rgb(c.seat)),
+                rgb(l.card.outline),
+                3,
+                (row.x + 150, row.y + 39),
+                14,
+            );
+            list.text(
+                rgb(l.card.ink),
+                l.body(),
+                34,
+                Align::Left,
+                (row.x + 178, row.y + 40),
+                &c.name,
+            );
             list.text(
                 rgb(l.card.ink),
                 mono,
@@ -243,7 +320,11 @@ impl App {
             );
         }
         let totals: Vec<i64> = cols.iter().map(Column::total).collect();
-        places(&totals).iter().map(|p| p.to_string()).collect::<Vec<_>>().join(",")
+        places(&totals)
+            .iter()
+            .map(|p| p.to_string())
+            .collect::<Vec<_>>()
+            .join(",")
     }
 
     /// The postgame's buttons.

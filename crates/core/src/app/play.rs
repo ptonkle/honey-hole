@@ -326,7 +326,12 @@ impl App {
         // the lake's world, uploaded once (`app/lake.rs`); without the
         // lake's look the match draws its stand-in
         let _ = self.show_world(&map);
-        let game = Match::new(map, &t, setup)?;
+        let mut game = Match::new(map, &t, setup)?;
+        // the lake's fish (`sim::fishing`); a page that sent no roster
+        // plays a lake without
+        if !self.fishboy.roster.0.is_empty() {
+            game.stock(&self.fishboy.roster)?;
+        }
         self.play = Some(Play {
             game,
             seat: 0,
@@ -421,6 +426,9 @@ impl App {
             p.pending_us -= step_us;
             ran += 1;
         }
+        let landed = heard
+            .iter()
+            .any(|e| e["type"] == "BobberLanded" && e["seat"] == p.seat as u64);
         // the rest is dropped, not run later
         p.pending_us = p.pending_us.min(step_us - 1);
         let over = p.log.len().saturating_sub(LOG_KEEP);
@@ -434,6 +442,7 @@ impl App {
         }
         // popups, wrecks' bursts and the end (`flow/`)
         self.flow_hear(&heard);
+        self.debug_fish(landed);
     }
 
     /// The match as a world renderer reads it.

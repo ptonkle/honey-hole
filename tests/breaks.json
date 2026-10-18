@@ -282,7 +282,7 @@
   {
     "name": "one schooling fish is refused",
     "file": "crates/core/src/map/fish.rs",
-    "find": "if k.tier.schools() && count == 1 {",
+    "find": "if tier.schools() && count == 1 {",
     "replace": "if false {",
     "test": "the_fish_counts_are_exact_per_kind"
   },
@@ -1524,5 +1524,243 @@
     "find": "            list.text(colour, font, 34, Align::Left, (x + 40, y), &b.name);",
     "replace": "",
     "test": "the_radar_draws_the_match_seats_by_name"
+  },
+  {
+    "name": "a cast above the speed limit is refused",
+    "file": "crates/core/src/sim/fishing/mod.rs",
+    "find": "if speed > t.cast_max_speed_mm_per_s {",
+    "replace": "if false {",
+    "test": "a_cast_is_refused_above_the_speed_limit"
+  },
+  {
+    "name": "a cast needs fishing mode",
+    "file": "crates/core/src/sim/fishing/mod.rs",
+    "find": "                if self.lines[seat].stage == Stage::Idle {\n                    continue;\n                }",
+    "replace": "",
+    "test": "a_cast_needs_fishing_mode"
+  },
+  {
+    "name": "the charge grows with the hold",
+    "file": "crates/core/src/sim/fishing/mod.rs",
+    "find": "(held.min(full) as i64 * 1000 / full as i64) as i32",
+    "replace": "1000",
+    "test": "the_cast_goes_further_the_longer_space_is_held"
+  },
+  {
+    "name": "Space stops the lure",
+    "file": "crates/core/src/sim/fishing/mod.rs",
+    "find": "if press || line.lure_depth_mm >= bed {",
+    "replace": "if line.lure_depth_mm >= bed {",
+    "test": "the_bobber_lands_in_the_swivel_direction_and_the_lure_sinks_to_where_space_stops_it"
+  },
+  {
+    "name": "the lake bed stops the lure",
+    "file": "crates/core/src/sim/fishing/mod.rs",
+    "find": "let bed = lake::bed_mm(w.map, line.bobber) - t.bed_clear_mm;",
+    "replace": "let bed = lake::bed_mm(w.map, line.bobber);",
+    "test": "the_lake_bed_stops_the_lure"
+  },
+  {
+    "name": "nibbles come before the bite",
+    "file": "crates/core/src/sim/fishing/mod.rs",
+    "find": "if int.nibbles_left > 0 {",
+    "replace": "if false {",
+    "test": "nibbles_come_before_the_bite_after_a_wait"
+  },
+  {
+    "name": "Space before the bite scares the fish",
+    "file": "crates/core/src/sim/fishing/mod.rs",
+    "find": "self.free(w.map, int.fish, rod);\n                    events.push(MatchEvent::Scared { seat });",
+    "replace": "events.push(MatchEvent::Scared { seat });",
+    "test": "space_before_the_bite_scares_the_fish_off"
+  },
+  {
+    "name": "Space on the window's last tick hooks",
+    "file": "crates/core/src/sim/fishing/mod.rs",
+    "find": "Some(until) if tick <= until => self.hook(w, seat, events),",
+    "replace": "Some(until) if tick < until => self.hook(w, seat, events),",
+    "test": "space_within_the_hook_window_hooks_and_a_tick_later_misses"
+  },
+  {
+    "name": "a hook names its fish",
+    "file": "crates/core/src/sim/fishing/mod.rs",
+    "find": "let kind = self.roster.0.get(f.kind).map_or(String::new(), |k| k.id.clone());",
+    "replace": "let kind = String::new();",
+    "test": "a_hook_names_the_fish_and_its_tier"
+  },
+  {
+    "name": "a perfect reel takes the tier's time",
+    "file": "crates/core/src/sim/fishing/reel.rs",
+    "find": "let plain = (need + n - 1) / n;",
+    "replace": "let plain = (need + n - 1) / n / 2;",
+    "test": "a_perfect_reel_takes_the_tiers_time"
+  },
+  {
+    "name": "the Power Reel multiplies the reel",
+    "file": "crates/core/src/sim/fishing/reel.rs",
+    "find": "(plain * power_pct as i64 / 100).max(1) as i32",
+    "replace": "plain.max(1) as i32",
+    "test": "the_power_reel_doubles_the_reel"
+  },
+  {
+    "name": "the meter drains out of the zone",
+    "file": "crates/core/src/sim/fishing/reel.rs",
+    "find": "self.meter = (self.meter - self.drain_per_tick(t)).max(0);",
+    "replace": "self.meter = self.meter.max(1);",
+    "test": "the_meter_drains_out_of_the_zone_and_the_line_breaks_only_when_empty"
+  },
+  {
+    "name": "a tamed reel starts round the marker",
+    "file": "crates/core/src/sim/fishing/reel.rs",
+    "find": "let marker = if tame { BAR * 9 / 10 } else { BAR / 2 };",
+    "replace": "let marker = BAR / 2;",
+    "test": "holding_space_on_a_tamed_fish_lands_it"
+  },
+  {
+    "name": "the meter fills only in the zone",
+    "file": "crates/core/src/sim/fishing/reel.rs",
+    "find": "        if self.in_zone() {\n            self.meter",
+    "replace": "        if !self.in_zone() {\n            self.meter",
+    "test": "a_steady_player_lands_every_tier_in_fair_time"
+  },
+  {
+    "name": "a freed fish swims off",
+    "file": "crates/core/src/sim/fishing/mod.rs",
+    "find": "to: lake::flee_point(map, &self.fish_tuning, f.at, from),",
+    "replace": "to: f.at,",
+    "test": "a_broken_line_loses_the_fish_which_stays_in_the_lake_and_swims_away"
+  },
+  {
+    "name": "a catch is worth its value",
+    "file": "crates/core/src/sim/fishing/mod.rs",
+    "find": "                value: worth,",
+    "replace": "                value: k.value,",
+    "test": "landing_scores_the_fish_at_its_value_and_it_is_never_caught_twice"
+  },
+  {
+    "name": "value counts the length",
+    "file": "crates/core/src/sim/fishing/mod.rs",
+    "find": "let num = base_value as i64 * tier_pct as i64 * length_mm as i64;",
+    "replace": "let num = base_value as i64 * tier_pct as i64 * base_length_mm as i64;",
+    "test": "a_value_is_base_times_tier_times_length_factor"
+  },
+  {
+    "name": "the camera raises a catch",
+    "file": "crates/core/src/sim/fishing/mod.rs",
+    "find": "c.value = (c.value as i64 * self.tuning.camera_value_pct as i64 / 100) as i32;",
+    "replace": "",
+    "test": "the_camera_raises_the_last_catch_once"
+  },
+  {
+    "name": "a wreck drops the fish",
+    "file": "crates/core/src/sim/mod.rs",
+    "find": "self.fishing.wrecked(&self.map, seat, rod, &mut self.events);",
+    "replace": "let _ = rod;",
+    "test": "a_wreck_drops_the_fish"
+  },
+  {
+    "name": "Esc drops the fish",
+    "file": "crates/core/src/sim/mod.rs",
+    "find": "self.fishing.cancel(&self.map, seat, rod, &mut self.events)",
+    "replace": "{ let _ = rod; false }",
+    "test": "esc_drops_the_fish_and_then_opens_the_menu"
+  },
+  {
+    "name": "Q to driving drops the fish",
+    "file": "crates/core/src/sim/fishing/mod.rs",
+    "find": "if b.mode == Mode::Driving {",
+    "replace": "if false {",
+    "test": "q_to_driving_drops_the_fish"
+  },
+  {
+    "name": "a moving boat reels the line in",
+    "file": "crates/core/src/sim/fishing/mod.rs",
+    "find": "if speed > self.tuning.drag_reel_in_mm_per_s {",
+    "replace": "if false {",
+    "test": "a_moving_boat_drags_the_bobber_and_too_fast_reels_the_line_in"
+  },
+  {
+    "name": "too fast with a fish on breaks the line",
+    "file": "crates/core/src/sim/fishing/mod.rs",
+    "find": "if speed > t.drag_snap_mm_per_s {",
+    "replace": "if false {",
+    "test": "too_fast_with_a_fish_on_breaks_the_line"
+  },
+  {
+    "name": "only a roaming fish notices a lure",
+    "file": "crates/core/src/sim/fishing/mod.rs",
+    "find": "            if !f.roaming() {\n                continue;",
+    "replace": "            if !f.in_lake() {\n                continue;",
+    "test": "two_seats_cannot_hook_the_same_fish"
+  },
+  {
+    "name": "attraction falls with the depth gap",
+    "file": "crates/core/src/sim/fishing/mod.rs",
+    "find": "let pct = 100 - (100 - t.attract_far_pct) as i64 * gap / t.attract_depth_mm as i64;",
+    "replace": "let pct = 100 - gap * 0;",
+    "test": "a_fish_comes_to_a_lure_at_its_depth_from_further_away"
+  },
+  {
+    "name": "fish show only near the boat",
+    "file": "crates/core/src/sim/fishing/view.rs",
+    "find": "!b.wrecked() && f.at.dist2(b.at()) <= s * s",
+    "replace": "!b.wrecked() && s > 0",
+    "test": "fish_show_close_to_the_boat_and_closer_still_when_deep"
+  },
+  {
+    "name": "lengths stay within the tuning",
+    "file": "crates/core/src/sim/fishing/lake.rs",
+    "find": "let pct = rng.range(t.length_min_pct * 10, t.length_max_pct * 10);",
+    "replace": "let pct = rng.range(t.length_min_pct * 10, t.length_max_pct * 20);",
+    "test": "stocking_follows_the_counts_schools_and_lengths"
+  },
+  {
+    "name": "fish keep up with their school slowly",
+    "file": "crates/core/src/sim/fishing/lake.rs",
+    "find": "let leg = per_tick(t.roam_speed_mm_per_s);",
+    "replace": "let leg = per_tick(t.roam_speed_mm_per_s) * 20;",
+    "test": "schools_roam_together_and_slowly"
+  },
+  {
+    "name": "the Fishpedia counts the real lake",
+    "file": "crates/core/src/sim/mod.rs",
+    "find": ".map_or(0, |k| self.fishing.left(k));",
+    "replace": ".map_or(0, |k| k + 1);",
+    "test": "the_fishpedia_shows_each_tier_its_fish_and_how_many_are_left"
+  },
+  {
+    "name": "a match is stocked from the roster",
+    "file": "crates/core/src/app/play.rs",
+    "find": "game.stock(&self.fishboy.roster)?;",
+    "replace": "",
+    "test": "the_lake_is_stocked_from_the_roster"
+  },
+  {
+    "name": "the line in the water turns on the underwater camera",
+    "file": "crates/core/src/app/fishing.rs",
+    "find": ".is_some_and(|v| matches!(v.stage, Stage::Sinking | Stage::Set | Stage::Reeling))",
+    "replace": ".is_some_and(|v| matches!(v.stage, Stage::Reeling))",
+    "test": "a_line_in_the_water_turns_on_the_underwater_camera_and_the_picture_in_picture"
+  },
+  {
+    "name": "the charge meter shows the charge",
+    "file": "crates/core/src/app/fishing.rs",
+    "find": "fill: (fv.charge / 10) as u32,",
+    "replace": "fill: 0,",
+    "test": "holding_space_charges_a_meter"
+  },
+  {
+    "name": "the reel bar shows the zone",
+    "file": "crates/core/src/app/fishing.rs",
+    "find": "zone: Some([to(r.zone), to(r.zone + r.zone_h)]),",
+    "replace": "zone: Some([to(r.zone), to(r.zone)]),",
+    "test": "the_reel_bar_shows_the_zone_the_fish_and_the_catch_meter"
+  },
+  {
+    "name": "a popup lasts 2 s",
+    "file": "crates/core/src/app/fishing.rs",
+    "find": "if now.saturating_sub(*tick) >= keep {",
+    "replace": "if now.saturating_sub(*tick) >= keep * 2 {",
+    "test": "a_hook_pops_up_for_every_player_in_its_tier_for_two_seconds"
   }
 ]

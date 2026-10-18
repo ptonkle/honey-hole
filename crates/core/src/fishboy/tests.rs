@@ -529,12 +529,15 @@ fn up_the_device_is_drawn_over_the_world_without_clearing_it() {
 fn the_fishpedia_shows_each_tier_its_fish_and_how_many_are_left() {
     let mut a = raised();
     a.act("key", "Digit2").unwrap();
+    // the lake stocked with the setup's counts exactly (no variance), and
     // one bluegill landed by an AI player: 4 - 1 = 3 left
-    a.play.as_mut().unwrap().game.scores[1].catches.push(Catch {
-        kind: "bluegill".into(),
-        length_mm: 210,
-        value: 10,
-    });
+    let roster = a.fishboy.roster.clone();
+    let game = &mut a.play.as_mut().unwrap().game;
+    game.fishing.fish_tuning.count_variance_pct = 0;
+    game.stock(&roster).unwrap();
+    let k = roster.0.iter().position(|k| k.id == "bluegill").unwrap();
+    let f = game.fishing.fish.iter_mut().find(|f| f.kind == k).unwrap();
+    f.state = crate::sim::fishing::lake::FishState::Caught { seat: 1 };
     let b = a.build_ui2d();
     let t = texts(&b);
     // each row's total: 3 legendary, 2 + 3 common; 8 in all

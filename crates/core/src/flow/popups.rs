@@ -6,7 +6,7 @@
 //! popup for a new event is adding a row (and its string):
 //!
 //! ```json
-//! {"event": "Hooked", "text": "announce.hooked", "style": "tier", "tier": "tier",
+//! {"event": "Hooked", "text": "popup.hooked", "style": "tier", "tier": "tier",
 //!  "fill": {"player": "name:seat", "fish": "fish:kind"}}
 //! ```
 //!
@@ -31,6 +31,8 @@ use crate::roster::{tier_key, TIERS};
 /// One popup, filled in.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Popup {
+    /// the string key its text came from
+    pub key: String,
     pub text: String,
     pub style: String,
     /// the event's tier, for a tier style
@@ -64,7 +66,8 @@ impl Popups {
     /// there is room.
     pub fn advance(&mut self, now_us: i64, popup_ms: i32, max_shown: usize) {
         let life = popup_ms as i64 * 1000;
-        self.queue.retain(|p| p.shown_us.is_none_or(|s| now_us - s < life));
+        self.queue
+            .retain(|p| p.shown_us.is_none_or(|s| now_us - s < life));
         let mut shown = self.queue.iter().filter(|p| p.shown_us.is_some()).count();
         for p in self.queue.iter_mut() {
             if shown >= max_shown {
@@ -162,10 +165,15 @@ impl PopupRow {
                 "tier" => v.and_then(tier_of).map(|t| (names.tier)(t)),
                 _ => v.and_then(plain),
             };
-            let fallback = if kind == "fish" { &names.a_fish } else { &names.someone };
+            let fallback = if kind == "fish" {
+                &names.a_fish
+            } else {
+                &names.someone
+            };
             text = text.replace(&format!("{{{key}}}"), &word.unwrap_or_else(|| fallback.clone()));
         }
         Popup {
+            key: self.text.clone(),
             text,
             style: self.style.clone(),
             tier: at(event, &self.tier).and_then(tier_of),

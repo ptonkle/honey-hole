@@ -51,7 +51,11 @@ fn the_countdown_holds_the_boats_still_then_lets_them_go() {
             beats.push((k, e.clone()));
         }
     }
-    assert_eq!(m.boat(0).unwrap().forward_speed(), 0, "W does nothing in the countdown");
+    assert_eq!(
+        m.boat(0).unwrap().forward_speed(),
+        0,
+        "W does nothing in the countdown"
+    );
     assert_eq!(m.boat(0).unwrap().at(), start);
     assert_eq!(m.tick, 0, "the clock waits");
     assert_eq!(m.remaining_ms(), 480_000);
@@ -93,6 +97,7 @@ fn the_match_setup_takes_the_countdown_from_the_tuning() {
 
 fn popup(text: &str, group: &str) -> Popup {
     Popup {
+        key: String::new(),
         text: text.into(),
         style: "plain".into(),
         tier: None,
@@ -154,8 +159,8 @@ fn fill(events: &[Value], me: usize) -> Vec<Popup> {
         fish: &fish,
         tier: &tier,
         text: &text,
-        someone: strings.t("announce.someone"),
-        a_fish: strings.t("announce.fish"),
+        someone: strings.t("popup.someone"),
+        a_fish: strings.t("popup.fish"),
     };
     of_events(&look().popups.rows, events, me, &names)
 }
@@ -165,7 +170,7 @@ fn a_hook_names_the_player_and_the_fish_in_its_tier() {
     let hooked = json!({"type": "Hooked", "seat": 1, "fish": 7, "kind": "walleye", "tier": "Uncommon"});
     let p = fill(&[hooked], 0);
     assert_eq!(p.len(), 1);
-    assert_eq!(p[0].text, "Rod Fisher has hooked a Walleye");
+    assert_eq!(p[0].text, "Rod Fisher has hooked a Walleye!");
     assert_eq!(p[0].tier, Some(Tier::Uncommon));
     assert_eq!(p[0].style, "tier");
     // a landing too
@@ -196,9 +201,12 @@ fn a_wreck_says_who_rammed_whom_or_who_ran_aground() {
 #[test]
 fn an_unknown_fish_or_seat_still_makes_a_popup_and_other_events_make_none() {
     let odd = json!({"type": "Hooked", "seat": 9, "kind": "kraken", "tier": "Rare"});
-    let p = fill(&[odd, json!({"type": "Bumped", "a": 0, "b": 1, "speed": 3000})], 0);
+    let p = fill(
+        &[odd, json!({"type": "Bumped", "a": 0, "b": 1, "speed": 3000})],
+        0,
+    );
     assert_eq!(p.len(), 1, "a bump has no popup");
-    assert_eq!(p[0].text, "Someone has hooked a fish");
+    assert_eq!(p[0].text, "Someone has hooked a fish!");
     let beat = json!({"type": "BuoyBeat", "left": 3});
     assert_eq!(fill(&[beat], 0)[0].text, "Item buoy in 3");
 }
@@ -212,8 +220,10 @@ fn a_popup_row_with_a_bad_style_or_fill_is_refused_by_name() {
         "Popup row 1 (Hooked) names the style \"loud\", which is not listed."
     );
     let mut v: Value = serde_json::from_str(FLOW).unwrap();
-    v["popups"]["rows"][2]["fill"]["player"] = json!("seat");
-    assert!(FlowLook::parse(&v.to_string()).unwrap_err().contains("Popup row 3 (Wrecked) fills {player}"));
+    v["popups"]["rows"][7]["fill"]["player"] = json!("seat");
+    assert!(FlowLook::parse(&v.to_string())
+        .unwrap_err()
+        .contains("Popup row 8 (Wrecked) fills {player}"));
 }
 
 // ---- the postgame ----
@@ -228,7 +238,10 @@ fn col(seat: usize, values: &[i32]) -> Column {
 
 /// Three players: 10 + 25, 40, and nothing.
 fn reveal() -> Reveal {
-    Reveal::new(vec![col(0, &[10, 25]), col(1, &[40]), col(2, &[])], &look().postgame)
+    Reveal::new(
+        vec![col(0, &[10, 25]), col(1, &[40]), col(2, &[])],
+        &look().postgame,
+    )
 }
 
 #[test]
@@ -247,7 +260,10 @@ fn the_reveal_shows_each_players_catches_in_turn_and_counts_their_total_up() {
     assert_eq!(r.at(1300).totals, vec![10, 0, 0]);
     assert_eq!(r.at(2100).totals, vec![35, 0, 0]);
     let b = r.at(3700);
-    assert_eq!((b.cards, b.totals, b.current), (vec![2, 1, 0], vec![35, 40, 0], Some(1)));
+    assert_eq!(
+        (b.cards, b.totals, b.current),
+        (vec![2, 1, 0], vec![35, 40, 0], Some(1))
+    );
     assert_eq!(r.at(5000).current, Some(2));
     let end = r.at(6900);
     assert!(end.ranking && end.current.is_none());
@@ -327,7 +343,12 @@ fn the_end_holds_then_opens_the_postgame_with_its_buttons() {
         a.ui().panels[0]
             .items
             .iter()
-            .map(|i| serde_json::to_value(i).unwrap()["id"].as_str().unwrap_or("").to_string())
+            .map(|i| {
+                serde_json::to_value(i).unwrap()["id"]
+                    .as_str()
+                    .unwrap_or("")
+                    .to_string()
+            })
             .collect()
     };
     assert_eq!(ids(&a), ["postgame.skip"]);
@@ -352,8 +373,17 @@ fn rematch_keeps_the_setup_with_a_new_seed() {
     assert_eq!(a.screen, Screen::Play);
     let after = &a.play.as_ref().unwrap().game;
     assert_ne!(after.setup.seed, before.seed, "a new seed");
-    assert_eq!(after.setup, Setup { seed: after.setup.seed, ..before.clone() });
-    assert_eq!(after.setup.seats[1].occupant, Occupant::Ai(crate::sim::Difficulty::Hard));
+    assert_eq!(
+        after.setup,
+        Setup {
+            seed: after.setup.seed,
+            ..before.clone()
+        }
+    );
+    assert_eq!(
+        after.setup.seats[1].occupant,
+        Occupant::Ai(crate::sim::Difficulty::Hard)
+    );
     assert_eq!(after.setup.length_ms, 240_000);
     assert!(after.scores.iter().all(|s| s.catches.is_empty()), "a fresh match");
     assert!(!after.ended && a.flow.postgame.is_none() && a.flow.ended_us.is_none());
@@ -369,7 +399,15 @@ fn the_reveal_plays_a_tally_tick_for_each_card_and_the_fanfare_once() {
     .unwrap();
     a.sound = Some(crate::sound::Sound::new(bank));
     a.act("debug.catches", "").unwrap();
-    let cards: usize = a.play.as_ref().unwrap().game.scores.iter().map(|s| s.catches.len()).sum();
+    let cards: usize = a
+        .play
+        .as_ref()
+        .unwrap()
+        .game
+        .scores
+        .iter()
+        .map(|s| s.catches.len())
+        .sum();
     to_postgame(&mut a);
     let mut heard = Vec::new();
     for _ in 0..1000 {
@@ -407,7 +445,14 @@ fn the_map_seed_shows_only_with_the_option_on() {
 fn the_hud_shows_the_time_speed_mode_and_ping_and_its_hints_fade_after_a_minute() {
     let mut a = match_app();
     let s = status(&a);
-    for w in ["hud=1", "time=4:00", "speed=0", "mode=driving", "hud_ping=ready", "hints=100"] {
+    for w in [
+        "hud=1",
+        "time=4:00",
+        "speed=0",
+        "mode=driving",
+        "hud_ping=ready",
+        "hints=100",
+    ] {
         assert!(s.split(' ').any(|x| x == w), "{w} in {s}");
     }
     // the sample's hints last 60 s of match time, then fade over 3 s
@@ -512,7 +557,14 @@ fn the_made_up_catches_fill_every_taken_seat() {
 #[test]
 fn every_event_the_flow_emits_has_a_sound() {
     let sounds: Value = serde_json::from_str(include_str!("../../../../data/sounds.json")).unwrap();
-    for e in ["Countdown", "MatchStarted", "MatchEnded", "Wrecked", "TallyTick", "Winner"] {
+    for e in [
+        "Countdown",
+        "MatchStarted",
+        "MatchEnded",
+        "Wrecked",
+        "TallyTick",
+        "Winner",
+    ] {
         assert!(sounds["events"].get(e).is_some(), "{e}");
     }
     let bank = crate::sound::Bank::parse(
@@ -522,7 +574,10 @@ fn every_event_the_flow_emits_has_a_sound() {
     .unwrap();
     let mut s = crate::sound::Sound::new(bank);
     for left in [3, 2, 1] {
-        s.event(&serde_json::to_value(MatchEvent::Countdown { left }).unwrap(), Some(0));
+        s.event(
+            &serde_json::to_value(MatchEvent::Countdown { left }).unwrap(),
+            Some(0),
+        );
     }
     s.event(&serde_json::to_value(MatchEvent::MatchStarted).unwrap(), Some(0));
     let heard: String = s.pending().iter().map(Value::to_string).collect();

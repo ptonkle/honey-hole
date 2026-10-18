@@ -3,7 +3,7 @@
 //! face for words and the Fish-Boy's monospace for numbers (one family
 //! with the Fish-Boy, without its green phosphor).
 //!
-//! - top right: the time left;
+//! - top right: the match's time left;
 //! - top centre: the popups, stacked;
 //! - bottom left: the speed gauge and the driving/fishing badge;
 //! - bottom right: the radar ping's cooldown, the item slot, and under them
@@ -38,8 +38,20 @@ pub fn card(list: &mut List, k: &CardLook, r: Rect) {
 
 pub fn card_in(list: &mut List, k: &CardLook, r: Rect, fill: [i32; 3], outline: [i32; 3]) {
     let shadow = Rect::new(r.x + k.shadow, r.y + k.shadow, r.w, r.h);
-    list.round_rect(rgb([0, 0, 0]).alpha(k.shadow_pct), Rgba::NONE, 0, shadow, k.radius);
-    list.round_rect(rgb(fill).alpha(k.fill_pct), rgb(outline), k.outline_w, r, k.radius);
+    list.round_rect(
+        rgb([0, 0, 0]).alpha(k.shadow_pct),
+        Rgba::NONE,
+        0,
+        shadow,
+        k.radius,
+    );
+    list.round_rect(
+        rgb(fill).alpha(k.fill_pct),
+        rgb(outline),
+        k.outline_w,
+        r,
+        k.radius,
+    );
 }
 
 /// Text with a dark outline round it, to read over the lake.
@@ -55,7 +67,16 @@ pub fn outlined(
     outline: Rgba,
 ) {
     let d = (size / 18).max(2);
-    for (dx, dy) in [(-d, 0), (d, 0), (0, -d), (0, d), (-d, -d), (d, d), (-d, d), (d, -d)] {
+    for (dx, dy) in [
+        (-d, 0),
+        (d, 0),
+        (0, -d),
+        (0, d),
+        (-d, -d),
+        (d, d),
+        (-d, d),
+        (d, -d),
+    ] {
         list.text(outline, font, size, align, (at.0 + dx, at.1 + dy), text);
     }
     list.text(fill, font, size, align, at, text);
@@ -65,8 +86,8 @@ pub fn outlined(
 /// from the right).
 pub fn polar(c: (i32, i32), r: i32, a: i32) -> (i32, i32) {
     (
-        c.0 + (r as i64 * fx::cos(a) as i64 >> 16) as i32,
-        c.1 + (r as i64 * fx::sin(a) as i64 >> 16) as i32,
+        c.0 + ((r as i64 * fx::cos(a) as i64) >> 16) as i32,
+        c.1 + ((r as i64 * fx::sin(a) as i64) >> 16) as i32,
     )
 }
 
@@ -80,9 +101,22 @@ pub fn key_cap(list: &mut List, l: &FlowLook, at: (i32, i32), key: &str, size: i
     let w = font.width(key, size) + size;
     let h = size * 3 / 2;
     let r = Rect::new(at.0, at.1 - h / 2, w, h);
-    list.round_rect(rgb([0, 0, 0]).alpha(l.card.shadow_pct), Rgba::NONE, 0, Rect::new(r.x, r.y + 4, w, h), 8);
+    list.round_rect(
+        rgb([0, 0, 0]).alpha(l.card.shadow_pct),
+        Rgba::NONE,
+        0,
+        Rect::new(r.x, r.y + 4, w, h),
+        8,
+    );
     list.round_rect(rgb(l.hud.key_cap), rgb(l.card.outline), 3, r, 8);
-    list.text(rgb(l.card.ink), font, size, Align::Centre, (r.x + w / 2, at.1), key);
+    list.text(
+        rgb(l.card.ink),
+        font,
+        size,
+        Align::Centre,
+        (r.x + w / 2, at.1),
+        key,
+    );
     w
 }
 
@@ -124,7 +158,9 @@ pub fn bobber_icon(list: &mut List, at: (i32, i32), s: i32, ink: Rgba) {
         rgb([226, 56, 44]),
         Rgba::NONE,
         0,
-        &(0..=12).map(|k| polar(at, s * 7 / 10, TURN / 2 + k * TURN / 24)).collect::<Vec<_>>(),
+        &(0..=12)
+            .map(|k| polar(at, s * 7 / 10, TURN / 2 + k * TURN / 24))
+            .collect::<Vec<_>>(),
     );
     list.circle(Rgba::NONE, ink, 3, at, s * 7 / 10);
     list.line(ink, 5, (at.0, at.1 - s * 7 / 10), (at.0, at.1 - s));
@@ -144,7 +180,12 @@ fn boat_icon(list: &mut List, at: (i32, i32), s: i32, fill: Rgba, ink: Rgba) {
             (x - s * 7 / 10, y + s * 4 / 10),
         ],
     );
-    list.line(ink, 4, (x - s * 7 / 10, y - s / 5), (x - s * 7 / 10, y - s * 7 / 10));
+    list.line(
+        ink,
+        4,
+        (x - s * 7 / 10, y - s / 5),
+        (x - s * 7 / 10, y - s * 7 / 10),
+    );
 }
 
 /// A hook for the fishing badge.
@@ -178,14 +219,27 @@ impl App {
         let g = &p.game;
         status.push("hud=1".into());
         let remaining = g.remaining_ms();
-        let time = crate::app::play::clock_text(remaining);
-        self.draw_time(list, l, &time, remaining);
-        status.push(format!("time={time}"));
+        let clock = crate::app::play::clock_text(remaining);
+        self.draw_time(list, l, &clock, remaining);
+        status.push(format!("time={clock}"));
         if let Some(b) = self.my_boat() {
             let kmh = (b.speed_mm_per_s as i64 * 36 / 10_000) as i32;
             self.draw_gauge(list, l, kmh);
             self.draw_mode(list, l, b.mode);
             status.push(format!("speed={kmh} mode={}", mode_key(b.mode)));
+        }
+        match self.fishing_hud() {
+            Some(f) => {
+                self.draw_fishing(list, l, &f);
+                status.push(format!("fishing={}", f.key));
+                if let Some(c) = f.charge {
+                    status.push(format!("charge={c}"));
+                }
+                if let Some(r) = &f.reel {
+                    status.push(format!("reel={},{},{},{}", r.zone[0], r.zone[1], r.fish, r.meter));
+                }
+            }
+            None => status.push("fishing=".into()),
         }
         let ping = self.draw_ping(list, l);
         status.push(format!("hud_ping={ping}"));
@@ -231,7 +285,14 @@ impl App {
             let text = self.t("hud.wrecked");
             let w = l.body().width(&text, 34) + 80;
             card(list, &l.card, Rect::new((W - w) / 2, H / 2 + 90, w, 76));
-            list.text(rgb(l.card.ink), l.body(), 34, Align::Centre, (W / 2, H / 2 + 128), &text);
+            list.text(
+                rgb(l.card.ink),
+                l.body(),
+                34,
+                Align::Centre,
+                (W / 2, H / 2 + 128),
+                &text,
+            );
             status.push("wrecked=1".into());
         }
         // the countdown, then "Go"
@@ -295,9 +356,11 @@ impl App {
         if let Some(first) = self.flow.popups.shown().next() {
             status.push(format!("popup={}", first.style));
         }
+        let keys: Vec<&str> = self.flow.popups.shown().map(|p| p.key.as_str()).collect();
+        status.push(format!("popup_keys={}", keys.join(",")));
     }
 
-    fn draw_time(&self, list: &mut List, l: &FlowLook, time: &str, remaining: i32) {
+    fn draw_time(&self, list: &mut List, l: &FlowLook, clock: &str, remaining: i32) {
         let r = Rect::new(W - EDGE - 290, EDGE, 290, 132);
         card(list, &l.card, r);
         list.text(
@@ -309,9 +372,20 @@ impl App {
             &self.t("hud.time_left").to_uppercase(),
         );
         // the last 30 s in the countdown's warning colour
-        let ink = if remaining <= 30_000 { l.countdown.end } else { l.card.ink };
+        let ink = if remaining <= 30_000 {
+            l.countdown.end
+        } else {
+            l.card.ink
+        };
         let mono = self.fishboy.theme.as_ref().map_or(l.display(), |t| t.mono());
-        list.text(rgb(ink), mono, 70, Align::Centre, (r.x + r.w / 2, r.y + 82), time);
+        list.text(
+            rgb(ink),
+            mono,
+            70,
+            Align::Centre,
+            (r.x + r.w / 2, r.y + 82),
+            clock,
+        );
     }
 
     /// The speed gauge: a 270° dial from 0 to the nitrous top speed, the
@@ -348,8 +422,22 @@ impl App {
         list.line(rgb(h.needle), 6, c, polar(c, rad - 18, a));
         list.circle(rgb(h.needle), rgb(l.card.outline), 4, c, 14);
         let mono = self.fishboy.theme.as_ref().map_or(l.display(), |t| t.mono());
-        list.text(rgb(l.card.ink), mono, 54, Align::Centre, (c.0, c.1 + 64), &kmh.to_string());
-        list.text(rgb(l.card.soft), l.body(), 22, Align::Centre, (c.0, c.1 + 100), &self.t("hud.kmh"));
+        list.text(
+            rgb(l.card.ink),
+            mono,
+            54,
+            Align::Centre,
+            (c.0, c.1 + 64),
+            &kmh.to_string(),
+        );
+        list.text(
+            rgb(l.card.soft),
+            l.body(),
+            22,
+            Align::Centre,
+            (c.0, c.1 + 100),
+            &self.t("hud.kmh"),
+        );
     }
 
     /// The mode badge beside the gauge: a boat or a hook, the word, and
@@ -369,7 +457,120 @@ impl App {
             Mode::Driving => boat_icon(list, icon, 28, rgb(l.card.fill), ink),
             Mode::Fishing => hook_icon(list, icon, 26, ink),
         }
-        list.text(rgb(l.card.ink), l.display(), 34, Align::Left, (r.x + 90, r.y + r.h / 2 + 2), &word);
+        list.text(
+            rgb(l.card.ink),
+            l.display(),
+            34,
+            Align::Left,
+            (r.x + 90, r.y + r.h / 2 + 2),
+            &word,
+        );
+    }
+
+    /// The fishing line's prompt at the bottom centre (with the lure's
+    /// depth, the cast's charge or whether the fish is in the zone), and
+    /// while reeling the reel bar and the catch meter on the right.
+    fn draw_fishing(&self, list: &mut List, l: &FlowLook, f: &crate::app::fishing::FishingHud) {
+        let font = l.body();
+        let h = &l.hud;
+        let second = match (&f.depth, &f.reel) {
+            (Some(d), _) => Some(d.clone()),
+            (None, Some(r)) => Some(self.t(if r.in_zone {
+                "fishing.in_zone"
+            } else {
+                "fishing.out_of_zone"
+            })),
+            _ => None,
+        };
+        let tall = if second.is_some() || f.charge.is_some() {
+            118
+        } else {
+            76
+        };
+        let w = (font.width(&f.prompt, 30) + 80).max(560);
+        let r = Rect::new((W - w) / 2, H - EDGE - 64 - tall, w, tall);
+        card(list, &l.card, r);
+        list.text(
+            rgb(l.card.ink),
+            font,
+            30,
+            Align::Centre,
+            (W / 2, r.y + 38),
+            &f.prompt,
+        );
+        if let Some(c) = f.charge {
+            let bar = Rect::new(r.x + 40, r.y + 70, r.w - 80, 26);
+            list.round_rect(rgb(h.gauge_face), rgb(l.card.outline), 3, bar, 13);
+            let fill = Rect::new(bar.x, bar.y, bar.w * c.clamp(0, 100) / 100, bar.h);
+            if fill.w > 0 {
+                list.round_rect(rgb(h.gauge_fill), rgb(l.card.outline), 3, fill, 13);
+            }
+        } else if let Some(t) = &second {
+            list.text(rgb(l.card.soft), font, 24, Align::Centre, (W / 2, r.y + 84), t);
+        }
+        let Some(reel) = &f.reel else {
+            return;
+        };
+        // the reel bar and the catch meter, filling from the bottom
+        let card_r = Rect::new(W - EDGE - 230, 250, 230, 520);
+        card(list, &l.card, card_r);
+        let track = Rect::new(card_r.x + 40, card_r.y + 70, 76, 400);
+        let meter = Rect::new(card_r.x + 150, card_r.y + 70, 40, 400);
+        let y_of = |t: Rect, pct: i32| t.bottom() - t.h * pct.clamp(0, 100) / 100;
+        list.text(
+            rgb(l.card.soft),
+            font,
+            22,
+            Align::Centre,
+            (track.x + track.w / 2, card_r.y + 36),
+            &self.t("fishing.reel"),
+        );
+        list.round_rect(rgb(h.gauge_face), rgb(l.card.outline), 4, track, 12);
+        let (z0, z1) = (y_of(track, reel.zone[1]), y_of(track, reel.zone[0]));
+        let zone_c = if reel.in_zone { h.ping_ready } else { h.ping_wait };
+        list.round_rect(
+            rgb(zone_c).alpha(80),
+            rgb(l.card.outline),
+            3,
+            Rect::new(track.x + 6, z0, track.w - 12, z1 - z0),
+            8,
+        );
+        let tier = self
+            .fishboy
+            .theme
+            .as_ref()
+            .map_or(h.needle, |t| t.tiers.get(reel.tier).colour);
+        fish_icon(
+            list,
+            (track.x + track.w / 2, y_of(track, reel.fish)),
+            26,
+            rgb(tier),
+            rgb(l.card.outline),
+        );
+        list.round_rect(rgb(h.gauge_face), rgb(l.card.outline), 4, meter, 10);
+        let top = y_of(meter, reel.meter);
+        let colour = if reel.meter < 25 {
+            h.gauge_boost
+        } else {
+            h.gauge_fill
+        };
+        if meter.bottom() - top > 4 {
+            list.round_rect(
+                rgb(colour),
+                Rgba::NONE,
+                0,
+                Rect::new(meter.x + 4, top, meter.w - 8, meter.bottom() - top - 4),
+                8,
+            );
+        }
+        list.text(
+            rgb(l.card.ink),
+            font,
+            20,
+            Align::Centre,
+            (card_r.x + card_r.w / 2, card_r.bottom() - 26),
+            &self.t("fishing.meter"),
+        );
     }
 
     /// The radar ping's cooldown: a dish whose ring fills as it cools.
@@ -400,12 +601,31 @@ impl App {
             ),
         };
         let from = -TURN / 4;
-        list.arc(rgb(colour), 10, c, 50, from, from + (TURN as i64 * done as i64 / 1000) as i32);
+        list.arc(
+            rgb(colour),
+            10,
+            c,
+            50,
+            from,
+            from + (TURN as i64 * done as i64 / 1000) as i32,
+        );
         if word == "sweeping" {
             // the sweep's arm going round
-            list.line(rgb(colour), 5, c, polar(c, 48, from + (TURN as i64 * done as i64 / 1000) as i32));
+            list.line(
+                rgb(colour),
+                5,
+                c,
+                polar(c, 48, from + (TURN as i64 * done as i64 / 1000) as i32),
+            );
         }
-        list.text(rgb(l.card.ink), l.body(), 24, Align::Centre, (c.0, r.y + 150), &label);
+        list.text(
+            rgb(l.card.ink),
+            l.body(),
+            24,
+            Align::Centre,
+            (c.0, r.y + 150),
+            &label,
+        );
         word
     }
 
@@ -420,8 +640,22 @@ impl App {
         list.dash(&[]);
         match self.hud_item() {
             Some((name, model)) => {
-                list.model(slot.inset(6), &model, Some(crate::model::Anim::Bob), 0, l.postgame.fish_box, 100);
-                list.text(rgb(l.card.ink), l.body(), 22, Align::Centre, (r.x + r.w / 2, r.y + 136), &name);
+                list.model(
+                    slot.inset(6),
+                    &model,
+                    Some(crate::model::Anim::Bob),
+                    0,
+                    l.postgame.fish_box,
+                    100,
+                );
+                list.text(
+                    rgb(l.card.ink),
+                    l.body(),
+                    22,
+                    Align::Centre,
+                    (r.x + r.w / 2, r.y + 136),
+                    &name,
+                );
             }
             None => list.text(
                 rgb(l.card.soft),
@@ -438,7 +672,7 @@ impl App {
     }
 
     /// The key hints along the bottom, fading out once `flow.hints_ms` of
-    /// match time has passed. Returns their opacity in percent.
+    /// match clock has passed. Returns their opacity in percent.
     fn draw_hints(&self, list: &mut List, l: &FlowLook) -> i32 {
         let Some(p) = self.play.as_ref() else {
             return 0;
@@ -454,12 +688,8 @@ impl App {
         if pct <= 0 {
             return 0;
         }
-        let hints = ["mode", "fishboy", "item", "menu"].map(|k| {
-            (
-                self.t(&format!("hint.{k}_key")),
-                self.t(&format!("hint.{k}")),
-            )
-        });
+        let hints = ["mode", "fishboy", "item", "menu"]
+            .map(|k| (self.t(&format!("hint.{k}_key")), self.t(&format!("hint.{k}"))));
         let size = 24;
         let font = l.body();
         let widths: Vec<i32> = hints
@@ -502,9 +732,10 @@ impl App {
             let fade = ((life - age).clamp(0, p.fade_ms as i64) * 100 / p.fade_ms as i64) as i32;
             let pct = slide.min(fade);
             list.alpha(pct);
-            let tier = pop
-                .tier
-                .map(|t| self.t(&format!("tier.{}", crate::roster::tier_key(t))).to_uppercase());
+            let tier = pop.tier.map(|t| {
+                self.t(&format!("tier.{}", crate::roster::tier_key(t)))
+                    .to_uppercase()
+            });
             let h = popup(list, l, theme, pop, y - (100 - slide) * 40 / 100, tier);
             list.alpha(100);
             y += h + 14;
@@ -527,7 +758,10 @@ fn popup(list: &mut List, l: &FlowLook, theme: &Theme, pop: &Popup, y: i32, tier
     let Some(style) = l.popups.styles.get(&pop.style) else {
         return 0;
     };
-    let tier_look = pop.tier.filter(|_| style.tier).map(|t| (t, theme.tiers.get(t).colour));
+    let tier_look = pop
+        .tier
+        .filter(|_| style.tier)
+        .map(|t| (t, theme.tiers.get(t).colour));
     let outline = tier_look.map_or(style.outline, |(_, c)| c);
     let font = l.body();
     let size = 36;
@@ -551,11 +785,25 @@ fn popup(list: &mut List, l: &FlowLook, theme: &Theme, pop: &Popup, y: i32, tier
         "bobber" => bobber_icon(list, icon_at, 26, rgb(k.outline)),
         _ => {}
     }
-    list.text(ink, font, size, Align::Left, (r.x + 30 + icon_w, mid + 1), &pop.text);
+    list.text(
+        ink,
+        font,
+        size,
+        Align::Left,
+        (r.x + 30 + icon_w, mid + 1),
+        &pop.text,
+    );
     if let (Some(word), Some((_, c))) = (badge, tier_look) {
         let b = Rect::new(r.right() - 24 - badge_w + 10, r.y + 16, badge_w - 10, h - 32);
         list.round_rect(rgb(c), rgb(k.outline), 3, b, (h - 32) / 2);
-        list.text(rgb(k.outline), l.display(), 24, Align::Centre, (b.x + b.w / 2, mid + 1), &word);
+        list.text(
+            rgb(k.outline),
+            l.display(),
+            24,
+            Align::Centre,
+            (b.x + b.w / 2, mid + 1),
+            &word,
+        );
     }
     h
 }

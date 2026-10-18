@@ -127,6 +127,22 @@ pub enum Item {
         id: String,
         entries: Vec<NoteEntry>,
     },
+    /// a bar the core fills, read-only: `fill` percent of it filled, an
+    /// optional `zone` (from, to percent) drawn over it and a `marker` at a
+    /// percent, across or (`vertical`) from the bottom up; `text` says the
+    /// same in words
+    Meter {
+        id: String,
+        label: String,
+        fill: u32,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        zone: Option<[u32; 2]>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        marker: Option<u32>,
+        #[serde(skip_serializing_if = "is_false")]
+        vertical: bool,
+        text: String,
+    },
 }
 
 impl Item {

@@ -164,7 +164,31 @@ function notes(item) {
   return box;
 }
 
-const builders = { button, slider, toggle, select, text, list, table, notes };
+// A bar the core fills: the share filled, and any zone and marker on it,
+// as CSS lengths the stylesheet lays out across or up.
+function meter(item) {
+  const wrap = make("div", item.vertical ? "field meter vertical" : "field meter");
+  wrap.id = item.id;
+  const bar = make("div", "meter-bar");
+  const fill = make("div", "meter-fill");
+  fill.style.setProperty("--at", item.fill + "%");
+  bar.append(fill);
+  if (item.zone) {
+    const zone = make("div", "meter-zone");
+    zone.style.setProperty("--from", item.zone[0] + "%");
+    zone.style.setProperty("--to", item.zone[1] + "%");
+    bar.append(zone);
+  }
+  if (item.marker !== undefined) {
+    const mark = make("div", "meter-marker");
+    mark.style.setProperty("--at", item.marker + "%");
+    bar.append(mark);
+  }
+  wrap.append(make("span", "meter-label", item.label), bar, make("span", "meter-text", item.text));
+  return wrap;
+}
+
+const builders = { button, slider, toggle, select, text, list, table, notes, meter };
 
 // The panels as the core gives them, built as a fresh tree off the page.
 function buildMenus() {
@@ -207,8 +231,12 @@ function patch(old, fresh) {
   [...old.attributes].forEach((a) => {
     if (!fresh.hasAttribute(a.name)) old.removeAttribute(a.name);
   });
+  // a style goes across through the CSSOM: the page's CSP refuses style
+  // attributes written as text (a meter's lengths)
   [...fresh.attributes].forEach((a) => {
-    if (old.getAttribute(a.name) !== a.value) old.setAttribute(a.name, a.value);
+    if (a.name === "style") {
+      if (old.style.cssText !== fresh.style.cssText) old.style.cssText = fresh.style.cssText;
+    } else if (old.getAttribute(a.name) !== a.value) old.setAttribute(a.name, a.value);
   });
   patchChildren(old, fresh);
   // the live state, after the children (a select's value needs its options)
@@ -390,6 +418,12 @@ function frame(now) {
     }
     renderer.frame(game.view(), game.vertices(), game.vertex_count(), game.statics(), game.groups(), game.instances(),
       game.ghost_view(), game.ghost_vertices(), game.ghost_vertex_count());
+    // the picture-in-picture, when the core gives one
+    const inset = game.inset_rect();
+    if (inset.length) {
+      renderer.inset(inset, game.inset_border(), game.inset_view(), game.inset_vertices(), game.inset_vertex_count(),
+        game.inset_statics(), game.inset_groups(), game.inset_instances());
+    }
     // the 2D layer: its models and the Fish-Boy through the renderer,
     // then the draw list on the overlay
     game.build_ui2d();
@@ -442,12 +476,16 @@ async function main() {
     ["data.controls", await (await fetch("data/controls.json")).text()],
     ["data.names", await (await fetch("data/names.json")).text()],
     ["data.maps", await (await fetch("data/maps/michigan-lake.json")).text()],
+    ["data.fish", await (await fetch("data/fish.json")).text()],
   ];
   files.forEach(([name, text]) => {
     const result = JSON.parse(game.act(name, text));
     if (result.error) el("message").textContent = result.error;
   });
   draw(JSON.parse(game.load_sounds(sounds, tuning)));
+  // debug flags from the page's address (`?debug=fishing`), for checks
+  const debug = new URLSearchParams(location.search).get("debug");
+  if (debug) send("debug.flags", debug);
   startAudio(game);
   renderer = makeRenderer(el("scene"), JSON.parse(game.numbers()), shaders);
   if (!renderer) send("scene.unavailable", "");

@@ -298,6 +298,54 @@ def step_sounds(page, check):
 
 
 # The steps in order, by name; `boot` always runs.
+def fishing_heading(page, want, timeout=30000):
+    """Waits until the fishing panel's heading starts with `want`."""
+    page.wait_for_function(
+        "(w) => { const h = document.querySelector('.panel.fishing h2'); return h && h.textContent.startsWith(w); }",
+        arg=want,
+        timeout=timeout,
+    )
+    return page.inner_text(".panel.fishing h2").startswith(want)
+
+
+def step_fishing(page, check):
+    # A match with the debug flag (`?debug=fishing`): a fish waits by every
+    # bobber that lands, its reel holds still at the top of the bar, and the
+    # hook window is 5 s, so the page's own frame rate cannot make it miss.
+    base = page.url.split("?")[0]
+    page.goto(base + "?debug=fishing")
+    page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
+    page.click(by_id("menu.play"))
+    page.click(by_id("lobby.start"))
+    check(screen(page, "play"), "a match starts")
+    page.wait_for_selector("body[data-drawn]", state="attached", timeout=10000)
+    page.keyboard.press("KeyQ")
+    check(fishing_heading(page, STRINGS["fishing.ready"], 10000), "Q to fishing mode offers the cast")
+    page.keyboard.down("Space")
+    check(fishing_heading(page, STRINGS["fishing.charging"], 10000), "holding Space charges the cast")
+    check(page.locator(by_id("fishing.charge")).count() == 1, "the charge meter shows")
+    page.keyboard.up("Space")
+    check(fishing_heading(page, STRINGS["fishing.sinking"], 10000), "the bobber lands and the lure sinks")
+    page.keyboard.press("Space")
+    check(fishing_heading(page, STRINGS["fishing.bite"], 30000), "a fish nibbles and then bites")
+    page.keyboard.down("Space")
+    check(fishing_heading(page, STRINGS["fishing.reeling"], 10000), "Space on the bite hooks the fish")
+    popup = page.inner_text(".panel.popup h2")
+    tail = STRINGS["popup.hooked"].split("{fish}")[1]
+    check(popup.endswith(tail) and popup != tail, f"every player is told of the hook ({popup})")
+    check(page.locator(by_id("fishing.reel")).count() == 1, "the reel bar shows")
+    landed = STRINGS["fishing.landed"].split("{feet}")[0]
+    check(fishing_heading(page, landed, 30000), "holding Space reels the fish in and lands it")
+    page.keyboard.up("Space")
+    page.keyboard.press("Escape")
+    page.wait_for_selector(".panel.pause", timeout=5000)
+    page.click(by_id("menu.quit"))
+    check(screen(page, "title"), "Leave match goes to the Title")
+    # back to the plain page for the steps after
+    page.goto(base)
+    page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
+
+
 STEPS = [
     ("boot", step_boot),
     ("settings", step_settings),
@@ -307,6 +355,7 @@ STEPS = [
     ("sounds", step_sounds),
     ("lake", step_lake),
     ("fishboy", step_fishboy),
+    ("fishing", step_fishing),
 ]
 
 

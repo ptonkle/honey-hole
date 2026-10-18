@@ -181,6 +181,20 @@ export function makeRenderer(canvas, N, shaders) {
       gl.disable(gl.BLEND);
       gl.bindVertexArray(null);
     },
+    // One more frame drawn into a rectangle of the canvas over what is
+    // there (the fishing's picture-in-picture), inside a white border:
+    // rectangles are [x, y, width, height] in pixels from the bottom left.
+    inset(rect, border, ...frame) {
+      gl.enable(gl.SCISSOR_TEST);
+      gl.scissor(...border);
+      gl.clearColor(1, 1, 1, 1);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.viewport(...rect);
+      gl.scissor(...rect);
+      this.frame(...frame);
+      gl.disable(gl.SCISSOR_TEST);
+      gl.viewport(0, 0, canvas.width, canvas.height);
+    },
     // One more drawing into part of the buffer (a model in a 2D box, or
     // the Fish-Boy over the world): its rectangle, whether to clear its
     // colour, and its own view values, laid out as the 2D numbers' `pass`

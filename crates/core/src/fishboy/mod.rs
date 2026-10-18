@@ -475,9 +475,10 @@ impl App {
         if self.screen == Screen::Postgame {
             // the postgame's reveal over the lake (`flow/screens.rs`)
             let mut status = Vec::new();
-            built
-                .list
-                .layer(Transform::letterbox(theme.hud.canvas, Rect::new(0, 0, self.size[0], self.size[1])));
+            built.list.layer(Transform::letterbox(
+                theme.hud.canvas,
+                Rect::new(0, 0, self.size[0], self.size[1]),
+            ));
             self.postgame_ui2d(&mut built.list, theme, &mut status);
             for shot in built.list.shots.clone() {
                 if let Some(p) = self.shot_pass(theme, &shot) {

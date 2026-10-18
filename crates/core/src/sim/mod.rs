@@ -27,9 +27,13 @@
 //! the line), [`boat::Boat::nitrous`] (the items system sets it),
 //! [`boat::Boat::captured`] (the Fish-Boy and minigames set it: the boat
 //! coasts), and [`Score`] (the catches, for the postgame).
+//!
+//! **Fishing** ([`fishing`]): the fish in the lake and each seat's line,
+//! stocked by [`Match::stock`] and stepped after the boats each tick.
 
 pub mod boat;
 pub mod collide;
+pub mod fishing;
 pub mod input;
 pub mod view;
 
@@ -209,17 +213,76 @@ pub enum MatchEvent {
     /// the countdown's "Go": the clock starts and the boats are let go
     MatchStarted,
     // raised by later systems
+    // fishing (`fishing`): a cast, a bite, a catch
+    /// Space was pressed to cast with the boat too fast
+    CastRefused {
+        seat: usize,
+        speed_mm_per_s: i32,
+    },
+    /// Space went down: the cast is charging
+    Charging {
+        seat: usize,
+    },
+    Cast {
+        seat: usize,
+        distance_mm: i32,
+    },
+    BobberLanded {
+        seat: usize,
+        distance_mm: i32,
+    },
+    /// the lure stopped sinking (Space, or the lake bed)
+    LureStopped {
+        seat: usize,
+        depth_mm: i32,
+    },
+    Nibble {
+        seat: usize,
+    },
+    /// Space before the bite scared the fish off
+    Scared {
+        seat: usize,
+    },
+    Bite {
+        seat: usize,
+    },
+    /// the hook window passed; the fish swam off
+    Missed {
+        seat: usize,
+    },
     Hooked {
         seat: usize,
         fish: u32,
+        /// the roster id ("walleye")
+        kind: String,
+        tier: crate::map::fish::Tier,
+    },
+    /// the reel's ratchet, while Space lifts the catch zone
+    ReelTick {
+        seat: usize,
+    },
+    /// the catch meter emptied, or the boat moved too fast: the fish is lost
+    LineBroke {
+        seat: usize,
+        fish: u32,
+    },
+    /// Esc, Q or a wreck dropped the fish off the line
+    FishDropped {
+        seat: usize,
+        fish: u32,
+    },
+    /// the line came in with no fish on it
+    LineReeledIn {
+        seat: usize,
     },
     Caught {
         seat: usize,
         fish: u32,
+        kind: String,
+        tier: crate::map::fish::Tier,
+        length_mm: i32,
     },
-    LineBroke {
-        seat: usize,
-    },
+    // raised by later systems
     BuoyWarning,
     BuoySpawned,
     ItemPicked {
@@ -385,6 +448,8 @@ pub struct Match {
     /// the match's chances, from `Setup::seed` (fish, buoys and items draw
     /// from their own `Rng::stream` of the seed, or from this)
     pub rng: Rng,
+    /// the fish in the lake and every seat's line
+    pub fishing: fishing::Fishing,
 }
 
 impl Match {
@@ -409,6 +474,7 @@ impl Match {
             scores: vec![Score::default(); n],
             events: Vec::new(),
             rng: Rng::new(setup.seed),
+            fishing: fishing::Fishing::new(&tuning.fish, &tuning.fishing, n, setup.seed),
             map,
             tuning: tuning.clone(),
             rules,
@@ -429,6 +495,27 @@ impl Match {
             m.boats.push(boat);
         }
         Ok(m)
+    }
+
+    /// Stocks the lake with the roster's fish (`data/fish.json`), by the
+    /// match seed. A match without it has no fish.
+    /// Each kind's starting count is the setup's (`Setup::fish`), or the
+    /// roster's for a kind the setup does not name, before the variance.
+    pub fn stock(&mut self, roster: &crate::roster::Roster) -> Result<(), String> {
+        let mut r = roster.clone();
+        for k in r.0.iter_mut() {
+            if let Some((_, n)) = self.setup.fish.iter().find(|(id, _)| *id == k.id) {
+                k.count = *n;
+            }
+        }
+        self.fishing.stock(&self.map, &r, self.setup.seed)
+    }
+
+    /// The bow of a seat's boat, where its line goes out.
+    pub fn rod(&self, seat: usize) -> P {
+        self.boat(seat).map_or(self.map.spawn.at, |b| {
+            fishing::bow(b, self.rules.half_length, self.rules.half_beam)
+        })
     }
 
     /// Where a seat's boat starts and respawns: the map's spawn, moved
@@ -504,6 +591,16 @@ impl Match {
             }
         }
         self.fishboy_and_radar(&inputs_or(inputs, self.seats.len()));
+        let world = fishing::World {
+            map: &self.map,
+            boats: &self.boats,
+            half_length_mm: self.rules.half_length,
+            half_beam_mm: self.rules.half_beam,
+            tick: self.tick,
+        };
+        let all: Vec<SeatInput> = (0..self.seats.len()).map(input).collect();
+        self.fishing
+            .step(&world, &all, &mut self.scores, &mut self.events);
         if self.tick >= self.rules.length_ticks {
             self.ended = true;
             self.events.push(MatchEvent::MatchEnded);
@@ -517,7 +614,7 @@ impl Match {
     /// second left, and "Go" at the end.
     fn count_down(&mut self, inputs: &[SeatInput]) {
         let c = self.countdown;
-        if c % TICKS_PER_S as u32 == 0 {
+        if c.is_multiple_of(TICKS_PER_S as u32) {
             self.events.push(MatchEvent::Countdown {
                 left: c / TICKS_PER_S as u32,
             });
@@ -553,13 +650,15 @@ impl Match {
     /// **Hook for the fishing, items and Fish-Boy systems.** Cancel this
     /// seat's current thing, top layer first, and return true; return false
     /// when there is nothing to cancel (Esc then opens the menu). The
-    /// Fish-Boy is the only layer yet: a raised one is put down.
+    /// Fish-Boy first (a raised one is put down), then the fishing: a fish
+    /// on the line is dropped, a line out is reeled in, a charge stops.
     pub fn cancel_layers(&mut self, seat: usize) -> bool {
         if self.seats[seat].fishboy {
             self.set_fishboy(seat, false);
             return true;
         }
-        false
+        let rod = self.rod(seat);
+        self.fishing.cancel(&self.map, seat, rod, &mut self.events)
     }
 
     /// Raises or lowers a seat's Fish-Boy. Raised, the boat coasts: its
@@ -689,14 +788,33 @@ impl Match {
 
     /// **Hook for the fishing system.** A wrecked player loses the fish on
     /// the line (BRIEF: "they do not lose anything except if they were
-    /// reeling in a fish"); landed fish in [`Score`] stay. Nothing is on a
-    /// line yet.
-    pub fn wreck_drops_fish(&mut self, _seat: usize) {}
+    /// reeling in a fish"); landed fish in [`Score`] stay. The line comes
+    /// in and the fish on it swims free.
+    pub fn wreck_drops_fish(&mut self, seat: usize) {
+        let rod = self.rod(seat);
+        self.fishing.wrecked(&self.map, seat, rod, &mut self.events);
+    }
 
-    /// **Hook for the fishing system.** How many of each kind are left in
-    /// the lake (public knowledge): the starting count less every seat's
-    /// catches of that kind. A fish that gets away stays in the lake.
+    /// How many of each kind are left in the lake (public knowledge), in
+    /// the setup's order: the stocked lake's own count ([`Match::stock`];
+    /// a fish that gets away stays in the lake). Before stocking, the
+    /// setup's count less every seat's catches.
     pub fn fish_left(&self) -> Vec<(String, u32)> {
+        if !self.fishing.roster.0.is_empty() {
+            let r = &self.fishing.roster;
+            return self
+                .setup
+                .fish
+                .iter()
+                .map(|(kind, _)| {
+                    let n =
+                        r.0.iter()
+                            .position(|k| &k.id == kind)
+                            .map_or(0, |k| self.fishing.left(k));
+                    (kind.clone(), n as u32)
+                })
+                .collect();
+        }
         self.setup
             .fish
             .iter()

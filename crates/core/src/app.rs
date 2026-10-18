@@ -15,6 +15,7 @@ use crate::patch_notes::{self, Entry};
 use crate::strings::{self, Strings};
 use crate::view::{Item, Panel};
 
+pub mod fishing;
 pub mod gallery;
 pub mod lake;
 mod menus;
@@ -175,6 +176,8 @@ pub struct App {
     /// the match's flow: the HUD, popups, bursts, the end and the
     /// postgame (`flow/`)
     pub flow: crate::flow::Flow,
+    /// the page's `?debug=fishing`: a fish by every bobber (`app/fishing.rs`)
+    pub debug_fishing: bool,
 }
 
 impl App {
@@ -206,6 +209,7 @@ impl App {
             preview: lake::Preview::default(),
             world: None,
             flow: crate::flow::Flow::default(),
+            debug_fishing: false,
         })
     }
 
@@ -311,6 +315,7 @@ impl App {
             "settings.show_seed" => self.settings.show_seed = value == "on",
             "data.flow" => self.flow_act(name, value)?,
             _ if name.starts_with("postgame.") || name.starts_with("debug.") => self.flow_act(name, value)?,
+            "debug.flags" => self.debug_act(value),
             "data.ui2d" | "data.fish" => self.fishboy_act(name, value)?,
             _ if name.starts_with("data.") => self.data_act(name, value)?,
             _ if name.starts_with("lobby.") => self.lobby_act(name, value)?,

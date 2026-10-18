@@ -253,7 +253,10 @@ impl FlowLook {
         for (i, r) in self.popups.rows.iter().enumerate() {
             let at = format!("Popup row {} ({})", i + 1, r.event);
             if !self.popups.styles.contains_key(&r.style) {
-                return Err(format!("{at} names the style \"{}\", which is not listed.", r.style));
+                return Err(format!(
+                    "{at} names the style \"{}\", which is not listed.",
+                    r.style
+                ));
             }
             if !["", "all", "mine", "others"].contains(&r.who.as_str()) {
                 return Err(format!("{at} has who \"{}\"; who is all, mine or others.", r.who));

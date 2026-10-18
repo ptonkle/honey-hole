@@ -131,7 +131,9 @@ impl App {
                 let p = self.play.as_mut().ok_or("There is no match to jump ahead.")?;
                 let g = &mut p.game;
                 g.countdown = 0;
-                g.tick = g.tick.max(g.rules.length_ticks.saturating_sub(crate::sim::ticks(ms)));
+                g.tick = g
+                    .tick
+                    .max(g.rules.length_ticks.saturating_sub(crate::sim::ticks(ms)));
             }
             "debug.catches" => {
                 let roster = self.fishboy.roster.clone();
@@ -158,8 +160,8 @@ impl App {
             fish: &fish,
             tier: &tier,
             text: &text,
-            someone: self.t("announce.someone"),
-            a_fish: self.t("announce.fish"),
+            someone: self.t("popup.someone"),
+            a_fish: self.t("popup.fish"),
         };
         let made = match self.flow.look.as_ref() {
             Some(l) => popups::of_events(&l.popups.rows, events, p.seat, &names),

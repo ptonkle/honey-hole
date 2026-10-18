@@ -53,12 +53,17 @@
       "plain": { "fill": [255, 246, 222], "outline": [34, 38, 52], "ink": [34, 38, 52], "icon": "none" }
     },
     "rows": [
-      { "event": "Hooked", "text": "announce.hooked", "style": "tier", "tier": "tier", "fill": { "player": "name:seat", "fish": "fish:kind" } },
-      { "event": "Caught", "text": "announce.landed", "style": "tier", "tier": "tier", "fill": { "player": "name:seat", "fish": "fish:kind" } },
-      { "event": "Wrecked", "when": { "cause": "grounded" }, "text": "announce.aground", "style": "wreck", "fill": { "player": "name:seat" } },
-      { "event": "Wrecked", "when": { "cause.rammed.by": "*" }, "text": "announce.rammed", "style": "wreck", "fill": { "player": "name:cause.rammed.by", "victim": "name:seat" } },
-      { "event": "BuoyWarning", "text": "announce.buoy", "style": "buoy", "group": "buoy" },
-      { "event": "BuoyBeat", "text": "announce.buoy_in", "style": "buoy", "group": "buoy", "fill": { "seconds": "text:left" } }
+      { "event": "Hooked", "text": "popup.hooked", "style": "tier", "tier": "tier", "fill": { "player": "name:seat", "fish": "fish:kind" } },
+      { "event": "Caught", "text": "popup.landed", "style": "tier", "tier": "tier", "fill": { "player": "name:seat", "fish": "fish:kind" } },
+      { "event": "CastRefused", "text": "popup.refused", "style": "plain", "who": "mine" },
+      { "event": "Scared", "text": "popup.scared", "style": "plain", "who": "mine" },
+      { "event": "Missed", "text": "popup.missed", "style": "plain", "who": "mine" },
+      { "event": "LineBroke", "text": "popup.broke", "style": "plain", "who": "mine" },
+      { "event": "FishDropped", "text": "popup.dropped", "style": "plain", "who": "mine" },
+      { "event": "Wrecked", "when": { "cause": "grounded" }, "text": "popup.aground", "style": "wreck", "fill": { "player": "name:seat" } },
+      { "event": "Wrecked", "when": { "cause.rammed.by": "*" }, "text": "popup.rammed", "style": "wreck", "fill": { "player": "name:cause.rammed.by", "victim": "name:seat" } },
+      { "event": "BuoyWarning", "text": "popup.buoy", "style": "buoy", "group": "buoy" },
+      { "event": "BuoyBeat", "text": "popup.buoy_in", "style": "buoy", "group": "buoy", "fill": { "seconds": "text:left" } }
     ]
   },
   "postgame": {

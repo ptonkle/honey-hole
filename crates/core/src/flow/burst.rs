@@ -80,7 +80,12 @@ pub fn tris(b: &Burst, look: &BurstLook, age_ms: i32) -> Vec<i32> {
     let life = fx::ratio(age_ms, look.ms);
     let r = fireball_mm(look, age_ms);
     if r > 0 {
-        ball(&mut out, b.at.add(v3(0, mm(r / 2), 0)), mm(r), shade(&look.colours, life / 2));
+        ball(
+            &mut out,
+            b.at.add(v3(0, mm(r / 2), 0)),
+            mm(r),
+            shade(&look.colours, life / 2),
+        );
     }
     // seconds in, Q16
     let s = fx::ratio(age_ms, 1000);
@@ -156,13 +161,19 @@ impl crate::app::App {
 
     /// The flow's part of the world: each wreck's burst, and the ghosted
     /// boats drawn see-through.
-    pub(crate) fn flow_world(&self, frame: &mut crate::gfx::render::Frame, ghosts: &[crate::scene::Instance]) {
+    pub(crate) fn flow_world(
+        &self,
+        frame: &mut crate::gfx::render::Frame,
+        ghosts: &[crate::scene::Instance],
+    ) {
         let Some(l) = self.flow.look.as_ref() else {
             frame.tris.extend(crate::scene::pose(ghosts));
             return;
         };
         for b in &self.flow.bursts {
-            frame.tris.extend(tris(b, &l.burst, ((self.clock - b.born_us) / 1000) as i32));
+            frame
+                .tris
+                .extend(tris(b, &l.burst, ((self.clock - b.born_us) / 1000) as i32));
         }
         if !ghosts.is_empty() {
             frame.set_ghost(crate::scene::pose(ghosts), fx::ratio(l.ghost_pct, 100));
