@@ -23,6 +23,10 @@
 11. Use each term in the sense `GLOSSARY.md` gives it, and never a word from its `Not:` line. A new term gets an entry before it appears in a string.
 12. Reader-visible text follows `TONE.md`. A string that looks wrong is reported in `SECOND-ORDER.md`, not repaired. A string you write yourself is listed at the foot of `SECOND-ORDER.md` for the person to read. A list you generate that a reader will see (names, labels, word lists) is a worklist row for the person.
 
+## Models
+
+13. Model files (`data/models/`) are not built from boxes by default. Shape limbs as tapered 6–8 sided tubes, heads as rounded forms (12+ sides), and hats, bodies and fins as cones, wedges and tapered shapes. A box is for something that really is a box (a crate, a cabin wall, a screen). The person's words, 2026-10-17: "in the future do not just default to building things out of cubes".
+
 ## Stopping
 
 Write `PLAN.md` from the brief and stop until the person has read it, unless `BRIEF.md`'s Autonomy paragraph approves the plan in advance. When a rule in `BUILDER-SPEC.md` seems to block the work, stop and say so in a worklist row; do not loosen a check to make it pass. When a request is refused on safety grounds, leave the feature out and say so; do not reword the request to get past the refusal.
