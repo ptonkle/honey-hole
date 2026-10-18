@@ -292,9 +292,10 @@ impl App {
     fn escape(&mut self) {
         match self.screen {
             Screen::Play => {}
-            // the reveal skips to the ranking; then Esc goes to the Title
+            // the reveal skips to the ranking; then Esc (and Space) swap
+            // the ranking and the catches behind it; the buttons leave
             Screen::Postgame if !self.postgame_ranked() => self.skip_reveal(),
-            Screen::Postgame => self.leave_match(),
+            Screen::Postgame => self.show_breakdown(!self.postgame_breakdown()),
             Screen::Settings
             | Screen::Notes
             | Screen::Gallery
@@ -335,7 +336,11 @@ impl App {
             self.escape();
         }
         if code == "Space" && self.screen == Screen::Postgame {
-            self.skip_reveal();
+            if self.postgame_ranked() {
+                self.show_breakdown(!self.postgame_breakdown());
+            } else {
+                self.skip_reveal();
+            }
         }
     }
 

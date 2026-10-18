@@ -134,9 +134,17 @@ fn the_sounds_the_brief_names_are_all_there() {
     for id in wanted {
         assert!(b.cue(id).is_some(), "no cue \"{id}\"");
     }
-    for id in ["own_motor", "rival_motor", "line_tension"] {
+    for id in ["own_motor", "rival_motor"] {
         assert!(b.find_loop(id).is_some(), "no loop \"{id}\"");
     }
+    // the line's drag is a tick, quieter than the reel's ratchet click
+    // (the person: the old whine "sounds like I'm being abducted by an alien")
+    let peak = |id: &str| -> i64 { b.cue(id).unwrap().layers.iter().map(|l| l.gain).sum() };
+    assert!(b.find_loop("line_tension").is_none(), "no whine loop");
+    assert!(
+        peak("line_drag") < peak("reel_click"),
+        "the drag is quieter than the ratchet"
+    );
     // the item buoy's countdown: five different beats, the last the highest
     let pitch = |id: &str| b.cue(id).unwrap().layers[0].freq;
     let beats: Vec<i64> = (1..=5).rev().map(|k| pitch(&format!("buoy_beat_{k}"))).collect();

@@ -295,7 +295,8 @@ impl App {
 
     /// The time left: the clock alone on its card.
     fn draw_time(&self, list: &mut List, l: &FlowLook, clock: &str, remaining: i32) {
-        let r = Rect::new(W - EDGE - 230, EDGE, 230, 96);
+        // under the Menu button (a page panel at the top right)
+        let r = Rect::new(W - EDGE - 230, EDGE + 54, 230, 96);
         card(list, &l.card, r);
         // the last 30 s in the countdown's warning colour
         let ink = if remaining <= 30_000 {

@@ -298,7 +298,7 @@ Not: super reel
 
 ### Postgame
 
-The screen after a match: each player's catches shown one after another as their points add up, then the final ranking. Rematch or Back to Title leaves it.
+The screen after a match: each player's catches shown one after another as their points add up, then the final ranking. Catches puts the ranking away to show every catch and total behind it, and Ranking brings it back. Rematch or Back to Title leaves it.
 
 Not: scoreboard, results screen, game over
 
