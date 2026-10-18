@@ -20,3 +20,29 @@ The agent decided: port the general tooling now, before the game is described, a
 > Online play will be a part of this but I want more care since this game will likely need different interactions between players compared to ape race
 
 The agent decided: online play is in scope, but neither Ape Race's netcode (each browser owns its own ape and sends its state 20 times a second; the host runs the AI and results) nor Mandible's (lockstep over a full mesh) is copied by default. The sync model is chosen in `PLAN.md` from the game's own player interactions once the game is described, and agreed with the person before any transport code. Only the transport layer that is truly general (WebRTC introduced by room code over pinned Nostr relays, with its BUILDER-SPEC exemptions and `check-online.sh`) may be reused. Meanwhile the core is kept deterministic and driven by per-player inputs, so every sync model stays open.
+
+## 2026-10-17 (design questions, round 1)
+
+> b1 sure b2 that's what the sound warning is for, that's fine b3 yes good idea b4 all fish are announced, not just legendaries, and leggendaries ar not announced for 20 seconds, the popup should be like 2 seconds. Make legendaries worth 5x. and rare 3x. and uncommon 2x. b5 not sure what you mean. That's fine, they wouldn't have the necessary momentum yet and the person who hooked it has time to react. b6 yes measure with ai b7 that's part of teh risk of going fast
+>
+> f1 20 seconds f2 you should be able to see them below the water. Camera should move with mouse when you are in driving mode. f3 yes it helps a bit with attracting the fish as they swim at different depths (probably rarer fish are deeper). f4 yes o1 for now just ramming? but if it could be built beefier than that that's a good idea probably. r1 I used michigan as an example but that's just a place with a lot of great fishing lakes. Just make them all thigns that could live in a midwest like like a bass, sturgeon, etc.   p1 I will not be creating the models  p2 yes  p4 do not publish to github yet, you can publish to local though
+
+The agent decided (questions in `brief/questions.md`):
+
+- B1: a ram that wrecks a boat also stalls the rammer's motor for about 3 s.
+- B2: no visual warning; the approaching motor's sound is the warning.
+- B3: a few seconds of ghosting after a respawn.
+- B4: every hook is announced in a popup of about 2 s. Tier multipliers: common 1×, uncommon 2×, rare 3×, legendary 5×.
+- B5: no change; a teleporter arrives without momentum, so the angler has time to react.
+- B6: AI playtests measure whether the lake runs dry before fish counts are tuned.
+- B7: no change; grounding in fog is the risk of going fast.
+- F1: reel times for a perfect reel are 20 / 10 / 5 / 3 s (legendary to common).
+- F2: fish are visible below the water's surface. The mouse turns the camera in driving mode.
+- F3: fish swim at depths, rarer ones deeper, and a bobber near a fish's depth attracts it a little better.
+- F4: switching to driving while reeling drops the fish.
+- O1: ramming is the only interaction for now; the online design is built so more can be added.
+- R1: every fish is one that could live in a Midwest lake.
+- P1: the agent creates all models.
+- P2: rename the folder to `honey-hole/` (done once no agent is working in a worktree under it).
+- P4: no GitHub yet; local deploys only.
+- Unanswered questions keep the agent's suggestions (F5, R2, I1–I4, O2, O3, P3).

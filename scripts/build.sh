@@ -47,6 +47,7 @@ cp -R data/. dist/data/
   printf '{'
   sep=''
   for f in data/models/*.json; do
+    [ -e "$f" ] || continue   # no model files yet: an empty object
     printf '%s"%s":' "$sep" "$(basename "$f" .json)"
     cat "$f"
     sep=','
