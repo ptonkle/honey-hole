@@ -59,10 +59,11 @@ pub struct Bank {
     pub click: String,
 }
 
-/// The loops the game names by id: your motor, a rival's, the line's whine.
+/// The loops the game names by id: your motor and a rival's.
 pub const OWN_MOTOR: &str = "own_motor";
 pub const RIVAL_MOTOR: &str = "rival_motor";
-pub const LINE_TENSION: &str = "line_tension";
+/// The cue the line's drag ticks with under tension (`motor::line_drag`).
+pub const LINE_DRAG: &str = "line_drag";
 
 /// The longest a cue may last as written.
 const MAX_CUE_MS: i64 = 20_000;
@@ -177,12 +178,17 @@ impl Bank {
             max_pending: read::whole(o, "max_pending", top)?.max(1) as usize,
             click: read::text(o, "click", top)?.to_string(),
         };
-        for id in [OWN_MOTOR, RIVAL_MOTOR, LINE_TENSION] {
+        for id in [OWN_MOTOR, RIVAL_MOTOR] {
             if bank.find_loop(id).is_none() {
                 return Err(format!(
                     "The sounds file has no loop \"{id}\", which the game plays."
                 ));
             }
+        }
+        if bank.cue(LINE_DRAG).is_none() {
+            return Err(format!(
+                "The sounds file has no cue \"{LINE_DRAG}\", which the game plays."
+            ));
         }
         if bank.cue(&bank.click).is_none() {
             return Err(format!("The sounds file click \"{}\" is not a cue.", bank.click));
@@ -229,6 +235,9 @@ impl Bank {
 pub struct Sound {
     pub bank: Bank,
     pending: Vec<Value>,
+    /// the line's drag between ticks, and when it was last stepped (µs)
+    drag: motor::Ratchet,
+    drag_us: Option<i64>,
 }
 
 impl Sound {
@@ -236,6 +245,29 @@ impl Sound {
         Sound {
             bank,
             pending: Vec::new(),
+            drag: motor::Ratchet::default(),
+            drag_us: None,
+        }
+    }
+
+    /// The line's drag at `now_us`: with a `tension` (0 to 1000) it ticks
+    /// at its rate since the last call; with none it stops.
+    pub fn drag(&mut self, now_us: i64, tension: Option<i64>) {
+        let Some(level) = tension else {
+            self.drag_us = None;
+            return;
+        };
+        let dt_ms = self
+            .drag_us
+            .map_or(0, |t| (now_us - t).clamp(0, 1_000_000) / 1000);
+        self.drag_us = Some(now_us);
+        if let Some(h) = motor::line_drag(&self.bank.tuning.line_tension, &mut self.drag, dt_ms, level) {
+            let p = recipe::Params {
+                gain: h.gain,
+                pitch: h.pitch,
+                ..recipe::Params::default()
+            };
+            self.play(LINE_DRAG, &p);
         }
     }
 

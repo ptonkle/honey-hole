@@ -1,6 +1,8 @@
 //! The postgame screen: the reveal drawn on the 2D layer over the lake,
-//! and its buttons (Skip during the reveal; Rematch and Back to Title
-//! once the ranking is up).
+//! and its buttons (Skip during the reveal; once the ranking is up,
+//! Catches, which puts the ranking away to show every catch and total
+//! behind it, then Ranking to bring it back, with Rematch and Back to
+//! Title either way; Esc and Space swap the two too).
 //!
 //! Each player is a column headed by their name in their colour and their
 //! total, counting up. Their catches come in one after another as cards,
@@ -101,9 +103,14 @@ impl App {
                 row_h,
             );
         }
+        let breakdown = self.postgame_breakdown();
         status.push(format!(
             "postgame={} cards={} totals={}",
-            if shown.ranking { "ranking" } else { "reveal" },
+            match (shown.ranking, breakdown) {
+                (true, true) => "catches",
+                (true, false) => "ranking",
+                _ => "reveal",
+            },
             shown
                 .cards
                 .iter()
@@ -117,7 +124,7 @@ impl App {
                 .collect::<Vec<_>>()
                 .join(","),
         ));
-        if shown.ranking {
+        if shown.ranking && !breakdown {
             let places = self.draw_ranking(list, l, cols);
             status.push(format!("places={places}"));
         }
@@ -369,11 +376,20 @@ impl App {
 
     /// The postgame's buttons.
     pub(crate) fn postgame_panels(&self) -> Vec<Panel> {
+        let swap = if self.postgame_breakdown() {
+            "postgame.ranking"
+        } else {
+            "postgame.catches"
+        };
         let items = if self.postgame_ranked() && self.online_joiner() {
             // online, Rematch is the host's
-            vec![self.button("postgame.title")]
+            vec![self.button(swap), self.button("postgame.title")]
         } else if self.postgame_ranked() {
-            vec![self.button("postgame.rematch"), self.button("postgame.title")]
+            vec![
+                self.button(swap),
+                self.button("postgame.rematch"),
+                self.button("postgame.title"),
+            ]
         } else {
             vec![Item::quiet_button("postgame.skip", self.t("postgame.skip"))]
         };

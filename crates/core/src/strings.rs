@@ -227,6 +227,8 @@ pub const KEYS: &[&str] = &[
     "postgame.skip",
     "postgame.rematch",
     "postgame.title",
+    "postgame.catches",
+    "postgame.ranking",
     "menu.minigames",
     // the Title's Workshop and the Settings kept between visits
     // (`app/menus.rs`, `app/settings.rs`)

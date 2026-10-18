@@ -64,6 +64,7 @@ Every `SECOND-ORDER.md` row with status *person*, by number, with what the perso
 - R5.40: items in AI playtests (camera strongest, Nitrous, Teleporter and Cloaking Tech worth about nothing, the winner's margin wider); whether to let the boat keep its throttle during a minigame, shorten Nitrous's, or lower the camera's weight (`notes/playtests.md`, "Results with items"; PLAN.md V54).
 - R4.26: the items' look, words and numbers (`notes/shots/items/`; try them with `?debug=items,item.<key>`).
 - R2.43: the boat camera's distance, height, pitch and field of view (`lake.camera` in `data/look.json`), and the lake's look in `notes/shots/world/`; the fog distance can be tried live in the Lake preview.
+- R6.38: the line's new drag tick (hear it on the Sounds screen: Line tension on, slide the tension), its rate and loudness (`audio.line_tension` in `data/tuning.json`).
 - R6.12: MSAA stays on; an edge-smoothing setting would help weaker machines (the frame-time measurements are in `MEASUREMENTS.md`, "A full match in the browser"; PLAN.md V-perf).
 
 ## Mistakes so far
@@ -73,6 +74,8 @@ By system, from `SECOND-ORDER.md`, with the rule each one produced.
 ## What passed
 
 The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the date and commit.
+
+2026-10-18, the KISS pass, stage 2 (the line's drag tick, copy limits, the postgame's Catches; branch `worktree-agent-a9818ee19434f1aea`, merged with main at 552c22b): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 470 passed, 0 failed, 0 ignored; `break_tests.py` on the 11 new or changed rows: 11 of 11 caught.
 
 2026-10-18, online: items shared, other players' lines drawn, hook popups at the host's delay, fish places packed (branch `online2`, worktree `.claude/worktrees/online2`, from main at 0389fa6): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `ONLINE CHECK PASSED` (chromium, firefox, webkit); `count-tests.sh`: 444 passed, 0 failed, 0 ignored; `scripts/break_tests.py "online items" "online fishing"`: every row caught.
 

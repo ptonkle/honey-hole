@@ -16,7 +16,7 @@ pub(crate) const TUNING: &str = r#"{
     "rival_motor": {"hear_seconds": 5, "full_within_mm": 8000, "loudest": 1, "curve": 1,
       "sound_speed_mm_per_s": 343000, "doppler_scale": 1, "lowest_pitch": 0.5, "highest_pitch": 2},
     "own_motor": {"idle_gain": 0.2, "full_gain": 0.6, "idle_pitch": 1, "full_pitch": 3, "throttle_share": 0.5},
-    "line_tension": {"starts_at": 0.5, "loudest": 0.4, "low_pitch": 1, "high_pitch": 2},
+    "line_tension": {"starts_at": 0.5, "slow_ticks_per_s": 4, "fast_ticks_per_s": 20, "gain": 0.4, "low_pitch": 1, "high_pitch": 2},
     "ratchet": {"slow_clicks_per_s": 10, "fast_clicks_per_s": 50, "slow_pitch": 1, "fast_pitch": 1.5},
     "pass_by": {"side_mm": 5000, "overrun": 0.25}
   }
@@ -34,6 +34,7 @@ pub(crate) const SOUNDS: &str = r#"{
       {"wave": "sine", "freq": 440, "attack_ms": 10, "hold_ms": 20, "release_ms": 30, "gain": 0.5}]},
     {"id": "hum", "label": "Hum", "layers": [
       {"wave": "triangle", "freq": 110, "attack_ms": 100, "hold_ms": 500, "release_ms": 200, "gain": 0.2, "stretch": true}]},
+    {"id": "line_drag", "label": "Drag", "layers": [{"wave": "noise", "attack_ms": 1, "release_ms": 10, "gain": 0.2}]},
     {"id": "catch_common", "label": "Catch", "layers": [{"wave": "square", "freq": 500, "release_ms": 50, "gain": 0.1}]},
     {"id": "catch_legendary", "label": "Big catch", "layers": [{"wave": "square", "freq": 600, "release_ms": 50, "gain": 0.1}]},
     {"id": "boom", "same_as": "beep"}
@@ -42,8 +43,7 @@ pub(crate) const SOUNDS: &str = r#"{
     {"id": "rival_motor", "label": "Motor", "layers": [
       {"wave": "sawtooth", "freq": 50, "gain": 0.5, "filter": {"type": "lowpass", "freq": 600}, "throb": {"rate": 10, "depth": 0.4}},
       {"wave": "noise", "gain": 0.1}]},
-    {"id": "own_motor", "label": "Yours", "layers": [{"wave": "sine", "freq": 100, "gain": 0.5}]},
-    {"id": "line_tension", "label": "Whine", "layers": [{"wave": "sine", "freq": 1000, "gain": 0.5}]}
+    {"id": "own_motor", "label": "Yours", "layers": [{"wave": "sine", "freq": 100, "gain": 0.5}]}
   ],
   "events": {
     "Hooked": [{"cue": "beep", "who": "mine"}, {"cue": "click", "who": "others"}],
@@ -166,19 +166,32 @@ fn your_motor_rises_from_idle_to_full() {
 }
 
 #[test]
-fn the_line_whines_only_above_its_starting_tension() {
+fn the_line_drag_ticks_faster_and_higher_as_it_tightens_and_not_below_its_start() {
     let t = tuning().line_tension;
-    assert_eq!(line_tension(&t, 400).gain, 0);
-    assert_eq!(line_tension(&t, 500).gain, 0);
+    // one second of 20 ms ticks at a tension
+    let ticks = |tension: i64| {
+        let mut d = Ratchet::default();
+        (0..50)
+            .filter_map(|_| line_drag(&t, &mut d, 20, tension))
+            .collect::<Vec<_>>()
+    };
+    assert!(ticks(400).is_empty());
+    assert!(ticks(500).is_empty(), "silent at its start");
+    // halfway from 0.5 to 1: 12 ticks a second (4 to 20), pitch 1.5
+    let half = ticks(750);
+    assert_eq!(half.len(), 12);
     assert_eq!(
-        line_tension(&t, 750),
+        half[0],
         Heard {
-            gain: 200,
+            gain: 400,
             pitch: 1500
         }
     );
+    // full: 20 ticks a second at pitch 2, each at the tick's own gain
+    let full = ticks(1000);
+    assert_eq!(full.len(), 20);
     assert_eq!(
-        line_tension(&t, 1000),
+        full[0],
         Heard {
             gain: 400,
             pitch: 2000

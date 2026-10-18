@@ -1,7 +1,7 @@
 //! The sounds that follow the game frame by frame: a rival's motor heard
 //! from your boat (louder as it nears, with a Doppler shift), your own
-//! motor's idle and throttle, the line's tension whine, and the reel's
-//! ratchet, which clicks faster as you reel. Each is a pure function of the
+//! motor's idle and throttle, the line's drag, which ticks faster as the
+//! line tightens, and the reel's ratchet, which clicks faster as you reel. Each is a pure function of the
 //! game's numbers and the audio section of `data/tuning.json`.
 //!
 //! Gains and pitches are thousandths (1000 is the recipe as written).
@@ -47,12 +47,18 @@ pub struct OwnTuning {
     pub throttle_share: i64,
 }
 
-/// The line's whine: silent below `starts_at` tension, then louder and
-/// higher up to full tension.
+/// The line's drag: silent below `starts_at` tension, then a quiet tick
+/// (the `line_drag` cue) that comes faster and a little higher up to full
+/// tension, like a reel's drag paying out. It replaced a whine the person
+/// said sounded "like I'm being abducted by an alien" (2026-10-18).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TensionTuning {
     pub starts_at: i64,
-    pub loudest: i64,
+    /// ticks a second (thousandths) just past `starts_at` and at full
+    pub slow_ticks_per_s: i64,
+    pub fast_ticks_per_s: i64,
+    /// each tick's gain, thousandths of the cue's own
+    pub gain: i64,
     pub low_pitch: i64,
     pub high_pitch: i64,
 }
@@ -212,8 +218,24 @@ impl AudioTuning {
         let (t, at) = section(
             o,
             "line_tension",
-            &["starts_at", "loudest", "low_pitch", "high_pitch"],
+            &[
+                "starts_at",
+                "slow_ticks_per_s",
+                "fast_ticks_per_s",
+                "gain",
+                "low_pitch",
+                "high_pitch",
+            ],
         )?;
+        let rate = |key: &str| {
+            read::within(
+                read::milli(t, key, &at)?,
+                1,
+                200 * MILLI,
+                &format!("{at} {key}"),
+                "more than 0 and at most 200",
+            )
+        };
         let line_tension = TensionTuning {
             starts_at: read::within(
                 read::milli(t, "starts_at", &at)?,
@@ -222,7 +244,9 @@ impl AudioTuning {
                 &format!("{at} starts_at"),
                 "0 to under 1",
             )?,
-            loudest: share(t, "loudest", &at)?,
+            slow_ticks_per_s: rate("slow_ticks_per_s")?,
+            fast_ticks_per_s: rate("fast_ticks_per_s")?,
+            gain: share(t, "gain", &at)?,
             low_pitch: pitch(t, "low_pitch", &at)?,
             high_pitch: pitch(t, "high_pitch", &at)?,
         };
@@ -372,16 +396,23 @@ pub fn own_motor(t: &OwnTuning, throttle: i64, speed: i64) -> Heard {
     }
 }
 
-/// The line's whine at `tension` (0 to 1000, where 1000 snaps it).
-pub fn line_tension(t: &TensionTuning, tension: i64) -> Heard {
+/// The line's drag over `dt_ms` at `tension` (0 to 1000, where 1000
+/// snaps it): a tick to play, at its gain and pitch, or none. `drag` keeps
+/// the time between ticks.
+pub fn line_drag(t: &TensionTuning, drag: &mut Ratchet, dt_ms: i64, tension: i64) -> Option<Heard> {
     if tension <= t.starts_at {
-        return Heard::SILENT;
+        return None;
     }
     let x = ((tension - t.starts_at) * MILLI / (MILLI - t.starts_at)).min(MILLI);
-    Heard {
-        gain: mul(t.loudest, x),
-        pitch: lerp(t.low_pitch, t.high_pitch, x),
-    }
+    let as_ratchet = RatchetTuning {
+        slow_clicks_per_s: t.slow_ticks_per_s,
+        fast_clicks_per_s: t.fast_ticks_per_s,
+        slow_pitch: t.low_pitch,
+        fast_pitch: t.high_pitch,
+    };
+    // a tension just past the start still ticks (the ratchet is silent at 0)
+    let pitch = drag.step(&as_ratchet, dt_ms, x.max(1))?;
+    Some(Heard { gain: t.gain, pitch })
 }
 
 /// The reel's ratchet: call `step` every tick with how fast the player is
