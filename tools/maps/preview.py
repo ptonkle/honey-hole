@@ -255,15 +255,25 @@ def caption(cv, m, ink, bad):
         cv.text(10, size + 38, "ACCEPTED", (30, 130, 50), 2)
 
 
+# Radar block size in pixels (the first preview used 2).
+RADAR_CHUNK = 2.5
+
+
 def radar_colour(h, kind, heights, px, py):
     size = len(heights)
-    # chunky: judge the 8-pixel block, outline land against water
-    bx, by = px - px % 2, py - py % 2
-    water = heights[by][bx] < 0
+    # chunky: judge the RADAR_CHUNK-pixel block, outline land against water.
+    # The person asked for 80% of the first radar's fidelity (2 px -> 2.5 px).
+    def start(b):
+        return min(size - 1, int(b * RADAR_CHUNK))
+
+    cx, cy = int(px / RADAR_CHUNK), int(py / RADAR_CHUNK)
+    water = heights[start(cy)][start(cx)] < 0
     edge = any(
-        0 <= bx + dx < size and 0 <= by + dy < size and (heights[by + dy][bx + dx] < 0) != water
-        for dx, dy in ((2, 0), (-2, 0), (0, 2), (0, -2))
+        (heights[start(cy + dy)][start(cx + dx)] < 0) != water
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))
+        if 0 <= cx + dx and 0 <= cy + dy
     )
+    bx, by = start(cx), start(cy)
     scan = 0.82 if (py // 2) % 2 else 1.0
     if edge:
         c = (120, 255, 140)
@@ -275,76 +285,40 @@ def radar_colour(h, kind, heights, px, py):
 
 
 def radar(m, out):
-    """The radar at low fidelity: the map judged in BLOCK-pixel cells, four
-    flat greens, a blocky outline, rings and blips snapped to the cells."""
     import math
 
-    n, cell = m["n"], m["cell_mm"]
-    size = n * PX
-    cells = size // BLOCK
-    cv = Canvas(size, size + 92, (4, 18, 8))
-    world = n * cell
-
-    def water_at(cx, cy):
-        # the block's centre, in map cells (y north)
-        fx = (cx + 0.5) * BLOCK / PX - 0.5
-        fy = (size - (cy + 0.5) * BLOCK) / PX - 0.5
-        return sample(m, fx, fy) < 0
-
-    grid = [[water_at(cx, cy) for cx in range(cells)] for cy in range(cells)]
-    land, water, edge, dim = (24, 84, 34), (6, 30, 12), (120, 255, 140), (40, 130, 56)
-    colours = {}
-    for cy in range(cells):
-        for cx in range(cells):
-            w = grid[cy][cx]
-            shore = any(
-                0 <= cx + dx < cells and 0 <= cy + dy < cells and grid[cy + dy][cx + dx] != w
-                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))
-            )
-            colours[cx, cy] = edge if (shore and not w) else (water if w else land)
-
+    pal = {"panel": (4, 18, 8), "colour": radar_colour}
+    cv = ground_layer(m, pal)
+    size = m["n"] * PX
+    green = (120, 255, 140)
+    for k in range(1, 12):
+        cv.line(k * size / 12, 0, k * size / 12, size, (20, 80, 30), 1)
+        cv.line(0, k * size / 12, size, k * size / 12, (20, 80, 30), 1)
     sx, sy = to_px(m, m["spawn"]["at"])
-    scx, scy = int(sx // BLOCK), int(sy // BLOCK)
-    # ping rings every quarter of the map, snapped to cells, drawn on water only
-    for r in (cells // 6, cells // 3, cells // 2):
-        for cy in range(cells):
-            for cx in range(cells):
-                if abs(round(math.hypot(cx - scx, cy - scy)) - r) == 0 and colours[cx, cy] == water:
-                    colours[cx, cy] = dim
-
-    def blip(px, py, c):
-        colours[int(px // BLOCK), int(py // BLOCK)] = c
-
+    for r in (90, 180, 270):
+        cv.ring(sx, sy, r, (60, 180, 80), 1.5)
+    # the ping's sweep
+    for k in range(0, 360, 1):
+        a = math.radians(k)
+        for d in range(320, 360, 2):
+            cv.put(int(sx + math.cos(a) * d), int(sy + math.sin(a) * d), green, 0.25 * (d - 320) / 40)
     sp = m["spawn"]
     a = sp["heading"] / 65536 * 2 * math.pi
-    blip(sx, sy, edge)
-    blip(sx + math.cos(a) * BLOCK * 1.4, sy - math.sin(a) * BLOCK * 1.4, edge)
+    cv.disc(sx, sy, 5, green)
+    cv.line(sx, sy, sx + math.cos(a) * 18, sy - math.sin(a) * 18, green, 2)
     b = m["buoys"][0]["buoy"]
     if b:
         bx, by = to_px(m, b)
-        for dx, dy in ((0, -1), (0, 1), (-1, 0), (1, 0)):
-            blip(bx + dx * BLOCK, by + dy * BLOCK, edge)
-
-    for (cx, cy), c in colours.items():
-        for y in range(cy * BLOCK, min(size, (cy + 1) * BLOCK)):
-            shade = 0.72 if y == (cy + 1) * BLOCK - 1 else 1.0
-            for x in range(cx * BLOCK, min(size, (cx + 1) * BLOCK)):
-                cv.put(x, y, tuple(int(v * shade) for v in c))
-    cv.text(10, size + 12, f"RADAR  SEED {m['seed']}", edge, 3)
+        cv.ring(bx, by, 7, green, 2)
+        cv.disc(bx, by, 2.5, green)
+    cv.text(10, size + 12, f"RADAR  SEED {m['seed']}", green, 3)
     png(out, cv.w, cv.h, cv.pix)
-
-
-# Radar cell size in pixels: the person asked for a lower-fidelity radar.
-BLOCK = 12
 
 
 def main(argv):
     draw = cartoon
     if argv and argv[0] == "--radar":
         draw, argv = radar, argv[1:]
-        if argv and argv[0].startswith("--block="):
-            global BLOCK
-            BLOCK, argv = int(argv[0].split("=")[1]), argv[1:]
     if argv and argv[0] == "--json":
         maps = json.loads(Path(argv[1]).read_text())
         out = Path(argv[2])
