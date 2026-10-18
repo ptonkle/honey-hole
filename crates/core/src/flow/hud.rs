@@ -639,9 +639,9 @@ impl App {
         list.dash(&[]);
         match self.hud_item() {
             Some(item) => {
-                // its icon (`app/items.rs`) and its name
+                // its icon (`app/items.rs`) and its name, inside the slot
                 if let Some(t) = self.fishboy.theme.as_ref() {
-                    let icon = Rect::new(slot.x + (slot.w - slot.h) / 2, slot.y, slot.h, slot.h).inset(4);
+                    let icon = Rect::new(slot.x + slot.w / 2 - 32, slot.y + 4, 64, 64);
                     crate::app::items::draw_icon(
                         list,
                         item,
@@ -651,13 +651,13 @@ impl App {
                     );
                 }
                 let name = self.t(&format!("item.{}", item.key()));
-                let size = crate::app::items::fit(l.body(), &name, 22, r.w - 16);
+                let size = crate::app::items::fit(l.body(), &name, 18, slot.w - 8);
                 list.text(
                     rgb(l.card.ink),
                     l.body(),
                     size,
                     Align::Centre,
-                    (r.x + r.w / 2, r.y + 136),
+                    (slot.x + slot.w / 2, slot.y + slot.h - 12),
                     &name,
                 );
             }
