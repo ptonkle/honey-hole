@@ -44,3 +44,5 @@ The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the 
 ## The next action
 
 One action.
+
+2026-10-17, map generation (branch `worktree-agent-a13a60c04e6220e7c`, after df1b4b7): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 82 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 53 of 53 breaks caught.
