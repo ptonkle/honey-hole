@@ -37,8 +37,8 @@
   {
     "name": "escape on a sub-screen goes to the title",
     "file": "crates/core/src/app.rs",
-    "find": "Screen::Settings | Screen::Notes | Screen::Gallery => self.go(Screen::Title),",
-    "replace": "Screen::Settings | Screen::Gallery => self.go(Screen::Title), Screen::Notes => {}",
+    "find": "Screen::Settings | Screen::Notes | Screen::Gallery | Screen::Sounds => self.go(Screen::Title),",
+    "replace": "Screen::Settings | Screen::Gallery | Screen::Sounds => self.go(Screen::Title), Screen::Notes => {}",
     "test": "escape_on_a_sub_screen_goes_back_to_the_title"
   },
   {
@@ -100,8 +100,8 @@
   {
     "name": "the version opens what's new from the menus only",
     "file": "crates/core/src/app.rs",
-    "find": "Screen::Title | Screen::Settings | Screen::Notes | Screen::Gallery\n        )",
-    "replace": "Screen::Title | Screen::Settings | Screen::Notes | Screen::Gallery | Screen::Play\n        )",
+    "find": "Screen::Title | Screen::Settings | Screen::Notes | Screen::Gallery | Screen::Sounds\n        )",
+    "replace": "Screen::Title | Screen::Settings | Screen::Notes | Screen::Gallery | Screen::Sounds | Screen::Play\n        )",
     "test": "the_version_opens_whats_new_from_the_menus_only"
   },
   {
@@ -656,5 +656,166 @@
     "find": "        if g.lineup {\n            return self.lineup_frame(",
     "replace": "        if g.lineup && false {\n            return self.lineup_frame(",
     "test": "the_line_up_is_the_same_whichever_fish_is_chosen"
+  },
+  {
+    "name": "a rival is silent beyond 5 s at top speed",
+    "file": "crates/core/src/sound/motor.rs",
+    "find": "if d >= hear {",
+    "replace": "if d > hear + hear {",
+    "test": "a_rival_motor_is_heard_from_5_s_away"
+  },
+  {
+    "name": "a rival grows louder as it nears",
+    "file": "crates/core/src/sound/motor.rs",
+    "find": "rise = mul(rise, near);",
+    "replace": "rise = mul(rise, MILLI);",
+    "test": "a_rival_motor_grows_louder_as_it_nears"
+  },
+  {
+    "name": "a closing rival is pitched up",
+    "file": "crates/core/src/sound/motor.rs",
+    "find": "let below = (c - src).max(1);",
+    "replace": "let below = (c + src).max(1);",
+    "test": "doppler_raises_pitch_when_closing_and_lowers_it_when_leaving"
+  },
+  {
+    "name": "your motor rises with the throttle",
+    "file": "crates/core/src/sound/motor.rs",
+    "find": "mul(throttle, t.throttle_share)",
+    "replace": "mul(throttle, 0)",
+    "test": "your_motor_rises_from_idle_to_full"
+  },
+  {
+    "name": "the line is silent below its starting tension",
+    "file": "crates/core/src/sound/motor.rs",
+    "find": "if tension <= t.starts_at {",
+    "replace": "if tension < 0 {",
+    "test": "the_line_whines_only_above_its_starting_tension"
+  },
+  {
+    "name": "the ratchet speeds with the reel",
+    "file": "crates/core/src/sound/motor.rs",
+    "find": "let per_s = lerp(t.slow_clicks_per_s, t.fast_clicks_per_s, reel);",
+    "replace": "let per_s = t.slow_clicks_per_s;",
+    "test": "the_ratchet_clicks_faster_as_you_reel_faster"
+  },
+  {
+    "name": "a cue starts after its delay",
+    "file": "crates/core/src/sound/recipe.rs",
+    "find": "let start = p.delay_ms + l.at_ms;",
+    "replace": "let start = l.at_ms;",
+    "test": "a_cue_compiles_to_a_schedule_with_its_gain_pitch_and_delay"
+  },
+  {
+    "name": "a cue plays at its gain",
+    "file": "crates/core/src/sound/recipe.rs",
+    "find": "let g = mul(l.gain, p.gain);",
+    "replace": "let g = l.gain;",
+    "test": "a_cue_compiles_to_a_schedule_with_its_gain_pitch_and_delay"
+  },
+  {
+    "name": "a stretch layer lasts as asked",
+    "file": "crates/core/src/sound/recipe.rs",
+    "find": "hold = (d - l.at_ms - l.attack_ms - l.release_ms).max(0);",
+    "replace": "hold = l.hold_ms;",
+    "test": "a_stretch_layer_lasts_as_long_as_the_game_asks"
+  },
+  {
+    "name": "each note starts at its own time",
+    "file": "crates/core/src/sound/recipe.rs",
+    "find": "l.at_ms += when;",
+    "replace": "l.at_ms += 0;",
+    "test": "notes_and_repeats_lay_out_copies_of_a_layer"
+  },
+  {
+    "name": "a loop's throb is split from its gain",
+    "file": "crates/core/src/sound/recipe.rs",
+    "find": "out[\"gain\"] = dec(g - amount);",
+    "replace": "out[\"gain\"] = dec(g);",
+    "test": "a_loop_splits_its_throb_from_its_steady_gain"
+  },
+  {
+    "name": "an unknown recipe key is refused",
+    "file": "crates/core/src/sound/read.rs",
+    "find": ".find(|k| !k.starts_with('_') && !allowed.contains(&k.as_str()))",
+    "replace": ".find(|k| k.is_empty())",
+    "test": "a_bad_recipe_is_refused_by_name"
+  },
+  {
+    "name": "an event naming no cue is refused",
+    "file": "crates/core/src/sound/mod.rs",
+    "find": "                    if bank.cue(&id).is_none() {",
+    "replace": "                    if bank.cue(&id).is_none() && id.is_empty() {",
+    "test": "a_bad_recipe_is_refused_by_name"
+  },
+  {
+    "name": "a mine-only event plays only for its seat",
+    "file": "crates/core/src/sound/events.rs",
+    "find": "Who::Mine => mine,",
+    "replace": "Who::Mine => true,",
+    "test": "an_event_plays_its_cues_for_the_right_listener"
+  },
+  {
+    "name": "an event delays its cue",
+    "file": "crates/core/src/sound/events.rs",
+    "find": "delay_ms: e.delay_ms,",
+    "replace": "delay_ms: 0,",
+    "test": "an_event_sets_a_cue_s_delay_gain_and_length"
+  },
+  {
+    "name": "waiting cues drop the oldest",
+    "file": "crates/core/src/sound/mod.rs",
+    "find": "self.pending.remove(0);",
+    "replace": "self.pending.truncate(self.bank.max_pending - 1);",
+    "test": "waiting_cues_beyond_the_limit_drop_the_oldest"
+  },
+  {
+    "name": "a frame takes its cues",
+    "file": "crates/core/src/sound/mod.rs",
+    "find": "let cues = std::mem::take(&mut self.pending);",
+    "replace": "let cues = self.pending.clone();",
+    "test": "a_frame_takes_the_waiting_cues_and_carries_the_volume"
+  },
+  {
+    "name": "the master volume is the setting",
+    "file": "crates/core/src/sound/mod.rs",
+    "find": "\"master\": dec(volume_pct as i64 * MILLI / 100),",
+    "replace": "\"master\": dec(MILLI),",
+    "test": "a_frame_takes_the_waiting_cues_and_carries_the_volume"
+  },
+  {
+    "name": "a decimal reads as thousandths",
+    "file": "crates/core/src/sound/decimal.rs",
+    "find": "thousandths += d * [100, 10, 1][k];",
+    "replace": "thousandths += d;",
+    "test": "decimals_read_as_thousandths"
+  },
+  {
+    "name": "a menu button clicks",
+    "file": "crates/core/src/app.rs",
+    "find": "if name.starts_with(\"menu.\") {\n            self.click();",
+    "replace": "if name.is_empty() {\n            self.click();",
+    "test": "a_sound_button_plays_its_cue_once_and_a_menu_button_clicks"
+  },
+  {
+    "name": "the pass-by moves at top speed",
+    "file": "crates/core/src/app/sounds.rs",
+    "find": "Some(from) => -half + v * (self.clock - from).max(0) / 1_000_000,",
+    "replace": "Some(from) => -half + v * (self.clock - from).max(0) / 2_000_000,",
+    "test": "the_other_boat_drives_past_at_top_speed_louder_then_quieter_higher_then_lower"
+  },
+  {
+    "name": "loops stop off the Sounds screen",
+    "file": "crates/core/src/app/sounds.rs",
+    "find": "let on_screen = self.screen == Screen::Sounds;",
+    "replace": "let on_screen = true;",
+    "test": "the_slider_puts_the_other_boat_on_its_line"
+  },
+  {
+    "name": "the Sounds screen lists cues by id",
+    "file": "crates/core/src/app/sounds.rs",
+    "find": ".map(|c| Item::button(&format!(\"sounds.play.{}\", c.id), c.label.clone()))",
+    "replace": ".map(|c| Item::button(&format!(\"sounds.play.{}\", c.label), c.label.clone()))",
+    "test": "the_gallery_leads_to_sounds_which_lists_every_cue_then_back"
   }
 ]
