@@ -34,12 +34,21 @@ Collected as the agent makes them; brought up in the morning. Each also has a ro
 
 - V1. Online sync model (decision 11).
 - V2. 50 ticks per second (decision 2).
+- V3. Rams and grounding are judged on the speed *toward* the other boat or the land, not the boat's whole speed: a fast glancing scrape bounces (SECOND-ORDER R2.3).
+- V4. The boat's handling numbers the brief leaves open: reverse 4 m/s, braking 2 s, coasting 6 s, turning 100°/s, the cast swivelling 135° either side, nitrous 200/150/150% (`data/tuning.json`, R2.7).
+- V5. Two boats ramming each other head-on, both fast enough, are both wrecked (R2.4).
+- V6. The draft AI names (`data/names.json`, R2.11).
+- V7. The match menu has Resume as well as Settings and Leave match (R2.9).
 - V3. Fish base lengths trimmed so a 1.5× catch is a trophy, not past a record (muskie 0.95 m, pike 0.65 m, walleye 0.43 m, smallmouth 0.35 m, perch 0.2 m, bluegill 0.17 m); the sturgeon stays 1.5 m rather than the 1.8 m first suggested (SECOND-ORDER R1.150–R1.154).
 - V4. Angler brows made level and slightly raised (the person said they looked sad).
 - V5. Sound: a rival's motor is heard from 5 s at top speed (80 m), rising with the square of the nearness to full within 6 m, and its Doppler shift is exaggerated 3 times (about +16% closing, -12% leaving) because the true shift of a boat is under a semitone (SECOND-ORDER R2.93, R2.94). Every sound's recipe is the agent's: audition them on the Sounds screen (Gallery, Sounds) and say which to change.
 - V6. Sound: the 3-2-1 beeps are alike with a higher go, the buoy's five beats climb to a high last one, and an explosion and the wreck chime are heard by every player at full volume (SECOND-ORDER R2.96, R2.97, R2.106).
 - V7. Six more roster fish modelled (pumpkinseed, rock bass, largemouth bass, black crappie, channel catfish, lake trout), bases 150 to 600 mm on the same 1.5× rule (SECOND-ORDER R2.110 to R2.117).
-- V8. All thirteen fish checked against the real species from above, the side and 3/4 and reshaped: torpedo smallmouth, conical-snouted sturgeon, thin sunfish, smooth duck-bill pike and muskie, thin tails and fins, a flat-headed catfish with a short dorsal, a painted largemouth stripe, markings kept inside the outline from above; a few side views changed (SECOND-ORDER R2.130 to R2.136; shots in `notes/shots/models/fish-v3/`).
+- V8. The lake's look: overcast grey-blue sky, fog thickening from 22% of the sight distance, water 30% see-through looking down, cool greens (`notes/shots/world/`, `data/look.json` "lake"; SECOND-ORDER R2.35, R2.37, R2.39).
+- V9. Props the scene adds beyond the map: the dock behind the spawn, two cabins, lily pads, shore rocks, boulders, fallen logs; maples drawn as birches or tall spruces (R2.34, R2.40).
+- V10. The boat camera: 9 m behind, 3.8 m up, 10° down, 55° field of view (R2.43).
+- V11. Glowing colours take 45% of the fog on the lake, so the buoy's beacon and a cabin window read through it (R2.42).
+- V12. All thirteen fish checked against the real species from above, the side and 3/4 and reshaped: torpedo smallmouth, conical-snouted sturgeon, thin sunfish, smooth duck-bill pike and muskie, thin tails and fins, a flat-headed catfish with a short dorsal, a painted largemouth stripe, markings kept inside the outline from above; a few side views changed (SECOND-ORDER R2.130 to R2.136; shots in `notes/shots/models/fish-v3/`).
 
 ## Status
 

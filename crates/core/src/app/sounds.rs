@@ -48,14 +48,47 @@ impl Default for SoundsScreen {
     }
 }
 
-/// The top speed a rival is heard at: the boat's top speed without nitrous.
-/// The boat's tuning will own it; until then, the figure the map was sized
-/// for.
+/// The top speed a rival is heard at before the tuning file loads: the
+/// figure the map was sized for.
 pub fn top_speed_mm_per_s() -> i64 {
     crate::map::BOAT_TOP_SPEED_MM_PER_S as i64
 }
 
 impl App {
+    /// The boat's top speed without nitrous, from the tuning file.
+    pub fn top_speed(&self) -> i64 {
+        self.tuning
+            .as_ref()
+            .map_or(top_speed_mm_per_s(), |t| t.boat.top_speed_mm_per_s as i64)
+    }
+
+    /// The match's motors as heard from this browser's boat: its own (by
+    /// throttle and speed) and each rival afloat (by place and velocity).
+    fn match_voices(&self, s: &Sound) -> Vec<Value> {
+        let Some(p) = self.play.as_ref().filter(|_| self.screen == Screen::Play) else {
+            return Vec::new();
+        };
+        let t = &s.bank.tuning;
+        let top = self.top_speed();
+        let mut voices = Vec::new();
+        let body = |b: &crate::sim::Boat| Body {
+            pos: [b.pos_um[0] / 1000, b.pos_um[1] / 1000],
+            vel: b.vel().map(|v| v as i64),
+        };
+        let Some(me) = p.game.boat(p.seat).filter(|b| !b.wrecked()) else {
+            return voices;
+        };
+        let speed = me.speed_mm_per_s() as i64 * MILLI / top.max(1);
+        let push = if p.throttle_held() { MILLI } else { 0 };
+        voices.extend(s.voice("own", OWN_MOTOR, motor::own_motor(&t.own_motor, push, speed)));
+        for b in p.game.boats.iter().flatten() {
+            if b.seat != p.seat && !b.wrecked() {
+                let heard = motor::rival_motor(&t.rival_motor, top, &body(me), &body(b));
+                voices.extend(s.voice(&format!("rival.{}", b.seat), RIVAL_MOTOR, heard));
+            }
+        }
+        voices
+    }
     /// Takes the sound recipes and the tuning file, checked, or says why not.
     pub fn load_sounds(&mut self, sounds_json: &str, tuning_json: &str) -> Result<(), String> {
         self.sound = Some(Sound::new(Bank::parse(sounds_json, tuning_json)?));
@@ -89,7 +122,7 @@ impl App {
     /// origin.
     fn rival_body(&self, bank: &Bank) -> Body {
         let half = Self::pass_half_mm(bank);
-        let v = top_speed_mm_per_s();
+        let v = self.top_speed();
         let x = match self.sounds.pass_from {
             Some(from) => -half + v * (self.clock - from).max(0) / 1_000_000,
             None => -half + 2 * half * self.sounds.rival_at as i64 / SLIDER_MAX as i64,
@@ -103,7 +136,7 @@ impl App {
     fn rival_heard(&self, bank: &Bank) -> Heard {
         motor::rival_motor(
             &bank.tuning.rival_motor,
-            top_speed_mm_per_s(),
+            self.top_speed(),
             &Body::default(),
             &self.rival_body(bank),
         )
@@ -154,7 +187,7 @@ impl App {
         let on_screen = self.screen == Screen::Sounds;
         if let (Some(from), Some(s)) = (self.sounds.pass_from, &self.sound) {
             let half = Self::pass_half_mm(&s.bank);
-            let gone = top_speed_mm_per_s() * (self.clock - from) / 1_000_000 > 2 * half;
+            let gone = self.top_speed() * (self.clock - from) / 1_000_000 > 2 * half;
             if gone || !on_screen {
                 self.sounds.pass_from = None;
             }
@@ -162,7 +195,7 @@ impl App {
         let Some(s) = &self.sound else {
             return Value::Null;
         };
-        let mut voices = Vec::new();
+        let mut voices = self.match_voices(s);
         if on_screen {
             let t = &s.bank.tuning;
             let sc = &self.sounds;

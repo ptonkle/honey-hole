@@ -104,6 +104,17 @@ pub enum Item {
         value: String,
         options: Vec<Choice>,
     },
+    /// a one-line text field; the page sends its text when it changes
+    Text {
+        id: String,
+        label: String,
+        value: String,
+        /// the most characters it takes
+        max: u32,
+        /// shown greyed while the field is empty
+        #[serde(skip_serializing_if = "String::is_empty")]
+        placeholder: String,
+    },
     /// label and value pairs
     List {
         rows: Vec<[String; 2]>,
