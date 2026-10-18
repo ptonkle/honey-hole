@@ -420,6 +420,20 @@
     "test": "the_boat_seats_the_driver_aft_and_the_angler_on_the_raised_bow_deck"
   },
   {
+    "name": "the angler stands 1.62 m to the top of the hat",
+    "file": "data/models/angler.json",
+    "find": "[0, 1620, 0],",
+    "replace": "[0, 1720, 0],",
+    "test": "the_angler_stands_1_62_m_to_the_top_of_its_hat"
+  },
+  {
+    "name": "the Fish-Boy straps onto the left forearm",
+    "file": "data/models/angler.json",
+    "find": "\"wrist_l\": {\"part\": \"forearm_l\"",
+    "replace": "\"wrist_l\": {\"part\": \"arm_l\"",
+    "test": "the_fish_boy_straps_onto_the_left_forearm_and_follows_the_elbow"
+  },
+  {
     "name": "the item buoy bobs",
     "file": "data/models/item-buoy.json",
     "find": "\"bob\": { \"ms\": 3200,",
