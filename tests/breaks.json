@@ -420,6 +420,20 @@
     "test": "the_boat_seats_the_driver_aft_and_the_angler_on_the_raised_bow_deck"
   },
   {
+    "name": "the angler stands 1.62 m to the top of the hat",
+    "file": "data/models/angler.json",
+    "find": "[0, 1620, 0],",
+    "replace": "[0, 1720, 0],",
+    "test": "the_angler_stands_1_62_m_to_the_top_of_its_hat"
+  },
+  {
+    "name": "the Fish-Boy straps onto the left forearm",
+    "file": "data/models/angler.json",
+    "find": "\"wrist_l\": {\"part\": \"forearm_l\"",
+    "replace": "\"wrist_l\": {\"part\": \"arm_l\"",
+    "test": "the_fish_boy_straps_onto_the_left_forearm_and_follows_the_elbow"
+  },
+  {
     "name": "the item buoy bobs",
     "file": "data/models/item-buoy.json",
     "find": "\"bob\": { \"ms\": 3200,",
@@ -614,6 +628,34 @@
     "find": "[(css_w * dpr_pct / 100).max(1), (css_h * dpr_pct / 100).max(1)]",
     "replace": "[css_w * dpr_pct / 100, css_h * dpr_pct / 100]",
     "test": "the_buffer_is_the_css_size_at_the_pixel_ratio_and_never_empty"
+  },
+  {
+    "name": "the line-up stands models end to end at their lengths",
+    "file": "crates/core/src/app/gallery.rs",
+    "find": "cursor += length + gap;",
+    "replace": "cursor += gap;",
+    "test": "the_line_up_shows_every_fish_at_true_size_end_to_end_with_the_boat"
+  },
+  {
+    "name": "the line-up adds the boat for scale",
+    "file": "crates/core/src/app/gallery.rs",
+    "find": "        if kind != Kind::Boat {\n            row.extend(",
+    "replace": "        if false {\n            row.extend(",
+    "test": "the_line_up_shows_every_fish_at_true_size_end_to_end_with_the_boat"
+  },
+  {
+    "name": "the line-up hides the turn toggle",
+    "file": "crates/core/src/app/gallery.rs",
+    "find": "        if !g.lineup {\n            items.push(Item::Toggle {",
+    "replace": "        if true {\n            items.push(Item::Toggle {",
+    "test": "the_line_up_shows_every_fish_at_true_size_end_to_end_with_the_boat"
+  },
+  {
+    "name": "the line-up ignores which fish is chosen",
+    "file": "crates/core/src/app/gallery.rs",
+    "find": "        if g.lineup {\n            return self.lineup_frame(",
+    "replace": "        if g.lineup && false {\n            return self.lineup_frame(",
+    "test": "the_line_up_is_the_same_whichever_fish_is_chosen"
   },
   {
     "name": "a rival is silent beyond 5 s at top speed",
