@@ -2889,5 +2889,40 @@
     "find": "!off.longer_than(cam.far.saturating_add(r)) && off.dot64(cam.fwd) >= -(r as i64) * ONE as i64",
     "replace": "true",
     "test": "a_model_past_the_far_plane_or_behind_the_camera_is_not_posed"
+  },
+  {
+    "name": "fast mode is on without the page asking",
+    "file": "crates/core/src/app.rs",
+    "find": "            fast: false,\n",
+    "replace": "            fast: true,\n",
+    "test": "fast_mode_is_off_unless_the_page_asks"
+  },
+  {
+    "name": "fast mode skips the countdown's ticks instead of running them",
+    "file": "crates/core/src/app/play.rs",
+    "find": "let free = fast && p.game.countdown > 0 && !p.game.paused();",
+    "replace": "let free = false;\n            if fast {\n                p.game.countdown = 0;\n            }",
+    "test": "fast_mode_leaves_a_seeded_match_the_same_tick_for_tick"
+  },
+  {
+    "name": "fast mode still holds Lines up",
+    "file": "crates/core/src/flow/mod.rs",
+    "find": "let hold_ms = if self.fast { 0 } else { hold_ms };",
+    "replace": "let hold_ms = if self.fast { hold_ms } else { hold_ms };",
+    "test": "fast_mode_skips_lines_up_the_reveal_and_the_fish_boys_raise"
+  },
+  {
+    "name": "fast mode keeps the Minigames screen's banner",
+    "file": "crates/core/src/app/minigames.rs",
+    "find": "            t.banner_ms = 0;",
+    "replace": "            t.banner_ms += 0;",
+    "test": "a_minigame_on_its_screen_opens_without_its_banner_in_fast_mode"
+  },
+  {
+    "name": "mute leaves the volume up",
+    "file": "crates/core/src/app/sounds.rs",
+    "find": "let volume = if self.mute { 0 } else { self.settings.volume };",
+    "replace": "let volume = self.settings.volume;",
+    "test": "mute_sends_the_sounds_nowhere_and_keeps_the_volume_setting"
   }
 ]

@@ -25,6 +25,28 @@ import pathlib
 DATA = pathlib.Path(__file__).resolve().parents[2] / "data"
 STRINGS = json.loads((DATA / "strings.json").read_text())
 
+# The page's test flags (crates/core/src/app/fast.rs), on unless turned off:
+# `?fast` skips the waits that only make a person wait (the countdown, "Lines
+# up", the postgame's reveal, the Fish-Boy's raise, the Minigames screen's
+# banner) and `?mute` sends no sound to the speakers. BUILDER_FAST=0 checks
+# the players' timing; BUILDER_MUTE=0 lets the sounds be heard.
+FAST = os.environ.get("BUILDER_FAST") != "0"
+MUTE = os.environ.get("BUILDER_MUTE") != "0"
+FLAGS = [f for f, on in (("fast", FAST), ("mute", MUTE)) if on]
+
+
+def address(base, *more):
+    """`base` (the page's URL without a query) with the test flags and `more`
+    (such as "debug=fishing")."""
+    query = "&".join(FLAGS + list(more))
+    return base + ("?" + query if query else "")
+
+
+def reopen(page, *more):
+    """Opens the page again with the test flags and `more`, and waits for it."""
+    page.goto(address(page.url.split("?")[0], *more))
+    page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
+
 
 def by_id(action):
     """A selector for an element whose id is a dotted action name."""
@@ -145,8 +167,11 @@ def step_play(page, check):
     check(page.is_disabled("#version"), "the version does not open What's New from Play")
     page.wait_for_selector("body[data-drawn]", state="attached", timeout=10000)
     check(page.is_visible("#scene"), "the lake is drawn behind the HUD")
-    check(ui2d_has(page, "hud=1", "countdown=3"), "the HUD is drawn, and the match counts down from 3")
-    check(ui2d_has(page, "countdown=", timeout=8000), "the countdown ends")
+    if FAST:
+        check(ui2d_has(page, "hud=1", "countdown=", timeout=5000), "the HUD is drawn, and fast mode ran the countdown through")
+    else:
+        check(ui2d_has(page, "hud=1", "countdown=3"), "the HUD is drawn, and the match counts down from 3")
+        check(ui2d_has(page, "countdown=", timeout=8000), "the countdown ends")
     start = ui2d_value(page, "time")
     check(start.startswith("8:00") or start.startswith("7:5"), f"the match starts with 8 minutes left ({start})")
     page.keyboard.down("KeyW")
@@ -345,8 +370,11 @@ def step_minigames(page, check):
     want = [STRINGS[f"minigames.play.{k}"] for k in keys]
     check(names[:6] == want, f"it offers each item's minigame {names}")
     page.click(by_id("minigames.play.power_reel"))
-    check(ui2d_has(page, "mg=power_reel", "phase=banner"), "Power Reel opens on its instruction banner")
-    check(ui2d_has(page, "phase=play"), "play follows the banner")
+    if FAST:
+        check(ui2d_has(page, "mg=power_reel", "phase=play"), "Power Reel opens straight into play (fast mode: no banner)")
+    else:
+        check(ui2d_has(page, "mg=power_reel", "phase=banner"), "Power Reel opens on its instruction banner")
+        check(ui2d_has(page, "phase=play"), "play follows the banner")
     # the reel's middle is (800, 470) of the 1600 x 900 canvas
     x, y, w, h = (int(v) for v in ui2d_value(page, "rect").split(","))
     ratio = page.evaluate("() => window.devicePixelRatio")
@@ -382,9 +410,7 @@ def step_fishing(page, check):
     # A match with the debug flag (`?debug=fishing`): a fish waits by every
     # bobber that lands, its reel holds still at the top of the bar, and the
     # hook window is 5 s, so the page's own frame rate cannot make it miss.
-    base = page.url.split("?")[0]
-    page.goto(base + "?debug=fishing")
-    page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
+    reopen(page, "debug=fishing")
     page.click(by_id("menu.play"))
     page.click(by_id("menu.offline"))
     page.click(by_id("lobby.start"))
@@ -416,8 +442,7 @@ def step_fishing(page, check):
     page.click(by_id("menu.quit"))
     check(screen(page, "title"), "Leave match goes to the Title")
     # back to the plain page for the steps after
-    page.goto(base)
-    page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
+    reopen(page)
 
 
 def step_items(page, check):
@@ -425,9 +450,7 @@ def step_items(page, check):
     # 40 m ahead of the boat and gives Nitrous. Driving through it fills the
     # slot; Shift starts the minigame; Esc wastes the item. Then with
     # `quick` (a minigame done at once) Cloaking Tech runs its minute.
-    base = page.url.split("?")[0]
-    page.goto(base + "?debug=items,item.nitrous")
-    page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
+    reopen(page, "debug=items,item.nitrous")
     page.click(by_id("menu.play"))
     page.click(by_id("menu.offline"))
     page.click(by_id("lobby.start"))
@@ -442,8 +465,7 @@ def step_items(page, check):
     page.keyboard.press("Escape")
     check(ui2d_has(page, "item=none", timeout=5000), "Esc quits the minigame and wastes the item")
     check(page.locator(".panel.pause").count() == 0, "Esc did not open the menu")
-    page.goto(base + "?debug=items,item.cloak,quick")
-    page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
+    reopen(page, "debug=items,item.cloak,quick")
     page.click(by_id("menu.play"))
     page.click(by_id("menu.offline"))
     page.click(by_id("lobby.start"))
@@ -456,8 +478,7 @@ def step_items(page, check):
     page.wait_for_selector(".panel.pause", timeout=5000)
     page.click(by_id("menu.quit"))
     check(screen(page, "title"), "Leave match goes to the Title")
-    page.goto(base)
-    page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
+    reopen(page)
 
 
 def step_ai(page, check):
@@ -485,9 +506,7 @@ def step_ai_items(page, check):
     # plays this browser's seat and a buoy waits 40 m ahead with the
     # High-Quality Camera in it. The AI drives through it by itself (the
     # trip is worth it), and keeps the camera for a rare catch.
-    base = page.url.split("?")[0]
-    page.goto(base + "?debug=watch,items,item.camera")
-    page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
+    reopen(page, "debug=watch,items,item.camera")
     page.click(by_id("menu.play"))
     page.click(by_id("menu.offline"))
     page.click(by_id("lobby.start"))
@@ -498,17 +517,14 @@ def step_ai_items(page, check):
     page.wait_for_selector(".panel.pause", timeout=5000)
     page.click(by_id("menu.quit"))
     check(screen(page, "title"), "Leave match goes to the Title")
-    page.goto(base)
-    page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
+    reopen(page)
 
 
 def step_match_flow(page, check):
     # A 4-minute match under `?debug=flow`: the countdown, the HUD, the map
     # seed shown from Settings, F8 to the last seconds (with made-up
     # catches), the end, the postgame's reveal and ranking, Back to Title.
-    base = page.url.split("?")[0]
-    page.goto(base + "?debug=flow")
-    page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
+    reopen(page, "debug=flow")
     page.click(by_id("menu.play"))
     page.click(by_id("menu.offline"))
     screen(page, "lobby")
@@ -517,8 +533,11 @@ def step_match_flow(page, check):
     page.select_option(by_id("lobby.length"), "240000")
     page.click(by_id("lobby.start"))
     check(screen(page, "play"), "a 4-minute match starts")
-    check(ui2d_has(page, "countdown=3", "seed="), "the countdown shows, and the map seed is hidden by default")
-    check(ui2d_has(page, "countdown=go", timeout=8000), "the countdown ends with Go")
+    if FAST:
+        check(ui2d_has(page, "countdown=", "seed="), "fast mode ran the countdown through, and the map seed is hidden by default")
+    else:
+        check(ui2d_has(page, "countdown=3", "seed="), "the countdown shows, and the map seed is hidden by default")
+        check(ui2d_has(page, "countdown=go", timeout=8000), "the countdown ends with Go")
     check(ui2d_has(page, "hud_ping=ready", "mode=driving"), "the HUD shows the ping")
     # the seed, from Settings in the match menu
     page.keyboard.press("Escape")
@@ -533,10 +552,15 @@ def step_match_flow(page, check):
     page.wait_for_selector(".panel.pause", state="detached", timeout=5000)
     check(ui2d_some(page, "seed"), f"the map seed shows with the option on ({ui2d_value(page, 'seed')})")
     page.keyboard.press("F8")
-    check(ui2d_has(page, "ended=1", timeout=10000), "time runs out: Lines up")
-    check(screen_soon(page, "postgame", 15000), "the postgame opens after the end")
-    check(ui2d_has(page, "postgame=reveal"), "the catches are revealed")
-    check(ui2d_has(page, "postgame=ranking", timeout=40000), "then the ranking shows")
+    if FAST:
+        # no "Lines up" hold and no reveal to sit through: every card and the ranking at once
+        check(screen_soon(page, "postgame", 15000), "time runs out, and the postgame opens at once")
+        check(ui2d_has(page, "postgame=ranking", timeout=5000), "with every card and the ranking shown")
+    else:
+        check(ui2d_has(page, "ended=1", timeout=10000), "time runs out: Lines up")
+        check(screen_soon(page, "postgame", 15000), "the postgame opens after the end")
+        check(ui2d_has(page, "postgame=reveal"), "the catches are revealed")
+        check(ui2d_has(page, "postgame=ranking", timeout=40000), "then the ranking shows")
     check(page.locator(by_id("postgame.rematch")).count() == 1, "Rematch is offered")
     page.click(by_id("postgame.catches"))
     check(ui2d_has(page, "postgame=catches"), "Catches puts the ranking away to show what added up")
@@ -544,8 +568,7 @@ def step_match_flow(page, check):
     check(ui2d_has(page, "postgame=ranking"), "Esc brings the ranking back")
     page.click(by_id("postgame.title"))
     check(screen(page, "title"), "Back to Title goes to the Title")
-    page.goto(base)
-    page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
+    reopen(page)
 
 
 def screen_soon(page, name, timeout):

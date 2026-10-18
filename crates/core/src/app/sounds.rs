@@ -183,7 +183,7 @@ impl App {
     /// load. Off the Sounds screen no
     /// loop runs yet; the match will name its motors and line here.
     pub fn sound_frame(&mut self) -> Value {
-        let volume = self.settings.volume;
+        let volume = if self.mute { 0 } else { self.settings.volume };
         let on_screen = self.screen == Screen::Sounds;
         if let (Some(from), Some(s)) = (self.sounds.pass_from, &self.sound) {
             let half = Self::pass_half_mm(&s.bank);
@@ -219,7 +219,10 @@ impl App {
         let clock = self.clock;
         let s = self.sound.as_mut().expect("checked above");
         s.drag(clock, level);
-        s.frame(volume, voices)
+        let mut frame = s.frame(volume, voices);
+        // `?mute`: the page builds the sounds but sends them nowhere
+        frame["muted"] = Value::Bool(self.mute);
+        frame
     }
 
     /// The noise buffer every noise layer plays (Q16.16), empty before the

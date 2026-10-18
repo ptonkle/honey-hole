@@ -454,7 +454,14 @@ impl App {
         let mut ran = 0;
         let mut heard = Vec::new();
         let mut online = self.online.session.as_mut();
-        while p.pending_us >= step_us && ran < MAX_CATCH_UP {
+        let fast = self.fast;
+        loop {
+            // `?fast`: the countdown's ticks run now, on top of the clock's
+            // (`app/fast.rs`)
+            let free = fast && p.game.countdown > 0 && !p.game.paused();
+            if !free && (p.pending_us < step_us || ran >= MAX_CATCH_UP) {
+                break;
+            }
             // the AI seats play by the same inputs (`ai/`)
             let mut inputs = p.ai.inputs(&p.game);
             let mine = p.gather.take();
@@ -474,8 +481,10 @@ impl App {
                 p.log.push((tick + 1, e.clone()));
                 heard.push(serde_json::to_value(e).unwrap_or_default());
             }
-            p.pending_us -= step_us;
-            ran += 1;
+            if !free {
+                p.pending_us -= step_us;
+                ran += 1;
+            }
         }
         let landed = heard
             .iter()

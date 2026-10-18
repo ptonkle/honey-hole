@@ -770,6 +770,10 @@ fn page_keeps_no_rule_and_names_no_other_origin() {
     let mut js_files = 0;
     let relays = relay_urls();
     for path in web_files() {
+        // a raster image (the tab icon) holds no code or address
+        if path.extension().is_some_and(|x| x == "png") {
+            continue;
+        }
         let text = fs::read_to_string(&path).expect("read page file");
         let policy = page_policy(&in_web(&path));
         let html = path.extension().map(|x| x == "html").unwrap_or(false);
