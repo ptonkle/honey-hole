@@ -24,6 +24,9 @@ const MARGIN: i32 = 112;
 const FISH_FLOOR: i32 = ONE * 3 / 5;
 /// The floor's sides (a flat many-sided disc).
 const FLOOR_SIDES: i32 = 32;
+/// The view from above looks this far down (straight down would leave the
+/// camera no up).
+const ABOVE: i32 = deg(88);
 /// The four copies stand this far apart, in percent of a copy's width.
 const ROW_GAP: i32 = 108;
 
@@ -113,6 +116,8 @@ pub struct Gallery {
     pub turn_from: i64,
     /// when the animation started
     pub anim_from: i64,
+    /// looking straight down, as from a boat, not from the model's angle
+    pub above: bool,
 }
 
 impl Default for Gallery {
@@ -125,6 +130,7 @@ impl Default for Gallery {
             yaw: 0,
             turn_from: 0,
             anim_from: 0,
+            above: false,
         }
     }
 }
@@ -230,6 +236,13 @@ impl App {
                     ),
                 };
             }
+            "gallery.view" => {
+                self.gallery.above = match value {
+                    "model" => false,
+                    "above" => true,
+                    _ => return Err(format!("There is no view \"{value}\".")),
+                };
+            }
             "gallery.turn" => {
                 self.gallery.yaw = self.gallery_yaw();
                 self.gallery.turn_from = self.clock;
@@ -305,6 +318,15 @@ impl App {
                 options,
             });
         }
+        items.push(Item::Select {
+            id: "gallery.view".into(),
+            label: self.t("gallery.view"),
+            value: if g.above { "above" } else { "model" }.into(),
+            options: vec![
+                choice("model".into(), self.t("gallery.view.model")),
+                choice("above".into(), self.t("gallery.view.above")),
+            ],
+        });
         items.push(Item::Toggle {
             id: "gallery.turn".into(),
             label: self.t("gallery.turn"),
@@ -375,7 +397,7 @@ impl App {
         let row_half = width * (count - 1) / 2 + radius;
         let fit = radius.max(fx::div(row_half, aspect.max(ONE)));
         let dist = Camera::fit(FOV, fit, MARGIN);
-        let fwd = facing(fx::HALF, -m.pitch);
+        let fwd = facing(fx::HALF, -if g.above { ABOVE } else { m.pitch });
         let cam = Camera {
             eye: centre.sub(fwd.scale(dist)),
             fwd,
