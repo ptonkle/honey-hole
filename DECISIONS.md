@@ -155,3 +155,7 @@ The agent levelled the brows and raised them slightly; the rest of the angler is
 Answers to follow-up questions: menu and HUD style "Retro outdoors magazine"; boat speed and map size "Decide after I play".
 
 The agent decided: a KISS pass over every player-facing string and HUD element (removing the speed gauge, the mode badge, the item-replaced popup, the Fish-Boy hints, minigame rule text and "Esc quits" lines, the second progress bar in Power Reel, and invert-Y; using the person's wording for the minigame calls); a restyle of menus, HUD, popups and postgame as a retro 1970s outdoors magazine; the line-tension sound replaced by a quieter ratchet-like tick. Sounds otherwise approved. The menus' current look came from Builder's default style pack palette.
+
+> make sure that after it announces the winners "Herb fisherman wins" popup, thre is still an option to close that popup and see what summed up to that total
+
+The agent decided: the postgame winner announcement can be closed to show each player's catches and points adding up to their total, with a way back to the ranking.
