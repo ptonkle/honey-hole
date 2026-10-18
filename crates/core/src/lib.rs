@@ -11,6 +11,7 @@
 pub mod api;
 pub mod app;
 pub mod glossary;
+pub mod map;
 pub mod patch_notes;
 pub mod strings;
 pub mod view;

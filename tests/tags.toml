@@ -20,6 +20,7 @@ copy = "reader-visible words: data/strings.json, GLOSSARY.md, TONE.md, README.md
 page = "the static page (web/) and the browser check's harness: every browser step runs"
 art = "the art pipeline (tools/art/) and the style packs (styles/): tests/art_check.py"
 notes = "the notebooks and other documents: the notebook form check only"
+maps = "map generation: the generator, validator, fish placement and buoy point (crates/core/src/map/), the map tool (crates/core/examples/), data/maps/ and the preview renderer (tools/maps/)"
 tooling = "scripts outside the check (serve, publish, audits, watch window): nothing beyond the always-run tests"
 
 # Hitting a tag also hits these, for a tag whose change reaches another's
@@ -53,6 +54,9 @@ tags = ["boundary"]
 "crates/core/src/patch_notes.rs" = ["whatsnew"]
 "crates/core/src/strings.rs" = ["copy"]
 "crates/core/src/glossary.rs" = ["copy"]
+"crates/core/src/map/**" = ["maps"]
+"crates/core/examples/**" = ["maps"]
+"crates/core/tests/maps.rs" = ["maps"]
 "crates/core/tests/boundary.rs" = ["boundary"]
 "crates/core/tests/copy.rs" = ["copy"]
 "crates/core/tests/data_files.rs" = ["copy", "whatsnew"]
@@ -61,6 +65,8 @@ tags = ["boundary"]
 "web/**" = ["page"]
 "data/strings.json" = ["copy"]
 "data/patch-notes.json" = ["whatsnew"]
+"data/maps/**" = ["maps"]
+"tools/maps/**" = ["maps"]
 "data/art.json" = ["art"]
 "styles/**" = ["art"]
 "tools/art/**" = ["art"]
@@ -138,12 +144,14 @@ tags = ["boundary"]
 "lib:app::tests::whats_new_" = ["menus", "copy", "whatsnew"]
 "lib:app::tests::the_version_opens_" = ["menus", "copy", "whatsnew"]
 "lib:glossary::" = ["copy"]
+"lib:map::" = ["maps"]
 "lib:patch_notes::" = ["whatsnew"]
 "lib:strings::" = ["copy"]
 "lib:view::" = ["menus"]
 "test:boundary" = ["boundary"]
 "test:copy" = ["copy"]
 "test:data_files" = ["copy", "whatsnew"]
+"test:maps" = ["maps"]
 "test:no_storage" = ["page"]
 
 # ---------------------------------------------------------------------------
