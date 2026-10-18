@@ -84,6 +84,8 @@ The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the 
 
 2026-10-18, the match flow (countdown, the 2D HUD with the fishing's meters, data-driven popups, wreck burst and shake, ghosting, the end, the postgame reveal and ranking, Rematch), merged with main (fishing, item minigames) (branch `worktree-agent-a9be3869944870630`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 357 checks, with the new `match_flow` step); `count-tests.sh`: 367 passed, 0 failed, 0 ignored; `scripts/break_tests.py` on the 23 new and changed breaks: 23 of 23 caught.
 
+2026-10-18, the AI players and headless playtests (`crates/core/src/ai/`, `examples/playtest.rs`, `notes/playtests.md`), merged with main (match flow, minigames, polish) (branch `ai`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 372 checks, with the new `ai` step); `count-tests.sh`: 380 passed, 0 failed, 0 ignored; `scripts/break_tests.py` on the 10 new breaks and the restored cue delay: 11 of 11 caught.
+
 ## The next action
 
 One action.
