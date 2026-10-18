@@ -19,7 +19,7 @@ pub const PLAYER_COLOURS: [&str; 4] = ["blue", "red", "green", "yellow"];
 /// The camera's vertical field of view.
 const FOV: i32 = deg(35);
 /// How much room the camera leaves round a model, in percent.
-const MARGIN: i32 = 112;
+const MARGIN: i32 = 80;
 /// How far below a fish its floor lies, as a share of its ball's radius.
 const FISH_FLOOR: i32 = ONE * 3 / 5;
 /// The floor's sides (a flat many-sided disc).
@@ -374,7 +374,8 @@ impl App {
         // its own middle
         let width = (radius * 2) / 100 * ROW_GAP;
         let count = slots.len() as i32;
-        let yaw = self.gallery_yaw();
+        // from above, a model lies across the screen, its front to the right
+        let yaw = self.gallery_yaw() + if g.above { fx::QUARTER - m.yaw } else { 0 };
         let mut tris = Vec::new();
         for (k, slot) in slots.iter().enumerate() {
             let across = width * (2 * k as i32 - (count - 1)) / 2;
