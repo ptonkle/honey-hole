@@ -73,7 +73,7 @@
 //!    effects (a rival hooked fish 7: it is no longer free) come the same
 //!    way. Offline, `claim` is answered at once (the next step), so one
 //!    code path serves both. The fishing system's hook and catch are the
-//!    worked example (`sim/fishing/`, `online_hooks.rs`).
+//!    worked example (`sim/fishing/shared.rs`).
 //! 5. Changes only the host decides (a freed fish swims off, a buoy comes
 //!    up) are world events: add a variant to [`WorldEvent`], call
 //!    `m.broadcast(event)` on the host (`m.online.role == Role::Host`,

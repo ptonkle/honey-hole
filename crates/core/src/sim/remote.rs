@@ -201,6 +201,8 @@ pub struct Hooks {
     /// claims and broadcasts made this step, for the session to send
     pub claims_out: Vec<(usize, u32, Claim)>,
     pub world_out: Vec<WorldEvent>,
+    /// a joiner's word to the host about its own seat (a fish got away)
+    pub reports_out: Vec<WorldEvent>,
     /// each seat's claim count, for numbering
     pub claim_count: Vec<u32>,
 }

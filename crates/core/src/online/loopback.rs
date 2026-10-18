@@ -83,6 +83,8 @@ pub struct Loop {
     pub cut: BTreeSet<(usize, usize)>,
     pub tuning: Tuning,
     pub map: Map,
+    /// the fish every browser stocks its lake with
+    pub roster: Option<crate::roster::Roster>,
 }
 
 /// An open square lake, 160 m a side, with the spawn on the west side.
@@ -139,6 +141,7 @@ impl Loop {
             cut: BTreeSet::new(),
             tuning,
             map: open_lake(),
+            roster: None,
         }
     }
 
@@ -247,9 +250,10 @@ impl Loop {
             }
             let map = self.map.clone();
             let tuning = self.tuning.clone();
+            let roster = self.roster.clone();
             for node in self.nodes.iter_mut().filter(|n| !n.gone) {
                 node.session.update(now);
-                node.tick(now, &map, &tuning);
+                node.tick(now, &map, &tuning, roster.as_ref());
             }
             self.send_all();
         }
@@ -331,12 +335,15 @@ impl Node {
     }
 
     /// The ticks this node's clock has reached, as the app runs them.
-    fn tick(&mut self, now: i64, map: &Map, tuning: &Tuning) {
+    fn tick(&mut self, now: i64, map: &Map, tuning: &Tuning, roster: Option<&crate::roster::Roster>) {
         if self.game.is_none() {
             let Some(start) = self.session.take_start(now) else {
                 return;
             };
             let mut m = Match::new(map.clone(), tuning, start.setup).unwrap();
+            if let Some(r) = roster {
+                m.stock(r).unwrap();
+            }
             self.session.prepare(&mut m);
             self.game = Some(m);
             self.next_tick = start.at_ms + TICK_MS as i64;

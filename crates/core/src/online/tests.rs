@@ -416,3 +416,164 @@ fn a_room_code_reads_back_and_a_bad_one_is_refused() {
     assert_eq!(clean_code("ABCDE0"), None, "0 is not a code letter");
     assert_eq!(room_name("ABCDEF"), format!("honey-hole-p{PROTOCOL}-ABCDEF"));
 }
+
+// ---- fishing, shared (`sim/fishing/shared.rs`) ----
+
+const ROSTER: &str = r#"{"fish": [
+    {"id": "bluegill", "name": "Bluegill", "tier": "common", "model": "bluegill", "base_length_mm": 200, "value": 10, "count": 8},
+    {"id": "walleye", "name": "Walleye", "tier": "uncommon", "model": "walleye", "base_length_mm": 400, "value": 20, "count": 4}
+]}"#;
+
+/// Two joiners in a match on a stocked lake, past the start's ghosting.
+fn fishing_loop(seed: u64) -> Loop {
+    let mut l = Loop::new(2, 0, LinkSpec::ROUGH, seed);
+    l.roster = Some(crate::roster::Roster::parse(ROSTER).unwrap());
+    l.lobby_and_start();
+    l.run(500);
+    l
+}
+
+/// Joiner `k`'s lure set 10 m ahead of its bow, with fish `fish` there
+/// biting until well after `press_at`, when Space goes down; Space stays
+/// held after, and the reel's fish holds still (`tame`), so it lands.
+fn bite(l: &mut Loop, k: usize, fish: usize, press_at: u32) {
+    use crate::sim::fishing::lake::FishState;
+    use crate::sim::fishing::{Interest, Stage};
+    let m = l.nodes[k].game_mut();
+    let b = m.boats[k].as_mut().unwrap();
+    b.mode = crate::sim::Mode::Fishing;
+    b.set_vel([0, 0]);
+    let rod = m.rod(k);
+    let at = crate::map::P::new(rod.x + 10_000, rod.y);
+    m.fishing.tame = true;
+    let line = &mut m.fishing.lines[k];
+    line.stage = Stage::Set;
+    line.bobber = at;
+    line.lure_depth_mm = 1000;
+    line.length_mm = 40_000;
+    line.interest = Some(Interest {
+        fish,
+        arrived: true,
+        next: u32::MAX,
+        nibbles_left: 0,
+        biting_until: Some(press_at + 1000),
+    });
+    let f = &mut m.fishing.fish[fish];
+    f.at = at;
+    f.depth_mm = 1000;
+    f.state = FishState::Lured { seat: k };
+    l.nodes[k].input = hold(&["cast"]);
+    let mut press = hold(&["cast"]);
+    press.pressed.set("cast", true);
+    l.nodes[k].presses.push((press_at, press));
+}
+
+fn hooks_of(node: &super::loopback::Node) -> Vec<usize> {
+    node.log
+        .iter()
+        .filter_map(|(_, e)| match e {
+            MatchEvent::Hooked { seat, .. } => Some(*seat),
+            _ => None,
+        })
+        .collect()
+}
+
+#[test]
+fn two_lines_on_one_fish_one_hook_holds_and_its_catch_counts_everywhere() {
+    use crate::sim::fishing::lake::FishState;
+    for seed in [1, 2, 3] {
+        let mut l = fishing_loop(seed);
+        let t = l.nodes[1].game().tick;
+        bite(&mut l, 1, 0, t + 20);
+        bite(&mut l, 2, 0, t + 30);
+        l.run(8000);
+        for (k, node) in l.nodes.iter().enumerate() {
+            let g = node.game();
+            assert_eq!(
+                g.fishing.fish[0].state,
+                FishState::Caught { seat: 1 },
+                "seed {seed}: browser {k} has the first hook's catch"
+            );
+            assert_eq!(g.scores[1].catches.len(), 1, "seed {seed}: browser {k} counts it");
+            assert!(
+                g.scores[2].catches.is_empty(),
+                "seed {seed}: browser {k} gives seat 3 nothing"
+            );
+            assert_eq!(
+                g.scores[1],
+                l.nodes[0].game().scores[1],
+                "seed {seed}: the same catch"
+            );
+        }
+        // the host and the winner hear one hook, the winner's; the loser
+        // hooked it for a moment and let it go
+        assert_eq!(hooks_of(&l.nodes[0]), vec![1], "seed {seed}");
+        assert_eq!(hooks_of(&l.nodes[1]), vec![1], "seed {seed}");
+        assert!(
+            l.nodes[2]
+                .log
+                .iter()
+                .any(|(_, e)| *e == MatchEvent::FishDropped { seat: 2, fish: 0 }),
+            "seed {seed}: the second line lets the fish go"
+        );
+    }
+}
+
+#[test]
+fn a_fish_that_gets_away_is_free_for_another_line() {
+    use crate::sim::fishing::lake::FishState;
+    let mut l = fishing_loop(4);
+    let t = l.nodes[1].game().tick;
+    bite(&mut l, 1, 0, t + 20);
+    // Esc a second later: the fish gets away
+    let mut esc = hold(&[]);
+    esc.pressed.set("cancel", true);
+    l.nodes[1].presses.push((t + 70, esc));
+    l.run(3000);
+    l.nodes[1].input = SeatInput::default();
+    let thing = Thing {
+        kind: "fish".into(),
+        id: 0,
+    };
+    assert_eq!(
+        l.nodes[0].game().online.holder(&thing),
+        None,
+        "the host lets go of it"
+    );
+    for (k, node) in l.nodes.iter().enumerate() {
+        assert!(
+            !matches!(node.game().fishing.fish[0].state, FishState::Hooked { .. }),
+            "browser {k} shows it free"
+        );
+    }
+    let t = l.nodes[2].game().tick;
+    bite(&mut l, 2, 0, t + 20);
+    l.run(8000);
+    for (k, node) in l.nodes.iter().enumerate() {
+        assert_eq!(
+            node.game().fishing.fish[0].state,
+            FishState::Caught { seat: 2 },
+            "browser {k}: the other line lands it"
+        );
+    }
+}
+
+#[test]
+fn the_free_fish_are_where_the_host_has_them() {
+    let mut l = fishing_loop(5);
+    // joiner 1's lake drifts (its own lines draw on its chances alone):
+    // every fish 10 m off
+    for f in l.nodes[1].game_mut().fishing.fish.iter_mut() {
+        f.at = crate::map::P::new(f.at.x + 10_000, f.at.y);
+    }
+    l.run(2000);
+    let host = &l.nodes[0].game().fishing.fish;
+    for k in [1, 2] {
+        let mine = &l.nodes[k].game().fishing.fish;
+        for (f, (a, b)) in host.iter().zip(mine).enumerate().skip(1) {
+            // a second of roaming at most since the last word
+            let d = a.at.dist(b.at);
+            assert!(d <= 3000, "browser {k}: fish {f} is {d} mm from the host's");
+        }
+    }
+}

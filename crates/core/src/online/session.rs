@@ -671,16 +671,18 @@ impl Session {
                 }
             }
             Msg::Report { event } => {
-                // a joiner speaks only for its own boat
-                if let WorldEvent::Wrecked {
-                    seat: s,
-                    cause: WreckCause::Grounded,
-                } = &event
-                {
-                    if Some(*s) == seat {
-                        self.world.push(event.clone());
-                        self.send_others(peer, &Msg::World { event }.encode());
-                    }
+                // a joiner speaks only for its own boat and line
+                let own = match &event {
+                    WorldEvent::Wrecked {
+                        seat: s,
+                        cause: WreckCause::Grounded,
+                    } => Some(*s) == seat,
+                    WorldEvent::FishFreed { .. } => seat.is_some(),
+                    _ => false,
+                };
+                if own {
+                    self.world.push(event.clone());
+                    self.send_others(peer, &Msg::World { event }.encode());
                 }
             }
             Msg::Claim {
@@ -880,6 +882,11 @@ impl Session {
                     claim,
                 };
                 self.send(&h, &c);
+            }
+        }
+        for event in std::mem::take(&mut m.online.reports_out) {
+            if let Some(h) = self.host_peer.clone() {
+                self.send(&h, &Msg::Report { event });
             }
         }
         if self.host {

@@ -578,6 +578,8 @@ impl Match {
             }
         }
         self.fishboy_and_radar(&inputs_or(inputs, self.seats.len()));
+        self.fishing_shared_before();
+        let from = self.events.len();
         let world = fishing::World {
             map: &self.map,
             boats: &self.boats,
@@ -588,6 +590,7 @@ impl Match {
         let all: Vec<SeatInput> = (0..self.seats.len()).map(input).collect();
         self.fishing
             .step(&world, &all, &mut self.scores, &mut self.events);
+        self.fishing_shared_after(from);
         if self.tick >= self.rules.length_ticks && !self.online.end_elsewhere {
             self.ended = true;
             self.events.push(MatchEvent::MatchEnded);
