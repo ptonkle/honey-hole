@@ -76,3 +76,9 @@ Yes: `sight_mm: 120_000` (mm) in `crates/core/src/map/mod.rs`.
 > boat looks good though
 
 The agent decided: the boat is approved as is. The angler is remodelled with tapered, many-sided shapes (no plain boxes), keeping its poses, anchors and colours.
+
+> Fish look pretty good tbh, I do'n thtink it needs any changes right now. The sizes don't look right now, isn't a sturgeon longer? they're all a bit the same shape from the top
+> animations look pretty good
+> lakeside props look good too
+
+The agent decided: the fish's side views, the swims and the lakeside props are approved as they are. The model lengths already differ (bluegill 0.2 m to sturgeon 1.5 m), but the Gallery fits each model to the frame, so they look alike. The Gallery gets a to-scale line-up, base lengths are checked against real adults, and each fish gets its own exaggerated silhouette from above, with the side views and swims kept.
