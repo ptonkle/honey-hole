@@ -18,14 +18,22 @@ feature the interactions never start is a feature this check never saw.
 
     python3 tests/browser/check.py
 
+In a terminal it draws one progress bar per engine (tests/browser/progress.py,
+with `rich` installed); in a log, the plain PASS/FAIL lines.
+
 Environment:
     BUILDER_ENGINES   space-separated engines (default "chromium firefox webkit");
                       add "webkit-iphone" for WebKit as an iPhone 15 with touch.
                       CI may run "chromium" alone (D7); run all three locally
                       before a push.
     BUILDER_IDLE      seconds to idle after load (default 10)
+    BUILDER_STEPS     space-separated interaction steps to run after `boot`
+                      (default: every step; scripts/quick-check.sh sets it)
+    BUILDER_HEADLESS  1: Chromium headless even where it could draw on the
+                      GPU in an invisible Xvfb window (tests/browser/engines.py)
     BUILDER_ORIGIN    check a deployed origin instead of serving dist/, e.g.
                       https://example.github.io/my-tool  (no trailing slash)
+    CHECK_PLAIN       1: the plain lines even in a terminal
 """
 import functools
 import http.server
@@ -37,16 +45,21 @@ import threading
 
 from playwright.sync_api import sync_playwright
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import engines  # noqa: E402  (tests/browser/engines.py)
+import progress  # noqa: E402  (tests/browser/progress.py)
+
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 DIST = ROOT / "dist"
 ENGINES = os.environ.get("BUILDER_ENGINES", "chromium firefox webkit").split()
 IDLE_MS = int(float(os.environ.get("BUILDER_IDLE", "10")) * 1000)
 
 failures = []
+report = None  # tests/browser/progress.py: the bars or the plain lines
 
 
 def check(ok, what):
-    print(("  PASS " if ok else "  FAIL ") + what)
+    report.check(ok, what)
     if not ok:
         failures.append(what)
 
@@ -79,7 +92,8 @@ def load_interactions():
 
 
 def run_engine(p, engine, base, interactions):
-    print(f"\n[{engine}] {base}/")
+    report.note(f"\n[{engine}] {base}/")
+    report.step_start(1, "load", f"load and {IDLE_MS // 1000} s idle")
     scheme_host = base.split("/", 3)
     origin = "/".join(scheme_host[:3])
     seen = {"foreign": [], "console": [], "errors": [], "sockets": [], "popups": [], "workers": []}
@@ -87,12 +101,7 @@ def run_engine(p, engine, base, interactions):
     def same_origin(url):
         return url.startswith(origin + "/") or url.startswith("blob:" + origin) or url.startswith("data:")
 
-    # "webkit-iphone": WebKit with Playwright's iPhone 15 profile (touch, a
-    # phone viewport). Emulation shows layout and touch events; it cannot show
-    # real multitouch, fullscreen or install, which stay a person's check.
-    launcher, _, device = engine.partition("-")
-    profile = dict(p.devices["iPhone 15"]) if device == "iphone" else {}
-    browser = getattr(p, launcher).launch()
+    browser, profile = engines.launch(p, engine)
     context = browser.new_context(accept_downloads=True, **profile)
     context.on("request", lambda r: None if same_origin(r.url) else seen["foreign"].append(r.url))
 
@@ -120,11 +129,14 @@ def run_engine(p, engine, base, interactions):
     page.goto(base + "/index.html")
     page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
     check(True, "page reported ready")
+    report.note(f"  WebGL: {engines.renderer(page)}")
     page.wait_for_timeout(IDLE_MS)
     check(not seen["foreign"], f"no off-origin request during load and {IDLE_MS // 1000}s idle {seen['foreign']}")
+    report.step_end()
 
-    interactions.run(page, check, engine)
+    interactions.run(page, check, engine, report, first=2)
 
+    report.step_start(len(report.steps), "final checks")
     csp = page.evaluate("() => window.__builderCsp || []")
     check(not csp, f"no Content-Security-Policy violation {csp}")
     sw = page.evaluate("() => navigator.serviceWorker ? navigator.serviceWorker.getRegistrations().then(r => r.length) : 0")
@@ -134,6 +146,7 @@ def run_engine(p, engine, base, interactions):
     check(not seen["sockets"], f"no WebSocket {seen['sockets']}")
     check(not seen["popups"], f"no popup {seen['popups']}")
     check(not seen["workers"] and sw == 0, f"no worker or service worker {seen['workers']} sw={sw}")
+    report.step_end()
     browser.close()
 
 
@@ -147,9 +160,17 @@ def main():
         host, port = server.server_address[:2]
         origin = f"http://{host}:{port}"
     interactions = load_interactions()
-    with sync_playwright() as p:
-        for engine in ENGINES:
-            run_engine(p, engine, origin, interactions)
+    global report
+    steps = ["load"] + [n for n, _ in interactions.chosen_steps()] + ["final checks"]
+    report = progress.Report(ENGINES, steps)
+    try:
+        with sync_playwright() as p:
+            for i, engine in enumerate(ENGINES, 1):
+                report.engine_start(i, engine)
+                run_engine(p, engine, origin, interactions)
+                report.engine_end()
+    finally:
+        report.close()
     if server:
         server.shutdown()
     if failures:

@@ -62,4 +62,5 @@ These stay with the person and go in `BRIEF.md` or `PLAN.md`:
 
 | Default | Changed to | Reason | Recorded in |
 | --- | --- | --- | --- |
-| | | | |
+| D7 browser check | Chromium runs windowed on an invisible Xvfb display, drawing on the GPU, where `/dev/dxg` and `Xvfb` exist (WSL); headless elsewhere and on CI, or with `BUILDER_HEADLESS=1`. Interactions are named steps; `BUILDER_STEPS` runs a subset after `boot` (the quick check, Chromium only unless `ALL_BROWSERS=1`). | headless Chromium draws in software, which Ape Race measured at a fifth of the speed once a page animates; the quick check runs only the steps a change needs | `SECOND-ORDER.md` R1.10, R1.11 |
+| R8 `check.sh` contents | a ninth stage, `scripts/tags.py guard`, fails on an untagged test, browser step or tracked file; stages print through `scripts/checkrun.py` (cargo-nextest and progress bars in a terminal, plain `cargo test` and lines in a log) | `scripts/quick-check.sh` is only as safe as `tests/tags.toml` is complete | `SECOND-ORDER.md` R1.4, R1.12 |
