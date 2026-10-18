@@ -3,9 +3,11 @@
 // numbers(), so this file holds no layout of its own. (The machinery
 // follows Ape Race's gl.js; the look is the core's.)
 //
-// Each frame, in order: the sky; the static terrain (uploaded once per
-// world); the props, one instanced draw per group the core lists; the
-// frame's own posed triangles; and last the water, blended over them.
+// Each frame, in order: the static terrain (uploaded once per world); the
+// props, one instanced draw per group the core lists; the frame's own
+// posed triangles; the sky, on the far plane, only where none of those
+// lies (its murk is worked out for no hidden pixel); and last the
+// see-through things and the water, blended over them.
 
 function compile(gl, type, source) {
   const shader = gl.createShader(type);
@@ -127,12 +129,6 @@ export function makeRenderer(canvas, N, shaders) {
       if (!view.length) return;
       const [terrainFirst, terrainCount, waterFirst, waterCount] = statics;
 
-      gl.disable(gl.DEPTH_TEST);
-      sky.use(view);
-      gl.bindVertexArray(skyVao);
-      gl.drawArrays(gl.TRIANGLES, 0, N.sky.length / N.sky_size);
-      gl.enable(gl.DEPTH_TEST);
-
       scene.use(view);
       gl.bindVertexArray(fixedVao);
       gl.drawArrays(gl.TRIANGLES, terrainFirst, terrainCount);
@@ -159,6 +155,15 @@ export function makeRenderer(canvas, N, shaders) {
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STREAM_DRAW);
         gl.drawArrays(gl.TRIANGLES, 0, count);
       }
+
+      // the far plane passes where nothing nearer was drawn
+      sky.use(view);
+      gl.bindVertexArray(skyVao);
+      gl.depthFunc(gl.LEQUAL);
+      gl.depthMask(false);
+      gl.drawArrays(gl.TRIANGLES, 0, N.sky.length / N.sky_size);
+      gl.depthMask(true);
+      gl.depthFunc(gl.LESS);
 
       if (ghostCount) {
         scene.use(ghostView);

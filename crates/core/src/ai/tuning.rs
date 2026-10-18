@@ -65,6 +65,9 @@ pub struct AiTuning {
     pub path_clear_mm: i32,
     /// water nearer land than this costs a path more
     pub path_roomy_mm: i32,
+    /// the A* path searches the crew runs a tick, between all its players
+    /// (one waits a tick when more need one at once: `ai::nav`)
+    pub path_searches_per_tick: i32,
     /// a waypoint is reached within this
     pub waypoint_mm: i32,
     /// with land this near ahead the boat keeps to careful_speed_pct of top
@@ -232,6 +235,7 @@ pub fn check(c: &mut Checker, a: &AiTuning) {
     c.range("ai.path_cell_mm", a.path_cell_mm, 1000, 32_000)
         .range("ai.path_clear_mm", a.path_clear_mm, 0, 40_000)
         .range("ai.path_roomy_mm", a.path_roomy_mm, a.path_clear_mm, 80_000)
+        .range("ai.path_searches_per_tick", a.path_searches_per_tick, 1, 16)
         .range("ai.waypoint_mm", a.waypoint_mm, 500, 40_000)
         .range("ai.look_ahead_mm", a.look_ahead_mm, 1000, 200_000)
         .range("ai.near_land_mm", a.near_land_mm, 0, 40_000)
