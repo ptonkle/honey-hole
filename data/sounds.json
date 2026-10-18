@@ -1,0 +1,493 @@
+{
+  "_note": "Every sound in the game, made by the page's synth (web/audio.js) from these recipes; there are no audio files. Read and checked by crates/core/src/sound/. A cue plays once; a loop plays while the game names it, at the gain and pitch the game sets each frame. Frequencies in Hz, times in ms, gains 0 to 1 (the layers of one cue add up, so keep their sum under about 1), filter Q as WebAudio's, wobble depth in cents. Hear each one on the Sounds screen (Gallery, Sounds).",
+  "_layers": "A cue layer: wave (sine, square, sawtooth, triangle or noise), freq and an optional to_freq it glides to over the layer (glide exp or linear), at_ms (when it starts), attack_ms, hold_ms, release_ms, gain, an optional filter {type lowpass/highpass/bandpass, freq, to_freq, q}, an optional wobble {rate, cents}, stretch (hold as long as the game asks), notes [[at_ms, freq], ...] (one copy per note: a tune, or a chord when the times match) and repeat {times, every_ms}. Noise has no freq; colour it with a filter.",
+  "_events": "Game events (crates/core/src/sim MatchEvent, by name) to cues. who: all, mine (the listener's own seat) or others. {field} puts in an event field; each lists the values it can take. How to add one: the top of crates/core/src/sound/events.rs.",
+  "noise": { "samples": 32768, "seed": 7 },
+  "smooth_ms": 60,
+  "fade_ms": 250,
+  "max_pending": 32,
+  "click": "menu_click",
+  "cues": [
+    {
+      "id": "menu_click",
+      "label": "Menu click",
+      "_about": "a short soft tick, falling",
+      "layers": [
+        { "wave": "triangle", "freq": 1400, "to_freq": 900, "attack_ms": 1, "hold_ms": 6, "release_ms": 35, "gain": 0.25, "filter": { "type": "lowpass", "freq": 5000 } }
+      ]
+    },
+    {
+      "id": "count_3",
+      "label": "Countdown 3",
+      "_about": "a plain beep; 3, 2 and 1 are alike, as on a race start",
+      "layers": [
+        { "wave": "square", "freq": 440, "attack_ms": 2, "hold_ms": 110, "release_ms": 120, "gain": 0.2, "filter": { "type": "lowpass", "freq": 2400 } }
+      ]
+    },
+    {
+      "id": "count_2",
+      "label": "Countdown 2",
+      "layers": [
+        { "wave": "square", "freq": 440, "attack_ms": 2, "hold_ms": 110, "release_ms": 120, "gain": 0.2, "filter": { "type": "lowpass", "freq": 2400 } }
+      ]
+    },
+    {
+      "id": "count_1",
+      "label": "Countdown 1",
+      "layers": [
+        { "wave": "square", "freq": 440, "attack_ms": 2, "hold_ms": 110, "release_ms": 120, "gain": 0.2, "filter": { "type": "lowpass", "freq": 2400 } }
+      ]
+    },
+    {
+      "id": "match_start",
+      "label": "Match start fanfare",
+      "_about": "the go beep an octave up, a quick C major run, then a held chord",
+      "layers": [
+        { "wave": "square", "freq": 880, "attack_ms": 2, "hold_ms": 160, "release_ms": 120, "gain": 0.2, "filter": { "type": "lowpass", "freq": 3000 } },
+        { "wave": "sawtooth", "at_ms": 200, "freq": 523, "attack_ms": 4, "hold_ms": 70, "release_ms": 50, "gain": 0.14, "filter": { "type": "lowpass", "freq": 2600 }, "notes": [[0, 523], [100, 659], [200, 784]] },
+        { "wave": "sawtooth", "at_ms": 500, "freq": 1047, "attack_ms": 8, "hold_ms": 350, "release_ms": 500, "gain": 0.09, "filter": { "type": "lowpass", "freq": 1800, "to_freq": 3600 }, "notes": [[0, 1047], [0, 784], [0, 659], [0, 523]] }
+      ]
+    },
+    {
+      "id": "cast_whoosh",
+      "label": "Cast whoosh",
+      "_about": "air through a band filter sweeping up, and the line's thin zing falling",
+      "layers": [
+        { "wave": "noise", "attack_ms": 70, "hold_ms": 60, "release_ms": 240, "gain": 0.5, "filter": { "type": "bandpass", "freq": 500, "to_freq": 3200, "q": 1.2 } },
+        { "wave": "sine", "freq": 2200, "to_freq": 900, "attack_ms": 20, "hold_ms": 80, "release_ms": 260, "gain": 0.05 }
+      ]
+    },
+    {
+      "id": "bobber_plop",
+      "label": "Bobber plop",
+      "_about": "a falling sine bloop with a little splash of low noise",
+      "layers": [
+        { "wave": "sine", "freq": 560, "to_freq": 140, "attack_ms": 2, "hold_ms": 20, "release_ms": 150, "gain": 0.5 },
+        { "wave": "noise", "at_ms": 15, "attack_ms": 2, "hold_ms": 10, "release_ms": 170, "gain": 0.22, "filter": { "type": "lowpass", "freq": 1100, "to_freq": 300 } }
+      ]
+    },
+    {
+      "id": "nibble_tick",
+      "label": "Nibble tick",
+      "_about": "a tiny dry tick on the line",
+      "layers": [
+        { "wave": "sine", "freq": 1250, "to_freq": 900, "attack_ms": 1, "hold_ms": 8, "release_ms": 35, "gain": 0.25 },
+        { "wave": "noise", "attack_ms": 1, "hold_ms": 3, "release_ms": 18, "gain": 0.1, "filter": { "type": "bandpass", "freq": 3000, "q": 3 } }
+      ]
+    },
+    {
+      "id": "bite",
+      "label": "Bite",
+      "_about": "a low tug thump and splash, with two sharp high blips: press now",
+      "layers": [
+        { "wave": "sine", "freq": 300, "to_freq": 90, "attack_ms": 3, "hold_ms": 40, "release_ms": 200, "gain": 0.5 },
+        { "wave": "noise", "attack_ms": 2, "hold_ms": 20, "release_ms": 140, "gain": 0.25, "filter": { "type": "lowpass", "freq": 1500 } },
+        { "wave": "square", "freq": 1320, "attack_ms": 1, "hold_ms": 35, "release_ms": 40, "gain": 0.12, "filter": { "type": "lowpass", "freq": 4000 }, "notes": [[0, 1320], [95, 1320]] }
+      ]
+    },
+    {
+      "id": "hook_set",
+      "label": "Hook set",
+      "_about": "the yank: a rising buzz and a zip of line, then a bright two-note chime",
+      "layers": [
+        { "wave": "sawtooth", "freq": 160, "to_freq": 520, "attack_ms": 5, "hold_ms": 60, "release_ms": 120, "gain": 0.25, "filter": { "type": "lowpass", "freq": 2500 } },
+        { "wave": "noise", "attack_ms": 2, "hold_ms": 40, "release_ms": 90, "gain": 0.22, "filter": { "type": "highpass", "freq": 2000 } },
+        { "wave": "triangle", "at_ms": 120, "freq": 784, "attack_ms": 2, "hold_ms": 50, "release_ms": 220, "gain": 0.22, "notes": [[0, 784], [80, 1175]] }
+      ]
+    },
+    {
+      "id": "reel_click",
+      "label": "Reel ratchet click",
+      "_about": "one click of the ratchet; the game plays it faster and a little higher as you reel faster",
+      "layers": [
+        { "wave": "square", "freq": 2600, "attack_ms": 1, "hold_ms": 2, "release_ms": 12, "gain": 0.12, "filter": { "type": "highpass", "freq": 1500 } },
+        { "wave": "noise", "attack_ms": 1, "hold_ms": 2, "release_ms": 16, "gain": 0.2, "filter": { "type": "bandpass", "freq": 4000, "q": 3 } }
+      ]
+    },
+    {
+      "id": "line_snap",
+      "label": "Line snap",
+      "_about": "a crack of high noise and a falling twang",
+      "layers": [
+        { "wave": "noise", "attack_ms": 1, "hold_ms": 15, "release_ms": 90, "gain": 0.55, "filter": { "type": "highpass", "freq": 2500 } },
+        { "wave": "sine", "freq": 1800, "to_freq": 120, "attack_ms": 1, "hold_ms": 10, "release_ms": 280, "gain": 0.28 },
+        { "wave": "triangle", "freq": 220, "to_freq": 70, "attack_ms": 2, "hold_ms": 20, "release_ms": 320, "gain": 0.18 }
+      ]
+    },
+    {
+      "id": "catch_common",
+      "label": "Catch, Common",
+      "_about": "two rising notes",
+      "layers": [
+        { "wave": "triangle", "freq": 659, "attack_ms": 3, "hold_ms": 60, "release_ms": 160, "gain": 0.28, "notes": [[0, 659], [90, 784]] }
+      ]
+    },
+    {
+      "id": "catch_uncommon",
+      "label": "Catch, Uncommon",
+      "_about": "three rising notes, the last held",
+      "layers": [
+        { "wave": "triangle", "freq": 659, "attack_ms": 3, "hold_ms": 60, "release_ms": 160, "gain": 0.26, "notes": [[0, 659], [90, 784]] },
+        { "wave": "triangle", "at_ms": 180, "freq": 988, "attack_ms": 3, "hold_ms": 160, "release_ms": 300, "gain": 0.26 }
+      ]
+    },
+    {
+      "id": "catch_rare",
+      "label": "Catch, Rare",
+      "_about": "a four-note D major run on a soft square, then a shimmering held chord",
+      "layers": [
+        { "wave": "square", "freq": 587, "attack_ms": 3, "hold_ms": 60, "release_ms": 70, "gain": 0.14, "filter": { "type": "lowpass", "freq": 2600 }, "notes": [[0, 587], [90, 740], [180, 880], [270, 1175]] },
+        { "wave": "triangle", "at_ms": 360, "freq": 1175, "attack_ms": 6, "hold_ms": 300, "release_ms": 550, "gain": 0.14, "wobble": { "rate": 6, "cents": 12 }, "notes": [[0, 1175], [0, 880], [0, 587]] }
+      ]
+    },
+    {
+      "id": "catch_legendary",
+      "label": "Catch, Legendary",
+      "_about": "the triumphant sting: brassy da-da-da-DAAH, a big held chord opening up, a timpani hit and a cymbal",
+      "layers": [
+        { "wave": "sawtooth", "freq": 523, "attack_ms": 8, "hold_ms": 80, "release_ms": 50, "gain": 0.16, "filter": { "type": "lowpass", "freq": 2200 }, "notes": [[0, 523], [120, 523], [240, 523]] },
+        { "wave": "sawtooth", "at_ms": 360, "freq": 698, "attack_ms": 10, "hold_ms": 700, "release_ms": 800, "gain": 0.08, "filter": { "type": "lowpass", "freq": 1400, "to_freq": 4200 }, "notes": [[0, 1047], [0, 880], [0, 698], [0, 523]] },
+        { "wave": "sine", "at_ms": 360, "freq": 98, "to_freq": 80, "attack_ms": 3, "hold_ms": 60, "release_ms": 700, "gain": 0.45 },
+        { "wave": "noise", "at_ms": 360, "attack_ms": 2, "hold_ms": 60, "release_ms": 1100, "gain": 0.1, "filter": { "type": "highpass", "freq": 6000 } }
+      ]
+    },
+    {
+      "id": "radar_ping",
+      "label": "Radar ping",
+      "_about": "a sonar ping: a pure tone with a long tail and a faint octave above",
+      "layers": [
+        { "wave": "sine", "freq": 1300, "attack_ms": 2, "hold_ms": 40, "release_ms": 1100, "gain": 0.3 },
+        { "wave": "sine", "freq": 2600, "attack_ms": 2, "hold_ms": 10, "release_ms": 400, "gain": 0.06 }
+      ]
+    },
+    {
+      "id": "sweep_hum",
+      "label": "Radar sweep hum",
+      "_about": "a low electrical hum that lasts the sweep (the game sets its length from the ping's sweep time)",
+      "layers": [
+        { "wave": "triangle", "freq": 110, "attack_ms": 200, "hold_ms": 2600, "release_ms": 300, "gain": 0.16, "stretch": true, "filter": { "type": "lowpass", "freq": 700 }, "wobble": { "rate": 3, "cents": 15 } },
+        { "wave": "sine", "freq": 220, "attack_ms": 200, "hold_ms": 2600, "release_ms": 300, "gain": 0.06, "stretch": true }
+      ]
+    },
+    {
+      "id": "radar_blip",
+      "label": "Radar blip",
+      "_about": "a short bright blip as the sweep finds something",
+      "layers": [
+        { "wave": "sine", "freq": 1800, "attack_ms": 1, "hold_ms": 25, "release_ms": 90, "gain": 0.22 },
+        { "wave": "square", "freq": 900, "attack_ms": 1, "hold_ms": 20, "release_ms": 60, "gain": 0.05, "filter": { "type": "lowpass", "freq": 2000 } }
+      ]
+    },
+    {
+      "id": "buoy_warning",
+      "label": "Item buoy warning",
+      "_about": "two bell strikes, B then E, with a faint inharmonic overtone",
+      "layers": [
+        { "wave": "sine", "freq": 988, "attack_ms": 2, "release_ms": 1100, "gain": 0.25, "notes": [[0, 988], [350, 1319]] },
+        { "wave": "sine", "freq": 2470, "attack_ms": 2, "release_ms": 500, "gain": 0.06, "notes": [[0, 2470], [350, 3297]] }
+      ]
+    },
+    {
+      "id": "buoy_beat_5",
+      "label": "Buoy countdown 5",
+      "_about": "the five beats climb G, A, B, C; the last one is high, longer and sparkles",
+      "layers": [
+        { "wave": "square", "freq": 392, "attack_ms": 2, "hold_ms": 70, "release_ms": 160, "gain": 0.18, "filter": { "type": "lowpass", "freq": 2000 } },
+        { "wave": "noise", "attack_ms": 1, "hold_ms": 5, "release_ms": 40, "gain": 0.15, "filter": { "type": "bandpass", "freq": 1200, "q": 5 } }
+      ]
+    },
+    {
+      "id": "buoy_beat_4",
+      "label": "Buoy countdown 4",
+      "layers": [
+        { "wave": "square", "freq": 440, "attack_ms": 2, "hold_ms": 70, "release_ms": 160, "gain": 0.18, "filter": { "type": "lowpass", "freq": 2000 } },
+        { "wave": "noise", "attack_ms": 1, "hold_ms": 5, "release_ms": 40, "gain": 0.15, "filter": { "type": "bandpass", "freq": 1200, "q": 5 } }
+      ]
+    },
+    {
+      "id": "buoy_beat_3",
+      "label": "Buoy countdown 3",
+      "layers": [
+        { "wave": "square", "freq": 494, "attack_ms": 2, "hold_ms": 70, "release_ms": 160, "gain": 0.18, "filter": { "type": "lowpass", "freq": 2000 } },
+        { "wave": "noise", "attack_ms": 1, "hold_ms": 5, "release_ms": 40, "gain": 0.15, "filter": { "type": "bandpass", "freq": 1200, "q": 5 } }
+      ]
+    },
+    {
+      "id": "buoy_beat_2",
+      "label": "Buoy countdown 2",
+      "layers": [
+        { "wave": "square", "freq": 523, "attack_ms": 2, "hold_ms": 70, "release_ms": 160, "gain": 0.18, "filter": { "type": "lowpass", "freq": 2000 } },
+        { "wave": "noise", "attack_ms": 1, "hold_ms": 5, "release_ms": 40, "gain": 0.15, "filter": { "type": "bandpass", "freq": 1200, "q": 5 } }
+      ]
+    },
+    {
+      "id": "buoy_beat_1",
+      "label": "Buoy countdown 1 (spawns)",
+      "layers": [
+        { "wave": "square", "freq": 784, "attack_ms": 2, "hold_ms": 220, "release_ms": 400, "gain": 0.18, "filter": { "type": "lowpass", "freq": 3000 } },
+        { "wave": "triangle", "freq": 1175, "attack_ms": 2, "hold_ms": 200, "release_ms": 500, "gain": 0.12 },
+        { "wave": "sine", "at_ms": 120, "freq": 2349, "attack_ms": 2, "hold_ms": 20, "release_ms": 300, "gain": 0.06, "notes": [[0, 2349], [70, 3136]] }
+      ]
+    },
+    {
+      "id": "item_pickup",
+      "label": "Item pickup",
+      "_about": "a quick bright three-note bling",
+      "layers": [
+        { "wave": "square", "freq": 988, "attack_ms": 2, "hold_ms": 40, "release_ms": 120, "gain": 0.13, "filter": { "type": "lowpass", "freq": 4000 }, "notes": [[0, 988], [60, 1319], [120, 1976]] },
+        { "wave": "sine", "at_ms": 180, "freq": 2637, "attack_ms": 2, "release_ms": 500, "gain": 0.08 }
+      ]
+    },
+    {
+      "id": "power_reel_on",
+      "label": "Power Reel on",
+      "_about": "a whirr spinning up",
+      "layers": [
+        { "wave": "sawtooth", "freq": 180, "to_freq": 1100, "attack_ms": 40, "hold_ms": 300, "release_ms": 200, "gain": 0.1, "filter": { "type": "lowpass", "freq": 900, "to_freq": 4000 }, "wobble": { "rate": 30, "cents": 40 } },
+        { "wave": "triangle", "at_ms": 420, "freq": 1568, "attack_ms": 2, "hold_ms": 40, "release_ms": 200, "gain": 0.15 }
+      ]
+    },
+    {
+      "id": "minigame_start",
+      "label": "Minigame start",
+      "_about": "a quick whoop and a rising three-note sting, then a snare hit",
+      "layers": [
+        { "wave": "sine", "freq": 400, "to_freq": 1200, "attack_ms": 10, "hold_ms": 150, "release_ms": 60, "gain": 0.1 },
+        { "wave": "square", "freq": 659, "attack_ms": 2, "hold_ms": 60, "release_ms": 80, "gain": 0.15, "filter": { "type": "lowpass", "freq": 3000 }, "notes": [[0, 659], [100, 880], [200, 1319]] },
+        { "wave": "noise", "at_ms": 300, "attack_ms": 1, "hold_ms": 20, "release_ms": 150, "gain": 0.15, "filter": { "type": "highpass", "freq": 3000 } }
+      ]
+    },
+    {
+      "id": "minigame_tick",
+      "label": "Minigame tick",
+      "_about": "a tight high tick for each hit or step",
+      "layers": [
+        { "wave": "triangle", "freq": 1568, "attack_ms": 1, "hold_ms": 10, "release_ms": 55, "gain": 0.2 }
+      ]
+    },
+    {
+      "id": "minigame_success",
+      "label": "Minigame success",
+      "_about": "a G major run up and a held chord",
+      "layers": [
+        { "wave": "square", "freq": 784, "attack_ms": 2, "hold_ms": 60, "release_ms": 90, "gain": 0.13, "filter": { "type": "lowpass", "freq": 3500 }, "notes": [[0, 784], [90, 988], [180, 1175]] },
+        { "wave": "triangle", "at_ms": 270, "freq": 1568, "attack_ms": 4, "hold_ms": 200, "release_ms": 420, "gain": 0.14, "notes": [[0, 1568], [0, 1175], [0, 988]] }
+      ]
+    },
+    {
+      "id": "explosion",
+      "label": "Explosion (wreck)",
+      "_about": "a deep falling boom under a burst of noise whose filter closes, with a mid crackle",
+      "layers": [
+        { "wave": "noise", "attack_ms": 2, "hold_ms": 80, "release_ms": 1300, "gain": 0.5, "filter": { "type": "lowpass", "freq": 3000, "to_freq": 180 } },
+        { "wave": "sine", "freq": 110, "to_freq": 30, "attack_ms": 2, "hold_ms": 50, "release_ms": 750, "gain": 0.45 },
+        { "wave": "noise", "at_ms": 60, "attack_ms": 5, "hold_ms": 40, "release_ms": 420, "gain": 0.2, "filter": { "type": "bandpass", "freq": 900, "q": 0.8 } }
+      ]
+    },
+    {
+      "id": "respawn_whoosh",
+      "label": "Respawn whoosh",
+      "_about": "a rising whoosh that lands on a soft sparkle",
+      "layers": [
+        { "wave": "noise", "attack_ms": 300, "hold_ms": 50, "release_ms": 250, "gain": 0.35, "filter": { "type": "bandpass", "freq": 400, "to_freq": 2600, "q": 1.5 } },
+        { "wave": "sine", "freq": 300, "to_freq": 900, "attack_ms": 300, "hold_ms": 30, "release_ms": 200, "gain": 0.1 },
+        { "wave": "triangle", "at_ms": 520, "freq": 1568, "attack_ms": 2, "hold_ms": 30, "release_ms": 320, "gain": 0.12, "notes": [[0, 1568], [60, 2093]] }
+      ]
+    },
+    {
+      "id": "bump",
+      "label": "Bump",
+      "_about": "a soft hull thunk with a little aluminium clank",
+      "layers": [
+        { "wave": "sine", "freq": 160, "to_freq": 70, "attack_ms": 2, "hold_ms": 15, "release_ms": 160, "gain": 0.5 },
+        { "wave": "noise", "attack_ms": 1, "hold_ms": 8, "release_ms": 120, "gain": 0.2, "filter": { "type": "lowpass", "freq": 600 } },
+        { "wave": "triangle", "freq": 340, "to_freq": 220, "attack_ms": 2, "hold_ms": 10, "release_ms": 180, "gain": 0.1 }
+      ]
+    },
+    {
+      "id": "cloak_on",
+      "label": "Cloak on",
+      "_about": "a wavering tone falling away under a hiss closing down: fading out of sight",
+      "layers": [
+        { "wave": "sine", "freq": 1800, "to_freq": 300, "attack_ms": 20, "hold_ms": 100, "release_ms": 450, "gain": 0.15, "wobble": { "rate": 12, "cents": 40 } },
+        { "wave": "noise", "attack_ms": 50, "hold_ms": 100, "release_ms": 350, "gain": 0.1, "filter": { "type": "highpass", "freq": 5000, "to_freq": 1000 } }
+      ]
+    },
+    {
+      "id": "cloak_off",
+      "label": "Cloak off",
+      "_about": "the cloak in reverse: a wavering tone rising back",
+      "layers": [
+        { "wave": "sine", "freq": 300, "to_freq": 1800, "attack_ms": 150, "hold_ms": 100, "release_ms": 200, "gain": 0.15, "wobble": { "rate": 12, "cents": 40 } },
+        { "wave": "noise", "attack_ms": 150, "hold_ms": 60, "release_ms": 150, "gain": 0.08, "filter": { "type": "highpass", "freq": 1000, "to_freq": 5000 } }
+      ]
+    },
+    {
+      "id": "nitrous_roar",
+      "label": "Nitrous roar",
+      "_about": "a rumbling roar opening up: noise through a rising low-pass over a growling sawtooth",
+      "layers": [
+        { "wave": "noise", "attack_ms": 80, "hold_ms": 700, "release_ms": 700, "gain": 0.45, "filter": { "type": "lowpass", "freq": 400, "to_freq": 4000 } },
+        { "wave": "sawtooth", "freq": 70, "to_freq": 160, "attack_ms": 50, "hold_ms": 700, "release_ms": 600, "gain": 0.22, "filter": { "type": "lowpass", "freq": 900 }, "wobble": { "rate": 25, "cents": 30 } }
+      ]
+    },
+    {
+      "id": "teleport_charge",
+      "label": "Teleport charge",
+      "_about": "a rising, wavering charge that lasts the teleporter's charge (the game sets its length)",
+      "layers": [
+        { "wave": "sawtooth", "freq": 110, "to_freq": 880, "attack_ms": 300, "hold_ms": 4400, "release_ms": 300, "gain": 0.09, "stretch": true, "filter": { "type": "lowpass", "freq": 600, "to_freq": 5000 }, "wobble": { "rate": 8, "cents": 30 } },
+        { "wave": "sine", "freq": 220, "to_freq": 1760, "attack_ms": 300, "hold_ms": 4400, "release_ms": 300, "gain": 0.07, "stretch": true }
+      ]
+    },
+    {
+      "id": "teleport_zap",
+      "label": "Teleport zap",
+      "_about": "a crack of noise and a fast falling zap",
+      "layers": [
+        { "wave": "noise", "attack_ms": 1, "hold_ms": 30, "release_ms": 250, "gain": 0.4, "filter": { "type": "highpass", "freq": 1200 } },
+        { "wave": "square", "freq": 1760, "to_freq": 110, "attack_ms": 1, "hold_ms": 10, "release_ms": 300, "gain": 0.16, "filter": { "type": "lowpass", "freq": 5000 } }
+      ]
+    },
+    {
+      "id": "camera_shutter",
+      "label": "Camera shutter",
+      "_about": "two quick shutter clicks and a short film wind",
+      "layers": [
+        { "wave": "noise", "attack_ms": 1, "hold_ms": 4, "release_ms": 25, "gain": 0.45, "filter": { "type": "bandpass", "freq": 3500, "q": 2 }, "repeat": { "times": 2, "every_ms": 70 } },
+        { "wave": "sine", "freq": 900, "attack_ms": 1, "hold_ms": 3, "release_ms": 20, "gain": 0.12, "repeat": { "times": 2, "every_ms": 70 } },
+        { "wave": "noise", "at_ms": 150, "attack_ms": 10, "hold_ms": 120, "release_ms": 60, "gain": 0.1, "filter": { "type": "bandpass", "freq": 1200, "q": 4 } }
+      ]
+    },
+    {
+      "id": "fish_boy_open",
+      "label": "Fish-Boy open",
+      "_about": "a rising electronic power-up beep and a puff of static",
+      "layers": [
+        { "wave": "square", "freq": 220, "to_freq": 880, "attack_ms": 5, "hold_ms": 60, "release_ms": 60, "gain": 0.09, "filter": { "type": "lowpass", "freq": 2000 } },
+        { "wave": "sine", "at_ms": 110, "freq": 1760, "attack_ms": 2, "hold_ms": 30, "release_ms": 120, "gain": 0.14 },
+        { "wave": "noise", "attack_ms": 5, "hold_ms": 60, "release_ms": 80, "gain": 0.05, "filter": { "type": "highpass", "freq": 6000 } }
+      ]
+    },
+    {
+      "id": "fish_boy_close",
+      "label": "Fish-Boy close",
+      "_about": "the open beep falling",
+      "layers": [
+        { "wave": "sine", "freq": 1760, "attack_ms": 2, "hold_ms": 20, "release_ms": 60, "gain": 0.12 },
+        { "wave": "square", "at_ms": 60, "freq": 880, "to_freq": 220, "attack_ms": 5, "hold_ms": 50, "release_ms": 60, "gain": 0.09, "filter": { "type": "lowpass", "freq": 2000 } }
+      ]
+    },
+    {
+      "id": "hook_announce",
+      "label": "Hook announcement",
+      "_about": "the popup chime another player's hook rings: a bright rising fifth",
+      "layers": [
+        { "wave": "triangle", "freq": 1047, "attack_ms": 2, "hold_ms": 40, "release_ms": 320, "gain": 0.2, "notes": [[0, 1047], [110, 1568]] },
+        { "wave": "sine", "freq": 2093, "attack_ms": 2, "hold_ms": 10, "release_ms": 200, "gain": 0.05, "notes": [[0, 2093], [110, 3136]] }
+      ]
+    },
+    {
+      "id": "wreck_announce",
+      "label": "Wreck announcement",
+      "_about": "the popup chime for a wreck: two falling notes, lower than the hook's",
+      "layers": [
+        { "wave": "triangle", "freq": 659, "attack_ms": 2, "hold_ms": 60, "release_ms": 320, "gain": 0.22, "notes": [[0, 659], [140, 523]] }
+      ]
+    },
+    {
+      "id": "match_end_horn",
+      "label": "Match end horn",
+      "_about": "a boat's air horn: a held B-flat and D chord through a low-pass, wavering a little",
+      "layers": [
+        { "wave": "sawtooth", "freq": 233, "attack_ms": 30, "hold_ms": 1100, "release_ms": 300, "gain": 0.14, "filter": { "type": "lowpass", "freq": 1400 }, "wobble": { "rate": 5, "cents": 8 }, "notes": [[0, 233], [0, 294]] },
+        { "wave": "square", "freq": 349, "attack_ms": 30, "hold_ms": 1100, "release_ms": 300, "gain": 0.08, "filter": { "type": "lowpass", "freq": 1200 } }
+      ]
+    },
+    {
+      "id": "tally_tick",
+      "label": "Postgame tally tick",
+      "_about": "a tiny coin tick for each point counted up",
+      "layers": [
+        { "wave": "square", "freq": 2093, "attack_ms": 1, "hold_ms": 6, "release_ms": 35, "gain": 0.1, "filter": { "type": "lowpass", "freq": 6000 } }
+      ]
+    },
+    {
+      "id": "winner_fanfare",
+      "label": "Winner fanfare",
+      "_about": "a trumpet tune C E G C, G C, then a full held chord with a timpani roll and a cymbal",
+      "layers": [
+        { "wave": "sawtooth", "freq": 523, "attack_ms": 8, "hold_ms": 110, "release_ms": 60, "gain": 0.14, "filter": { "type": "lowpass", "freq": 2500 }, "notes": [[0, 523], [150, 659], [300, 784], [450, 1047], [750, 784], [900, 1047]] },
+        { "wave": "sawtooth", "at_ms": 1050, "freq": 523, "attack_ms": 10, "hold_ms": 900, "release_ms": 900, "gain": 0.07, "filter": { "type": "lowpass", "freq": 1500, "to_freq": 3600 }, "notes": [[0, 1047], [0, 784], [0, 659], [0, 523]] },
+        { "wave": "sine", "at_ms": 1050, "freq": 98, "attack_ms": 3, "hold_ms": 20, "release_ms": 120, "gain": 0.25, "repeat": { "times": 8, "every_ms": 60 } },
+        { "wave": "noise", "at_ms": 1050, "attack_ms": 2, "hold_ms": 60, "release_ms": 1400, "gain": 0.1, "filter": { "type": "highpass", "freq": 6000 } }
+      ]
+    },
+    { "id": "use_cloak", "same_as": "cloak_on" },
+    { "id": "use_power_reel", "same_as": "power_reel_on" },
+    { "id": "use_nitrous", "same_as": "nitrous_roar" },
+    { "id": "use_teleporter", "same_as": "teleport_charge" },
+    { "id": "use_camera", "same_as": "camera_shutter" },
+    { "id": "use_enhanced_radar", "same_as": "radar_ping" }
+  ],
+  "loops": [
+    {
+      "id": "own_motor",
+      "label": "Your motor",
+      "_about": "an outboard: a low sawtooth putter (its throb speeds with the pitch), a square an octave up, and water hiss",
+      "layers": [
+        { "wave": "sawtooth", "freq": 55, "gain": 0.5, "filter": { "type": "lowpass", "freq": 600, "q": 2 }, "throb": { "rate": 16, "depth": 0.5 } },
+        { "wave": "square", "freq": 110, "gain": 0.14, "filter": { "type": "lowpass", "freq": 900 } },
+        { "wave": "noise", "gain": 0.07, "filter": { "type": "lowpass", "freq": 1000 } }
+      ]
+    },
+    {
+      "id": "rival_motor",
+      "label": "Rival motor",
+      "_about": "another boat's outboard at top speed, a little higher and buzzier than yours so the two can be told apart",
+      "layers": [
+        { "wave": "sawtooth", "freq": 130, "gain": 0.55, "filter": { "type": "lowpass", "freq": 1100, "q": 2 }, "throb": { "rate": 34, "depth": 0.55 } },
+        { "wave": "square", "freq": 260, "gain": 0.15, "filter": { "type": "lowpass", "freq": 1500 } }
+      ]
+    },
+    {
+      "id": "line_tension",
+      "label": "Line tension",
+      "_about": "a thin wavering whine that climbs as the line tightens",
+      "layers": [
+        { "wave": "sine", "freq": 900, "gain": 0.5, "wobble": { "rate": 7, "cents": 25 } },
+        { "wave": "triangle", "freq": 1800, "gain": 0.15, "filter": { "type": "bandpass", "freq": 1800, "q": 4 } }
+      ]
+    }
+  ],
+  "events": {
+    "Countdown": [{ "cue": "count_{left}", "each": { "left": [3, 2, 1] } }],
+    "MatchStarted": [{ "cue": "match_start" }],
+    "Cast": [{ "cue": "cast_whoosh", "who": "mine" }],
+    "BobberLanded": [{ "cue": "bobber_plop", "who": "mine" }],
+    "Nibble": [{ "cue": "nibble_tick", "who": "mine" }],
+    "Bite": [{ "cue": "bite", "who": "mine" }],
+    "Hooked": [{ "cue": "hook_set", "who": "mine" }, { "cue": "hook_announce", "who": "others" }],
+    "LineBroke": [{ "cue": "line_snap", "who": "mine" }],
+    "Caught": [{ "cue": "catch_{tier}", "who": "mine", "each": { "tier": ["common", "uncommon", "rare", "legendary"] } }],
+    "Pinged": [{ "cue": "radar_ping", "who": "mine" }, { "cue": "sweep_hum", "who": "mine", "duration_field": "sweep_ms" }],
+    "Revealed": [{ "cue": "radar_blip", "who": "mine" }],
+    "BuoyWarning": [{ "cue": "buoy_warning" }],
+    "BuoyBeat": [{ "cue": "buoy_beat_{left}", "each": { "left": [5, 4, 3, 2, 1] } }],
+    "ItemPicked": [{ "cue": "item_pickup", "who": "mine" }],
+    "MinigameStarted": [{ "cue": "minigame_start", "who": "mine" }],
+    "MinigameTick": [{ "cue": "minigame_tick", "who": "mine" }],
+    "MinigameDone": [{ "cue": "minigame_success", "who": "mine" }],
+    "ItemUsed": [{ "cue": "use_{item}", "who": "mine", "each": { "item": ["cloak", "power_reel", "nitrous", "teleporter", "camera", "enhanced_radar"] } }],
+    "CloakEnded": [{ "cue": "cloak_off", "who": "mine" }],
+    "Teleported": [{ "cue": "teleport_zap", "who": "mine" }],
+    "Bumped": [{ "cue": "bump", "who": "mine" }, { "cue": "bump", "who": "mine", "seat_field": "other" }],
+    "Wrecked": [{ "cue": "explosion" }, { "cue": "wreck_announce", "delay_ms": 350 }],
+    "Respawned": [{ "cue": "respawn_whoosh", "who": "mine" }],
+    "FishBoyOpened": [{ "cue": "fish_boy_open", "who": "mine" }],
+    "FishBoyClosed": [{ "cue": "fish_boy_close", "who": "mine" }],
+    "MatchEnded": [{ "cue": "match_end_horn" }],
+    "TallyTick": [{ "cue": "tally_tick" }],
+    "Winner": [{ "cue": "winner_fanfare" }]
+  }
+}

@@ -26,6 +26,7 @@
 ## Models
 
 13. Model files (`data/models/`) are not built from boxes by default. Shape limbs as tapered 6–8 sided tubes, heads as rounded forms (12+ sides), and hats, bodies and fins as cones, wedges and tapered shapes. A box is for something that really is a box (a crate, a cabin wall, a screen). The person's words, 2026-10-17: "in the future do not just default to building things out of cubes".
+14. A model of a real creature or thing is checked against the real one from above, the side and 3/4 before it is shown: the body plan, where it is widest, the head and snout, fin or limb positions, the tail. Cartoony is fine; wrong anatomy is not, and a feature is not exaggerated into the wrong shape to make it read. The person's words, 2026-10-17: "apply similar scrutiny to all fish models for this game ... and in the future".
 
 ## Stopping
 
