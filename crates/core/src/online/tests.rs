@@ -599,7 +599,6 @@ fn the_countdown_runs_out_together_and_the_clock_then_follows_the_host() {
                 );
             }
         }
-        let host = l.nodes[0].game().tick;
         for (k, node) in l.nodes.iter().enumerate() {
             let beats = node
                 .log
