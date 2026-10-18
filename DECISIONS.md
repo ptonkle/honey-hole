@@ -61,3 +61,7 @@ The agent decided: the radar keeps its first look (fine grid, thin ping rings, s
 > reeds have no effect, I woul dneed to see the fog distance in game
 
 The agent decided: boats pass through reeds with no slowdown or collision; reeds are scenery (and later a fish habitat). The fog distance stays at 120 m for now, and the map checker's cover rule uses that value. Once the lake is drawn in 3D, a debug control will set the fog distance live so the person can choose it in the game; the checker's sight distance then follows the chosen value. Boat top speed (16 m/s) and rare/legendary spacing (60 m) keep the map work's defaults until the person says otherwise.
+
+> fog distance should be very easy to tune quickly too
+
+The agent decided: the fog distance is a single value in one data file, which the game and the map checker both read. It can also be changed live in game from a debug control, for trying values without a rebuild. A changed value can make some pregenerated layouts too open or too cramped, so one command rescans the layout list; a test fails if the list was checked against a different fog distance than the file holds, so the two can't drift apart unnoticed.
