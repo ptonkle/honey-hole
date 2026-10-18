@@ -531,6 +531,8 @@ impl Session {
         let n = m.boats.len();
         m.online.role = if self.host { Role::Host } else { Role::Client };
         m.online.remote = (0..n).map(|s| !self.owns(s)).collect();
+        // Cloaking Tech's flag, by seat (the items system sets its own)
+        m.online.hidden = vec![false; n];
         m.online.rams_elsewhere = true;
         m.online.end_elsewhere = !self.host;
         m.fishing.announcer.online = true;
