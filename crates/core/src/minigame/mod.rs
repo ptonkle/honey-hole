@@ -191,6 +191,7 @@ pub(crate) struct Paint<'a> {
     pub held: bool,
 }
 
+#[derive(Debug, Clone)]
 enum Game {
     Cloak(cloak::Cloak),
     Reel(reel::Reel),
@@ -200,6 +201,7 @@ enum Game {
     Focus(focus::Focus),
 }
 
+#[derive(Debug, Clone)]
 pub struct Minigame {
     pub kind: Kind,
     canvas: [i32; 2],

@@ -47,6 +47,7 @@ impl Atom {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Atoms {
     pub t: AtomsTuning,
     pub atoms: Vec<Atom>,

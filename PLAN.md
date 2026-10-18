@@ -80,6 +80,12 @@ Collected as the agent makes them; brought up in the morning. Each also has a ro
 - V42. Online (decision 11, as built): other boats drawn 100 ms behind; boats meeting at ram speed pass through each other until the host's verdict, about a round trip later; the host leaving ends the match (no migration); claims settled 150 ms after they are made, in the order made; Play offers Offline and Online (SECOND-ORDER R3.41-R3.49).
 - V43. Fishing online: a hook shows at once and is settled by the host's claim (the first made wins; a loser's line lets the fish go); the host's fish places are the truth, sent once a second (SECOND-ORDER R3.63).
 - V44. Online with the match flow: the host's Rematch takes everyone back to the Lobby (joiners Ready again; a joiner's postgame offers Back to Title only); the countdown is part of the shared clock (SECOND-ORDER R3.65).
+- V45. Items (SECOND-ORDER R4.3 to R4.25): an unclaimed buoy moves to the new fair point when the next is due; equal item weights; a 3.5 m pickup; the first buoy a whole interval in.
+- V46. Esc in a minigame, or while picking a teleport's spot, wastes the item; Tab cannot put the Fish-Boy down under its minigame (R4.9, R4.10).
+- V47. The Teleporter: the boat can drive while it charges; a spot on land snaps to water 6 m from land; it lands at rest (R4.16).
+- V48. The camera's offer: Shift uses it, Esc saves it, and after 10 s it is saved (R4.18).
+- V49. Enhanced Radar pings whatever the cooldown and marks the nearest fish of each tier (R4.19).
+- V50. Your cloaked boat is drawn see-through and pale to you; the slot's item icons, the effect timers, the camera's offer and the item popups are the agent's (R4.12, R4.20 to R4.22; shots in `notes/shots/items/`).
 
 ## Status
 

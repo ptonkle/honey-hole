@@ -98,9 +98,16 @@ pub struct Gather {
     pressed: Actions,
     released: Actions,
     mouse: [i32; 2],
+    /// the pointer over the 2D layer, in its units, while it is there
+    pointer: Option<[i32; 2]>,
 }
 
 impl Gather {
+    /// The pointer moved over the 2D layer (`None`: off it).
+    pub fn point(&mut self, at: Option<[i32; 2]>) {
+        self.pointer = at;
+    }
+
     /// A key or mouse button went down. Returns the action it does.
     pub fn down(&mut self, controls: &Controls, code: &str) -> Option<String> {
         let action = controls.action(code)?.to_string();
@@ -150,7 +157,7 @@ impl Gather {
             pressed: self.pressed,
             released: self.released,
             mouse: self.mouse,
-            pointer: None,
+            pointer: self.pointer,
         };
         self.pressed = Actions::default();
         self.released = Actions::default();

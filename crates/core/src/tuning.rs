@@ -32,6 +32,8 @@ pub struct Tuning {
     pub fishing: crate::sim::fishing::tuning::FishingTuning,
     /// the Fish-Boy's radar: the ping (`fishboy/radar.rs`)
     pub radar: RadarTuning,
+    /// the item buoy and the items' effects (`sim::items::tuning`)
+    pub items: crate::sim::items::tuning::ItemsTuning,
     /// the AI players (`ai/tuning.rs`)
     pub ai: crate::ai::tuning::AiTuning,
     /// the match's flow: the countdown, the popups, the end
@@ -267,6 +269,7 @@ impl Tuning {
             );
         crate::ai::tuning::check(&mut c, &self.ai);
         self.minigames.check(&mut c);
+        crate::sim::items::tuning::check(&mut c, &self.items);
         c.done()
     }
 }
@@ -334,10 +337,33 @@ pub mod tests {
                 "end_hold_ms": 3000,
                 "hints_ms": 60000
             },
-            "minigames": crate::minigame::tuning::tests::sample_json(),
             "fish": fish_sample(),
             "fishing": fishing_sample(),
+            "items": items_sample(),
+            "minigames": crate::minigame::tuning::tests::sample_json(),
             "ai": ai_sample()
+        })
+    }
+
+    /// The items section, round numbers for tests: a 5 s warning with 5
+    /// beats a second apart, a 3 m pickup, equal weights, a 60 s cloak, a
+    /// 20 s Power Reel at 200%, 15 s of nitrous and a 5 s teleport charge.
+    pub fn items_sample() -> serde_json::Value {
+        serde_json::json!({
+            "warning_ms": 5000,
+            "beats": 5,
+            "beat_ms": 1000,
+            "pickup_radius_mm": 3000,
+            "unclaimed_moves": true,
+            "weights": {"cloak": 1, "power_reel": 1, "nitrous": 1, "teleporter": 1,
+                        "camera": 1, "enhanced_radar": 1},
+            "cloak_ms": 60000,
+            "power_reel_ms": 20000,
+            "power_reel_pct": 200,
+            "nitrous_ms": 15000,
+            "teleport_charge_ms": 5000,
+            "teleport_clear_mm": 6000,
+            "camera_prompt_ms": 8000
         })
     }
 

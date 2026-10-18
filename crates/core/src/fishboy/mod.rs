@@ -232,7 +232,7 @@ fn screen_of(m: &Model) -> ([i32; 2], crate::gfx::geom::V3) {
 }
 
 /// Land the radar shows round the lake's water.
-const RADAR_MARGIN_MM: i32 = 24_000;
+pub const RADAR_MARGIN_MM: i32 = 24_000;
 
 /// The tabs' rectangles along the top of the screen.
 const TAB_Y: i32 = 22;
@@ -363,7 +363,9 @@ impl App {
         };
         let k = self.fishboy.dpr_pct as i64;
         let (px, py) = ((x * k / 100) as i32, (y * k / 100) as i32);
-        Ok(self.screen_transform().map(|t| t.invert(px, py)))
+        // a minigame's own canvas while one plays, else the screen's
+        let t = self.items_pointer_transform().or_else(|| self.screen_transform());
+        Ok(t.map(|t| t.invert(px, py)))
     }
 
     /// The Fish-Boy's actions and the pointer, and its data files.
@@ -384,6 +386,7 @@ impl App {
             "pointer.move" | "pointer.down" | "pointer.up" => {
                 let at = self.pointer_at(value)?;
                 self.fishboy.pointer = at;
+                self.items_pointer(name, at);
                 match name {
                     "pointer.down" => {
                         self.fishboy.pointer_down = true;
@@ -504,15 +507,21 @@ impl App {
                     hud,
                     Rect::new(0, 0, self.size[0], self.size[1]),
                 ));
-                if !self.flow_hud(list, &mut status) && !self.play.as_ref().is_some_and(|p| p.menu_open()) {
-                    list.text(
-                        c(theme.hud.ink),
-                        theme.mono(),
-                        30,
-                        Align::Centre,
-                        (hud[0] / 2, hud[1] - 48),
-                        &self.t("hud.fishboy"),
-                    );
+                let flow = self.flow_hud(list, &mut status);
+                if !self.play.as_ref().is_some_and(|p| p.menu_open()) {
+                    if !flow {
+                        list.text(
+                            c(theme.hud.ink),
+                            theme.mono(),
+                            30,
+                            Align::Centre,
+                            (hud[0] / 2, hud[1] - 48),
+                            &self.t("hud.fishboy"),
+                        );
+                    }
+                    // the items' timers, the camera's offer, a minigame;
+                    // their own slot only where the flow's HUD has none
+                    self.draw_items_hud(list, theme, &mut status, !flow);
                 }
                 status.push("raised=0".into());
             }
@@ -524,7 +533,18 @@ impl App {
                     built.passes.push(p);
                 }
                 list.layer(Transform::onto(theme.fishboy.canvas, r.px));
-                self.draw_screen(list, theme, &mut status);
+                match self
+                    .my_minigame()
+                    .filter(|m| m.layer() == crate::minigame::Layer::FishBoy)
+                {
+                    // an item's minigame on the screen (`app/items.rs`)
+                    Some(mg) => {
+                        list.layer(mg.transform(r.px));
+                        mg.draw(list, theme, &|k| self.t(k));
+                        status.push(mg.status());
+                    }
+                    None => self.draw_screen(list, theme, &mut status),
+                }
             }
         }
         // popups, the countdown and the end over everything, the Fish-Boy
@@ -633,6 +653,7 @@ impl App {
                         seen,
                     };
                     scene.draw(list);
+                    self.draw_radar_items(list, theme, &scene, status);
                 }
             }
             Tab::Fishpedia => {

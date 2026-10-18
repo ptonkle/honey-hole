@@ -11,7 +11,8 @@
 //! ```
 //!
 //! A fill is `name:<path>` (a seat's player name), `fish:<path>` (a roster
-//! id's fish name), `tier:<path>` (a tier's name) or `text:<path>` (the
+//! id's fish name), `tier:<path>` (a tier's name), `item:<path>` (an
+//! item's name) or `text:<path>` (the
 //! value as it is). A path is dotted through the event's JSON:
 //! `cause.rammed.by` reads `{"cause": {"rammed": {"by": 0}}}`. `when`
 //! picks among rows for one event (`{"cause": "grounded"}`, or `"*"` for
@@ -163,6 +164,10 @@ impl PopupRow {
                     .and_then(|s| names.players.get(s as usize).cloned()),
                 "fish" => v.and_then(Value::as_str).and_then(|id| (names.fish)(id)),
                 "tier" => v.and_then(tier_of).map(|t| (names.tier)(t)),
+                // an item's key to its name (`item.{key}`)
+                "item" => v
+                    .and_then(Value::as_str)
+                    .map(|k| (names.text)(&format!("item.{k}"))),
                 _ => v.and_then(plain),
             };
             let fallback = if kind == "fish" {

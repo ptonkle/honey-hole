@@ -31,6 +31,7 @@ struct Mark {
     tick: u32,
 }
 
+#[derive(Debug, Clone)]
 pub struct Beats {
     pub t: BeatsTuning,
     rng: Rng,

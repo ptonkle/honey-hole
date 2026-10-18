@@ -297,6 +297,19 @@ pub fn region(map: &Map, margin_mm: i32) -> (P, i32) {
     (P::new(lo(x0, x1), lo(y0, y1)), side)
 }
 
+/// The map point under (x, y) screen units on the radar's map, for the
+/// square `region` shows (`region`); `None` off the map's rectangle. The
+/// Teleporter's destination is picked this way.
+pub fn map_point(region: (P, i32), x: i32, y: i32) -> Option<P> {
+    if !MAP_RECT.contains(x, y) {
+        return None;
+    }
+    let (lo, side) = (region.0, region.1 as i64);
+    let dx = (x - MAP_RECT.x) as i64 * side / MAP_RECT.w.max(1) as i64;
+    let dy = (y - MAP_RECT.y) as i64 * side / MAP_RECT.h.max(1) as i64;
+    Some(P::new(lo.x + dx as i32, (lo.y as i64 + side - dy) as i32))
+}
+
 /// What the radar screen needs besides the view.
 pub struct RadarScene<'a> {
     pub theme: &'a Theme,
@@ -325,6 +338,24 @@ impl RadarScene<'_> {
         let x = MAP_RECT.x as i64 * ONE as i64 + dx * MAP_RECT.w as i64 * ONE as i64 / side;
         let y = MAP_RECT.y as i64 * ONE as i64 + dy * MAP_RECT.h as i64 * ONE as i64 / side;
         (x as i32, y as i32)
+    }
+
+    /// A map point on the screen, in screen units (the items' marks).
+    pub fn screen_point(&self, p: P) -> (i32, i32) {
+        self.to_screen(p)
+    }
+
+    /// A marked fish (Enhanced Radar): a diamond in `colour` and a label.
+    pub fn mark(&self, list: &mut List, at: P, colour: Rgba, text: &str) {
+        let (x, y) = self.to_screen(at);
+        let d = 13;
+        list.poly(
+            colour,
+            c(self.theme.radar.label_back),
+            3,
+            &[(x, y - d), (x + d, y), (x, y + d), (x - d, y)],
+        );
+        self.label(list, (x, y), text, colour);
     }
 
     fn to_screen(&self, p: P) -> (i32, i32) {

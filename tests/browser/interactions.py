@@ -390,6 +390,46 @@ def step_fishing(page, check):
     page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
 
 
+def step_items(page, check):
+    # Items with the debug flag (`?debug=items,item.nitrous`): a buoy waits
+    # 40 m ahead of the boat and gives Nitrous. Driving through it fills the
+    # slot; Shift starts the minigame; Esc wastes the item. Then with
+    # `quick` (a minigame done at once) Cloaking Tech runs its minute.
+    base = page.url.split("?")[0]
+    page.goto(base + "?debug=items,item.nitrous")
+    page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
+    page.click(by_id("menu.play"))
+    page.click(by_id("menu.offline"))
+    page.click(by_id("lobby.start"))
+    check(screen(page, "play"), "a match starts")
+    check(ui2d_has(page, "buoy=1", "item=none"), "a buoy is in the lake and the slot is empty")
+    page.keyboard.down("KeyW")
+    check(ui2d_has(page, "item=nitrous", timeout=30000), "driving through the buoy fills the slot")
+    page.keyboard.up("KeyW")
+    page.keyboard.press("ShiftLeft")
+    check(ui2d_has(page, "mg=nitrous", timeout=5000), "Shift starts the item's minigame")
+    check(page.get_attribute("body", "data-pointer") == "on", "the minigame takes the pointer")
+    page.keyboard.press("Escape")
+    check(ui2d_has(page, "item=none", timeout=5000), "Esc quits the minigame and wastes the item")
+    check(page.locator(".panel.pause").count() == 0, "Esc did not open the menu")
+    page.goto(base + "?debug=items,item.cloak,quick")
+    page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
+    page.click(by_id("menu.play"))
+    page.click(by_id("menu.offline"))
+    page.click(by_id("lobby.start"))
+    page.keyboard.down("KeyW")
+    check(ui2d_has(page, "item=cloak", timeout=30000), "a second buoy gives Cloaking Tech")
+    page.keyboard.up("KeyW")
+    page.keyboard.press("ShiftLeft")
+    check(ui2d_has(page, "effects=cloak", timeout=5000), "the cloak runs, with its timer on the HUD")
+    page.keyboard.press("Escape")
+    page.wait_for_selector(".panel.pause", timeout=5000)
+    page.click(by_id("menu.quit"))
+    check(screen(page, "title"), "Leave match goes to the Title")
+    page.goto(base)
+    page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
+
+
 def step_ai(page, check):
     # A match with three AI players: at least one AI boat gets under way by
     # itself (the core counts them in data-ai-moving).
@@ -468,6 +508,7 @@ STEPS = [
     ("fishboy", step_fishboy),
     ("minigames", step_minigames),
     ("fishing", step_fishing),
+    ("items", step_items),
     ("ai", step_ai),
     ("match_flow", step_match_flow),
 ]

@@ -33,6 +33,7 @@ const PIXEL_MIN: i32 = 10;
 /// The blur's offset copies.
 const BLUR_COPIES: i32 = 6;
 
+#[derive(Debug, Clone)]
 pub struct Focus {
     pub t: FocusTuning,
     pub sweet: [i32; SLIDERS],

@@ -198,10 +198,9 @@ fn hook_icon(list: &mut List, at: (i32, i32), s: i32, ink: Rgba) {
 
 impl App {
     /// **Hook for the items system.** The item this browser's seat holds,
-    /// as its name on screen and its model's id, for the HUD's item slot;
-    /// `None` draws the slot empty. There are no items yet.
-    pub fn hud_item(&self) -> Option<(String, String)> {
-        None
+    /// for the HUD's item slot; `None` draws the slot empty.
+    pub fn hud_item(&self) -> Option<crate::sim::items::Item> {
+        self.my_items()?.held
     }
 
     /// My boat as drawn now.
@@ -639,21 +638,26 @@ impl App {
         list.round_rect(rgb(l.hud.item_slot), rgb(l.card.soft), 4, slot, 16);
         list.dash(&[]);
         match self.hud_item() {
-            Some((name, model)) => {
-                list.model(
-                    slot.inset(6),
-                    &model,
-                    Some(crate::model::Anim::Bob),
-                    0,
-                    l.postgame.fish_box,
-                    100,
-                );
+            Some(item) => {
+                // its icon (`app/items.rs`) and its name, inside the slot
+                if let Some(t) = self.fishboy.theme.as_ref() {
+                    let icon = Rect::new(slot.x + slot.w / 2 - 32, slot.y + 4, 64, 64);
+                    crate::app::items::draw_icon(
+                        list,
+                        item,
+                        icon,
+                        crate::ui2d::theme::c(t.items.icons.get(item)),
+                        rgb(l.card.ink),
+                    );
+                }
+                let name = self.t(&format!("item.{}", item.key()));
+                let size = crate::app::items::fit(l.body(), &name, 18, slot.w - 8);
                 list.text(
                     rgb(l.card.ink),
                     l.body(),
-                    22,
+                    size,
                     Align::Centre,
-                    (r.x + r.w / 2, r.y + 136),
+                    (slot.x + slot.w / 2, slot.y + slot.h - 12),
                     &name,
                 );
             }
@@ -666,7 +670,12 @@ impl App {
                 &self.t("hud.item_none"),
             ),
         }
-        let key = self.t("hint.item_key");
+        // the camera waits for a catch (`app/items.rs`)
+        let key = if self.hud_item() == Some(crate::sim::items::Item::Camera) {
+            self.t("items.after_catch")
+        } else {
+            self.t("hint.item_key")
+        };
         let w = l.body().width(&key, 20) + 20;
         key_cap(list, l, (r.x + (r.w - w) / 2, r.y + 150), &key, 20);
     }

@@ -730,6 +730,8 @@ impl App {
             .map(str::trim)
             .find(|f| ["reeds", "island"].contains(f))
             .map(String::from);
+        self.debug_flags = value.split(',').map(|f| f.trim().to_string()).collect();
+        self.flow.debug = value.split(',').any(|f| f.trim() == "flow");
     }
 
     /// Under `?debug=reeds` or `?debug=island`, once the match has run a

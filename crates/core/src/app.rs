@@ -17,6 +17,7 @@ use crate::view::{Item, Panel};
 
 pub mod fishing;
 pub mod gallery;
+pub mod items;
 pub mod lake;
 mod menus;
 pub mod minigames;
@@ -205,6 +206,9 @@ pub struct App {
     /// moved by the biggest reed bed or island once its match starts, for
     /// the screenshots of the underwater and chase cameras there
     pub debug_place: Option<String>,
+    /// the page's `?debug=` flags, each (`items`, `item.nitrous`, `quick`:
+    /// `app/items.rs`)
+    pub debug_flags: Vec<String>,
 }
 
 impl App {
@@ -241,6 +245,7 @@ impl App {
             online: online_play::OnlinePlay::default(),
             debug_watch: false,
             debug_place: None,
+            debug_flags: Vec::new(),
         })
     }
 
@@ -448,6 +453,7 @@ impl App {
             ),
             fishboy: self.fishboy_shown(),
             pointer: self.fishboy_shown() != ""
+                || self.items_take_pointer()
                 || (self.screen == Screen::Minigames && self.minigames.game.is_some()),
             capture: self.screen == Screen::Play
                 && self
@@ -463,7 +469,7 @@ impl App {
             }),
             live: (matches!(self.screen, Screen::Play | Screen::Postgame) && self.play.is_some())
                 || self.screen == Screen::Minigames,
-            hide_cursor: self.minigames_hide_cursor(),
+            hide_cursor: self.minigames_hide_cursor() || self.my_minigame().is_some_and(|m| m.hides_cursor()),
             panels,
         }
     }

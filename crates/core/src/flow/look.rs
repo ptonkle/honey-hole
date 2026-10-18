@@ -195,7 +195,7 @@ fn colour_ok(name: &str, c: C) -> Result<(), String> {
 }
 
 pub const ICONS: [&str; 4] = ["fish", "burst", "bobber", "none"];
-const FILLS: [&str; 4] = ["name", "fish", "tier", "text"];
+const FILLS: [&str; 5] = ["name", "fish", "tier", "text", "item"];
 
 impl FlowLook {
     pub fn parse(json: &str) -> Result<FlowLook, String> {
@@ -265,7 +265,7 @@ impl FlowLook {
                 let kind = how.split_once(':').map(|(k, _)| k).unwrap_or("");
                 if !FILLS.contains(&kind) {
                     return Err(format!(
-                        "{at} fills {{{key}}} by \"{how}\"; a fill is name:, fish:, tier: or text: and a field."
+                        "{at} fills {{{key}}} by \"{how}\"; a fill is name:, fish:, tier:, item: or text: and a field."
                     ));
                 }
             }

@@ -35,6 +35,7 @@ pub mod boat;
 pub mod collide;
 pub mod fishing;
 pub mod input;
+pub mod items;
 pub mod remote;
 pub mod view;
 
@@ -283,17 +284,92 @@ pub enum MatchEvent {
         tier: crate::map::fish::Tier,
         length_mm: i32,
     },
-    // raised by later systems
+    // the items (`items`)
+    /// an item buoy spawns in `items.warning_ms` (a popup for everyone)
     BuoyWarning,
-    BuoySpawned,
+    /// the countdown: `left` beats to go, 1 as the buoy spawns
+    BuoyBeat {
+        left: u32,
+    },
+    /// the buoy is in the lake here (it shows on every radar)
+    BuoySpawned {
+        x_mm: i32,
+        y_mm: i32,
+    },
+    /// drove through the buoy; `dropped` is the item it replaced
     ItemPicked {
         seat: usize,
+        item: items::Item,
+        dropped: Option<items::Item>,
     },
+    /// Shift did nothing, and why
+    ItemRefused {
+        seat: usize,
+        item: items::Item,
+        why: items::claims::Refusal,
+    },
+    MinigameStarted {
+        seat: usize,
+        item: items::Item,
+    },
+    /// a step forward in the minigame
+    MinigameTick {
+        seat: usize,
+    },
+    /// a wrong bin, a missed circle
+    MinigameMiss {
+        seat: usize,
+    },
+    /// a photograph in the camera's minigame
+    Shutter {
+        seat: usize,
+    },
+    MinigameDone {
+        seat: usize,
+        item: items::Item,
+    },
+    /// Esc quit the minigame (or a teleport's choice), or a wreck lost the
+    /// teleport's charge: the item is gone with no effect
+    ItemWasted {
+        seat: usize,
+        item: items::Item,
+    },
+    /// the item's effect began (for the Teleporter, its charge)
     ItemUsed {
+        seat: usize,
+        item: items::Item,
+    },
+    /// a Teleporter's minigame is done: the radar is up for the destination
+    TeleportChoosing {
+        seat: usize,
+    },
+    Teleported {
+        seat: usize,
+    },
+    CloakEnded {
+        seat: usize,
+    },
+    /// the Power Reel or nitrous ran out
+    EffectEnded {
+        seat: usize,
+        item: items::Item,
+    },
+    /// a catch with the High-Quality Camera held: "Use camera" or "Save
+    /// for later"
+    CameraOffered {
+        seat: usize,
+    },
+    /// the camera's offer closed with the camera kept
+    CameraSaved {
         seat: usize,
     },
     Pinged {
         seat: usize,
+    },
+    /// an Enhanced Radar marked `count` fish on the seat's radar
+    Revealed {
+        seat: usize,
+        count: u32,
     },
 }
 
@@ -451,6 +527,8 @@ pub struct Match {
     pub rng: Rng,
     /// the fish in the lake and every seat's line
     pub fishing: fishing::Fishing,
+    /// the item buoy and every seat's items
+    pub items: items::Items,
     /// online play's part (`remote`): offline, its default changes nothing
     pub online: remote::Hooks,
 }
@@ -478,6 +556,7 @@ impl Match {
             events: Vec::new(),
             rng: Rng::new(setup.seed),
             fishing: fishing::Fishing::new(&tuning.fish, &tuning.fishing, n, setup.seed),
+            items: items::Items::new(&tuning.items, setup.buoy_interval_ms, n, setup.seed),
             online: remote::Hooks::default(),
             map,
             tuning: tuning.clone(),
@@ -599,6 +678,7 @@ impl Match {
             }
         }
         self.fishboy_and_radar(&inputs_or(inputs, self.seats.len()));
+        self.items_step(&inputs_or(inputs, self.seats.len()));
         self.fishing_shared_before();
         let from = self.events.len();
         let world = fishing::World {
@@ -615,6 +695,7 @@ impl Match {
         self.fishing
             .step(&world, &all, &mut self.scores, &mut self.events);
         self.fishing_shared_after(from);
+        self.items_after_fishing();
         if self.tick >= self.rules.length_ticks && !self.online.end_elsewhere {
             self.ended = true;
             self.events.push(MatchEvent::MatchEnded);
@@ -667,6 +748,10 @@ impl Match {
     /// Fish-Boy first (a raised one is put down), then the fishing: a fish
     /// on the line is dropped, a line out is reeled in, a charge stops.
     pub fn cancel_layers(&mut self, seat: usize) -> bool {
+        // the items first: a minigame, a teleport's choice, the camera's offer
+        if self.items_cancel(seat) {
+            return true;
+        }
         if self.seats[seat].fishboy {
             self.set_fishboy(seat, false);
             return true;
@@ -679,9 +764,7 @@ impl Match {
     /// keys do nothing (the person's answer, DECISIONS.md).
     pub fn set_fishboy(&mut self, seat: usize, up: bool) {
         self.seats[seat].fishboy = up;
-        if let Some(b) = self.boats[seat].as_mut() {
-            b.captured = up;
-        }
+        self.recapture(seat);
     }
 
     /// The Fish-Boy's key and the radar: Tab raises or lowers it, a ping
@@ -693,14 +776,17 @@ impl Match {
         let size = self.map.size_mm();
         let tuning = self.tuning.radar.clone();
         for (seat, i) in inputs.iter().enumerate() {
-            if i.pressed.fishboy && self.boats[seat].is_some() {
+            // a minigame on its screen, or a teleport's choice, keeps it up
+            let held = self.items.seats[seat].holds_screen();
+            if i.pressed.fishboy && self.boats[seat].is_some() && !held {
                 let up = !self.seats[seat].fishboy;
                 self.set_fishboy(seat, up);
             }
             let Some(me) = self.radar_index(seat) else {
                 continue;
             };
-            if i.pressed.ping && self.seats[seat].fishboy {
+            let playing = self.items.seats[seat].captures();
+            if i.pressed.ping && self.seats[seat].fishboy && !playing {
                 let mine = RadarView { me, ..view.clone() };
                 if self.seats[seat].ping.start(tick, &mine, size, &tuning) {
                     self.events.push(MatchEvent::Pinged { seat });
@@ -717,8 +803,8 @@ impl Match {
 
     /// The boats and the buoy as the radar knows them, for `seat`: every
     /// taken seat's boat in seat order (its pings' sightings are kept by
-    /// this order), named and coloured by its seat. No one is cloaked
-    /// until the items system sets it; there is no buoy until it spawns.
+    /// this order), named and coloured by its seat, cloaked while its
+    /// Cloaking Tech runs, and the item buoy while one is in the lake.
     pub fn radar_view(&self, seat: usize) -> RadarView {
         let boats = self
             .boats
@@ -729,13 +815,15 @@ impl Match {
                 heading: b.heading,
                 slot: b.seat,
                 name: self.setup.seats[b.seat].name.clone(),
-                cloaked: false,
+                // this match's cloak, or a remote seat's (online play)
+                cloaked: self.items.cloaked(b.seat, self.tick)
+                    || self.online.hidden.get(b.seat).copied().unwrap_or(false),
             })
             .collect();
         RadarView {
             me: self.radar_index(seat).unwrap_or(0),
             boats,
-            buoy: None,
+            buoy: self.items.buoy,
         }
     }
 
@@ -803,6 +891,7 @@ impl Match {
             b.wreck(respawn);
         }
         self.wreck_drops_fish(seat);
+        self.items_wrecked(seat);
         self.events.push(MatchEvent::Wrecked { seat, cause });
     }
 

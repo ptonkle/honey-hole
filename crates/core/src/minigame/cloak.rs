@@ -72,6 +72,7 @@ fn part(nx: i32, ny: i32) -> u8 {
     FLOOR
 }
 
+#[derive(Debug, Clone)]
 pub struct Cloak {
     pub t: CloakTuning,
     /// the picture's place on the canvas

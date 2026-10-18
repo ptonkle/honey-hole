@@ -423,12 +423,14 @@ impl App {
         // a ghosted boat (after a respawn) is drawn see-through, apart
         let mut ghosts = Vec::new();
         for b in view.world.boats.iter().filter(|b| !b.wrecked) {
-            let into = if b.ghosted { &mut ghosts } else { &mut instances };
+            // and your own boat while cloaked (`app/items.rs`)
+            let see_through = b.ghosted || (b.cloaked && b.seat == view.seat);
+            let into = if see_through { &mut ghosts } else { &mut instances };
             let slot = crate::sim::SEAT_COLOURS
                 .iter()
                 .position(|c| *c == b.colour)
                 .unwrap_or(0);
-            let colour = look.player(slot);
+            let colour = self.boat_colour(look.player(slot), b, view.seat);
             let on = Instance {
                 model: boat,
                 place: lake.place(P::new(b.x_mm, b.y_mm), 0, b.heading, 1000),
@@ -488,7 +490,13 @@ impl App {
         // the fish, bobbers and lines, and the underwater camera (not with
         // the Fish-Boy up)
         let under = under && self.fishboy_eye().is_none();
+        // the item buoy, the nitrous trails and teleport shimmers
+        self.item_instances(lake, &view, &mut instances);
+        let eye = cam.eye;
         let mut frame = self.fishing_frame(lake, &view, cam, aspect, under, instances);
+        if !under {
+            frame.tris.extend(self.item_tris(lake, &view, eye));
+        }
         self.flow_world(&mut frame, &ghosts);
         Some(frame)
     }
