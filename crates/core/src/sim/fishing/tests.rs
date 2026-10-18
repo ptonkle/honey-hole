@@ -1099,3 +1099,50 @@ fn a_player_a_fifth_of_a_second_late_still_lands_every_tier() {
         assert!(mean_ms <= most * perfect, "{tier:?}: {mean_ms} ms on average");
     }
 }
+
+// ---- the bite seen (T4): the strike (strike.rs) and the view's clock ----
+
+/// The sample's strike: 3000 mm/s (60 mm a tick) to a mouth gap of -20 mm.
+/// The 300 mm fish waits with its middle at most 250 mm from the lure, its
+/// mouth (150 mm ahead of its middle) at most 100 mm off; 120 mm in at 60
+/// a tick, it has the lure in its mouth two ticks after the bite, and keeps
+/// it there, facing it, until the window closes.
+#[test]
+fn on_the_bite_the_fish_strikes_the_lure_and_holds_it() {
+    let mut m = fresh(1);
+    let f = lure_set_by_fish(&mut m, 0);
+    until(&mut m, 1000, is_bite);
+    let lure = m.fishing.lines[0].bobber;
+    let gap = |m: &Match| strike::mouth_gap(&m.fishing.fish[f], lure);
+    assert!(gap(&m) > -20, "{}", gap(&m));
+    for _ in 0..2 {
+        step0(&mut m, SeatInput::default());
+    }
+    assert!((-21..=-19).contains(&gap(&m)), "{}", gap(&m));
+    for _ in 0..30 {
+        step0(&mut m, SeatInput::default());
+    }
+    assert!(m.fishing_view(0).biting);
+    assert!((-21..=-19).contains(&gap(&m)), "{}", gap(&m));
+    // it faces the lure, to a degree (182 angle units)
+    let fish = &m.fishing.fish[f];
+    let to = crate::map::trig::atan2((lure.y - fish.at.y) as i64, (lure.x - fish.at.x) as i64);
+    let off = crate::map::trig::wrap(fish.heading - to + 182);
+    assert!(off <= 364, "heading {} toward {to}", fish.heading);
+}
+
+/// The line's `bite_ms` counts from the bite's tick: 0 then, 20 a tick
+/// after, and none before the bite or once the window has closed.
+#[test]
+fn the_view_counts_the_bite_from_its_tick() {
+    let mut m = fresh(1);
+    lure_set_by_fish(&mut m, 0);
+    let mine = |m: &Match| m.fishing_view(0).lines[0].bite_ms;
+    assert_eq!(mine(&m), None);
+    until(&mut m, 1000, is_bite);
+    assert_eq!(mine(&m), Some(0));
+    step0(&mut m, SeatInput::default());
+    assert_eq!(mine(&m), Some(20));
+    until(&mut m, 100, |e| matches!(e, MatchEvent::Missed { seat: 0 }));
+    assert_eq!(mine(&m), None);
+}

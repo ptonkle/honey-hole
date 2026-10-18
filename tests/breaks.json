@@ -2938,5 +2938,40 @@
     "find": "\"zone_permille\": 420,",
     "replace": "\"zone_permille\": 280,",
     "test": "a_player_a_fifth_of_a_second_late_still_lands_every_tier"
+  },
+  {
+    "name": "the biting fish stays where it waited",
+    "file": "crates/core/src/sim/fishing/mod.rs",
+    "find": "strike::bite(f, to, &self.tuning.strike);",
+    "replace": "let _ = &self.tuning.strike;",
+    "test": "on_the_bite_the_fish_strikes_the_lure_and_holds_it"
+  },
+  {
+    "name": "the bite's clock counts ticks, not ms",
+    "file": "crates/core/src/sim/fishing/view.rs",
+    "find": "self.tick.saturating_sub(began) * TICK_MS as u32",
+    "replace": "self.tick.saturating_sub(began)",
+    "test": "the_view_counts_the_bite_from_its_tick"
+  },
+  {
+    "name": "the bobber drops under at once",
+    "file": "crates/core/src/app/fishing/cue.rs",
+    "find": "self.plunge_mm * k / self.plunge_in_ms.max(1)",
+    "replace": "self.plunge_mm",
+    "test": "the_bite_cue_runs_its_course_inside_the_hook_window"
+  },
+  {
+    "name": "the bobber stays up on the bite",
+    "file": "crates/core/src/app/fishing.rs",
+    "find": "-mm(look.bite.plunge_mm(b))",
+    "replace": "0",
+    "test": "on_the_bite_the_bobber_plunges_in_rings_and_bubbles_burst_from_the_lure"
+  },
+  {
+    "name": "no bubbles from the lure on the bite",
+    "file": "crates/core/src/app/fishing.rs",
+    "find": "look.bite.bubbles(&mut tris, hook, cam, b);",
+    "replace": "let _ = (hook, b);",
+    "test": "on_the_bite_the_bobber_plunges_in_rings_and_bubbles_burst_from_the_lure"
   }
 ]

@@ -53,6 +53,8 @@ pub struct FishingLook {
     pub landed_drop_mm: i32,
     pub under: UnderLook,
     pub pip: PipLook,
+    /// the bite's cue (`cue.rs`)
+    pub bite: cue::BiteLook,
 }
 
 /// The underwater camera.
@@ -525,12 +527,22 @@ impl App {
                 continue;
             }
             let float = lake.world(P::new(l.bobber_x_mm, l.bobber_y_mm), l.bobber_up_mm);
+            // the bite (T4): the bobber plunges under in splash rings
+            let dip = match l.bite_ms {
+                Some(b) => {
+                    look.bite.rings(&mut tris, float, b);
+                    look.bite.splash(&mut tris, float, cam, b);
+                    -mm(look.bite.plunge_mm(b))
+                }
+                None if l.tug => -mm(40),
+                None => 0,
+            };
+            let float = float.add(v3(0, dip, 0));
             if let Some(b) = bobber {
-                let dip = if l.tug { -mm(40) } else { 0 };
                 let s = look.bobber_scale_pct * 10;
                 instances.push(Instance {
                     model: b,
-                    place: Affine::translate(float.add(v3(0, dip, 0))).then(&Affine::scale(v3(
+                    place: Affine::translate(float).then(&Affine::scale(v3(
                         s * ONE / 1000,
                         s * ONE / 1000,
                         s * ONE / 1000,
@@ -541,15 +553,25 @@ impl App {
                 });
             }
             if let Some(tip) = tip {
-                // a little sag in the middle while the line is slack
-                let sag = if l.stage == Stage::Flying { 0 } else { mm(400) };
-                let mid = tip.lerp(float, ONE / 2).sub(v3(0, sag, 0));
+                // a little sag in the middle while the line is slack; on
+                // the bite it snaps taut and twitches side to side
+                let sag = if l.stage == Stage::Flying || l.bite_ms.is_some() {
+                    0
+                } else {
+                    mm(400)
+                };
+                let twitch = l.bite_ms.map_or(0, |b| look.bite.twitch_mm(b));
+                let side = float.sub(tip).cross(v3(0, ONE, 0)).norm().scale(mm(twitch));
+                let mid = tip.lerp(float, ONE / 2).sub(v3(0, sag, 0)).add(side);
                 ribbon(&mut tris, tip, mid, eye, width, colour);
                 ribbon(&mut tris, mid, float, eye, width, colour);
             }
             if l.stage != Stage::Flying {
                 let hook = lake.world(P::new(l.bobber_x_mm, l.bobber_y_mm), -l.lure_depth_mm);
                 ribbon(&mut tris, float, hook, eye, width, colour);
+                if let (true, Some(b)) = (under, l.bite_ms) {
+                    look.bite.bubbles(&mut tris, hook, cam, b);
+                }
                 if let Some(m) = lure {
                     let s = look.lure_scale_pct * ONE / 100;
                     instances.push(Instance {
@@ -865,5 +887,6 @@ impl App {
     }
 }
 
+pub mod cue;
 #[cfg(test)]
 mod tests;

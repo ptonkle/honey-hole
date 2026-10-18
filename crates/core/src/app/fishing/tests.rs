@@ -177,3 +177,117 @@ fn specks_drift_round_the_eye_under_the_surface_and_over_the_bed() {
     motes(lake, m, &cam, 1000, &mut later);
     assert_ne!(first, later);
 }
+
+// ---- the bite's cue (T4, cue.rs) ----
+
+/// The look's bite: the bobber 260 mm under in 80 ms; the line's middle
+/// shaking 150 mm, a 120 ms period, gone by 450 ms; three rings 150 ms
+/// apart, each 450 ms long, so the last is gone by 750 ms, inside the
+/// 0.75 s hook window.
+#[test]
+fn the_bite_cue_runs_its_course_inside_the_hook_window() {
+    let a = fishing();
+    let b = &a.fishing_look().unwrap().bite;
+    assert_eq!([0, 40, 80, 500].map(|ms| b.plunge_mm(ms)), [0, 130, 260, 260]);
+    // a quarter period in (30 ms) the shake is at its widest, less the
+    // 30/450 it has died away: 150 * 420 / 450 = 140 (to the sine's
+    // rounding); none at the start, nor from 450 ms
+    assert!((138..=141).contains(&b.twitch_mm(30)), "{}", b.twitch_mm(30));
+    assert_eq!((b.twitch_mm(0), b.twitch_mm(450)), (0, 0));
+    // a ring is 32 segments of two triangles, 30 values each
+    let rings = |ms| {
+        let mut out = Vec::new();
+        b.rings(&mut out, v3(0, 0, 0), ms);
+        out.len() / (32 * 2 * 30)
+    };
+    assert_eq!([0, 200, 400, 700, 750].map(rings), [1, 2, 3, 1, 0]);
+    // the first ring 90 ms in (a fifth of its 450) is a fifth of the way
+    // out, 100 + 1900 / 5 = 480 mm round, four fifths of its 280 mm width:
+    // from 368 to 592 mm, 20 mm up
+    let mut out = Vec::new();
+    b.rings(&mut out, v3(0, 0, 0), 90);
+    for v in out.chunks(10) {
+        let r = fx::isqrt((v[0] as i64 * v[0] as i64 + v[2] as i64 * v[2] as i64) as u128) as i32;
+        assert!(r >= mm(366) && r <= mm(594), "{}", scene::to_mm(r));
+        assert_eq!(v[1], mm(20));
+    }
+}
+
+/// Seat 0's lure 10 m ahead of its bow a metre down, with a fish at it;
+/// `biting` starts its bite five ticks (100 ms) ago.
+fn lure_with_fish(a: &mut App, biting: bool) -> P {
+    use crate::sim::fishing::lake::FishState;
+    use crate::sim::fishing::Interest;
+    let g = &mut a.play.as_mut().unwrap().game;
+    let rod = g.rod(0);
+    let at = P::new(rod.x + 10_000, rod.y);
+    let window = crate::sim::ticks(g.fishing.tuning.hook_window_ms);
+    // a minute in, so five ticks ago is in the match
+    g.tick = 3000;
+    let tick = g.tick;
+    let line = &mut g.fishing.lines[0];
+    line.stage = Stage::Set;
+    line.bobber = at;
+    line.lure_depth_mm = 1000;
+    line.length_mm = 40_000;
+    line.interest = Some(Interest {
+        fish: 0,
+        arrived: true,
+        next: u32::MAX,
+        nibbles_left: 0,
+        biting_until: biting.then(|| tick + window - 5),
+    });
+    let f = &mut g.fishing.fish[0];
+    f.at = at;
+    f.depth_mm = 1000;
+    f.state = FishState::Lured { seat: 0 };
+    at
+}
+
+/// The vertices of `tris` in colour `c` (look values).
+fn in_colour(tris: &[i32], c: [i32; 3]) -> Vec<&[i32]> {
+    let c = render::rgb(c);
+    tris.chunks(render::VERTEX_VALUES)
+        .filter(|v| v[6..9] == c[..])
+        .collect()
+}
+
+/// The top of the bobber's red half drawn within 300 mm of `w`, world y.
+fn bobber_top(f: &Frame, w: V3) -> i32 {
+    in_colour(&f.tris, [222, 40, 36])
+        .into_iter()
+        .filter(|v| (v[0] - w.x).abs() <= mm(300) && (v[2] - w.z).abs() <= mm(300))
+        .map(|v| v[1])
+        .max()
+        .expect("the bobber is drawn")
+}
+
+#[test]
+fn on_the_bite_the_bobber_plunges_in_rings_and_bubbles_burst_from_the_lure() {
+    let mut tops = Vec::new();
+    for biting in [false, true] {
+        let mut a = fishing();
+        let at = lure_with_fish(&mut a, biting);
+        let lake = a.world.as_ref().unwrap();
+        let w = lake.world(at, 0);
+        let look = a.fishing_look().unwrap().bite.clone();
+        // over the water (the picture-in-picture's boat camera): 100 ms in,
+        // the bobber is all the way under and one ring is out
+        let (_, _, boat) = a.inset_frame();
+        let rings = in_colour(&boat.tris, look.ring).len();
+        tops.push(bobber_top(&boat, w));
+        // under the water: the bubbles round the lure
+        let under = a.frame();
+        let bubbles = in_colour(&under.tris, look.bubble).len();
+        if biting {
+            // one ring and the 14 drops of the splash, in the same colour
+            assert_eq!(rings, 32 * 2 * 3 + 14 * 2 * 3);
+            // 18 bubbles of two triangles, all a metre down
+            assert_eq!(bubbles, 18 * 2 * 3);
+        } else {
+            assert_eq!((rings, bubbles), (0, 0));
+        }
+    }
+    // the bobber is 260 mm lower on the bite (to a unit's rounding)
+    assert!((tops[0] - tops[1] - mm(260)).abs() <= 2, "{tops:?}");
+}

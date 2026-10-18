@@ -44,6 +44,7 @@ pub mod announce;
 pub mod lake;
 pub mod reel;
 pub mod shared;
+pub mod strike;
 pub mod tuning;
 pub mod view;
 
@@ -705,8 +706,11 @@ impl Fishing {
             if let Some(int) = line.interest {
                 let (to, depth) = (line.bobber, line.lure_depth_mm);
                 let f = &mut self.fish[int.fish];
-                // it stops a nose short of the lure
-                if f.at.dist(to) > 250 {
+                if int.biting_until.is_some() {
+                    // the bite: it strikes the lure and holds it
+                    strike::bite(f, to, &self.tuning.strike);
+                } else if f.at.dist(to) > 250 {
+                    // it stops a nose short of the lure
                     lake::swim(f, to, approach);
                 }
                 f.depth_mm = crate::gfx::fx::approach(f.depth_mm, depth, approach);
