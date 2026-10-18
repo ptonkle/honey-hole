@@ -103,7 +103,9 @@ def step_play(page, check):
     # Play opens the match setup; Start match puts a boat on the lake, and
     # holding W drives it
     page.click(by_id("menu.play"))
-    check(screen(page, "lobby"), "Play opens the match setup")
+    check(screen(page, "play_menu"), "Play offers Offline and Online")
+    page.click(by_id("menu.offline"))
+    check(screen(page, "lobby"), "Offline opens the match setup")
     check(page.inner_text(".panel.lobby h2") == STRINGS["lobby.heading"], "the setup is headed New match")
     check(page.locator(by_id("lobby.ai")).count() == 1, "the setup offers AI players")
     page.click(by_id("lobby.start"))
@@ -200,6 +202,7 @@ def step_fishboy(page, check):
     # the Fish-Boy in a match with three AI players: Tab, the radar's
     # ping, the tabs, Esc
     page.click(by_id("menu.play"))
+    page.click(by_id("menu.offline"))
     screen(page, "lobby")
     page.select_option(by_id("lobby.ai"), "3")
     page.wait_for_selector(f"{by_id('lobby.ai')} option[value='3']:checked", state="attached", timeout=5000)
@@ -316,6 +319,7 @@ def step_fishing(page, check):
     page.goto(base + "?debug=fishing")
     page.wait_for_selector("body[data-ready='true']", state="attached", timeout=20000)
     page.click(by_id("menu.play"))
+    page.click(by_id("menu.offline"))
     page.click(by_id("lobby.start"))
     check(screen(page, "play"), "a match starts")
     page.wait_for_selector("body[data-drawn]", state="attached", timeout=10000)
