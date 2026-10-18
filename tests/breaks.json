@@ -952,11 +952,53 @@
     "test": "your_motor_rises_from_idle_to_full"
   },
   {
-    "name": "the line is silent below its starting tension",
+    "name": "flow: the ranking cannot be put away",
+    "file": "crates/core/src/flow/screens.rs",
+    "find": "        if shown.ranking && !breakdown {",
+    "replace": "        if shown.ranking {",
+    "test": "the_ranking_closes_to_show_every_catch_and_total_then_comes_back"
+  },
+  {
+    "name": "flow: Esc on the ranking leaves instead of showing the catches",
+    "file": "crates/core/src/app.rs",
+    "find": "            Screen::Postgame => self.show_breakdown(!self.postgame_breakdown()),",
+    "replace": "            Screen::Postgame => {}",
+    "test": "the_ranking_closes_to_show_every_catch_and_total_then_comes_back"
+  },
+  {
+    "name": "items: a pickup pops up again",
+    "file": "data/flow.json",
+    "find": "      { \"event\": \"BuoySpawned\", \"text\": \"popup.buoy_spawned\", \"style\": \"buoy\" }",
+    "replace": "      { \"event\": \"BuoySpawned\", \"text\": \"popup.buoy_spawned\", \"style\": \"buoy\" },\n      { \"event\": \"ItemPicked\", \"text\": \"popup.buoy_spawned\", \"style\": \"buoy\" }",
+    "test": "a_pickup_or_a_wasted_item_makes_no_popup"
+  },
+  {
+    "name": "fishing: every stage gets words again",
+    "file": "crates/core/src/app/fishing.rs",
+    "find": "            _ if matches!(key, \"too_fast\" | \"bite\") => Some(self.t(&format!(\"fishing.{key}\"))),\n            _ => None,",
+    "replace": "            _ => Some(self.t(&format!(\"fishing.{key}\"))),",
+    "test": "holding_space_charges_a_meter"
+  },
+  {
+    "name": "copy: a minigame call grows back its rule",
+    "file": "data/strings.json",
+    "find": "\"minigame.power_reel\": \"Wind the reel\",",
+    "replace": "\"minigame.power_reel\": \"Wind the reel clockwise {count} times\",",
+    "test": "popups_minigame_calls_and_hud_words_stay_short"
+  },
+  {
+    "name": "copy: a minigame says which key quits",
+    "file": "data/strings.json",
+    "find": "\"minigame.cloak\": \"Erase the boat\",",
+    "replace": "\"minigame.cloak\": \"Erase it, Esc\",",
+    "test": "no_minigame_or_match_string_names_a_key"
+  },
+  {
+    "name": "the line's drag is silent below its starting tension",
     "file": "crates/core/src/sound/motor.rs",
     "find": "if tension <= t.starts_at {",
     "replace": "if tension < 0 {",
-    "test": "the_line_whines_only_above_its_starting_tension"
+    "test": "the_line_drag_ticks_faster_and_higher_as_it_tightens_and_not_below_its_start"
   },
   {
     "name": "the ratchet speeds with the reel",

@@ -105,6 +105,15 @@
       ]
     },
     {
+      "id": "line_drag",
+      "label": "Line drag tick",
+      "_about": "one soft tick of the reel's drag under tension, lower and quieter than the ratchet; the game plays it faster and a little higher as the line tightens (it replaced the line's whine)",
+      "layers": [
+        { "wave": "noise", "attack_ms": 1, "hold_ms": 2, "release_ms": 14, "gain": 0.12, "filter": { "type": "bandpass", "freq": 2200, "q": 4 } },
+        { "wave": "square", "freq": 1300, "attack_ms": 1, "hold_ms": 1, "release_ms": 8, "gain": 0.04, "filter": { "type": "lowpass", "freq": 2500 } }
+      ]
+    },
+    {
       "id": "line_snap",
       "label": "Line snap",
       "_about": "a crack of high noise and a falling twang",
@@ -456,15 +465,6 @@
       "layers": [
         { "wave": "sawtooth", "freq": 130, "gain": 0.55, "filter": { "type": "lowpass", "freq": 1100, "q": 2 }, "throb": { "rate": 34, "depth": 0.55 } },
         { "wave": "square", "freq": 260, "gain": 0.15, "filter": { "type": "lowpass", "freq": 1500 } }
-      ]
-    },
-    {
-      "id": "line_tension",
-      "label": "Line tension",
-      "_about": "a thin wavering whine that climbs as the line tightens",
-      "layers": [
-        { "wave": "sine", "freq": 900, "gain": 0.5, "wobble": { "rate": 7, "cents": 25 } },
-        { "wave": "triangle", "freq": 1800, "gain": 0.15, "filter": { "type": "bandpass", "freq": 1800, "q": 4 } }
       ]
     }
   ],
