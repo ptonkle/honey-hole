@@ -48,6 +48,7 @@ Collected as the agent makes them; brought up in the morning. Each also has a ro
 - V9. Props the scene adds beyond the map: the dock behind the spawn, two cabins, lily pads, shore rocks, boulders, fallen logs; maples drawn as birches or tall spruces (R2.34, R2.40).
 - V10. The boat camera: 9 m behind, 3.8 m up, 10° down, 55° field of view (R2.43).
 - V11. Glowing colours take 45% of the fog on the lake, so the buoy's beacon and a cabin window read through it (R2.42).
+- V12. All thirteen fish checked against the real species from above, the side and 3/4 and reshaped: torpedo smallmouth, conical-snouted sturgeon, thin sunfish, smooth duck-bill pike and muskie, thin tails and fins, a flat-headed catfish with a short dorsal, a painted largemouth stripe, markings kept inside the outline from above; a few side views changed (SECOND-ORDER R2.130 to R2.136; shots in `notes/shots/models/fish-v3/`).
 
 ## Status
 
