@@ -228,7 +228,7 @@ impl Table {
                 Params {
                     gain: e.gain,
                     pitch: e.pitch,
-                    delay_ms: e.delay_ms,
+                    delay_ms: 0,
                     duration_ms,
                 },
             ));
