@@ -121,6 +121,8 @@ pub struct Session {
     end_sent: bool,
     /// seats whose players left mid-match, for the HUD's notice
     gone: Vec<usize>,
+    /// back in the Lobby (Rematch), for the app to notice
+    back: bool,
 }
 
 impl Session {
@@ -159,6 +161,7 @@ impl Session {
             end_heard: false,
             end_sent: false,
             gone: Vec::new(),
+            back: false,
         }
     }
 
@@ -422,6 +425,7 @@ impl Session {
         match_seed: u64,
         names: &[String],
         fish: Vec<(String, u32)>,
+        countdown_ms: i32,
         now_ms: i64,
     ) -> Result<(), String> {
         if !self.can_start() {
@@ -456,6 +460,7 @@ impl Session {
             buoy_interval_ms: self.roster.setup.buoy_interval_ms,
             lead_ms: START_LEAD_MS,
             fish,
+            countdown_ms,
         };
         self.start = Some(start.clone());
         self.start_at = Some(now_ms + START_LEAD_MS);
@@ -498,6 +503,7 @@ impl Session {
                 offline: false,
                 seed: start.match_seed,
                 fish: start.fish.clone(),
+                countdown_ms: start.countdown_ms,
             },
             map_seed: start.map_seed,
             seat,
@@ -740,6 +746,13 @@ impl Session {
             }
             Msg::Verdict { verdict } => self.verdicts.push(verdict),
             Msg::End => self.end_heard = true,
+            Msg::Lobby => {
+                self.reset_match();
+                self.status = Status::Lobby;
+                self.want_ready = false;
+                self.gone.clear();
+                self.back = true;
+            }
             Msg::Bye => self.status = Status::HostLeft,
             _ => {}
         }
@@ -843,17 +856,18 @@ impl Session {
         }
         if !self.host {
             // the reading with the shortest round trip is the one least
-            // held up on the way (as NTP does)
+            // held up on the way (as NTP does); the clock is the match's
+            // steps, the countdown's included (`Match::steps`)
             let best = self.clock.iter().min_by_key(|(rtt, _, _)| *rtt).copied();
             if let Some(r @ (rtt, tick, at)) = best.filter(|b| Some(*b) != self.clock_used) {
                 self.clock_used = Some(r);
                 let expected = tick as i64 + (now_ms - at + rtt / 2) / TICK_MS as i64;
-                if (expected - m.tick as i64).abs() >= CLOCK_SNAP_TICKS as i64 {
-                    m.tick = expected.max(0) as u32;
+                if (expected - m.steps() as i64).abs() >= CLOCK_SNAP_TICKS as i64 {
+                    m.set_steps(expected.max(0) as u32);
                 }
             }
-        } else {
-            self.host_tick = Some((m.tick, now_ms));
+        } else if self.host {
+            self.host_tick = Some((m.steps(), now_ms));
         }
         self.place_remotes(m);
         for ram in std::mem::take(&mut self.rams) {
@@ -1008,6 +1022,58 @@ impl Session {
     /// Seats whose players left mid-match.
     pub fn gone(&self) -> &[usize] {
         &self.gone
+    }
+
+    /// Forgets the match: its start, the boats' states, the clock, the
+    /// verdicts and events still to apply.
+    fn reset_match(&mut self) {
+        self.start = None;
+        self.start_at = None;
+        self.start_taken = false;
+        self.acked.clear();
+        self.states.clear();
+        self.host_tick = None;
+        self.clock.clear();
+        self.clock_used = None;
+        self.rams.clear();
+        self.world.clear();
+        self.verdicts.clear();
+        self.pending.clear();
+        self.ram_hold.clear();
+        self.end_heard = false;
+        self.end_sent = false;
+    }
+
+    /// The host's Rematch: everyone back to the Lobby, with the same seats
+    /// (a player who left mid-match leaves an open seat); the joiners mark
+    /// themselves Ready again, and the host starts the next match.
+    pub fn back_to_lobby(&mut self) {
+        if !self.host || self.start.is_none() {
+            return;
+        }
+        self.reset_match();
+        for k in std::mem::take(&mut self.gone) {
+            if let Some(s) = self.roster.seats.get_mut(k) {
+                s.who = Who::Open;
+                s.name.clear();
+            }
+        }
+        for s in self.roster.seats.iter_mut() {
+            if s.who == Who::Player {
+                s.ready = false;
+            }
+        }
+        self.fill_ai();
+        self.status = Status::Lobby;
+        self.back = true;
+        self.broadcast(&Msg::Lobby);
+        self.roster_changed();
+    }
+
+    /// Whether the session went back to the Lobby since the last look
+    /// (the app leaves the postgame for it).
+    pub fn take_back(&mut self) -> bool {
+        std::mem::take(&mut self.back)
     }
 }
 

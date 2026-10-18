@@ -436,6 +436,29 @@ impl Match {
         self.online.world_in.push(e.clone());
     }
 
+    /// The steps run since the match began: the countdown's, then the
+    /// clock's. A joiner's clock follows the host's by this.
+    pub fn steps(&self) -> u32 {
+        let total = super::ticks(self.setup.countdown_ms);
+        total.saturating_sub(self.countdown) + self.tick
+    }
+
+    /// Jumps to `steps` since the match began: into the countdown, or past
+    /// it (with its "Go", if this jump is what passes it).
+    pub fn set_steps(&mut self, steps: u32) {
+        let total = super::ticks(self.setup.countdown_ms);
+        if steps < total {
+            self.countdown = total - steps;
+            self.tick = 0;
+        } else {
+            if self.countdown > 0 {
+                self.events.push(MatchEvent::MatchStarted);
+            }
+            self.countdown = 0;
+            self.tick = steps - total;
+        }
+    }
+
     /// Ends the match now (the host's end message).
     pub fn end_now(&mut self) {
         if !self.ended {

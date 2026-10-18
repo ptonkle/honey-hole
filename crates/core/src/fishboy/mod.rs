@@ -472,6 +472,22 @@ impl App {
         let Some(theme) = self.fishboy.theme.as_ref() else {
             return built;
         };
+        if self.screen == Screen::Postgame {
+            // the postgame's reveal over the lake (`flow/screens.rs`)
+            let mut status = Vec::new();
+            built.list.layer(Transform::letterbox(
+                theme.hud.canvas,
+                Rect::new(0, 0, self.size[0], self.size[1]),
+            ));
+            self.postgame_ui2d(&mut built.list, theme, &mut status);
+            for shot in built.list.shots.clone() {
+                if let Some(p) = self.shot_pass(theme, &shot) {
+                    built.passes.push(p);
+                }
+            }
+            built.list.status = status.join(" ");
+            return built;
+        }
         if self.screen == Screen::Minigames {
             return self.minigames_ui2d(theme);
         }
@@ -482,13 +498,13 @@ impl App {
         let mut status = vec![format!("fishboy={}", self.fishboy_shown())];
         match self.fishboy_raised() {
             None => {
-                if !self.play.as_ref().is_some_and(|p| p.menu_open()) {
-                    // the HUD: how to raise it
-                    let hud = theme.hud.canvas;
-                    list.layer(Transform::letterbox(
-                        hud,
-                        Rect::new(0, 0, self.size[0], self.size[1]),
-                    ));
+                // the HUD (`flow/hud.rs`), or without its look the hint
+                let hud = theme.hud.canvas;
+                list.layer(Transform::letterbox(
+                    hud,
+                    Rect::new(0, 0, self.size[0], self.size[1]),
+                ));
+                if !self.flow_hud(list, &mut status) && !self.play.as_ref().is_some_and(|p| p.menu_open()) {
                     list.text(
                         c(theme.hud.ink),
                         theme.mono(),
@@ -511,6 +527,13 @@ impl App {
                 self.draw_screen(list, theme, &mut status);
             }
         }
+        // popups, the countdown and the end over everything, the Fish-Boy
+        // too (`flow/hud.rs`)
+        list.layer(Transform::letterbox(
+            theme.hud.canvas,
+            Rect::new(0, 0, self.size[0], self.size[1]),
+        ));
+        self.flow_overlay(list, theme, &mut status);
         for shot in built.list.shots.clone() {
             if let Some(p) = self.shot_pass(theme, &shot) {
                 built.passes.push(p);
@@ -708,7 +731,7 @@ impl App {
 
     /// A model in its box: a side view fitted to the box, nose to the
     /// right.
-    fn shot_pass(&self, theme: &Theme, shot: &crate::ui2d::Shot) -> Option<Pass> {
+    pub(crate) fn shot_pass(&self, theme: &Theme, shot: &crate::ui2d::Shot) -> Option<Pass> {
         let m = self.models.iter().find(|m| m.id == shot.model)?;
         let anim = shot.anim.filter(|a| m.animation(*a).is_some());
         let transforms = m.transforms(&m.poses(anim, shot.ms));

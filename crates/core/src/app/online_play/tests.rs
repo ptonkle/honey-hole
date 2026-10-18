@@ -151,6 +151,9 @@ fn two_apps_meet_in_a_lobby_and_start_a_match_together() {
     let r = b.online.session.as_ref().unwrap().roster().clone();
     assert!(matches!(r.seats[2].who, online::Who::Ai { .. }), "{:?}", r.seats);
     assert!(!disabled(&a, "online.start"), "Start comes on once B is Ready");
+    // no AI player in the match after all: it would sit in B's way
+    a.act("lobby.ai", "0").unwrap();
+    run(&mut a, &mut b, &mut now, 1000);
     a.act("online.start", "").unwrap();
     run(&mut a, &mut b, &mut now, 2000);
     assert_eq!(a.screen, Screen::Play);
@@ -203,4 +206,42 @@ fn a_joiner_leaving_the_lobby_frees_its_seat() {
     let r = a.online.session.as_ref().unwrap().roster();
     assert_eq!(r.seats[1].who, online::Who::Open);
     assert!(b.online.session.is_none());
+}
+
+#[test]
+fn the_host_runs_the_ai_players_and_the_joiner_sees_them() {
+    let (mut a, mut b, mut now) = meet();
+    a.act("lobby.ai", "1").unwrap();
+    b.act("online.ready", "").unwrap();
+    run(&mut a, &mut b, &mut now, 1000);
+    a.act("online.start", "").unwrap();
+    run(&mut a, &mut b, &mut now, 6000);
+    let (pa, pb) = (a.play.as_ref().unwrap(), b.play.as_ref().unwrap());
+    assert_eq!(pa.ai.brains.len(), 1, "the host runs the AI player");
+    assert!(pb.ai.brains.is_empty(), "the joiner runs none");
+    let (at_a, at_b) = (pa.game.boat(2).unwrap().at(), pb.game.boat(2).unwrap().at());
+    let gap = crate::map::trig::hypot((at_a.x - at_b.x) as i64, (at_a.y - at_b.y) as i64);
+    assert!(
+        gap < 3000,
+        "B draws the AI's boat where the host has it ({gap} mm)"
+    );
+}
+
+#[test]
+fn the_hosts_rematch_takes_everyone_back_to_the_lobby_for_the_next_match() {
+    let (mut a, mut b, mut now) = playing();
+    a.act("postgame.rematch", "").unwrap();
+    run(&mut a, &mut b, &mut now, 1000);
+    assert_eq!((a.screen, b.screen), (Screen::OnlineLobby, Screen::OnlineLobby));
+    assert!(a.play.is_none() && b.play.is_none());
+    assert!(disabled(&a, "online.start"), "B marks itself Ready again");
+    b.act("online.ready", "").unwrap();
+    run(&mut a, &mut b, &mut now, 1000);
+    a.act("online.start", "").unwrap();
+    run(&mut a, &mut b, &mut now, 2000);
+    assert_eq!(
+        (a.screen, b.screen),
+        (Screen::Play, Screen::Play),
+        "the next match starts"
+    );
 }

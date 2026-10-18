@@ -577,3 +577,45 @@ fn the_free_fish_are_where_the_host_has_them() {
         }
     }
 }
+
+#[test]
+fn the_countdown_runs_out_together_and_the_clock_then_follows_the_host() {
+    for seed in [1, 2, 3] {
+        let mut l = Loop::new(2, 0, LinkSpec::ROUGH, seed);
+        l.countdown_ms = 3000;
+        l.lobby_and_start();
+        // just after Go, and again later
+        l.run_until(5000, |l| l.nodes[0].game().countdown == 0);
+        for wait in [300, 3000] {
+            l.run(wait);
+            let host = l.nodes[0].game().tick;
+            for (k, node) in l.nodes.iter().enumerate() {
+                // a jittery link's readings can be a tick or so off either
+                // way (60 ± 40 ms each way): within 60 ms
+                let off = node.game().tick as i64 - host as i64;
+                assert!(
+                    off.abs() <= 3,
+                    "seed {seed}: browser {k} is {off} ticks off the host {wait} ms after Go"
+                );
+            }
+        }
+        let host = l.nodes[0].game().tick;
+        for (k, node) in l.nodes.iter().enumerate() {
+            let beats = node
+                .log
+                .iter()
+                .filter(|(_, e)| matches!(e, MatchEvent::Countdown { .. }))
+                .count();
+            let gos = node
+                .log
+                .iter()
+                .filter(|(_, e)| *e == MatchEvent::MatchStarted)
+                .count();
+            assert_eq!(
+                (beats, gos),
+                (3, 1),
+                "seed {seed}: browser {k} hears 3-2-1-Go once"
+            );
+        }
+    }
+}

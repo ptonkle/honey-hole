@@ -38,6 +38,9 @@ Every `SECOND-ORDER.md` row with status *person*, by number, with what the perso
 - R2.75: the radar's brighter player colours in `data/ui2d.json` (`radar.players`).
 - R1.149: the remodelled angler's look (tapered limbs, round head, no boxes), in `notes/shots/models/angler-v2/`.
 - R2.7: the boat's handling numbers the brief does not name (reverse, braking, coasting, slip, turning, swivel, nitrous), in `data/tuning.json`; try them by driving.
+- R4.45: the eased rare and legendary reel fights (`fishing.reel` in `data/tuning.json`), PLAN.md V38.
+- R4.47: ramming pays several times better than fishing in AI playtests (`notes/playtests.md`); which rule to change, if any (PLAN.md V39).
+- R4.49: whether B4's "leggendaries ar not announced for 20 seconds" means a legendary's hook popup comes 20 s late.
 - R2.11: the twelve draft AI names in `data/names.json`.
 - R2.21: the match setup's length choices (4, 8, 12 min) and buoy intervals (30 s to 2 min).
 - R3.44: whether two players both behind strict NATs must be able to connect (a TURN server: a server or a paid service, and a new origin).
@@ -52,6 +55,7 @@ Every `SECOND-ORDER.md` row with status *person*, by number, with what the perso
 - R4.97: the channel catfish v4 (broad flat head, thick body, short forward dorsal, forked tail), in `notes/shots/models/fish-v4/`.
 - R4.80: the lower chase camera, in `notes/shots/polish/` (3 to 5c).
 - R4.93: the underwater look, in `notes/shots/polish/` (1 to 2b).
+- R3.123: the match flow's look (the HUD, popups, countdown, wreck burst, ghosted boat, postgame reveal and ranking), in `notes/shots/match-flow/`; every colour and timing is in `data/flow.json`.
 - R2.43: the boat camera's distance, height, pitch and field of view (`lake.camera` in `data/look.json`), and the lake's look in `notes/shots/world/`; the fog distance can be tried live in the Lake preview.
 
 ## Mistakes so far
@@ -81,6 +85,10 @@ The last lines of `./scripts/check.sh` and `./scripts/count-tests.sh`, with the 
 2026-10-18, the Fish-Boy integrated with the match core and the lake world, merged with main (branch `worktree-agent-a0af07e03570f7fa8`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit); `count-tests.sh`: 265 passed, 0 failed, 0 ignored; `scripts/break_tests.py`: 218 of 218 breaks caught.
 
 2026-10-18, fishing (fish in the lake, the cast, nibbles, the hook window, the reel, catches, the underwater camera and picture-in-picture, the fishing HUD), merged with main (branch `worktree-agent-a619c0b6bfe7ceb22`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 291 checks, with the new `fishing` step); `count-tests.sh`: 300 passed, 0 failed, 0 ignored; `scripts/break_tests.py` on the 34 new breaks: 34 of 34 caught (and the map row "one schooling fish is refused" repaired).
+
+2026-10-18, the match flow (countdown, the 2D HUD with the fishing's meters, data-driven popups, wreck burst and shake, ghosting, the end, the postgame reveal and ranking, Rematch), merged with main (fishing, item minigames) (branch `worktree-agent-a9be3869944870630`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 357 checks, with the new `match_flow` step); `count-tests.sh`: 367 passed, 0 failed, 0 ignored; `scripts/break_tests.py` on the 23 new and changed breaks: 23 of 23 caught.
+
+2026-10-18, the AI players and headless playtests (`crates/core/src/ai/`, `examples/playtest.rs`, `notes/playtests.md`), merged with main (match flow, minigames, polish) (branch `ai`): `BUILDER CHECK PASSED` (browser check in chromium, firefox, webkit, 372 checks, with the new `ai` step); `count-tests.sh`: 380 passed, 0 failed, 0 ignored; `scripts/break_tests.py` on the 10 new breaks and the restored cue delay: 11 of 11 caught.
 
 ## The next action
 

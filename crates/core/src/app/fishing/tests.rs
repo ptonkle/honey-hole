@@ -6,7 +6,6 @@ use super::*;
 use crate::app::lake::tests::{models, LOOK};
 use crate::app::play::tests::{lobby, tick};
 use crate::sim::fishing::reel::Reel;
-use crate::view::Item;
 use serde_json::Value;
 
 /// The lake's models, the fish's, the bobber and the lure.
@@ -42,8 +41,8 @@ fn fishing() -> App {
     a
 }
 
-fn panels_of(a: &App, kind: &str) -> Vec<Panel> {
-    a.play_panels().into_iter().filter(|p| p.kind == kind).collect()
+fn hud(a: &App) -> FishingHud {
+    a.fishing_hud().expect("the fishing HUD shows")
 }
 
 #[test]
@@ -98,8 +97,7 @@ fn a_line_in_the_water_turns_on_the_underwater_camera_and_the_picture_in_picture
     assert_eq!(inset.view[at + 1], mm(120_000), "the inset is the boat camera");
     // the line and the bobber are drawn in both
     assert!(!inset.tris.is_empty());
-    let panel = &panels_of(&a, "fishing")[0];
-    assert_eq!(panel.sub, a.t("fishing.depth"));
+    assert_eq!(hud(&a).depth, Some(a.t("fishing.depth")));
 }
 
 #[test]
@@ -109,16 +107,11 @@ fn holding_space_charges_a_meter() {
     for _ in 0..15 {
         tick(&mut a);
     }
-    let p = &panels_of(&a, "fishing")[0];
-    assert_eq!(p.heading, a.t("fishing.charging"));
+    let h = hud(&a);
+    assert_eq!((h.key, h.prompt.clone()), ("charging", a.t("fishing.charging")));
     // 15 ticks of the sample's 50: 30%
-    match &p.items[0] {
-        Item::Meter { fill, text, .. } => {
-            assert!((28..=32).contains(fill), "{fill}");
-            assert_eq!(text, &format!("{fill}%"));
-        }
-        other => panic!("{other:?}"),
-    }
+    let fill = h.charge.unwrap();
+    assert!((28..=32).contains(&fill), "{fill}");
 }
 
 #[test]
@@ -130,67 +123,12 @@ fn the_reel_bar_shows_the_zone_the_fish_and_the_catch_meter() {
     line.stage = crate::sim::fishing::Stage::Reeling;
     line.fish = Some(0);
     line.reel = Some(Reel::new(crate::map::fish::Tier::Common, &t, false));
-    let p = &panels_of(&a, "fishing")[0];
-    assert_eq!(p.heading, a.t("fishing.reeling"));
+    let h = hud(&a);
+    assert_eq!(h.prompt, a.t("fishing.reeling"));
     // the zone is 280 thousandths, centred: 36% to 64%; the fish at 50%;
     // the meter starts at 30%
-    assert!(
-        matches!(
-            &p.items[0],
-            Item::Meter {
-                zone: Some([36, 64]),
-                marker: Some(50),
-                vertical: true,
-                ..
-            }
-        ),
-        "{:?}",
-        p.items[0]
-    );
-    assert!(
-        matches!(
-            &p.items[1],
-            Item::Meter {
-                fill: 30,
-                vertical: true,
-                ..
-            }
-        ),
-        "{:?}",
-        p.items[1]
-    );
-}
-
-#[test]
-fn a_hook_pops_up_for_every_player_in_its_tier_for_two_seconds() {
-    let mut a = fishing();
-    let p = a.play.as_mut().unwrap();
-    let now = p.game.tick;
-    p.log.push((
-        now,
-        MatchEvent::Hooked {
-            seat: 1,
-            fish: 0,
-            kind: "walleye".into(),
-            tier: crate::map::fish::Tier::Uncommon,
-        },
-    ));
-    let pops = panels_of(&a, "popup tier-uncommon");
-    assert_eq!(pops.len(), 1);
-    let who = a.play.as_ref().unwrap().game.setup.seats[1].name.clone();
-    let want = a
-        .t("popup.hooked")
-        .replace("{player}", &who)
-        .replace("{fish}", "Walleye");
-    assert_eq!(pops[0].heading, want);
-    assert_eq!(pops[0].sub, a.t("tier.uncommon"));
-    // 2 s is 100 ticks: gone then
-    for _ in 0..99 {
-        tick(&mut a);
-    }
-    assert_eq!(panels_of(&a, "popup tier-uncommon").len(), 1);
-    tick(&mut a);
-    assert!(panels_of(&a, "popup tier-uncommon").is_empty());
+    let r = h.reel.unwrap();
+    assert_eq!((r.zone, r.fish, r.meter), ([36, 64], 50, 30));
 }
 
 #[test]

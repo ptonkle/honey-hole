@@ -41,6 +41,8 @@ pub struct BoatView {
 pub struct WorldView {
     pub tick: u32,
     pub remaining_ms: i32,
+    /// the countdown's time still to run, ms (0 once the match is going)
+    pub countdown_ms: i32,
     pub ended: bool,
     pub paused: bool,
     pub map_seed: u32,
@@ -86,6 +88,7 @@ impl Match {
         WorldView {
             tick: self.tick,
             remaining_ms: self.remaining_ms(),
+            countdown_ms: (self.countdown as i64 * super::TICK_MS as i64) as i32,
             ended: self.ended,
             paused: self.paused(),
             map_seed: self.map.seed,

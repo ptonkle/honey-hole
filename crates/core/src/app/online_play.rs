@@ -201,7 +201,7 @@ impl App {
     }
 
     /// Leaves the online session: a parting word, then the links close.
-    pub(super) fn leave_online(&mut self) {
+    pub(crate) fn leave_online(&mut self) {
         if let Some(s) = self.online.session.as_mut() {
             s.leave();
             self.request("leave", json!({}));
@@ -213,12 +213,20 @@ impl App {
         let match_seed = mix(self.clock as u64 ^ 0x6f6e_6c69_6e65);
         let map_seed = self.map_seed(&list, match_seed)?;
         let names = self.names.clone();
-        // the host's starting fish counts, as offline (`App::setup`)
-        let fish = self.setup(match_seed)?.fish;
+        // the host's starting fish counts and countdown, as offline
+        // (`App::setup`)
+        let offline = self.setup(match_seed)?;
         let now = self.now_ms();
         let s = self.online.session.as_mut().ok_or("There is no online lobby.")?;
-        s.start(map_seed, match_seed, &names, fish, now)
-            .map_err(|k| self.t(&k))
+        s.start(
+            map_seed,
+            match_seed,
+            &names,
+            offline.fish,
+            offline.countdown_ms,
+            now,
+        )
+        .map_err(|k| self.t(&k))
     }
 
     // ---- the page's side ----
@@ -255,6 +263,7 @@ impl App {
         let mut out = Vec::new();
         let mut start = None;
         let mut over = false;
+        let mut back = false;
         if let Some(s) = self.online.session.as_mut() {
             s.update(now);
             if self.play.is_none() {
@@ -262,6 +271,7 @@ impl App {
             }
             out = s.take_outbox();
             over = matches!(s.status(), Status::Left);
+            back = s.take_back();
             if matches!(s.status(), Status::HostLeft) {
                 if let Some(p) = self.play.as_mut() {
                     p.game.end_now();
@@ -270,6 +280,12 @@ impl App {
         }
         if over {
             self.online.session = None;
+        }
+        if back {
+            // the host's Rematch: everyone to the Lobby for the next one
+            self.play = None;
+            self.flow.reset();
+            self.go(Screen::OnlineLobby);
         }
         if let Some(st) = start {
             if let Err(e) = self.begin_online_match(st) {
@@ -315,8 +331,23 @@ impl App {
             s.prepare(&mut game);
         }
         self.play = Some(play::Play::begin(game, st.seat, pitch, st.at_ms * 1000));
+        self.flow.reset();
         self.go(Screen::Play);
         Ok(())
+    }
+
+    /// Online, the postgame's Rematch is the host's: back to the Lobby,
+    /// where the host starts the next match. A joiner is offered Back to
+    /// Title only. `None` offline.
+    pub(crate) fn online_rematch(&mut self) -> Option<()> {
+        let s = self.online.session.as_mut()?;
+        s.back_to_lobby();
+        Some(())
+    }
+
+    /// Whether this browser is a joiner in an online session.
+    pub(crate) fn online_joiner(&self) -> bool {
+        self.online.session.as_ref().is_some_and(|s| !s.is_host())
     }
 
     /// A line for the HUD about the other players: who left, or that the

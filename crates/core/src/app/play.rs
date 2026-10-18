@@ -94,13 +94,24 @@ pub struct Play {
     pub cam_pitch: i32,
     /// the latest events, oldest first, with their ticks
     pub log: Vec<(u32, MatchEvent)>,
+    /// the AI seats' brains (`ai/`), which make their inputs each tick
+    pub ai: crate::ai::Crew,
+    /// an AI plays this browser's seat too (`?debug=watch`): the keys do
+    /// nothing to the boat
+    pub watch: bool,
 }
 
 impl Play {
     /// A match to play from seat `seat`, its clock started at `start_us`
     /// (page time), the camera tilted `pitch_deg` down.
+    /// Online, the AI seats are the host's: a joiner's browser runs no
+    /// brain for a seat it does not simulate.
     pub fn begin(game: Match, seat: usize, pitch_deg: i32, start_us: i64) -> Play {
+        let mut ai = crate::ai::Crew::new(&game);
+        ai.brains.retain(|b| !game.is_remote(b.seat));
         Play {
+            ai,
+            watch: false,
             game,
             seat,
             gather: Gather::default(),
@@ -298,6 +309,7 @@ impl App {
         s.length_ms = lobby.length_ms;
         s.buoy_interval_ms = lobby.buoy_interval_ms;
         s.offline = true;
+        s.countdown_ms = t.flow.countdown_ms;
         // the roster's starting counts (`data/fish.json`)
         s.fish = self
             .fishboy
@@ -323,13 +335,24 @@ impl App {
 
     fn start_match(&mut self) -> Result<(), String> {
         let list = self.need(&self.maps, "map list")?.clone();
-        let t = self.need(&self.tuning, "tuning")?.clone();
-        let controls = self.need(&self.controls, "controls")?.clone();
+        self.need(&self.controls, "controls")?;
         // the match seed comes from the page's clock: no two matches alike,
         // and the same clock gives the same match
         let match_seed = mix(self.clock as u64 ^ 0x6d61_7463_6800_0000);
         let map_seed = self.map_seed(&list, match_seed)?;
         let setup = self.setup(match_seed)?;
+        self.begin(setup, map_seed)
+    }
+
+    /// Starts a match with this setup on this checked layout (New match's
+    /// Start match, and the postgame's Rematch).
+    pub(crate) fn begin(&mut self, setup: Setup, map_seed: u32) -> Result<(), String> {
+        let mut setup = setup;
+        if self.debug_watch {
+            setup.seats[0].occupant = Occupant::Ai(Difficulty::Hard);
+        }
+        let t = self.need(&self.tuning, "tuning")?.clone();
+        let controls = self.need(&self.controls, "controls")?.clone();
         let map = generate(Setting::MichiganLake, map_seed);
         // the lake's world, uploaded once (`app/lake.rs`); without the
         // lake's look the match draws its stand-in
@@ -340,6 +363,7 @@ impl App {
         if !self.fishboy.roster.0.is_empty() {
             game.stock(&self.fishboy.roster)?;
         }
+        let ai = crate::ai::Crew::new(&game);
         self.play = Some(Play {
             game,
             seat: 0,
@@ -349,14 +373,20 @@ impl App {
             cam_yaw: 0,
             cam_pitch: deg(controls.mouse.pitch_start_deg),
             log: Vec::new(),
+            ai,
+            watch: self.debug_watch,
         });
+        self.flow.reset();
         self.go(Screen::Play);
         Ok(())
     }
 
     /// Leaves the match for the Title.
-    pub(super) fn leave_match(&mut self) {
+    pub(crate) fn leave_match(&mut self) {
+        // online, a parting word first (`app/online_play.rs`)
+        self.leave_online();
         self.play = None;
+        self.flow.reset();
         self.settings_return = false;
         self.go(Screen::Title);
     }
@@ -423,8 +453,16 @@ impl App {
         let mut heard = Vec::new();
         let mut online = self.online.session.as_mut();
         while p.pending_us >= step_us && ran < MAX_CATCH_UP {
-            let mut inputs = vec![sim::SeatInput::default(); p.game.seats.len()];
-            inputs[p.seat] = p.gather.take();
+            // the AI seats play by the same inputs (`ai/`)
+            let mut inputs = p.ai.inputs(&p.game);
+            let mine = p.gather.take();
+            if p.watch {
+                // the menu still answers the person
+                inputs[p.seat].pressed.cancel |= mine.pressed.cancel;
+                inputs[p.seat].pressed.menu |= mine.pressed.menu;
+            } else {
+                inputs[p.seat] = mine;
+            }
             let tick = p.game.tick;
             p.game.step(&inputs);
             if let Some(s) = online.as_mut() {
@@ -451,6 +489,8 @@ impl App {
                 s.event(e, listener);
             }
         }
+        // popups, wrecks' bursts and the end (`flow/`)
+        self.flow_hear(&heard);
         self.debug_fish(landed);
         self.debug_move();
     }
@@ -582,33 +622,20 @@ impl App {
         };
         let p = self.play.as_ref().unwrap();
         let w = &view.world;
-        let mut lines = Vec::new();
-        if let Some(b) = w.boats.iter().find(|b| b.seat == p.seat) {
-            lines.push(self.t(if b.mode == sim::Mode::Driving {
-                "hud.driving"
-            } else {
-                "hud.fishing"
-            }));
-            // mm/s to km/h: × 3600 / 1 000 000
-            let kmh = (b.speed_mm_per_s as i64 * 36 / 10_000) as i32;
-            lines.push(self.t("hud.speed").replace("{speed}", &kmh.to_string()));
-            if b.wrecked {
-                lines.push(self.t("hud.wrecked"));
-            }
-        }
-        lines.extend(self.online_notice());
+        // the HUD itself is on the 2D layer (`flow/hud.rs`); this panel
+        // holds only the Menu button, for the mouse
         let mut hud = Panel::new(
             "hud",
-            self.t("hud.time").replace("{time}", &clock_text(w.remaining_ms)),
+            String::new(),
             vec![Item::quiet_button("menu.pause", self.t("menu.pause"))],
         );
-        hud.sub = lines.join(" · ");
-        // the Fish-Boy up covers the HUD's panel
+        // online: who left, or that the host did (`app/online_play.rs`)
+        hud.sub = self.online_notice().unwrap_or_default();
+        // the Fish-Boy up covers it
         let mut panels = if self.fishboy.open { Vec::new() } else { vec![hud] };
-        if !self.fishboy.open {
-            panels.extend(self.fishing_panels());
-        }
-        if w.ended {
+        // at the end the postgame follows (`flow/`); without the flow's
+        // look, the match waits here to be left
+        if w.ended && self.flow.look.is_none() {
             panels.push(Panel::new(
                 "pause",
                 self.t("hud.ended"),

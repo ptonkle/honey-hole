@@ -96,6 +96,9 @@ pub struct Start {
     /// (`sim::Setup::fish`), the host's, so every browser counts the same
     #[serde(default)]
     pub fish: Vec<(String, u32)>,
+    /// the 3-2-1-Go before the clock starts (`sim::Setup::countdown_ms`)
+    #[serde(default)]
+    pub countdown_ms: i32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -175,6 +178,8 @@ pub enum Msg {
     },
     /// host → everyone: the match is over
     End,
+    /// host → everyone: back to the Lobby for another match (Rematch)
+    Lobby,
     /// anyone → everyone: this browser is leaving
     Bye,
 }

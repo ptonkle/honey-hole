@@ -18,7 +18,11 @@ use std::path::{Path, PathBuf};
 use tool_core::glossary;
 
 /// (file name, word, reason): a ruled-out word that is right in one file.
-const ALLOWED: &[(&str, &str, &str)] = &[];
+const ALLOWED: &[(&str, &str, &str)] = &[(
+    "data/strings.json.popup.",
+    "!",
+    "the person's own words for the announcements: \"(PLAYERNAME has hooked a FISHTYPE!)\" (BRIEF.md; a project decision in TONE.md); only at the very end, as `popup_strings_end_with_their_only_exclamation` checks",
+)];
 
 fn root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("..").join("..")
@@ -188,6 +192,17 @@ fn no_reader_string_uses_a_word_the_glossary_rules_out() {
         }
     }
     assert!(problems.is_empty(), "glossary words:\n{}", problems.join("\n"));
+}
+
+#[test]
+fn popup_strings_end_with_their_only_exclamation() {
+    // the exemption above lets an announcement end with "!", and no more
+    for (place, text) in reader_strings() {
+        if place.starts_with("data/strings.json.popup.") {
+            let inner = text.strip_suffix('!').unwrap_or(&text);
+            assert!(!inner.contains('!'), "{place}: \"!\" only at the end: {text}");
+        }
+    }
 }
 
 #[test]

@@ -85,6 +85,8 @@ pub struct Loop {
     pub map: Map,
     /// the fish every browser stocks its lake with
     pub roster: Option<crate::roster::Roster>,
+    /// the host's 3-2-1-Go
+    pub countdown_ms: i32,
 }
 
 /// An open square lake, 160 m a side, with the spawn on the west side.
@@ -142,6 +144,7 @@ impl Loop {
             tuning,
             map: open_lake(),
             roster: None,
+            countdown_ms: 0,
         }
     }
 
@@ -293,7 +296,14 @@ impl Loop {
         let now = self.now;
         self.nodes[0]
             .session
-            .start(7, 1234, &["Walt".into(), "Gus".into(), "Rita".into()], fish, now)
+            .start(
+                7,
+                1234,
+                &["Walt".into(), "Gus".into(), "Rita".into()],
+                fish,
+                self.countdown_ms,
+                now,
+            )
             .unwrap();
         assert!(
             self.run_until(5000, |l| l.nodes.iter().all(|n| n.game.is_some())),

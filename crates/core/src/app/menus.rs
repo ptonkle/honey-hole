@@ -4,7 +4,7 @@ use super::*;
 use crate::view::Choice;
 
 impl App {
-    pub(super) fn button(&self, id: &str) -> Item {
+    pub(crate) fn button(&self, id: &str) -> Item {
         Item::button(id, self.t(id))
     }
 
@@ -94,6 +94,11 @@ impl App {
                     value: s.name.clone(),
                     max: super::play::NAME_MAX,
                     placeholder: self.t("name.default"),
+                },
+                Item::Toggle {
+                    id: "settings.show_seed".into(),
+                    label: self.t("settings.show_seed"),
+                    value: s.show_seed,
                 },
                 self.button("menu.back"),
             ],
