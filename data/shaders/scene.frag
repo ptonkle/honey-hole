@@ -39,6 +39,7 @@ uniform vec2 uHemi;
 uniform vec2 uUnder;
 uniform vec3 uUnderColour;
 uniform float uGlow;
+uniform float uOpacity;
 out vec4 outColour;
 vec3 murk(vec3 d) {
   vec3 c = mix(uFogColour, uZenith, smoothstep(uSkyBand.x, uSkyBand.y, d.y));
@@ -74,5 +75,5 @@ void main() {
   vec3 ray = vWorld - uEye;
   vec3 sky = murk(normalize(ray));
   float f = smoothstep(uFog.x, uFog.y, length(ray)) * mix(1.0, uGlow, vGlow);
-  outColour = vec4(mix(lit, sky, f), 1.0);
+  outColour = vec4(mix(lit, sky, f), uOpacity);
 }

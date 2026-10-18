@@ -213,7 +213,7 @@ Not: scan, pulse
 
 ### Play
 
-The screen where a match runs: the lake, the boats, and the time left in the corner.
+The screen where a match runs: the lake, the boats, and the HUD over them: the time left, your speed and mode, the radar's ping, your item and the popups.
 
 Not: level, stage, round
 
@@ -222,6 +222,12 @@ Not: level, stage, round
 The colour a player's lobby slot gives them: blue, red, green or yellow. It marks their boat and their name, and the name is always shown with it.
 
 Not: team colour
+
+### Postgame
+
+The screen after a match: each player's catches shown one after another as their points add up, then the final ranking. Rematch or Back to Title leaves it.
+
+Not: scoreboard, results screen, game over
 
 ### Radar
 
@@ -235,9 +241,15 @@ The minigame after a hook: keep the fish inside the catch zone until the catch m
 
 Not: fight, tug of war
 
+### Rematch
+
+The postgame's button that starts another match with the same players, length and item buoy interval, on a new layout of the lake.
+
+Not: replay, restart, play again
+
 ### Settings
 
-The screen where the reader sets the volume, the text size and their name in matches. Settings last for this visit.
+The screen where the reader sets the volume, the text size, their name in matches and whether the map seed shows in a match. Settings last for this visit.
 
 Not: options, preferences, config
 

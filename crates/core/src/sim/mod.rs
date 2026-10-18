@@ -116,6 +116,10 @@ pub struct Setup {
     /// match starts with; the Fishpedia counts down from these
     /// ([`Match::fish_left`]). The fishing system places them.
     pub fish: Vec<(String, u32)>,
+    /// the 3-2-1-Go before the clock starts, the boats held still
+    /// (`flow.countdown_ms`; [`Setup::new`] leaves it 0, so tests and
+    /// headless playtests start at once)
+    pub countdown_ms: i32,
 }
 
 impl Setup {
@@ -133,6 +137,7 @@ impl Setup {
             offline: true,
             seed: 0,
             fish: Vec::new(),
+            countdown_ms: 0,
         }
     }
 
@@ -201,6 +206,13 @@ pub enum MatchEvent {
         seat: usize,
     },
     MatchEnded,
+    /// the countdown before the match: `left` whole seconds to go (3, 2, 1)
+    Countdown {
+        left: u32,
+    },
+    /// the countdown's "Go": the clock starts and the boats are let go
+    MatchStarted,
+    // raised by later systems
     // fishing (`fishing`): a cast, a bite, a catch
     /// Space was pressed to cast with the boat too fast
     CastRefused {
@@ -423,6 +435,9 @@ pub struct Match {
     /// ticks played
     pub tick: u32,
     pub ended: bool,
+    /// ticks of the countdown still to run; the clock (`tick`) starts
+    /// when it reaches 0
+    pub countdown: u32,
     /// by seat; `None` for an empty seat
     pub boats: Vec<Option<Boat>>,
     pub seats: Vec<SeatState>,
@@ -466,7 +481,9 @@ impl Match {
             setup,
             tick: 0,
             ended: false,
+            countdown: 0,
         };
+        m.countdown = ticks(m.setup.countdown_ms);
         for seat in 0..n {
             let boat = match m.setup.seats[seat].occupant {
                 Occupant::Empty => None,
@@ -555,6 +572,10 @@ impl Match {
         if self.paused() {
             return &self.events;
         }
+        if self.countdown > 0 {
+            self.count_down(inputs);
+            return &self.events;
+        }
 
         self.tick += 1;
         self.respawn_and_unghost();
@@ -585,6 +606,36 @@ impl Match {
             self.events.push(MatchEvent::MatchEnded);
         }
         &self.events
+    }
+
+    /// A tick of the countdown: the boats stay still (their keys do
+    /// nothing) and the clock waits; the Fish-Boy can be raised to look at
+    /// the lake, but the radar does not ping yet. A beat on each whole
+    /// second left, and "Go" at the end.
+    fn count_down(&mut self, inputs: &[SeatInput]) {
+        let c = self.countdown;
+        if c.is_multiple_of(TICKS_PER_S as u32) {
+            self.events.push(MatchEvent::Countdown {
+                left: c / TICKS_PER_S as u32,
+            });
+        }
+        for (seat, b) in self.boats.iter_mut().enumerate() {
+            if let Some(b) = b.as_mut() {
+                b.remember();
+            }
+            let tab = inputs.get(seat).is_some_and(|i| i.pressed.fishboy);
+            if tab && b.is_some() {
+                let up = !self.seats[seat].fishboy;
+                self.seats[seat].fishboy = up;
+                if let Some(b) = b.as_mut() {
+                    b.captured = up;
+                }
+            }
+        }
+        self.countdown = c - 1;
+        if self.countdown == 0 {
+            self.events.push(MatchEvent::MatchStarted);
+        }
     }
 
     /// Esc: the layers above the boat cancel their current thing first

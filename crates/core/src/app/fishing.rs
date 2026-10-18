@@ -15,10 +15,10 @@
 //!   main view looks at the lure from `under.back_mm` behind it, turned by
 //!   the mouse, in a short green-blue fog; the boat camera's view goes into
 //!   a picture-in-picture in the top-left corner ([`App::inset_frame`]).
-//! - **The HUD** is a stand-in made of panels (`Item::Meter`) until the 2D
-//!   layer draws it: the charge meter while Space is held, the reel bar and
-//!   the catch meter while reeling, and a popup for 2 s for each hook (every
-//!   player's) and for this seat's misses, breaks and catches.
+//! - **The HUD**: [`App::fishing_hud`] says what the line's stage shows (a
+//!   prompt, the depth, the charge, the reel bar and the catch meter);
+//!   `flow/hud.rs` draws it on the 2D layer. The popups (every player's
+//!   hooks, this seat's misses and breaks) are rows of `data/flow.json`.
 
 use serde::Deserialize;
 
@@ -32,7 +32,7 @@ use crate::model::Anim;
 use crate::scene::{self, mm, yaw_of_heading, Instance, Lake};
 use crate::sim::fishing::view::{FishSeen, FishingView};
 use crate::sim::fishing::Stage;
-use crate::sim::{MatchEvent, Mode, TICK_MS};
+use crate::sim::Mode;
 
 /// `data/look.json`'s `fishing` section.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
@@ -192,8 +192,29 @@ pub struct PipLook {
     pub border_permille: i32,
 }
 
-/// Popups last this long (the person: about 2 s).
-const POPUP_MS: u32 = 2000;
+/// The fishing HUD's state for this seat (`App::fishing_hud`).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FishingHud {
+    /// the stage's key: ready, too_fast, charging, flying, sinking,
+    /// waiting, nibble, bite, reeling or landed
+    pub key: &'static str,
+    pub prompt: String,
+    /// the lure's depth, while it sinks or waits
+    pub depth: Option<String>,
+    /// the cast's charge, percent, while Space is held
+    pub charge: Option<i32>,
+    pub reel: Option<ReelBars>,
+}
+
+/// The reel bar and the catch meter, in percent of the bar from the bottom.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ReelBars {
+    pub zone: [i32; 2],
+    pub fish: i32,
+    pub meter: i32,
+    pub in_zone: bool,
+    pub tier: crate::map::fish::Tier,
+}
 /// The hook window under `?debug=fishing`.
 const DEBUG_HOOK_WINDOW_MS: i32 = 5000;
 
@@ -628,10 +649,6 @@ impl App {
 
     // ---- the HUD ----
 
-    fn tier_name(&self, t: crate::map::fish::Tier) -> String {
-        self.t(&format!("tier.{}", crate::sim::fishing::tier_key(t)))
-    }
-
     fn fish_name(&self, kind: &str) -> String {
         self.fishboy
             .roster
@@ -639,130 +656,64 @@ impl App {
             .map_or(kind.to_string(), |k| k.name.clone())
     }
 
-    /// The fishing panels over Play: the line's state with its meters, and
-    /// the popups of the last 2 s.
-    pub(super) fn fishing_panels(&self) -> Vec<Panel> {
-        let (Some(p), Some(fv)) = (self.play.as_ref(), self.my_fishing()) else {
-            return Vec::new();
-        };
-        let mut panels = Vec::new();
+    /// What the fishing HUD shows for this seat's line now (drawn on the 2D
+    /// layer by `flow/hud.rs`): a prompt for the line's stage, the lure's
+    /// depth, the charge while Space is held, and the reel bar and catch
+    /// meter while reeling. `None` with nothing to say (driving, no line).
+    pub fn fishing_hud(&self) -> Option<FishingHud> {
+        let (p, fv) = (self.play.as_ref()?, self.my_fishing()?);
         let fishing = p
             .game
             .boat(p.seat)
             .is_some_and(|b| b.mode == Mode::Fishing && !b.wrecked());
         let mine = fv.lines.iter().find(|l| l.seat == fv.seat);
-        let mut items = Vec::new();
-        let heading = match fv.stage {
-            Stage::Idle if fishing && fv.too_fast => Some(self.t("fishing.too_fast")),
-            Stage::Idle if fishing => Some(self.t("fishing.ready")),
-            Stage::Idle => None,
-            Stage::Charging => {
-                items.push(Item::Meter {
-                    id: "fishing.charge".into(),
-                    label: self.t("fishing.charge"),
-                    fill: (fv.charge / 10) as u32,
-                    zone: None,
-                    marker: None,
-                    vertical: false,
-                    text: format!("{}%", fv.charge / 10),
-                });
-                Some(self.t("fishing.charging"))
-            }
-            Stage::Flying => Some(self.t("fishing.flying")),
-            Stage::Sinking => Some(self.t("fishing.sinking")),
-            Stage::Set if fv.biting => Some(self.t("fishing.bite")),
-            Stage::Set if mine.is_some_and(|l| l.tug) => Some(self.t("fishing.nibble")),
-            Stage::Set => Some(self.t("fishing.waiting")),
-            Stage::Reeling => {
-                if let Some(r) = &fv.reel {
-                    let to = |v: i32| (v / 10).clamp(0, 100) as u32;
-                    items.push(Item::Meter {
-                        id: "fishing.reel".into(),
-                        label: self.t("fishing.reel"),
-                        fill: 0,
-                        zone: Some([to(r.zone), to(r.zone + r.zone_h)]),
-                        marker: Some(to(r.fish)),
-                        vertical: true,
-                        text: self.t(if r.in_zone {
-                            "fishing.in_zone"
-                        } else {
-                            "fishing.out_of_zone"
-                        }),
-                    });
-                    items.push(Item::Meter {
-                        id: "fishing.meter".into(),
-                        label: self.t("fishing.meter"),
-                        fill: to(r.meter),
-                        zone: None,
-                        marker: None,
-                        vertical: true,
-                        text: format!("{}%", r.meter / 10),
-                    });
-                }
-                Some(self.t("fishing.reeling"))
-            }
-            Stage::Landed => fv.on_line.as_ref().map(|f| {
-                self.t("fishing.landed")
-                    .replace("{feet}", &gallery::feet(f.length_mm))
-                    .replace("{fish}", &self.fish_name(&f.kind))
-            }),
+        let key = match fv.stage {
+            Stage::Idle if fishing && fv.too_fast => "too_fast",
+            Stage::Idle if fishing => "ready",
+            Stage::Idle => return None,
+            Stage::Charging => "charging",
+            Stage::Flying => "flying",
+            Stage::Sinking => "sinking",
+            Stage::Set if fv.biting => "bite",
+            Stage::Set if mine.is_some_and(|l| l.tug) => "nibble",
+            Stage::Set => "waiting",
+            Stage::Reeling => "reeling",
+            Stage::Landed => "landed",
         };
-        if let Some(h) = heading {
-            let mut panel = Panel::new("fishing", h, items);
-            if matches!(fv.stage, Stage::Sinking | Stage::Set) {
-                if let Some(l) = mine {
-                    panel.sub = self.t("fishing.depth").replace(
-                        "{metres}",
-                        &format!("{}.{}", l.lure_depth_mm / 1000, l.lure_depth_mm % 1000 / 100),
-                    );
-                }
-            }
-            panels.push(panel);
-        }
-        panels.extend(self.popups(p, &fv));
-        panels
-    }
-
-    /// Popups for the events of the last 2 s, newest first.
-    fn popups(&self, p: &play::Play, fv: &FishingView) -> Vec<Panel> {
-        let now = p.game.tick;
-        let keep = POPUP_MS / TICK_MS as u32;
-        let name = |seat: usize| {
-            p.game
-                .setup
-                .seats
-                .get(seat)
-                .map_or(String::new(), |s| s.name.clone())
+        let prompt = match (fv.stage, fv.on_line.as_ref()) {
+            (Stage::Landed, Some(f)) => self
+                .t("fishing.landed")
+                .replace("{feet}", &gallery::feet(f.length_mm))
+                .replace("{fish}", &self.fish_name(&f.kind)),
+            (Stage::Landed, None) => return None,
+            _ => self.t(&format!("fishing.{key}")),
         };
-        let mut out = Vec::new();
-        for (tick, e) in p.log.iter().rev() {
-            if now.saturating_sub(*tick) >= keep {
-                break;
-            }
-            let own = |seat: &usize| *seat == fv.seat;
-            let say = |key: &str| Some(Panel::new("popup", self.t(key), Vec::new()));
-            let popup = match e {
-                MatchEvent::Hooked { seat, kind, tier, .. } => {
-                    let mut panel = Panel::new(
-                        &format!("popup tier-{}", crate::sim::fishing::tier_key(*tier)),
-                        self.t("popup.hooked")
-                            .replace("{player}", &name(*seat))
-                            .replace("{fish}", &self.fish_name(kind)),
-                        Vec::new(),
-                    );
-                    panel.sub = self.tier_name(*tier);
-                    Some(panel)
-                }
-                MatchEvent::CastRefused { seat, .. } if own(seat) => say("popup.refused"),
-                MatchEvent::Scared { seat } if own(seat) => say("popup.scared"),
-                MatchEvent::Missed { seat } if own(seat) => say("popup.missed"),
-                MatchEvent::LineBroke { seat, .. } if own(seat) => say("popup.broke"),
-                MatchEvent::FishDropped { seat, .. } if own(seat) => say("popup.dropped"),
-                _ => None,
-            };
-            out.extend(popup);
-        }
-        out
+        let depth = mine
+            .filter(|_| matches!(fv.stage, Stage::Sinking | Stage::Set))
+            .map(|l| {
+                self.t("fishing.depth").replace(
+                    "{metres}",
+                    &format!("{}.{}", l.lure_depth_mm / 1000, l.lure_depth_mm % 1000 / 100),
+                )
+            });
+        let to = |v: i32| (v / 10).clamp(0, 100);
+        Some(FishingHud {
+            key,
+            prompt,
+            depth,
+            charge: (fv.stage == Stage::Charging).then_some(fv.charge / 10),
+            reel: fv
+                .reel
+                .as_ref()
+                .filter(|_| fv.stage == Stage::Reeling)
+                .map(|r| ReelBars {
+                    zone: [to(r.zone), to(r.zone + r.zone_h)],
+                    fish: to(r.fish),
+                    meter: to(r.meter),
+                    in_zone: r.in_zone,
+                    tier: r.tier,
+                }),
+        })
     }
 
     /// The `debug` flags the page passes on from its address (`?debug=`):
@@ -835,6 +786,7 @@ impl App {
             b.heading = crate::map::trig::wrap(heading);
             b.vel_um = [0, 0];
         }
+        self.flow.debug = value.split(',').any(|f| f.trim() == "flow");
     }
 
     /// After the ticks: the debug fish by a bobber that just landed.

@@ -67,6 +67,11 @@ Collected as the agent makes them; brought up in the morning. Each also has a ro
 - V32. The hook popup ends with a full stop, not "!", for the tone lint (R3.15).
 - V33. The chase camera: a pivot 1.5 m over the boat, 7 m back, 11° down, aimed 4 m ahead and 0.3 m up, pulled in by land between it and the boat (SECOND-ORDER R4.80, R4.82; `notes/shots/polish/`).
 - V34. The underwater look: murk graded by depth and view, shafts, caustics, the surface's bright window and dark floating shapes, drifting specks and bubbles, weeds and stems by the reeds, rocks and logs on the bed, fish lifted 30% toward their own colours (R4.83 to R4.90; `notes/shots/polish/`).
+- V32. The hook popup ends with a full stop, not "!", for the tone lint (R3.15). Superseded by V33.
+- V33. The hook popup ends with "!" as the person wrote it: popup strings may end with one "!" (a narrow tone exemption, TONE.md; SECOND-ORDER R3.112).
+- V34. The match flow: a 3 s countdown with the boats held still; popups up to 4 at once for 2 s each, landings announced too; the HUD's layout (time top right, gauge and mode badge bottom left, ping and item bottom right, key hints along the bottom fading after a minute); "Lines up" for 3 s before the postgame (R3.110, R3.113, R3.121, R3.122).
+- V35. The postgame: players revealed in seat order, a card every 0.75 s, ties sharing a place; Rematch keeps the setup but draws a new map layout (R3.118, R3.119).
+- V36. The wreck: a lumpy fireball with shards, a short camera shake and an orange flash for the victim; a respawned boat drawn 45% solid while ghosted (R3.116, R3.117). The look: `notes/shots/match-flow/`.
 
 ## Status
 
